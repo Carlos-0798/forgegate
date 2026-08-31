@@ -212,8 +212,9 @@ attestation embedding of assembly receipts, and hardware access.
 - complete sdist manifest and wheel build: PASS
 - repository-external wheel installation and CLI smoke: PASS
 - Git Bash shell-script syntax check: PASS
-- GitHub Actions: Phase 8 run 33411154421 PASS on Windows, Ubuntu, and macOS;
-  each platform completed `verify.py` and `release_smoke.py`
+- GitHub Actions: Phase 9 implementation run 33436111147 PASS on Windows,
+  Ubuntu, and macOS; each platform completed `verify.py` and
+  `release_smoke.py` for commit `61c7726`
 - private GitHub synchronization: `main` pushed with noreply commit identity;
   repository visibility, default branch, About, and ten Topics read back
 

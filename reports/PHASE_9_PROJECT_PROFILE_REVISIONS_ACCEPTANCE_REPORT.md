@@ -56,8 +56,10 @@ candidate.
 
 These are software/local-host results. No physical device, upstream runtime,
 authenticated producer, TLS, authorization, or public deployment was tested.
-Cross-platform private GitHub CI evidence is recorded only after the synchronized
-commit completes the workflow.
+Private GitHub Actions run
+[`33436111147`](https://github.com/Carlos-0798/forgegate/actions/runs/33436111147)
+passed `tools/verify.py` and `tools/release_smoke.py` on Windows, Ubuntu, and
+macOS for implementation commit `61c7726`.
 
 ## Residual and human-intervention boundary
 

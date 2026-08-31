@@ -49,6 +49,12 @@ release smoke passed. Follow-up run
 then passed on Windows, Ubuntu, and macOS; every job executed both
 `tools/verify.py` and `tools/release_smoke.py`.
 
+Phase 9 implementation commit `61c7726` was synchronized to the same private
+`main` branch. Run
+[`33436111147`](https://github.com/Carlos-0798/forgegate/actions/runs/33436111147)
+passed on Windows, Ubuntu, and macOS; every job again executed both development
+verification and clean-install release smoke.
+
 ## Boundaries retained
 
 - No License was added.

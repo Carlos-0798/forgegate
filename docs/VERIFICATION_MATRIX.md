@@ -19,7 +19,7 @@
 | mypy strict | package and verification tools | PASS |
 | Source distribution contents | manifest assertion | PASS |
 | Clean release installation | temporary sdist/wheel/venv smoke | PASS |
-| Windows/Linux/macOS CI | GitHub Actions | PASS — `verify.py` + `release_smoke.py`, Phase 8 run 33411154421 |
+| Windows/Linux/macOS CI | GitHub Actions | PASS — `verify.py` + `release_smoke.py`, Phase 9 run 33436111147 (`61c7726`) |
 | Artifact root and byte identity | unit/adversarial tests | PASS — local host |
 | Stable artifact read/change rejection | simulated metadata cases | PASS — local host |
 | Actual Windows symlink escape | privileged symlink fixture | NOT RUN — host disallowed symlink creation |
