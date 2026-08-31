@@ -47,10 +47,13 @@ evidence, identities, or missing documents.
 - 13 canonical versioned document Schemas plus two artifact Schemas: PASS
 - committed OpenAPI drift check: PASS
 - source distribution, wheel, clean installation, and installed CLI smoke: PASS
+- GitHub Actions on Windows, Ubuntu, and macOS: PASS —
+  [run 33406259713](https://github.com/Carlos-0798/forgegate/actions/runs/33406259713)
 
-These are local-host software results. GitHub Actions evidence is recorded only
-after the final private push completes. No physical device, upstream runtime,
-authenticated producer, TLS, authorization, or public deployment was tested.
+The cross-platform CI evidence repeats the software verification and release
+smoke gates; it does not add device or external-system evidence. No physical
+device, upstream runtime, authenticated producer, TLS, authorization, or public
+deployment was tested.
 
 ## Residual and human-intervention boundary
 
