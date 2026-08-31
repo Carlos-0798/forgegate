@@ -1,0 +1,461 @@
+{
+  "$defs": {
+    "AfeCriteria": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "title": "Id",
+          "type": "string"
+        },
+        "results": {
+          "items": {
+            "$ref": "#/$defs/AfeExportCriterion"
+          },
+          "title": "Results",
+          "type": "array"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "version",
+        "results"
+      ],
+      "title": "AfeCriteria",
+      "type": "object"
+    },
+    "AfeEvidenceSource": {
+      "enum": [
+        "THEORY",
+        "SYNTHETIC",
+        "CSV_REPLAY",
+        "SPICE_IDEAL",
+        "SPICE_MODEL",
+        "HOST_TEST",
+        "BENCH_DMM",
+        "BENCH_CONTROLLER",
+        "BENCH_SCOPE"
+      ],
+      "title": "AfeEvidenceSource",
+      "type": "string"
+    },
+    "AfeExportCriterion": {
+      "additionalProperties": false,
+      "properties": {
+        "actual_value": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Actual Value"
+        },
+        "lower_limit": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Lower Limit"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "passed": {
+          "title": "Passed",
+          "type": "boolean"
+        },
+        "unit": {
+          "title": "Unit",
+          "type": "string"
+        },
+        "upper_limit": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Upper Limit"
+        }
+      },
+      "required": [
+        "name",
+        "actual_value",
+        "unit",
+        "passed",
+        "lower_limit",
+        "upper_limit"
+      ],
+      "title": "AfeExportCriterion",
+      "type": "object"
+    },
+    "AfeExportPoint": {
+      "additionalProperties": false,
+      "properties": {
+        "disposition": {
+          "$ref": "#/$defs/AfePointDisposition"
+        },
+        "exclusion_reasons": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Exclusion Reasons",
+          "type": "array"
+        },
+        "index": {
+          "minimum": 0,
+          "title": "Index",
+          "type": "integer"
+        },
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "quality_flags": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Quality Flags",
+          "type": "array"
+        },
+        "references": {
+          "items": {
+            "$ref": "#/$defs/AfeRecordReference"
+          },
+          "minItems": 1,
+          "title": "References",
+          "type": "array"
+        },
+        "values": {
+          "items": {
+            "$ref": "#/$defs/AfeExportValue"
+          },
+          "minItems": 1,
+          "title": "Values",
+          "type": "array"
+        }
+      },
+      "required": [
+        "index",
+        "label",
+        "disposition",
+        "references",
+        "values",
+        "quality_flags",
+        "exclusion_reasons"
+      ],
+      "title": "AfeExportPoint",
+      "type": "object"
+    },
+    "AfeExportValue": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "unit": {
+          "title": "Unit",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "name",
+        "value",
+        "unit"
+      ],
+      "title": "AfeExportValue",
+      "type": "object"
+    },
+    "AfePointDisposition": {
+      "enum": [
+        "INCLUDED",
+        "EXCLUDED",
+        "INVALID"
+      ],
+      "title": "AfePointDisposition",
+      "type": "string"
+    },
+    "AfeRecordReference": {
+      "additionalProperties": false,
+      "properties": {
+        "channel": {
+          "title": "Channel",
+          "type": "string"
+        },
+        "raw_record_id": {
+          "title": "Raw Record Id",
+          "type": "string"
+        },
+        "record_id": {
+          "title": "Record Id",
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/AfeEvidenceSource"
+        },
+        "timestamp": {
+          "title": "Timestamp",
+          "type": "string"
+        }
+      },
+      "required": [
+        "record_id",
+        "raw_record_id",
+        "timestamp",
+        "channel",
+        "source"
+      ],
+      "title": "AfeRecordReference",
+      "type": "object"
+    },
+    "AfeRunMetadata": {
+      "additionalProperties": false,
+      "properties": {
+        "configuration_id": {
+          "title": "Configuration Id",
+          "type": "string"
+        },
+        "configuration_version": {
+          "title": "Configuration Version",
+          "type": "string"
+        },
+        "device_id": {
+          "title": "Device Id",
+          "type": "string"
+        },
+        "ended_at": {
+          "title": "Ended At",
+          "type": "string"
+        },
+        "evidence_source": {
+          "$ref": "#/$defs/AfeEvidenceSource"
+        },
+        "input_record_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Input Record Ids",
+          "type": "array"
+        },
+        "profile_name": {
+          "title": "Profile Name",
+          "type": "string"
+        },
+        "profile_version": {
+          "title": "Profile Version",
+          "type": "string"
+        },
+        "run_id": {
+          "title": "Run Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "test-run.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "software_version": {
+          "title": "Software Version",
+          "type": "string"
+        },
+        "started_at": {
+          "title": "Started At",
+          "type": "string"
+        },
+        "test_type": {
+          "title": "Test Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id",
+        "test_type",
+        "configuration_id",
+        "configuration_version",
+        "started_at",
+        "ended_at",
+        "software_version",
+        "device_id",
+        "profile_name",
+        "profile_version",
+        "evidence_source",
+        "input_record_ids",
+        "schema_version"
+      ],
+      "title": "AfeRunMetadata",
+      "type": "object"
+    },
+    "AfeSourceSchema": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ],
+      "title": "AfeSourceSchema",
+      "type": "object"
+    },
+    "AfeTestRun": {
+      "additionalProperties": false,
+      "properties": {
+        "evidence_record_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Record Ids",
+          "type": "array"
+        },
+        "metadata": {
+          "$ref": "#/$defs/AfeRunMetadata"
+        },
+        "missing_requirements": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Missing Requirements",
+          "type": "array"
+        },
+        "outcome": {
+          "$ref": "#/$defs/AfeTestRunOutcome"
+        },
+        "summary": {
+          "title": "Summary",
+          "type": "string"
+        }
+      },
+      "required": [
+        "metadata",
+        "outcome",
+        "summary",
+        "evidence_record_ids",
+        "missing_requirements"
+      ],
+      "title": "AfeTestRun",
+      "type": "object"
+    },
+    "AfeTestRunOutcome": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "INCOMPLETE",
+        "UNSUPPORTED",
+        "ABORTED",
+        "ERROR"
+      ],
+      "title": "AfeTestRunOutcome",
+      "type": "string"
+    }
+  },
+  "$id": "urn:forgegate:compatibility:analog-validation:result-export:v1",
+  "additionalProperties": false,
+  "properties": {
+    "criteria": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AfeCriteria"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Limitations",
+      "type": "array"
+    },
+    "metrics": {
+      "items": {
+        "$ref": "#/$defs/AfeExportValue"
+      },
+      "title": "Metrics",
+      "type": "array"
+    },
+    "points": {
+      "items": {
+        "$ref": "#/$defs/AfeExportPoint"
+      },
+      "title": "Points",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "result-export.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_schemas": {
+      "items": {
+        "$ref": "#/$defs/AfeSourceSchema"
+      },
+      "minItems": 1,
+      "title": "Source Schemas",
+      "type": "array"
+    },
+    "test_run": {
+      "$ref": "#/$defs/AfeTestRun"
+    }
+  },
+  "required": [
+    "schema_version",
+    "test_run",
+    "criteria",
+    "source_schemas",
+    "metrics",
+    "points",
+    "limitations"
+  ],
+  "title": "Analog Validation Studio result-export.v1 compatibility contract",
+  "type": "object"
+}

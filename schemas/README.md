@@ -11,7 +11,9 @@ committed JSON Schemas with:
 Schema export is deterministic for a fixed ForgeGate version. Review and commit
 model changes and regenerated schemas together.
 
-`forgegate.benchmark.v1.schema.json` is the ForgeGate-owned external Benchmark
-artifact contract. It is defined alongside the bounded collector and checked
-for exact drift by `tools/verify.py`; it is not a project/policy configuration
-schema emitted by `export-schemas`.
+`forgegate.benchmark.v1.schema.json` is the ForgeGate-owned Benchmark artifact
+contract. `analog-validation.result-export.v1.schema.json` is ForgeGate's
+consumer-side structural mirror of the upstream Studio contract; it does not
+transfer schema ownership to ForgeGate. Both are emitted by `export-schemas`
+and drift-checked by `tools/verify.py`. Neither is a project/policy
+configuration schema.

@@ -34,9 +34,18 @@
 - [x] Generate deterministic JSON and Markdown attestations.
 - [x] Complete the local CLI MVP around persisted candidates.
 
-## Later compatibility work
+## Phase 3 — software-peer compatibility
 
-After the generic MVP is independently demonstrable, freeze an Analog
-Validation Studio report schema and implement the first optional software-peer
-collector. Add an MSP430 compatibility collector only after new hardware
-progress is aligned in this project context.
+- [x] Audit the Studio public `result-export.v1` boundary at its upstream freeze
+  commit without importing upstream runtime code.
+- [x] Commit a consumer-side structural Schema mirror and exact drift gate.
+- [x] Implement bounded run/metric/criterion normalization with retained
+  limitations, source schemas, artifact identity, and record lineage checks.
+- [x] Derive verification levels from upstream evidence sources and cap current
+  `BENCH_*` exports at `system_observed`.
+- [x] Add CLI, fixture, Golden, adversarial tests, documentation, and
+  clean-install smoke.
+- [ ] Add an MSP430 compatibility collector only after new hardware progress is
+  aligned in this project context and its public report contract is frozen.
+- [ ] Revisit human-readable Studio report ingestion only after its Phase 5
+  product report contract is implemented and frozen upstream.

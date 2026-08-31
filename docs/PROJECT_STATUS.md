@@ -1,9 +1,9 @@
 # Project status
 
 - Date: 2026-08-31
-- Version: 0.1.0.dev8
-- Stage: Phase 2 deterministic attestation and local CLI MVP complete
-- Product maturity: local CLI MVP; not production-ready
+- Version: 0.1.0.dev9
+- Stage: Phase 3 Analog Validation Studio compatibility slice implemented
+- Product maturity: local CLI MVP plus first software-peer collector; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
 - Remote/publication status: local only; no remote repository created
@@ -75,12 +75,23 @@
   symlink/unsafe-target defenses, and stable filesystem errors;
 - persisted `candidate migrate-store`, `import-evaluation`, `attest`, and
   `show-attestation` CLI paths.
+- frozen consumer-side structural mirror of Analog Validation Studio's public
+  `result-export.v1` contract at upstream commit
+  `9ac23494b86212928185de9b0eef1c1a82a8c0ea`;
+- bounded, strict `collect-analog-validation` artifact path with no upstream
+  package import, serial access, analysis rerun, or device operation;
+- retained TestRun outcome, limitations, source schemas, metrics, criteria,
+  point/evidence/raw-record lineage, exact bytes, and SHA-256 identity;
+- automatic evidence-source mapping with current `BENCH_*` capped at
+  `system_observed` and warned rather than promoted to physical verification;
+- committed sample, Golden normalization, compatibility Schema, adversarial
+  tests, architecture/security documentation, and clean-install smoke path.
 
 ## Not implemented
 
 REST API, external plugins, GitHub integration, signatures/key management,
-database authorization, backup/repair, AFE collector, MSP430 collector, and
-hardware access.
+database authorization, backup/repair, MSP430 collector, Studio Phase 5
+human-readable report ingestion, and hardware access.
 
 ## Accepted local checkpoint
 
@@ -88,12 +99,14 @@ hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 427 passed, 1 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 100% across 2,944 statements and 856 branches
+- pytest: 486 passed, 1 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 100% across 3,393 statements and 964 branches
+- Analog Validation collector focus: 59 passed; 100% across 431 statements and
+  106 branches
 - committed JSON Schema drift check: PASS
 - project/policy/candidate/transition example documents: VALID
-- eight canonical versioned document Schemas plus one Benchmark artifact Schema:
-  drift-checked and parsed
+- eight canonical versioned document Schemas plus Benchmark and Analog
+  Validation artifact Schemas: drift-checked and parsed
 - complete sdist manifest and wheel build: PASS
 - repository-external wheel installation and CLI smoke: PASS
 - Git Bash shell-script syntax check: PASS
@@ -102,4 +115,5 @@ hardware access.
 
 See `reports/PHASE_0_ENVIRONMENT_AUDIT.md` for the prerequisite audit and exact
 human-intervention boundary. See
-`reports/PHASE_2_ATTESTATION_ACCEPTANCE_REPORT.md` for the current slice.
+`reports/PHASE_3_ANALOG_VALIDATION_COMPATIBILITY_ACCEPTANCE_REPORT.md` for the
+current slice.

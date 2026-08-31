@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.0.dev9 — 2026-08-31
+
+- Added the optional, artifact-only Analog Validation Studio
+  `result-export.v1` collector without an upstream runtime dependency or device
+  access path.
+- Mirrored and drift-checked the frozen public structure, revalidated TestRun,
+  criteria, point, source, and raw-record lineage, and normalized run, metric,
+  and criterion facts without recalculation.
+- Derived verification levels from upstream evidence sources and capped current
+  `BENCH_*` labels at `system_observed` with an explicit warning because the
+  schema lacks mandatory instrument/calibration provenance.
+- Added the `collect-analog-validation` CLI, sample artifact, deterministic
+  Golden, adversarial/resource tests, compatibility/threat documentation, and
+  clean-wheel smoke coverage.
+
 ## 0.1.0.dev8 — 2026-08-31
 
 - Added a self-validating `forgegate.release-attestation.v1` document containing

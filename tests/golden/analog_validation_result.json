@@ -1,0 +1,122 @@
+{
+  "collector_name": "analog_validation_result",
+  "collector_version": "forgegate-analog-validation-result.v1",
+  "status": "COMPLETE",
+  "artifact": {
+    "path_or_uri": "artifacts/analog-validation-result.json",
+    "media_type": "application/vnd.analog-validation.result+json",
+    "sha256": "b58566d4c2aea2929f39c21f63a64ba691478c6ceec7f030ff329aeb648bf4a1",
+    "size_bytes": 1994
+  },
+  "evidence": [
+    {
+      "evidence_id": "analog-validation-run-b58566d4c2ae",
+      "kind": "analog-validation.run",
+      "scope": "analog-validation",
+      "value": {
+        "run_id": "afe-demo-dc-001",
+        "test_type": "dc-sweep",
+        "outcome": "PASS",
+        "summary": "DC sweep criteria passed",
+        "configuration": {
+          "id": "afe-demo-config",
+          "version": "1"
+        },
+        "profile": {
+          "name": "afe-synthetic",
+          "version": "1"
+        },
+        "device_id": "afe-demo-simulator",
+        "started_at": "2026-08-31T12:00:00.000000Z",
+        "ended_at": "2026-08-31T12:00:01.000000Z",
+        "criteria": {
+          "id": "afe-demo-dc-criteria",
+          "version": "1"
+        },
+        "counts": {
+          "input_records": 1,
+          "evidence_records": 1,
+          "metrics": 1,
+          "criteria": 1,
+          "points": 1
+        },
+        "missing_requirements": [],
+        "limitations": [
+          "SYNTHETIC compatibility fixture; no physical AFE was measured."
+        ],
+        "source_schemas": [
+          {
+            "name": "test-run",
+            "version": "test-run.v1"
+          },
+          {
+            "name": "dc-sweep-analysis",
+            "version": "dc-sweep-analysis.v1"
+          }
+        ]
+      },
+      "unit": null,
+      "status": "PASS",
+      "source_tool": "analog-validation-studio",
+      "source_version": "0.1.0.dev0",
+      "verification_level": "simulated",
+      "tags": {
+        "collector": "forgegate-analog-validation-result.v1",
+        "schema_version": "result-export.v1",
+        "evidence_source": "SYNTHETIC",
+        "record_type": "run"
+      }
+    },
+    {
+      "evidence_id": "analog-validation-metric-b58566d4c2ae-a0ca87f4cc75",
+      "kind": "analog-validation.metric",
+      "scope": "analog-validation",
+      "value": {
+        "run_id": "afe-demo-dc-001",
+        "test_type": "dc-sweep",
+        "name": "gain",
+        "value": 2.0
+      },
+      "unit": "ratio",
+      "status": "observed",
+      "source_tool": "analog-validation-studio",
+      "source_version": "0.1.0.dev0",
+      "verification_level": "simulated",
+      "tags": {
+        "collector": "forgegate-analog-validation-result.v1",
+        "schema_version": "result-export.v1",
+        "evidence_source": "SYNTHETIC",
+        "record_type": "metric"
+      }
+    },
+    {
+      "evidence_id": "analog-validation-criterion-b58566d4c2ae-3dd54be2c356",
+      "kind": "analog-validation.criterion",
+      "scope": "analog-validation",
+      "value": {
+        "run_id": "afe-demo-dc-001",
+        "test_type": "dc-sweep",
+        "criteria_id": "afe-demo-dc-criteria",
+        "criteria_version": "1",
+        "name": "GAIN",
+        "actual_value": 2.0,
+        "lower_limit": 1.95,
+        "upper_limit": 2.05,
+        "passed": true
+      },
+      "unit": "ratio",
+      "status": "passed",
+      "source_tool": "analog-validation-studio",
+      "source_version": "0.1.0.dev0",
+      "verification_level": "simulated",
+      "tags": {
+        "collector": "forgegate-analog-validation-result.v1",
+        "schema_version": "result-export.v1",
+        "evidence_source": "SYNTHETIC",
+        "record_type": "criterion"
+      }
+    }
+  ],
+  "warnings": [],
+  "rejected_records": []
+}

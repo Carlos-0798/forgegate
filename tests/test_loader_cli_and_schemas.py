@@ -6,7 +6,7 @@ from typer.testing import CliRunner
 
 from forgegate.cli import app
 from forgegate.config import ConfigLoadError, load_config
-from forgegate.schema_registry import SCHEMAS, schema_filename
+from forgegate.schema_registry import ARTIFACT_SCHEMAS, SCHEMAS, schema_filename
 
 runner = CliRunner()
 
@@ -79,8 +79,9 @@ def test_doctor_reports_phase() -> None:
     result = runner.invoke(app, ["doctor"])
     assert result.exit_code == 0
     report = json.loads(result.stdout)
-    assert report["phase"] == "phase2-deterministic-attestations"
+    assert report["phase"] == "phase3-analog-validation-compatibility"
     assert report["supported_schemas"] == sorted(SCHEMAS)
+    assert report["supported_artifact_schemas"] == sorted(ARTIFACT_SCHEMAS)
 
 
 def test_validate_config_cli(repository_root: Path) -> None:
@@ -651,6 +652,10 @@ def test_schema_export_cli(tmp_path: Path) -> None:
     assert result.exit_code == 0
     for schema_version in SCHEMAS:
         path = output / schema_filename(schema_version)
+        assert path.is_file()
+        assert json.loads(path.read_text(encoding="utf-8"))["type"] == "object"
+    for schema_name in ARTIFACT_SCHEMAS:
+        path = output / schema_filename(schema_name)
         assert path.is_file()
         assert json.loads(path.read_text(encoding="utf-8"))["type"] == "object"
 

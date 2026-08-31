@@ -1,16 +1,21 @@
 # Optional upstream compatibility contract
 
-This document is an integration plan, not accepted ForgeGate evidence.
+This document records accepted compatibility boundaries. It is not itself
+ForgeGate evidence.
 
 ## Analog Validation Studio — primary software peer
 
-Reference snapshot: Phase 4 Step 2, commit
-`95c1432febdce70007daba013cae4cce47cf8556`, reported 2026-08-30.
+Public result contract: `result-export.v1`, frozen by Analog Validation Studio
+Phase 3 commit `9ac23494b86212928185de9b0eef1c1a82a8c0ea` on 2026-08-30. The
+read-only compatibility audit was refreshed against Studio planning head
+`ef1f3c50834f55566a2022648e271b913aa9399f` on 2026-08-31; the result-export
+contract files still resolve to the Phase 3 freeze commit.
 
-ForgeGate may later consume a versioned validation report exported by the
-Studio. It must not call Studio measurement algorithms, import its Python
-package, control serial devices, or reinterpret replay/synthetic results as
-physical validation.
+ForgeGate now consumes the versioned JSON result export through the optional
+`collect-analog-validation` path. It does not call Studio measurement
+algorithms, import its Python package, control serial devices, or reinterpret
+replay/synthetic results as physical validation. Studio Phase 5 human-readable
+reports remain planned and are not assumed by this collector.
 
 Initial mapping proposal:
 
@@ -19,12 +24,16 @@ Initial mapping proposal:
 | `HOST_TEST` | `host_tested` | source commit, environment, report hash |
 | `SYNTHETIC` | `simulated` | simulator/config version, seed if applicable |
 | `CSV_REPLAY` | `replayed` | source CSV hash and replay configuration |
-| future physical bench result | `physically_verified` | instrument/context/calibration references |
+| `THEORY` | `declared` | model/configuration identity and limitations |
+| `SPICE_IDEAL` / `SPICE_MODEL` | `simulated` | model/configuration version and limitations |
+| `BENCH_*` in current v1 | `system_observed` plus warning | report hash and retained source metadata |
+| future bench schema with mandatory provenance | eligible for later review | instrument/context/calibration references |
 
-The exact Studio export schema must be frozen in the Studio repository first.
-ForgeGate's generic local CLI MVP is now accepted; freezing that public Studio
-artifact and implementing an optional collector is the next compatibility
-stage.
+The accepted collector retains the exact artifact SHA-256, caller-claimed
+producer commit/environment, source software version, evidence source,
+limitations, source schemas, TestRun outcome, metrics, and criteria. It emits
+no `physically_verified` record because v1 does not require instrument or
+calibration provenance.
 
 ## MSP430 Equipment Health & Safety Controller — later hardware peer
 

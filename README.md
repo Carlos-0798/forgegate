@@ -6,7 +6,7 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 2 deterministic attestation and local CLI MVP accepted; not production-ready.**
+**Phase 3 Analog Validation Studio compatibility slice implemented; not production-ready.**
 
 Implemented and host-verified in this checkpoint:
 
@@ -58,12 +58,23 @@ Implemented and host-verified in this checkpoint:
   exact replay, and conflict rejection;
 - persisted `candidate migrate-store`, `import-evaluation`, `attest`, and
   `show-attestation` CLI paths.
+- an optional, artifact-only Analog Validation Studio `result-export.v1`
+  collector with a committed consumer-side Schema mirror;
+- strict TestRun, criteria, metric, point, limitation, and record-lineage
+  validation without importing or running the upstream Studio;
+- deterministic `analog-validation.run`, `.metric`, and `.criterion` evidence,
+  with source-derived verification levels and no collector-owned release
+  decision;
+- automatic `BENCH_*` capping at `system_observed` because v1 does not require
+  instrument identity or calibration provenance;
+- `collect-analog-validation` CLI preview, compatibility fixture, Golden
+  projection, adversarial tests, Schema drift gate, and installed-wheel smoke.
 
 Not implemented yet:
 
 - REST API, plugin execution, GitHub integration, database authorization,
   backup/repair, or signed provenance/key management;
-- AFE or MSP430 compatibility collectors;
+- MSP430 compatibility collector;
 - any AFE/MSP430 runtime integration or hardware operation;
 - any production deployment or public release.
 
@@ -233,12 +244,29 @@ Observed values, baselines, and absolute/percent tolerances remain facts. A
 `COMPLETE` collection does not assert that performance is acceptable; only an
 explicit matching policy rule can make that determination.
 
+Collect an Analog Validation Studio structured result without importing its
+runtime or touching a device:
+
+```powershell
+.\.venv\Scripts\python.exe -m forgegate collect-analog-validation `
+  artifacts/analog-validation-result.json `
+  --root examples/sample-python-api `
+  --commit 9ac23494b86212928185de9b0eef1c1a82a8c0ea `
+  --collected-at 2026-08-31T13:00:00Z
+```
+
+`--commit` is the claimed Studio artifact-producing commit. ForgeGate derives
+the verification level from `evidence_source`; there is intentionally no
+verification-level override. A valid upstream `PASS` remains observed evidence
+until a separate ForgeGate policy evaluates it.
+
 ## Product boundary
 
-ForgeGate does not run builds or tests, control devices, perform analog
-measurements, or inherit evidence from another repository. Analog Validation
-Studio and the MSP430 controller may later export versioned artifacts that an
-optional ForgeGate compatibility pack consumes.
+ForgeGate does not run builds or tests, control devices, or perform analog
+measurements. The Studio integration consumes only its frozen public JSON
+artifact; it neither imports Studio code nor converts current `BENCH_*` labels
+into physical verification. The MSP430 controller may later expose a separate
+versioned artifact for another optional collector.
 
 ## License status
 

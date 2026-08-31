@@ -19,6 +19,8 @@ from forgegate.candidates import (
     transition_candidate,
 )
 from forgegate.collectors import (
+    AnalogValidationCollectionRequest,
+    AnalogValidationResultCollector,
     BenchmarkCollectionRequest,
     BenchmarkJsonCollector,
     CollectionResult,
@@ -36,7 +38,7 @@ from forgegate.domain.enums import CandidateStatus, Decision, EvidenceTrust, Ver
 from forgegate.domain.models import EvidenceBundle, ExecutionContext, PolicyConfig
 from forgegate.policy import evaluate_policy
 from forgegate.policy.models import PolicyEvaluation
-from forgegate.schema_registry import SCHEMAS, schema_filename
+from forgegate.schema_registry import ARTIFACT_SCHEMAS, SCHEMAS, schema_filename
 
 app = typer.Typer(
     name="forgegate",
@@ -55,7 +57,8 @@ def doctor() -> None:
         "python": platform.python_version(),
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
-        "phase": "phase2-deterministic-attestations",
+        "supported_artifact_schemas": sorted(ARTIFACT_SCHEMAS),
+        "phase": "phase3-analog-validation-compatibility",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 
@@ -77,11 +80,16 @@ def validate_config(
 def export_schemas(
     output_dir: Annotated[Path, typer.Argument(file_okay=False)],
 ) -> None:
-    """Export canonical JSON Schemas from the Pydantic contract models."""
+    """Export canonical document and collector-artifact JSON Schemas."""
     output_dir.mkdir(parents=True, exist_ok=True)
     for schema_version, model in sorted(SCHEMAS.items()):
         target = output_dir / schema_filename(schema_version)
         payload = json.dumps(model.model_json_schema(), indent=2, sort_keys=True) + "\n"
+        target.write_text(payload, encoding="utf-8")
+        typer.echo(str(target))
+    for schema_name, schema in sorted(ARTIFACT_SCHEMAS.items()):
+        target = output_dir / schema_filename(schema_name)
+        payload = json.dumps(schema, indent=2, sort_keys=True) + "\n"
         target.write_text(payload, encoding="utf-8")
         typer.echo(str(target))
 
@@ -495,6 +503,31 @@ def collect_benchmark(
         typer.echo(f"ERROR: {exc}", err=True)
         raise typer.Exit(code=3) from exc
     _emit_collection(BenchmarkJsonCollector(registry).collect(request))
+
+
+@app.command("collect-analog-validation")
+def collect_analog_validation(
+    source_path: Annotated[str, typer.Argument(help="Artifact path relative to --root")],
+    commit: Annotated[str, typer.Option("--commit")],
+    collected_at: Annotated[str, typer.Option("--collected-at")],
+    root: Annotated[Path, typer.Option("--root", file_okay=False, resolve_path=True)] = Path("."),
+    trust: Annotated[EvidenceTrust, typer.Option("--trust")] = EvidenceTrust.UNSIGNED_LOCAL,
+    scope: Annotated[str, typer.Option("--scope")] = "analog-validation",
+) -> None:
+    """Collect Analog Validation Studio result-export.v1 without evidence promotion."""
+    try:
+        registry = ArtifactRegistry(root)
+        request = AnalogValidationCollectionRequest(
+            source_path=source_path,
+            execution_context=ExecutionContext(commit_sha=commit),
+            collected_at=datetime.fromisoformat(collected_at.replace("Z", "+00:00")),
+            trust=trust,
+            scope=scope,
+        )
+    except (ArtifactBoundaryError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    _emit_collection(AnalogValidationResultCollector(registry).collect(request))
 
 
 def _coverage_inputs(

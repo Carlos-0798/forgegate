@@ -1,3 +1,7 @@
+from forgegate.collectors.analog_validation import (
+    AnalogValidationCollectionRequest,
+    AnalogValidationResultCollector,
+)
 from forgegate.collectors.base import (
     CollectionIssue,
     CollectionResult,
@@ -14,6 +18,8 @@ from forgegate.collectors.junit import JUnitCollectionRequest, JUnitCollector
 from forgegate.collectors.sarif import SarifCollectionRequest, SarifCollector
 
 __all__ = [
+    "AnalogValidationCollectionRequest",
+    "AnalogValidationResultCollector",
     "BenchmarkCollectionRequest",
     "BenchmarkJsonCollector",
     "CollectionIssue",

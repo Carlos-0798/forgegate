@@ -6,6 +6,8 @@ from forgegate.candidates.models import (
     CandidateTransitionResult,
     ReleaseCandidate,
 )
+from forgegate.collectors.analog_validation import AFE_RESULT_JSON_SCHEMA
+from forgegate.collectors.benchmark import BENCHMARK_JSON_SCHEMA
 from forgegate.domain.models import EvidenceBundle, PolicyConfig, ProjectConfig
 from forgegate.policy.models import PolicyEvaluation
 
@@ -18,6 +20,11 @@ SCHEMAS: dict[str, type[BaseModel]] = {
     "forgegate.candidate-transition.v1": CandidateTransition,
     "forgegate.candidate-transition-result.v1": CandidateTransitionResult,
     "forgegate.release-attestation.v1": ReleaseAttestation,
+}
+
+ARTIFACT_SCHEMAS: dict[str, dict[str, object]] = {
+    "analog-validation.result-export.v1": AFE_RESULT_JSON_SCHEMA,
+    "forgegate.benchmark.v1": BENCHMARK_JSON_SCHEMA,
 }
 
 

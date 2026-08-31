@@ -134,6 +134,19 @@ The current slice has no authenticated producer and runs no plugin code.
 | Local record is mistaken for signed authority | Required `assurance: unsigned_local` plus explicit JSON/Markdown documentation boundary |
 | Legacy migration fabricates a missing evaluation | Explicit v1-to-v2 migration leaves it absent; exact matching evaluation import is required before attestation |
 
+## Addressed in the Phase 3 Analog Validation compatibility slice
+
+| Threat | Current control |
+|---|---|
+| Upstream runtime code crosses the product boundary | Consume only a versioned JSON artifact; no Studio import, subprocess, serial, or device path |
+| Synthetic/replay evidence is promoted to hardware proof | Fixed source-to-verification mapping derived from the artifact |
+| A `BENCH_*` label is mistaken for calibrated physical proof | Cap at `system_observed` and emit a warning because v1 lacks mandatory instrument/calibration provenance |
+| Upstream PASS becomes an automatic release decision | Preserve it as observed `analog-validation.run`/criterion status; policy evaluation remains separate |
+| Result fields or lineage are silently dropped or contradicted | Exact field allowlists plus TestRun/point/raw-record/source/criteria invariant checks |
+| Future or malformed result schema is accepted | Exact version, enum, type, duplicate-key, finite-number, UTF-8, and unknown-field rejection |
+| Pathological result JSON exhausts resources | Upstream 2,000,000-byte limit plus configured node/depth limits |
+| Claimed producer commit is confused with byte integrity | Separate caller execution context/trust from registry-owned artifact SHA-256 |
+
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;

@@ -1,0 +1,87 @@
+{
+  "schema_version": "result-export.v1",
+  "test_run": {
+    "metadata": {
+      "run_id": "afe-demo-dc-001",
+      "test_type": "dc-sweep",
+      "configuration_id": "afe-demo-config",
+      "configuration_version": "1",
+      "started_at": "2026-08-31T12:00:00.000000Z",
+      "ended_at": "2026-08-31T12:00:01.000000Z",
+      "software_version": "0.1.0.dev0",
+      "device_id": "afe-demo-simulator",
+      "profile_name": "afe-synthetic",
+      "profile_version": "1",
+      "evidence_source": "SYNTHETIC",
+      "input_record_ids": [
+        "afe-demo-raw-input-0"
+      ],
+      "schema_version": "test-run.v1"
+    },
+    "outcome": "PASS",
+    "summary": "DC sweep criteria passed",
+    "evidence_record_ids": [
+      "afe-demo-input-0"
+    ],
+    "missing_requirements": []
+  },
+  "criteria": {
+    "id": "afe-demo-dc-criteria",
+    "version": "1",
+    "results": [
+      {
+        "name": "GAIN",
+        "actual_value": 2.0,
+        "unit": "ratio",
+        "passed": true,
+        "lower_limit": 1.95,
+        "upper_limit": 2.05
+      }
+    ]
+  },
+  "source_schemas": [
+    {
+      "name": "test-run",
+      "version": "test-run.v1"
+    },
+    {
+      "name": "dc-sweep-analysis",
+      "version": "dc-sweep-analysis.v1"
+    }
+  ],
+  "metrics": [
+    {
+      "name": "gain",
+      "value": 2.0,
+      "unit": "ratio"
+    }
+  ],
+  "points": [
+    {
+      "index": 0,
+      "label": "dc-point-0",
+      "disposition": "INCLUDED",
+      "references": [
+        {
+          "record_id": "afe-demo-input-0",
+          "raw_record_id": "afe-demo-raw-input-0",
+          "timestamp": "2026-08-31T12:00:00.000000Z",
+          "channel": "afe.ch0.input",
+          "source": "SYNTHETIC"
+        }
+      ],
+      "values": [
+        {
+          "name": "input",
+          "value": 100.0,
+          "unit": "mV"
+        }
+      ],
+      "quality_flags": [],
+      "exclusion_reasons": []
+    }
+  ],
+  "limitations": [
+    "SYNTHETIC compatibility fixture; no physical AFE was measured."
+  ]
+}

@@ -11,8 +11,9 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — eight versioned document schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — eight document plus two artifact schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
+| Analog Validation result Schema mirror | committed upstream-consumer contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
 | Ruff | full repository | PASS |
 | mypy strict | package and verification tools | PASS |
@@ -58,9 +59,12 @@
 | Attestation self-consistency | adversarial model/chain/evaluation tests | PASS — local host |
 | Attestation output publication | atomic publish/replay/conflict/fault tests | PASS — local host |
 | Installed attestation CLI | clean-wheel terminal flow and exact replay | PASS — local host |
-| AFE report compatibility | frozen public artifact contract | PLANNED |
+| AFE `result-export.v1` compatibility | frozen public artifact, adversarial tests, Golden output | PASS — local host; no Studio import/device access |
+| AFE source-to-verification mapping | all nine v1 sources + bench cap tests | PASS — `BENCH_*` maxes at `system_observed` |
+| Installed AFE collector CLI | clean wheel + sample result | PASS — local host |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
 
-See `reports/PHASE_2_ATTESTATION_ACCEPTANCE_REPORT.md` for the current exact test
-and coverage result. Earlier acceptance reports remain historical records.
+See `reports/PHASE_3_ANALOG_VALIDATION_COMPATIBILITY_ACCEPTANCE_REPORT.md` for
+the current exact test and coverage result. Earlier acceptance reports remain
+historical records.

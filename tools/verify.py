@@ -5,8 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from forgegate.collectors.benchmark import BENCHMARK_JSON_SCHEMA
-from forgegate.schema_registry import SCHEMAS, schema_filename
+from forgegate.schema_registry import ARTIFACT_SCHEMAS, SCHEMAS, schema_filename
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
@@ -28,12 +27,13 @@ def verify_committed_schemas() -> None:
             raise SystemExit(
                 f"schema drift: {path}; run `python -m forgegate export-schemas schemas`"
             )
-    benchmark_path = REPOSITORY_ROOT / "schemas/forgegate.benchmark.v1.schema.json"
-    benchmark_expected = json.dumps(BENCHMARK_JSON_SCHEMA, indent=2, sort_keys=True) + "\n"
-    if not benchmark_path.is_file():
-        raise SystemExit(f"missing committed schema: {benchmark_path}")
-    if benchmark_path.read_text(encoding="utf-8") != benchmark_expected:
-        raise SystemExit(f"schema drift: {benchmark_path}")
+    for schema_name, schema in sorted(ARTIFACT_SCHEMAS.items()):
+        path = REPOSITORY_ROOT / "schemas" / schema_filename(schema_name)
+        expected = json.dumps(schema, indent=2, sort_keys=True) + "\n"
+        if not path.is_file():
+            raise SystemExit(f"missing committed schema: {path}")
+        if path.read_text(encoding="utf-8") != expected:
+            raise SystemExit(f"schema drift: {path}")
     print("\nCommitted JSON Schemas: PASS", flush=True)
 
 
