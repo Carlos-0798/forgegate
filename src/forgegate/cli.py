@@ -11,7 +11,9 @@ from forgegate import __version__
 from forgegate.artifacts import ArtifactBoundaryError, ArtifactRegistry
 from forgegate.candidates import (
     CandidateLifecycleError,
+    CandidateStoreError,
     ReleaseCandidate,
+    SQLiteCandidateRepository,
     create_candidate,
     transition_candidate,
 )
@@ -52,7 +54,7 @@ def doctor() -> None:
         "python": platform.python_version(),
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
-        "phase": "phase2-candidate-lifecycle",
+        "phase": "phase2-sqlite-candidate-store",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 
@@ -91,8 +93,10 @@ def candidate_create(
     created_at: Annotated[str, typer.Option("--created-at")],
     source_branch: Annotated[str, typer.Option("--branch")] = "main",
     release_track: Annotated[str, typer.Option("--track")] = "pull-request",
+    database: Annotated[Path | None, typer.Option("--database", dir_okay=False)] = None,
+    idempotency_key: Annotated[str | None, typer.Option("--idempotency-key")] = None,
 ) -> None:
-    """Create a deterministic DRAFT candidate document without persistence."""
+    """Create a deterministic DRAFT preview or persist it in an initialized store."""
     try:
         candidate = create_candidate(
             project_id=project_id,
@@ -102,10 +106,32 @@ def candidate_create(
             release_track=release_track,
             created_at=datetime.fromisoformat(created_at.replace("Z", "+00:00")),
         )
-    except (CandidateLifecycleError, ValidationError, ValueError) as exc:
+        if database is None and idempotency_key is not None:
+            raise ValueError("--idempotency-key requires --database")
+        if database is not None:
+            if idempotency_key is None:
+                raise ValueError("--database requires --idempotency-key")
+            candidate = SQLiteCandidateRepository(database).create(
+                candidate, idempotency_key=idempotency_key
+            )
+    except (CandidateLifecycleError, CandidateStoreError, ValidationError, ValueError) as exc:
         typer.echo(f"ERROR: {exc}", err=True)
         raise typer.Exit(code=3) from exc
     typer.echo(candidate.model_dump_json(indent=2))
+
+
+@candidate_app.command("init-store")
+def candidate_init_store(
+    database: Annotated[Path, typer.Argument(dir_okay=False)],
+) -> None:
+    """Initialize or validate a local SQLite WAL candidate store."""
+    try:
+        repository = SQLiteCandidateRepository(database)
+        repository.initialize()
+    except (CandidateStoreError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(f"INITIALIZED {repository.database_path}")
 
 
 @candidate_app.command("transition")
@@ -124,12 +150,7 @@ def candidate_transition(
         candidate = load_config(candidate_path)
         if not isinstance(candidate, ReleaseCandidate):
             raise ValueError("candidate path must contain forgegate.release-candidate.v1")
-        evaluation = None
-        if evaluation_path is not None:
-            loaded_evaluation = load_config(evaluation_path)
-            if not isinstance(loaded_evaluation, PolicyEvaluation):
-                raise ValueError("evaluation path must contain forgegate.policy-evaluation.v1")
-            evaluation = loaded_evaluation
+        evaluation = _load_policy_evaluation(evaluation_path)
         result = transition_candidate(
             candidate,
             to_status,
@@ -141,6 +162,85 @@ def candidate_transition(
         typer.echo(f"ERROR: {exc}", err=True)
         raise typer.Exit(code=3) from exc
     typer.echo(result.model_dump_json(indent=2))
+
+
+@candidate_app.command("advance")
+def candidate_advance(
+    database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    candidate_id: Annotated[str, typer.Argument()],
+    to_status: Annotated[CandidateStatus, typer.Option("--to")],
+    expected_revision: Annotated[int, typer.Option("--expected-revision")],
+    occurred_at: Annotated[str, typer.Option("--occurred-at")],
+    idempotency_key: Annotated[str, typer.Option("--idempotency-key")],
+    reason: Annotated[str | None, typer.Option("--reason")] = None,
+    evaluation_path: Annotated[
+        Path | None,
+        typer.Option("--evaluation", exists=True, dir_okay=False, readable=True),
+    ] = None,
+) -> None:
+    """Atomically append one persisted transition at an expected revision."""
+    try:
+        evaluation = _load_policy_evaluation(evaluation_path)
+        result = SQLiteCandidateRepository(database).advance(
+            candidate_id,
+            to_status,
+            expected_revision=expected_revision,
+            occurred_at=datetime.fromisoformat(occurred_at.replace("Z", "+00:00")),
+            idempotency_key=idempotency_key,
+            reason=reason,
+            evaluation=evaluation,
+        )
+    except (
+        CandidateLifecycleError,
+        CandidateStoreError,
+        ConfigLoadError,
+        ValidationError,
+        ValueError,
+    ) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(result.model_dump_json(indent=2))
+
+
+@candidate_app.command("show")
+def candidate_show(
+    database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    candidate_id: Annotated[str, typer.Argument()],
+) -> None:
+    """Read and validate the current persisted candidate plus its audit chain."""
+    try:
+        candidate = SQLiteCandidateRepository(database).get(candidate_id)
+    except CandidateStoreError as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(candidate.model_dump_json(indent=2))
+
+
+@candidate_app.command("history")
+def candidate_history(
+    database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    candidate_id: Annotated[str, typer.Argument()],
+) -> None:
+    """Read the current candidate and its ordered append-only transition events."""
+    try:
+        history = SQLiteCandidateRepository(database).history(candidate_id)
+    except CandidateStoreError as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    payload = {
+        "candidate": history.candidate.model_dump(mode="json"),
+        "transitions": [event.model_dump(mode="json") for event in history.transitions],
+    }
+    typer.echo(json.dumps(payload, indent=2, sort_keys=True))
+
+
+def _load_policy_evaluation(path: Path | None) -> PolicyEvaluation | None:
+    if path is None:
+        return None
+    evaluation = load_config(path)
+    if not isinstance(evaluation, PolicyEvaluation):
+        raise ValueError("evaluation path must contain forgegate.policy-evaluation.v1")
+    return evaluation
 
 
 @app.command("evaluate-policy")

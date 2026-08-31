@@ -15,8 +15,10 @@ PolicyRule + matching valid evidence -> RuleEvaluation -> PolicyEvaluation
 
 Phase 0 established `ProjectConfig`, `PolicyConfig`, and `EvidenceBundle`.
 Phase 2 now adds immutable evaluation results, `ReleaseCandidate`,
-`CandidateTransition`, and `CandidateTransitionResult`. Persistence and
-attestation remain deferred.
+`CandidateTransition`, and `CandidateTransitionResult`. The SQLite candidate
+store durably appends candidate snapshots, transition events, and idempotency
+records while maintaining one compare-and-swap current pointer. Attestation
+remains deferred.
 
 ## Invariants already enforced
 
@@ -50,3 +52,15 @@ attestation remain deferred.
 - transition IDs bind all event content plus before/after candidate fingerprints;
 - PASS/FAIL/REVIEW require a policy evaluation with matching commit, decision,
   and timestamp; ERROR may represent a fail-closed system outcome without one.
+
+## Persistence invariants now enforced
+
+- schema version and ForgeGate application identity are exact and never
+  auto-migrated;
+- WAL, FULL synchronous durability, foreign keys, and explicit transactions are
+  checked on every repository operation;
+- snapshots, transitions, and idempotency records are append-only;
+- current revision uses optimistic compare-and-swap and advances by exactly one;
+- exact idempotency replays return the original response while conflicting key
+  reuse fails closed;
+- every load verifies the complete canonical snapshot/fingerprint/event chain.

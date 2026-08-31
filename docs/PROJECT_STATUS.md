@@ -1,8 +1,8 @@
 # Project status
 
-- Date: 2026-08-30
-- Version: 0.1.0.dev6
-- Stage: Phase 2 release-candidate lifecycle slice complete
+- Date: 2026-08-31
+- Version: 0.1.0.dev7
+- Stage: Phase 2 transactional SQLite candidate-store slice complete
 - Product maturity: pre-MVP
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
@@ -52,22 +52,31 @@
 - PASS/FAIL/REVIEW terminal transitions bound to matching policy evaluation ID,
   commit, decision, and timestamp;
 - stateless `candidate create` and `candidate transition` CLI previews with
-  generic DRAFT/EVALUATING fixtures and structural/evaluation-bound Goldens.
+  generic DRAFT/EVALUATING fixtures and structural/evaluation-bound Goldens;
+- SQLite candidate-store schema v1 with ForgeGate application identity, WAL,
+  FULL synchronous durability, foreign keys, exact-version validation, and
+  explicit read/write transactions;
+- append-only canonical candidate snapshots, content-addressed transitions,
+  compare-and-swap current revision, and immutable idempotency responses;
+- exact replay, conflicting-key rejection, stale revision protection, bounded
+  writer contention, restart recovery, rollback fault injection, and corruption
+  detection;
+- persisted candidate create/advance/show/history CLI flow while retaining the
+  stateless preview commands.
 
 ## Not implemented
 
-SQLite persistence, attestations, API, external plugins, GitHub integration,
-AFE collector, MSP430 collector, and hardware access. Candidate CLI commands
-currently emit documents and do not save application state.
+Attestations, API, external plugins, GitHub integration, database authorization,
+backup/repair, AFE collector, MSP430 collector, and hardware access.
 
 ## Accepted local checkpoint
 
 - PowerShell environment bootstrap: PASS
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
-- mypy strict: PASS across 25 package and verification-tool source files
-- pytest: 357 passed, 1 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 100% across 2,246 statements and 698 branches
+- mypy strict: PASS across 26 package and verification-tool source files
+- pytest: 398 passed, 1 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 100% across 2,562 statements and 762 branches
 - committed JSON Schema drift check: PASS
 - project/policy/candidate/transition example documents: VALID
 - seven canonical versioned document Schemas plus one Benchmark artifact Schema:
@@ -80,4 +89,5 @@ currently emit documents and do not save application state.
 
 See `reports/PHASE_0_ENVIRONMENT_AUDIT.md` for the prerequisite audit and exact
 human-intervention boundary. See
-`reports/PHASE_2_CANDIDATE_LIFECYCLE_ACCEPTANCE_REPORT.md` for the current slice.
+`reports/PHASE_2_SQLITE_CANDIDATE_STORE_ACCEPTANCE_REPORT.md` for the current
+slice.

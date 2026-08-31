@@ -6,7 +6,7 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 2 release-candidate lifecycle slice accepted; still pre-MVP.**
+**Phase 2 transactional SQLite candidate-store slice accepted; still pre-MVP.**
 
 Implemented and host-verified in this checkpoint:
 
@@ -42,12 +42,19 @@ Implemented and host-verified in this checkpoint:
   timestamps, immutable terminal states, and before/after fingerprints;
 - mandatory policy-evaluation binding for PASS/FAIL/REVIEW terminal states;
 - stateless `candidate create` and `candidate transition` CLI previews with
-  committed structural and evaluation-bound Golden outputs.
+  committed structural and evaluation-bound Golden outputs;
+- a local SQLite v1 candidate store with WAL, FULL synchronous durability,
+  foreign keys, exact application/schema identity, and explicit transactions;
+- canonical append-only candidate snapshots and transition events with an
+  optimistic current-revision pointer and immutable idempotency responses;
+- exact retry replay, conflicting-key rejection, stale-write protection,
+  restart recovery, bounded writer contention, and audit-chain validation;
+- persisted `candidate create`, `advance`, `show`, and `history` CLI paths.
 
 Not implemented yet:
 
-- persistence, attestations, REST API, plugin execution, GitHub integration, or
-  signed provenance;
+- attestations, REST API, plugin execution, GitHub integration, database
+  authorization, backup/repair, or signed provenance;
 - AFE or MSP430 compatibility collectors;
 - any AFE/MSP430 runtime integration or hardware operation;
 - any production deployment or public release.
@@ -95,8 +102,8 @@ Exit code `0` means PASS, `1` FAIL, `2` REVIEW, and `3` ERROR. Configuration or
 system errors also use `3`. The evaluator does not collect, rebuild, rerun, or
 authenticate evidence while deciding.
 
-Create a deterministic local DRAFT candidate, then preview one legal structural
-transition:
+Create a deterministic local DRAFT candidate and preview one legal structural
+transition without persistence:
 
 ```powershell
 .\.venv\Scripts\python.exe -m forgegate candidate create `
@@ -110,9 +117,36 @@ transition:
 ```
 
 PASS/FAIL/REVIEW transitions additionally require `--evaluation` pointing to a
-matching `forgegate.policy-evaluation.v1` document. These commands emit new
-immutable documents but do not persist them; transactional SQLite storage is
-the next Phase 2 checkpoint.
+matching `forgegate.policy-evaluation.v1` document.
+
+Initialize a local store, persist the same deterministic candidate, atomically
+advance the expected revision, and read its validated audit history:
+
+```powershell
+New-Item -ItemType Directory -Force work | Out-Null
+.\.venv\Scripts\python.exe -m forgegate candidate init-store work/forgegate.db
+
+.\.venv\Scripts\python.exe -m forgegate candidate create `
+  --project sample-api --version 1.2.0 `
+  --commit aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa `
+  --created-at 2026-08-30T12:00:00Z `
+  --database work/forgegate.db `
+  --idempotency-key create:sample-api-1.2.0
+
+.\.venv\Scripts\python.exe -m forgegate candidate advance `
+  work/forgegate.db cand-dab25eb0be1a0107b3996080 `
+  --to COLLECTING --expected-revision 0 `
+  --occurred-at 2026-08-30T12:01:00Z `
+  --idempotency-key advance:sample-api-collecting
+
+.\.venv\Scripts\python.exe -m forgegate candidate history `
+  work/forgegate.db cand-dab25eb0be1a0107b3996080
+```
+
+Every persisted write requires a caller-owned idempotency key. Exact retries
+return the original response; reuse for different normalized input and stale
+revisions fail closed. The database establishes local transaction ordering, not
+producer authenticity or operator authorization.
 
 Coverage artifacts use the same provenance options:
 

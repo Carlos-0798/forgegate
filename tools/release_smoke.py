@@ -22,6 +22,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/SARIF_COLLECTOR.md",
     "docs/architecture/POLICY_ENGINE.md",
     "docs/architecture/CANDIDATE_LIFECYCLE.md",
+    "docs/architecture/SQLITE_CANDIDATE_STORE.md",
     "examples/sample-python-api/artifacts/junit.xml",
     "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
@@ -39,6 +40,7 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_1_SARIF_SLICE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_2_POLICY_ENGINE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_2_CANDIDATE_LIFECYCLE_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_2_SQLITE_CANDIDATE_STORE_ACCEPTANCE_REPORT.md",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
@@ -58,6 +60,8 @@ REQUIRED_SDIST_PATHS = (
     "tests/golden/sarif_summary.json",
     "tools/verify.py",
     "tests/test_candidate_lifecycle.py",
+    "tests/test_candidate_store.py",
+    "tests/test_candidate_store_cli.py",
 )
 
 
@@ -158,6 +162,83 @@ def main() -> int:
                 "a" * 40,
                 "--created-at",
                 "2026-08-30T12:00:00Z",
+            ],
+            cwd=root,
+        )
+        candidate_store = root / "candidate-store.db"
+        candidate_id = "cand-dab25eb0be1a0107b3996080"
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "candidate",
+                "init-store",
+                str(candidate_store),
+            ],
+            cwd=root,
+        )
+        persisted_create = [
+            str(python),
+            "-m",
+            "forgegate",
+            "candidate",
+            "create",
+            "--project",
+            "sample-api",
+            "--version",
+            "1.2.0",
+            "--commit",
+            "a" * 40,
+            "--created-at",
+            "2026-08-30T12:00:00Z",
+            "--database",
+            str(candidate_store),
+            "--idempotency-key",
+            "create:release-smoke-001",
+        ]
+        run(persisted_create, cwd=root)
+        run(persisted_create, cwd=root)
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "candidate",
+                "show",
+                str(candidate_store),
+                candidate_id,
+            ],
+            cwd=root,
+        )
+        persisted_advance = [
+            str(python),
+            "-m",
+            "forgegate",
+            "candidate",
+            "advance",
+            str(candidate_store),
+            candidate_id,
+            "--to",
+            "COLLECTING",
+            "--expected-revision",
+            "0",
+            "--occurred-at",
+            "2026-08-30T12:01:00Z",
+            "--idempotency-key",
+            "advance:release-smoke-001",
+        ]
+        run(persisted_advance, cwd=root)
+        run(persisted_advance, cwd=root)
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "candidate",
+                "history",
+                str(candidate_store),
+                candidate_id,
             ],
             cwd=root,
         )

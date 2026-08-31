@@ -106,6 +106,20 @@ The current slice has no authenticated producer and runs no plugin code.
 | Event points to a different candidate result | Result envelope checks ID, state, time, evaluation, and result fingerprint |
 | CLI preview mistaken for durable state | Documentation and output boundary explicitly state no persistence or locking |
 
+## Addressed in the Phase 2 SQLite candidate-store slice
+
+| Threat | Current control |
+|---|---|
+| Two writers advance the same revision | `BEGIN IMMEDIATE`, caller `expected_revision`, and SQL compare-and-swap |
+| Retried request duplicates an event | Immutable idempotency key with canonical request fingerprint and stored response |
+| Idempotency key reused for different input | Stable `STORE_IDEMPOTENCY_CONFLICT` failure |
+| Mid-transaction failure leaves partial state | Snapshot, event, pointer, and idempotency row share one rollback boundary |
+| Audit event or snapshot is edited/deleted | SQLite append-only update/delete triggers plus read-time chain validation |
+| Candidate identity or revision pointer is rewritten | Candidate trigger freezes identity and requires a unit revision increment |
+| Wrong or future database schema is opened | ForgeGate application ID, exact `user_version`, metadata, and object checks |
+| Foreign-key or canonical JSON corruption is ignored | Every read validates foreign keys, strict models, canonical JSON, and fingerprints |
+| Writer contention silently loses work | Bounded busy timeout and stable `STORE_BUSY` failure; no automatic unsafe retry |
+
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;
@@ -114,4 +128,5 @@ The current slice has no authenticated producer and runs no plugin code.
 - malicious plugins and subprocess isolation;
 - CI identity verification, secret redaction, signing, revocation, and key
   management;
-- database authorization, API authentication, audit retention, and concurrency.
+- database authorization, API authentication, audit retention, backup, repair,
+  encryption at rest, and administrator-resistant tamper evidence.

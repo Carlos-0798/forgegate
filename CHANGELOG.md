@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.0.dev7 — 2026-08-31
+
+- Added the versioned local SQLite candidate store with WAL, FULL synchronous
+  durability, foreign keys, explicit transactions, and fail-closed schema
+  identity checks.
+- Persisted canonical candidate snapshots, content-addressed transitions, an
+  optimistic current-revision pointer, and immutable idempotency responses.
+- Added exact replay semantics, conflicting-key rejection, stale revision and
+  compare-and-swap controls, bounded writer contention, restart recovery, and
+  read-time audit-chain corruption detection.
+- Added persisted candidate create/advance/show/history CLI paths, adversarial
+  transaction/concurrency/corruption tests, architecture and threat-model
+  updates, and clean-install database smoke coverage.
+
 ## 0.1.0.dev6 — 2026-08-30
 
 - Added immutable, versioned release-candidate, transition-event, and

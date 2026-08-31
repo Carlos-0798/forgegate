@@ -50,9 +50,11 @@ event content when the model is validated. A
 `forgegate.candidate-transition-result.v1` envelope verifies that the result
 candidate and transition agree.
 
-## Current CLI boundary
+## CLI and persistence boundary
 
 `candidate create` and `candidate transition` emit deterministic JSON previews.
-They do not write files or databases, acquire locks, or establish the current
-authoritative revision. SQLite transactions, optimistic concurrency, replay
-protection, and durable audit ordering belong to the next Phase 2 checkpoint.
+Without `--database`, they do not write files or establish an authoritative
+revision. The accepted SQLite checkpoint adds `candidate init-store`, persisted
+`candidate create --database`, atomic `candidate advance`, `candidate show`,
+and `candidate history`. See `SQLITE_CANDIDATE_STORE.md` for transaction,
+idempotency, recovery, and corruption-detection guarantees.

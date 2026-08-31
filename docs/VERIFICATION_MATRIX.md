@@ -46,7 +46,12 @@
 | Candidate lifecycle | state-transition/adversarial tests | PASS — local host, 100% branch coverage |
 | Terminal evaluation binding | commit/decision/time mismatch tests | PASS — local host |
 | Candidate CLI preview | Golden create/transition output | PASS — stateless local host |
-| SQLite persistence | transaction/concurrency tests | NOT IMPLEMENTED |
+| SQLite schema bootstrap | application ID/version/WAL/FULL/FK tests | PASS — local host |
+| SQLite persistence | transaction/restart/recovery tests | PASS — local host |
+| Optimistic concurrency | stale revision, CAS, and writer-lock tests | PASS — local host |
+| Idempotent writes | exact replay/conflicting-key tests | PASS — local host |
+| Append-only audit history | trigger and corruption tests | PASS — local host |
+| Persisted candidate CLI | clean-process create/advance/show/history smoke | PASS — local host |
 | JSON/Markdown attestations | deterministic golden output | NOT IMPLEMENTED |
 | AFE report compatibility | frozen public artifact contract | PLANNED |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
