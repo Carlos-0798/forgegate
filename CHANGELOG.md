@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.0.dev14 — 2026-08-31
+
+- Added immutable, idempotent `forgegate.registered-project.v1` persistence and
+  project register/show surfaces for the CLI and loopback REST API.
+- Upgraded the SQLite store to schema v4 with transactional append-only audit
+  events for successful project and candidate lifecycle writes.
+- Added strict `forgegate.audit-event.v1` and bounded stable-cursor
+  `forgegate.audit-event-page.v1` query contracts with project/candidate filters.
+- Added explicit v1/v2/v3-to-v4 migration with deterministic projection of
+  existing candidate, transition, binding, evaluation, and attestation records.
+- Added corruption, trigger, conflict, migration, API/CLI, OpenAPI, Schema, and
+  clean-wheel coverage while retaining the loopback-only unsigned-local boundary.
+
 ## 0.1.0.dev13 — 2026-08-31
 
 - Added local REST commands for optimistic/idempotent candidate transitions,

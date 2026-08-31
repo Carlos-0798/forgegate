@@ -21,7 +21,7 @@ class HealthResponse(StrictModel):
     status: Literal["ok"] = "ok"
     api_version: Literal["v1"] = "v1"
     forgegate_version: str = Field(min_length=1, max_length=120)
-    store_schema: Literal["forgegate.candidate-store.v3"] = "forgegate.candidate-store.v3"
+    store_schema: Literal["forgegate.candidate-store.v4"] = "forgegate.candidate-store.v4"
 
 
 __all__ = ["ApiError", "ApiErrorResponse", "HealthResponse"]

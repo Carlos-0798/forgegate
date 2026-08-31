@@ -1,0 +1,131 @@
+{
+  "$defs": {
+    "AuditEvent": {
+      "additionalProperties": false,
+      "properties": {
+        "candidate_id": {
+          "anyOf": [
+            {
+              "pattern": "^cand-[0-9a-f]{24}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Candidate Id"
+        },
+        "event_id": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Event Id",
+          "type": "string"
+        },
+        "event_type": {
+          "$ref": "#/$defs/AuditEventType"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string"
+        },
+        "project_id": {
+          "pattern": "^[a-z][a-z0-9-]{1,62}$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "forgegate.audit-event.v1",
+          "default": "forgegate.audit-event.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "sequence": {
+          "minimum": 1,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "subject_fingerprint": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Subject Fingerprint",
+          "type": "string"
+        },
+        "subject_id": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Subject Id",
+          "type": "string"
+        },
+        "subject_schema_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Subject Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "event_id",
+        "sequence",
+        "event_type",
+        "occurred_at",
+        "project_id",
+        "subject_schema_version",
+        "subject_id",
+        "subject_fingerprint"
+      ],
+      "title": "AuditEvent",
+      "type": "object"
+    },
+    "AuditEventType": {
+      "enum": [
+        "project.registered",
+        "candidate.created",
+        "candidate.transitioned",
+        "candidate.evidence-bound",
+        "candidate.evaluation-recorded",
+        "candidate.attestation-recorded"
+      ],
+      "title": "AuditEventType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "events": {
+      "items": {
+        "$ref": "#/$defs/AuditEvent"
+      },
+      "title": "Events",
+      "type": "array"
+    },
+    "has_more": {
+      "title": "Has More",
+      "type": "boolean"
+    },
+    "next_after_sequence": {
+      "anyOf": [
+        {
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Next After Sequence"
+    },
+    "schema_version": {
+      "const": "forgegate.audit-event-page.v1",
+      "default": "forgegate.audit-event-page.v1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "events",
+    "has_more"
+  ],
+  "title": "AuditEventPage",
+  "type": "object"
+}

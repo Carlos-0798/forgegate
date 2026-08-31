@@ -84,6 +84,12 @@
 | Release-track policy identity | mismatch rejection before terminal commit | PASS — local host |
 | REST attestation persistence | deterministic create/replay/conflict | PASS — database only |
 | HTTP Host and declared body length | loopback allowlist + 4 MiB Content-Length gate | PASS — local host |
+| Immutable project registration | model/store/idempotency/conflict tests | PASS — local host, SQLite v4 |
+| Project CLI and REST readback | shared application + installed-wheel smoke | PASS — local host |
+| Transactional state-change audit | create/bind/transition/evaluate/attest tests | PASS — local host |
+| Audit cursor pagination and filters | bounded/empty/multi-page/adversarial tests | PASS — local host |
+| SQLite v1/v2/v3-to-v4 migration | complete-chain audit projection tests | PASS — no project/identity fabrication |
+| Project/audit contract drift | three JSON Schemas + OpenAPI | PASS — byte checked |
 | HTTP artifact loading/file publication | no loader/output path; nested metadata is not dereferenced | OUT OF SCOPE |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |

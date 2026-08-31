@@ -1,4 +1,5 @@
 from forgegate.application.models import (
+    AuditEventQuery,
     CandidateAdvanceCommand,
     CandidateAttestCommand,
     CandidateBindEvidenceCommand,
@@ -6,10 +7,12 @@ from forgegate.application.models import (
     CandidateEvaluateCommand,
     CandidateEvaluationResult,
     CandidateHistoryView,
+    ProjectRegisterCommand,
 )
 from forgegate.application.service import CandidateApplication
 
 __all__ = [
+    "AuditEventQuery",
     "CandidateAdvanceCommand",
     "CandidateApplication",
     "CandidateAttestCommand",
@@ -18,4 +21,5 @@ __all__ = [
     "CandidateEvaluateCommand",
     "CandidateEvaluationResult",
     "CandidateHistoryView",
+    "ProjectRegisterCommand",
 ]

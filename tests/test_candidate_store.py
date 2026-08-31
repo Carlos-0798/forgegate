@@ -210,6 +210,9 @@ def _downgrade_to_schema_v1(database: Path) -> None:
     """Turn a current fixture into an exact legacy schema without its new documents."""
     with sqlite3.connect(database) as connection:
         connection.execute("PRAGMA foreign_keys = OFF")
+        connection.execute("DROP TABLE audit_events")
+        connection.execute("DROP TABLE project_idempotency_records")
+        connection.execute("DROP TABLE projects")
         connection.execute("DROP TABLE candidate_evidence_bindings")
         connection.execute("DROP TRIGGER candidates_binding_requirement_guard_update")
         connection.execute("DROP TRIGGER candidates_guard_update")

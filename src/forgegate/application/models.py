@@ -12,7 +12,13 @@ from forgegate.candidates.models import (
     ReleaseCandidate,
 )
 from forgegate.domain.enums import CandidateStatus
-from forgegate.domain.models import COMMIT_PATTERN, SLUG_PATTERN, PolicyConfig, StrictModel
+from forgegate.domain.models import (
+    COMMIT_PATTERN,
+    SLUG_PATTERN,
+    PolicyConfig,
+    ProjectConfig,
+    StrictModel,
+)
 from forgegate.policy.models import PolicyEvaluation
 
 
@@ -30,6 +36,23 @@ class CandidateCreateCommand(StrictModel):
         if value.tzinfo is None or value.utcoffset() is None:
             raise ValueError("created_at must include a UTC offset")
         return value
+
+
+class ProjectRegisterCommand(StrictModel):
+    config: ProjectConfig
+    registered_at: datetime
+
+    @field_validator("registered_at")
+    @classmethod
+    def registered_at_must_include_timezone(cls, value: datetime) -> datetime:
+        return _timezone_aware(value, "registered_at")
+
+
+class AuditEventQuery(StrictModel):
+    after_sequence: int = Field(default=0, ge=0)
+    limit: int = Field(default=100, ge=1, le=200)
+    project_id: str | None = Field(default=None, pattern=SLUG_PATTERN)
+    candidate_id: str | None = Field(default=None, pattern=r"^cand-[0-9a-f]{24}$")
 
 
 class CandidateHistoryView(StrictModel):
@@ -103,6 +126,7 @@ def _timezone_aware(value: datetime, field_name: str) -> datetime:
 
 
 __all__ = [
+    "AuditEventQuery",
     "CandidateAdvanceCommand",
     "CandidateAttestCommand",
     "CandidateBindEvidenceCommand",
@@ -110,4 +134,5 @@ __all__ = [
     "CandidateEvaluateCommand",
     "CandidateEvaluationResult",
     "CandidateHistoryView",
+    "ProjectRegisterCommand",
 ]

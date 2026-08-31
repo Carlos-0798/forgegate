@@ -1,9 +1,9 @@
 # Project status
 
 - Date: 2026-08-31
-- Version: 0.1.0.dev13
-- Stage: Phase 6 local REST command workflow implemented
-- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, and durable lifecycle binding; not production-ready
+- Version: 0.1.0.dev14
+- Stage: Phase 7 project registry and audit-query slice implemented
+- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, project registration, and state-change audit queries; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
 - Remote/publication status: synchronized to private `Carlos-0798/forgegate`;
@@ -139,11 +139,26 @@
   output parameter;
 - loopback HTTP Host enforcement, declared 4 MiB request-length rejection, and
   state/concurrency/error adversarial tests.
+- immutable `forgegate.registered-project.v1` profiles with canonical config
+  fingerprints, content-derived registration IDs, and exact idempotent replay;
+- SQLite candidate-store schema v4 with append-only project, project-idempotency,
+  and audit-event tables plus indexed project/candidate cursors;
+- transactional audit events for successful project registration, candidate
+  creation, evidence binding, transitions, evaluation persistence, and
+  attestation persistence, with no duplicate event on exact replay;
+- explicit v1/v2/v3-to-v4 migration with deterministic audit projection and no
+  fabricated project profile, evidence, or actor identity;
+- bounded `forgegate.audit-event-page.v1` queries by stable local sequence,
+  project, and candidate through shared application, CLI, and REST paths;
+- committed project/audit Schemas, expanded OpenAPI, corruption/trigger/
+  pagination/adversarial tests, and clean-wheel smoke coverage.
 
 ## Not implemented
 
 Authenticated/non-loopback API deployment, HTTP artifact collection and file
-publication, project/audit APIs, external plugins, GitHub integration,
+publication, project profile updates/listing, project-authoritative candidate
+creation, rejected-request/warning audit ingestion, audit export/retention,
+external plugins, GitHub integration,
 signatures/key management, database authorization, backup/repair, MSP430
 collector, Studio Phase 5
 human-readable report ingestion, authenticated provenance/signatures, portable
@@ -155,8 +170,8 @@ attestation embedding of assembly receipts, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 557 passed, 1 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 100% across 4,106 statements and 1,120 branches
+- pytest: 563 passed, 1 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 100% across 4,385 statements and 1,180 branches
 - local API/application/network focus: 34 passed; 100% across 282 statements
   and 28 branches
 - Analog Validation collector focus: 59 passed; 100% across 431 statements and
@@ -167,17 +182,19 @@ attestation embedding of assembly receipts, and hardware access.
   and 138 branches
 - committed JSON Schema and OpenAPI drift checks: PASS
 - project/policy/candidate/transition example documents: VALID
-- ten canonical versioned document Schemas plus Benchmark and Analog
+- thirteen canonical versioned document Schemas plus Benchmark and Analog
   Validation artifact Schemas: drift-checked and parsed
 - complete sdist manifest and wheel build: PASS
 - repository-external wheel installation and CLI smoke: PASS
 - Git Bash shell-script syntax check: PASS
-- GitHub Actions: PASS on Windows, Ubuntu, and macOS; run `33403322055`
-  executed both `tools/verify.py` and `tools/release_smoke.py`
+- GitHub Actions: prior Phase 6 checkpoint PASS on Windows, Ubuntu, and macOS;
+  Phase 7 final private-push CI is pending
 - private GitHub synchronization: `main` pushed with noreply commit identity;
   repository visibility, default branch, About, and ten Topics read back
 
 See `reports/PHASE_0_ENVIRONMENT_AUDIT.md` for the prerequisite audit and exact
 human-intervention boundary. See
 `reports/PHASE_6_LOCAL_REST_COMMAND_WORKFLOW_ACCEPTANCE_REPORT.md` for the
+previous REST command slice and
+`reports/PHASE_7_PROJECT_REGISTRY_AUDIT_QUERY_ACCEPTANCE_REPORT.md` for the
 current slice.

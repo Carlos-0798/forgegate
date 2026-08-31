@@ -87,5 +87,26 @@
 - [x] Require evaluation policy names to match candidate release tracks.
 - [ ] Add authenticated operator/producer identity before considering any
   non-loopback deployment.
-- [ ] Add projects and audit-event query APIs after their durable contracts are
+- [x] Add projects and audit-event query APIs after their durable contracts are
   implemented.
+
+## Phase 7 — project registry and audit queries
+
+- [x] Add an immutable versioned project-registration document with canonical
+  profile identity and exact idempotent replay.
+- [x] Upgrade SQLite to v4 with append-only project and audit-event records.
+- [x] Append successful state-change audit events inside the authoritative
+  project/candidate write transaction without duplicating exact replays.
+- [x] Explicitly migrate validated v1/v2/v3 stores and project only existing
+  durable documents without fabricating project profiles or identities.
+- [x] Add bounded stable-cursor audit queries and project/candidate filters.
+- [x] Expose project register/read and audit queries through the shared CLI/API
+  boundary; commit Schemas/OpenAPI and verify the installed wheel.
+
+## Phase 8 — project authority and discovery
+
+- [ ] Require new product-surface candidate creation to reference a registered
+  project and configured release track while preserving legacy database reads.
+- [ ] Add bounded project and project-scoped candidate listing contracts.
+- [ ] Define explicit project-profile revision/update semantics before allowing
+  mutable configuration.

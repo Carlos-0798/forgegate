@@ -7,7 +7,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import FastAPI, Header, Request, status
+from fastapi import FastAPI, Header, Query, Request, status
 from fastapi.exceptions import RequestValidationError
 from pydantic import ValidationError
 from starlette.middleware.base import RequestResponseEndpoint
@@ -16,6 +16,7 @@ from starlette.responses import JSONResponse, Response
 from forgegate import __version__
 from forgegate.api.models import ApiError, ApiErrorResponse, HealthResponse
 from forgegate.application import (
+    AuditEventQuery,
     CandidateAdvanceCommand,
     CandidateApplication,
     CandidateAttestCommand,
@@ -24,8 +25,10 @@ from forgegate.application import (
     CandidateEvaluateCommand,
     CandidateEvaluationResult,
     CandidateHistoryView,
+    ProjectRegisterCommand,
 )
 from forgegate.attestations import ReleaseAttestation
+from forgegate.audit import AuditEventPage
 from forgegate.candidates import (
     CandidateEvidenceBinding,
     CandidateLifecycleError,
@@ -34,6 +37,7 @@ from forgegate.candidates import (
 )
 from forgegate.candidates.models import CandidateTransitionResult
 from forgegate.network import is_loopback_host
+from forgegate.projects import RegisteredProject
 
 REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
 MAX_REQUEST_BODY_BYTES = 4 * 1024 * 1024
@@ -63,7 +67,7 @@ def create_api_app(
 
     app = FastAPI(
         title="ForgeGate Local API",
-        summary="Local release-assurance candidate API",
+        summary="Local release-assurance project and candidate API",
         version=__version__,
         openapi_version="3.1.0",
         lifespan=lifespan,
@@ -151,7 +155,7 @@ def create_api_app(
         return _error_response(
             status.HTTP_422_UNPROCESSABLE_CONTENT,
             "API_DOMAIN_VALIDATION_FAILED",
-            "candidate input failed strict domain validation",
+            "request input failed strict domain validation",
             _request_id(request),
         )
 
@@ -184,6 +188,55 @@ def create_api_app(
     )
     def health() -> HealthResponse:
         return HealthResponse(forgegate_version=__version__)
+
+    @app.post(
+        "/v1/projects",
+        response_model=RegisteredProject,
+        status_code=status.HTTP_201_CREATED,
+        operation_id="registerProject",
+        tags=["projects"],
+        responses=ERROR_RESPONSES,
+    )
+    def register_project_endpoint(
+        command: ProjectRegisterCommand,
+        idempotency_key: Annotated[str, Header(alias="Idempotency-Key")],
+    ) -> RegisteredProject:
+        return candidate_application.register_project(
+            command,
+            idempotency_key=idempotency_key,
+        )
+
+    @app.get(
+        "/v1/projects/{project_id}",
+        response_model=RegisteredProject,
+        operation_id="getProject",
+        tags=["projects"],
+        responses=ERROR_RESPONSES,
+    )
+    def get_project_endpoint(project_id: str) -> RegisteredProject:
+        return candidate_application.get_project(project_id)
+
+    @app.get(
+        "/v1/audit-events",
+        response_model=AuditEventPage,
+        operation_id="queryAuditEvents",
+        tags=["audit"],
+        responses=ERROR_RESPONSES,
+    )
+    def query_audit_events_endpoint(
+        after_sequence: Annotated[int, Query(ge=0)] = 0,
+        limit: Annotated[int, Query(ge=1, le=200)] = 100,
+        project_id: str | None = None,
+        candidate_id: str | None = None,
+    ) -> AuditEventPage:
+        return candidate_application.query_audit_events(
+            AuditEventQuery(
+                after_sequence=after_sequence,
+                limit=limit,
+                project_id=project_id,
+                candidate_id=candidate_id,
+            )
+        )
 
     @app.post(
         "/v1/candidates",
@@ -342,6 +395,7 @@ def _store_error_status(code: str) -> int:
         return status.HTTP_404_NOT_FOUND
     if code in {
         "STORE_CANDIDATE_CONFLICT",
+        "STORE_PROJECT_CONFLICT",
         "STORE_ATTESTATION_CONFLICT",
         "STORE_EVIDENCE_BINDING_CONFLICT",
         "STORE_EVALUATION_CONFLICT",

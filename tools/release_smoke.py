@@ -31,6 +31,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/CANDIDATE_EVIDENCE_BINDING.md",
     "docs/architecture/LOCAL_REST_API.md",
     "docs/architecture/LOCAL_REST_COMMAND_WORKFLOW.md",
+    "docs/architecture/PROJECT_REGISTRY_AND_AUDIT_QUERY.md",
     "examples/sample-python-api/artifacts/junit.xml",
     "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
@@ -56,6 +57,7 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_4_CANDIDATE_EVIDENCE_BINDING_ACCEPTANCE_REPORT.md",
     "reports/PHASE_5_LOCAL_REST_API_BASELINE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_6_LOCAL_REST_COMMAND_WORKFLOW_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_7_PROJECT_REGISTRY_AUDIT_QUERY_ACCEPTANCE_REPORT.md",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
@@ -65,6 +67,9 @@ REQUIRED_SDIST_PATHS = (
     "schemas/forgegate.release-attestation.v1.schema.json",
     "schemas/forgegate.evidence-bundle-assembly.v1.schema.json",
     "schemas/forgegate.candidate-evidence-binding.v1.schema.json",
+    "schemas/forgegate.registered-project.v1.schema.json",
+    "schemas/forgegate.audit-event.v1.schema.json",
+    "schemas/forgegate.audit-event-page.v1.schema.json",
     "schemas/forgegate.openapi.v1.json",
     "schemas/forgegate.benchmark.v1.schema.json",
     "schemas/analog-validation.result-export.v1.schema.json",
@@ -93,6 +98,7 @@ REQUIRED_SDIST_PATHS = (
     "tests/test_candidate_evidence_binding.py",
     "tests/test_application.py",
     "tests/test_api.py",
+    "tests/test_project_registry_audit.py",
 )
 
 
@@ -271,6 +277,9 @@ def main() -> int:
             raise SystemExit("installed wheel OpenAPI contract differs from committed contract")
         openapi = json.loads(exported_openapi.read_text(encoding="utf-8"))
         expected_operations = {
+            ("/v1/projects", "post"): "registerProject",
+            ("/v1/projects/{project_id}", "get"): "getProject",
+            ("/v1/audit-events", "get"): "queryAuditEvents",
             ("/v1/candidates/{candidate_id}/transitions", "post"): "advanceCandidate",
             ("/v1/candidates/{candidate_id}/evidence", "post"): "bindCandidateEvidence",
             ("/v1/candidates/{candidate_id}/evaluate", "post"): "evaluateCandidate",
@@ -375,6 +384,33 @@ def main() -> int:
             ],
             cwd=root,
         )
+        project_register = [
+            str(python),
+            "-m",
+            "forgegate",
+            "project",
+            "register",
+            str(candidate_store),
+            str(REPOSITORY_ROOT / "examples/sample-python-api/forgegate.yaml"),
+            "--registered-at",
+            "2026-08-30T11:59:00Z",
+            "--idempotency-key",
+            "project:release-smoke-001",
+        ]
+        run(project_register, cwd=root)
+        run(project_register, cwd=root)
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "project",
+                "show",
+                str(candidate_store),
+                "sample-api",
+            ],
+            cwd=root,
+        )
         persisted_create = [
             str(python),
             "-m",
@@ -405,6 +441,23 @@ def main() -> int:
                 "show",
                 str(candidate_store),
                 candidate_id,
+            ],
+            cwd=root,
+        )
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "audit",
+                "events",
+                str(candidate_store),
+                "--project",
+                "sample-api",
+                "--candidate",
+                candidate_id,
+                "--limit",
+                "8",
             ],
             cwd=root,
         )

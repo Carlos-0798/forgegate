@@ -207,6 +207,20 @@ The current slice has no authenticated producer and runs no plugin code.
 | Declared oversized JSON exhausts ordinary local use | Requests declaring more than 4 MiB in `Content-Length` reject before validation |
 | Local command endpoint is mistaken for operator authentication | Authority remains the local OS process/account boundary; no ForgeGate user identity is claimed |
 
+## Addressed in the Phase 7 project registry and audit-query slice
+
+| Threat | Current control |
+|---|---|
+| Project registration is silently replaced | One immutable row per project ID plus update/delete triggers and canonical readback validation |
+| Retried registration duplicates state | Caller idempotency key binds the canonical registration request and exact response |
+| Candidate write commits without its audit event | Domain write and audit append share the same SQLite transaction and rollback boundary |
+| Exact replay duplicates audit history | Replay returns before event insertion; one durable state change yields one event |
+| Audit row metadata diverges from its document | Every query revalidates canonical JSON, event identity, cursor, type, association, and subject fingerprint metadata |
+| Unbounded audit query exhausts local resources | Strict 1-200 page limit, increasing integer cursor, and indexed project/candidate filters |
+| Migration invents a project or actor | v1/v2/v3 migration projects only existing immutable candidate documents and never creates project profiles or identity claims |
+| Audit hash is mistaken for an authenticated log | Documentation states local integrity/ordering only; no signature, trusted clock, retention, or administrator-resistant guarantee |
+| Rejected input is assumed to be durably audited | Contract explicitly limits v4 events to successful state changes; rejected-request ingestion is deferred |
+
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;

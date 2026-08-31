@@ -1,0 +1,211 @@
+{
+  "$defs": {
+    "CollectorConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "optional": {
+          "default": false,
+          "title": "Optional",
+          "type": "boolean"
+        },
+        "path": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Path",
+          "type": "string"
+        },
+        "type": {
+          "$ref": "#/$defs/CollectorType"
+        }
+      },
+      "required": [
+        "type",
+        "path"
+      ],
+      "title": "CollectorConfig",
+      "type": "object"
+    },
+    "CollectorType": {
+      "enum": [
+        "junit",
+        "coverage_xml",
+        "lcov",
+        "sarif",
+        "benchmark_json",
+        "manual_approval"
+      ],
+      "title": "CollectorType",
+      "type": "string"
+    },
+    "OutputConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "json": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Json",
+          "type": "string"
+        },
+        "markdown": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Markdown",
+          "type": "string"
+        }
+      },
+      "required": [
+        "json",
+        "markdown"
+      ],
+      "title": "OutputConfig",
+      "type": "object"
+    },
+    "ProjectConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "collectors": {
+          "items": {
+            "$ref": "#/$defs/CollectorConfig"
+          },
+          "minItems": 1,
+          "title": "Collectors",
+          "type": "array"
+        },
+        "outputs": {
+          "$ref": "#/$defs/OutputConfig"
+        },
+        "project": {
+          "$ref": "#/$defs/ProjectIdentity"
+        },
+        "release_tracks": {
+          "additionalProperties": {
+            "$ref": "#/$defs/ReleaseTrack"
+          },
+          "minProperties": 1,
+          "title": "Release Tracks",
+          "type": "object"
+        },
+        "schema_version": {
+          "const": "forgegate.project.v1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "project",
+        "release_tracks",
+        "collectors",
+        "outputs"
+      ],
+      "title": "ProjectConfig",
+      "type": "object"
+    },
+    "ProjectIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "default_branch": {
+          "default": "main",
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Default Branch",
+          "type": "string"
+        },
+        "id": {
+          "pattern": "^[a-z][a-z0-9-]{1,62}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "repository": {
+          "anyOf": [
+            {
+              "maxLength": 2048,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Repository"
+        }
+      },
+      "required": [
+        "id",
+        "name"
+      ],
+      "title": "ProjectIdentity",
+      "type": "object"
+    },
+    "ReleaseTrack": {
+      "additionalProperties": false,
+      "properties": {
+        "policy": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Policy",
+          "type": "string"
+        }
+      },
+      "required": [
+        "policy"
+      ],
+      "title": "ReleaseTrack",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Immutable first-version registration of one ForgeGate project profile.",
+  "properties": {
+    "config": {
+      "$ref": "#/$defs/ProjectConfig"
+    },
+    "config_fingerprint": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Config Fingerprint",
+      "type": "string"
+    },
+    "profile_version": {
+      "const": 1,
+      "default": 1,
+      "title": "Profile Version",
+      "type": "integer"
+    },
+    "project_id": {
+      "pattern": "^[a-z][a-z0-9-]{1,62}$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "registered_at": {
+      "format": "date-time",
+      "title": "Registered At",
+      "type": "string"
+    },
+    "registration_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Registration Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "forgegate.registered-project.v1",
+      "default": "forgegate.registered-project.v1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "registration_id",
+    "project_id",
+    "config",
+    "config_fingerprint",
+    "registered_at"
+  ],
+  "title": "RegisteredProject",
+  "type": "object"
+}

@@ -9,11 +9,13 @@ from pydantic import ValidationError
 
 from forgegate import __version__
 from forgegate.application import (
+    AuditEventQuery,
     CandidateAdvanceCommand,
     CandidateApplication,
     CandidateAttestCommand,
     CandidateBindEvidenceCommand,
     CandidateCreateCommand,
+    ProjectRegisterCommand,
 )
 from forgegate.artifacts import ArtifactBoundaryError, ArtifactError, ArtifactRegistry
 from forgegate.assembly import (
@@ -48,7 +50,7 @@ from forgegate.collectors import (
 )
 from forgegate.config import ConfigLoadError, load_config
 from forgegate.domain.enums import CandidateStatus, Decision, EvidenceTrust, VerificationLevel
-from forgegate.domain.models import EvidenceBundle, ExecutionContext, PolicyConfig
+from forgegate.domain.models import EvidenceBundle, ExecutionContext, PolicyConfig, ProjectConfig
 from forgegate.network import validated_loopback_host
 from forgegate.policy import evaluate_policy
 from forgegate.policy.models import PolicyEvaluation
@@ -60,7 +62,11 @@ app = typer.Typer(
     no_args_is_help=True,
 )
 candidate_app = typer.Typer(help="Create and advance immutable release candidates.")
+project_app = typer.Typer(help="Register and inspect immutable project profiles.")
+audit_app = typer.Typer(help="Query durable append-only audit events.")
 app.add_typer(candidate_app, name="candidate")
+app.add_typer(project_app, name="project")
+app.add_typer(audit_app, name="audit")
 
 
 @app.command()
@@ -72,7 +78,7 @@ def doctor() -> None:
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
         "supported_artifact_schemas": sorted(ARTIFACT_SCHEMAS),
-        "phase": "phase6-local-rest-command-workflow",
+        "phase": "phase7-project-registry-audit-query",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 
@@ -156,6 +162,69 @@ def serve(
     )
 
 
+@project_app.command("register")
+def project_register(
+    database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    config_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    registered_at: Annotated[str, typer.Option("--registered-at")],
+    idempotency_key: Annotated[str, typer.Option("--idempotency-key")],
+) -> None:
+    """Persist one immutable project profile with exact idempotent replay."""
+    try:
+        config = load_config(config_path)
+        if not isinstance(config, ProjectConfig):
+            raise ValueError("config path must contain forgegate.project.v1")
+        project = CandidateApplication.for_database(database).register_project(
+            ProjectRegisterCommand(
+                config=config,
+                registered_at=datetime.fromisoformat(registered_at.replace("Z", "+00:00")),
+            ),
+            idempotency_key=idempotency_key,
+        )
+    except (CandidateStoreError, ConfigLoadError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(project.model_dump_json(indent=2))
+
+
+@project_app.command("show")
+def project_show(
+    database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    project_id: Annotated[str, typer.Argument()],
+) -> None:
+    """Read and validate one immutable project profile."""
+    try:
+        project = CandidateApplication.for_database(database).get_project(project_id)
+    except CandidateStoreError as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(project.model_dump_json(indent=2))
+
+
+@audit_app.command("events")
+def audit_events(
+    database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    after_sequence: Annotated[int, typer.Option("--after-sequence", min=0)] = 0,
+    limit: Annotated[int, typer.Option("--limit", min=1, max=200)] = 100,
+    project_id: Annotated[str | None, typer.Option("--project")] = None,
+    candidate_id: Annotated[str | None, typer.Option("--candidate")] = None,
+) -> None:
+    """Query a bounded stable-cursor page of append-only audit events."""
+    try:
+        page = CandidateApplication.for_database(database).query_audit_events(
+            AuditEventQuery(
+                after_sequence=after_sequence,
+                limit=limit,
+                project_id=project_id,
+                candidate_id=candidate_id,
+            )
+        )
+    except (CandidateStoreError, ValidationError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(page.model_dump_json(indent=2))
+
+
 @candidate_app.command("create")
 def candidate_create(
     project_id: Annotated[str, typer.Option("--project")],
@@ -197,7 +266,7 @@ def candidate_create(
 def candidate_init_store(
     database: Annotated[Path, typer.Argument(dir_okay=False)],
 ) -> None:
-    """Initialize or validate a local SQLite WAL candidate store at schema v3."""
+    """Initialize or validate a local SQLite WAL candidate store at schema v4."""
     try:
         repository = SQLiteCandidateRepository(database)
         repository.initialize()
@@ -211,7 +280,7 @@ def candidate_init_store(
 def candidate_migrate_store(
     database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
 ) -> None:
-    """Explicitly migrate a validated candidate store from schema v1/v2 to v3."""
+    """Explicitly migrate a validated candidate store from schema v1/v2/v3 to v4."""
     try:
         repository = SQLiteCandidateRepository(database)
         repository.migrate()

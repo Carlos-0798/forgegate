@@ -5,6 +5,7 @@ from pathlib import Path
 
 from forgegate import __version__
 from forgegate.application.models import (
+    AuditEventQuery,
     CandidateAdvanceCommand,
     CandidateAttestCommand,
     CandidateBindEvidenceCommand,
@@ -12,8 +13,10 @@ from forgegate.application.models import (
     CandidateEvaluateCommand,
     CandidateEvaluationResult,
     CandidateHistoryView,
+    ProjectRegisterCommand,
 )
 from forgegate.attestations import ReleaseAttestation
+from forgegate.audit import AuditEventPage
 from forgegate.candidates import (
     CandidateEvidenceBinding,
     CandidateLifecycleError,
@@ -24,6 +27,7 @@ from forgegate.candidates import (
 from forgegate.candidates.models import CandidateTransitionResult
 from forgegate.domain.enums import CandidateStatus, Decision
 from forgegate.policy import PolicyEvaluation, evaluate_policy
+from forgegate.projects import RegisteredProject
 
 DECISION_STATUS = {
     Decision.PASS: CandidateStatus.PASS,
@@ -43,6 +47,29 @@ class CandidateApplication:
 
     def initialize(self) -> None:
         self.repository.initialize()
+
+    def register_project(
+        self,
+        command: ProjectRegisterCommand,
+        *,
+        idempotency_key: str,
+    ) -> RegisteredProject:
+        return self.repository.register_project(
+            command.config,
+            registered_at=command.registered_at,
+            idempotency_key=idempotency_key,
+        )
+
+    def get_project(self, project_id: str) -> RegisteredProject:
+        return self.repository.get_project(project_id)
+
+    def query_audit_events(self, query: AuditEventQuery) -> AuditEventPage:
+        return self.repository.audit_events(
+            after_sequence=query.after_sequence,
+            limit=query.limit,
+            project_id=query.project_id,
+            candidate_id=query.candidate_id,
+        )
 
     @staticmethod
     def preview_candidate(command: CandidateCreateCommand) -> ReleaseCandidate:

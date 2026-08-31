@@ -8,7 +8,7 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 6 local REST command workflow implemented; not production-ready.**
+**Phase 7 project registry and audit-query workflow implemented; not production-ready.**
 
 This private-development checkpoint provides a working Python 3.12 CLI and a
 loopback-only REST API. Its strongest ForgeGate-owned evidence is local host
@@ -41,8 +41,8 @@ collector rather than a runtime or hardware dependency.
 
 | Gate | Result | Evidence level |
 |---|---|---|
-| Python tests | 557 passed, 1 skipped because Windows symlink creation was unavailable | Local host test |
-| Branch-aware coverage | 100% across 4,106 statements and 1,120 branches | Local host test |
+| Python tests | 563 passed, 1 skipped because Windows symlink creation was unavailable | Local host test |
+| Branch-aware coverage | 100% across 4,385 statements and 1,180 branches | Local host test |
 | Static quality gates | Ruff, formatting, and strict mypy passed | Local host test |
 | Contracts | JSON Schema and OpenAPI drift checks passed | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
@@ -101,14 +101,15 @@ Implemented and host-verified in this checkpoint:
 - mandatory policy-evaluation binding for PASS/FAIL/REVIEW terminal states;
 - stateless `candidate create` and `candidate transition` CLI previews with
   committed structural and evaluation-bound Golden outputs;
-- a local SQLite v3 candidate store with WAL, FULL synchronous durability,
+- a local SQLite v4 candidate/project store with WAL, FULL synchronous durability,
   foreign keys, exact application/schema identity, and explicit transactions;
 - canonical append-only candidate snapshots and transition events with an
   optimistic current-revision pointer and immutable idempotency responses;
 - exact retry replay, conflicting-key rejection, stale-write protection,
   restart recovery, bounded writer contention, and audit-chain validation;
 - persisted `candidate create`, `advance`, `show`, and `history` CLI paths;
-- explicit validated v1/v2-to-v3 migration and legacy evaluation backfill;
+- explicit validated v1/v2/v3-to-v4 migration, audit projection, and legacy
+  evaluation backfill;
 - durable append-only policy evaluations and release attestations;
 - self-validating `forgegate.release-attestation.v1` records containing the
   terminal candidate, transition chain, evaluation, and content fingerprints;
@@ -139,7 +140,7 @@ Implemented and host-verified in this checkpoint:
   the revision-one `COLLECTING` snapshot and complete audited assembly;
 - immutable, idempotent SQLite binding persistence plus `bind-evidence` and
   `show-evidence` CLI paths;
-- mandatory binding and chronology gates before a new v3 candidate reaches
+- mandatory binding and chronology gates before a new v3-or-later candidate reaches
   `READY`;
 - terminal evaluation enforcement against the bound assembly's nested
   evidence-bundle fingerprint, with non-fabricating v1/v2 migration semantics.
@@ -162,6 +163,12 @@ Implemented and host-verified in this checkpoint:
   4 MiB request-length guard;
 - complete HTTP create → collect-state → bind → ready → evaluate → attest
   integration with exact replay and conflict tests.
+- immutable project-profile registration with exact idempotent replay and
+  canonical configuration identity;
+- transactional append-only audit events for successful project/candidate
+  lifecycle writes, including deterministic v3 history projection on migration;
+- stable cursor pages with bounded project/candidate filtering through
+  `project register/show`, `audit events`, and loopback REST endpoints.
 
 
 </details>
@@ -206,6 +213,26 @@ committed copy can be regenerated with:
 
 This API has no authentication or authorization and is not approved for LAN,
 internet, shared-host, or production deployment.
+
+Register and read one immutable project profile, then query its local audit
+events:
+
+```powershell
+.\.venv\Scripts\python.exe -m forgegate project register `
+  work/forgegate.db examples/sample-python-api/forgegate.yaml `
+  --registered-at 2026-08-31T14:00:00Z `
+  --idempotency-key project:sample-api:v1
+
+.\.venv\Scripts\python.exe -m forgegate project show `
+  work/forgegate.db sample-api
+
+.\.venv\Scripts\python.exe -m forgegate audit events `
+  work/forgegate.db --project sample-api --limit 100
+```
+
+Audit sequences are stable cursors within one database lineage. The log covers
+successful durable state changes; it is not an authenticated compliance log
+and does not automatically ingest rejected requests or collector warnings.
 
 Preview the first collection path without making a release decision:
 
@@ -422,7 +449,9 @@ Not implemented yet:
 
 - authenticated or non-loopback API deployment;
 - HTTP artifact collection or filesystem publication;
-- project/audit APIs, plugin execution, or product-level GitHub integration;
+- project profile updates/listing, project-authoritative candidate creation,
+  rejected-request audit ingestion, audit export/retention, plugin execution,
+  or product-level GitHub integration;
 - database authorization, backup/repair, signatures, or trusted producer/CI
   identity;
 - MSP430 compatibility collection, AFE/MSP430 runtime integration, or any
@@ -442,10 +471,12 @@ another optional collector.
 
 ## Roadmap
 
-The next core slice is a durable project registry and read-only audit-event
-query contract. Authenticated identity must precede any non-loopback deployment.
-MSP430 compatibility remains gated on a separately frozen public result
-contract. See [docs/ROADMAP.md](docs/ROADMAP.md) for acceptance-level tasks.
+The next core slice binds new product-surface candidate creation to registered
+projects and configured release tracks, then adds bounded project/candidate
+discovery. Authenticated identity must still precede any non-loopback
+deployment. MSP430 compatibility remains gated on a separately frozen public
+result contract. See [docs/ROADMAP.md](docs/ROADMAP.md) for acceptance-level
+tasks.
 
 ## License status
 

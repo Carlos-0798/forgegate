@@ -8,9 +8,9 @@ transition-result document schemas and does not store upstream AFE/MSP430
 internals.
 
 `SQLiteCandidateRepository` owns one local database file. Initialization sets a
-ForgeGate application ID, schema version 3, WAL journaling, FULL synchronous
+ForgeGate application ID, schema version 4, WAL journaling, FULL synchronous
 durability, foreign keys, and a bounded busy timeout. A future schema version is
-rejected. An existing schema-v1 or schema-v2 store is never changed by
+rejected. An existing schema-v1, schema-v2, or schema-v3 store is never changed by
 `init-store`; the owner must run the explicit, validated `migrate-store`
 operation.
 
@@ -30,6 +30,11 @@ operation.
   binding for a new v3 candidate;
 - `attestations` stores one exact JSON attestation and deterministic Markdown
   rendering per candidate;
+- `projects` stores one immutable registered project profile;
+- `project_idempotency_records` binds project-registration retries to exact
+  request and response content;
+- `audit_events` stores ordered content-bound metadata for successful durable
+  state changes;
 - `forgegate_metadata` identifies the exact storage schema.
 
 Database triggers reject candidate deletion, identity rewriting, non-unit
@@ -80,14 +85,16 @@ assembly identities and compare the embedded candidate with revision one.
 Corruption fails closed with a stable store error; this checkpoint does not
 repair, salvage, back up, encrypt, or replicate a damaged database.
 
-## Explicit v1/v2 migration
+## Explicit v1/v2/v3 migration
 
-`candidate migrate-store DATABASE` accepts only a fully valid schema-v1 or
-schema-v2 store. A v1 migration adds both v2 and v3 objects; a v2 migration adds
-the v3 binding objects and extends the immutable idempotency operation set. The
-operation updates both metadata values and `PRAGMA user_version` in one
-transaction, then revalidates the result. Calling it on v3 is an idempotent
-validation. Unknown, foreign, or corrupt stores fail closed.
+`candidate migrate-store DATABASE` accepts only a fully valid schema-v1,
+schema-v2, or schema-v3 store. Missing historical layers are added before the
+v4 project/audit objects. Existing immutable candidate documents are then
+projected into deterministic audit-event order. No project profile, evidence,
+rejected request, or actor identity is fabricated. The operation updates both
+metadata values and `PRAGMA user_version` in one transaction, then revalidates
+the result. Calling it on v4 is an idempotent validation. Unknown, foreign, or
+corrupt stores fail closed.
 
 Existing candidates receive an immutable `evidence_binding_required = 0`
 marker. This preserves the historical state without fabricating an assembly

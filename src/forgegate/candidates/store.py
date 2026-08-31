@@ -17,6 +17,7 @@ from forgegate.attestations import (
     create_release_attestation,
     render_attestation_markdown,
 )
+from forgegate.audit import AuditEvent, AuditEventPage, AuditEventType, create_audit_event
 from forgegate.candidates.evidence_binding import (
     CandidateEvidenceBinding,
     create_candidate_evidence_binding,
@@ -29,15 +30,19 @@ from forgegate.candidates.models import (
 )
 from forgegate.canonical import canonical_json, sha256_fingerprint
 from forgegate.domain.enums import CandidateStatus
+from forgegate.domain.models import ProjectConfig
 from forgegate.policy.models import PolicyEvaluation
+from forgegate.projects import RegisteredProject, create_registered_project
 
 STORE_APPLICATION_ID = 0x46474154  # ASCII "FGAT"
 LEGACY_STORE_SCHEMA_VERSION = 1
 LEGACY_STORE_SCHEMA_NAME = "forgegate.candidate-store.v1"
 PREVIOUS_STORE_SCHEMA_VERSION = 2
 PREVIOUS_STORE_SCHEMA_NAME = "forgegate.candidate-store.v2"
-STORE_SCHEMA_VERSION = 3
-STORE_SCHEMA_NAME = "forgegate.candidate-store.v3"
+BINDING_STORE_SCHEMA_VERSION = 3
+BINDING_STORE_SCHEMA_NAME = "forgegate.candidate-store.v3"
+STORE_SCHEMA_VERSION = 4
+STORE_SCHEMA_NAME = "forgegate.candidate-store.v4"
 IDEMPOTENCY_KEY_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
 
 _SCHEMA_V1_STATEMENTS = (
@@ -315,6 +320,95 @@ _SCHEMA_V3_STATEMENTS = (
     """,
 )
 
+_SCHEMA_V4_STATEMENTS = (
+    """
+    CREATE TABLE projects (
+        project_id TEXT PRIMARY KEY,
+        profile_version INTEGER NOT NULL CHECK (profile_version = 1),
+        registration_id TEXT NOT NULL UNIQUE,
+        config_fingerprint TEXT NOT NULL,
+        project_json TEXT NOT NULL,
+        registered_at TEXT NOT NULL
+    ) STRICT
+    """,
+    """
+    CREATE TABLE project_idempotency_records (
+        idempotency_key TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL,
+        request_fingerprint TEXT NOT NULL,
+        response_schema_version TEXT NOT NULL,
+        response_json TEXT NOT NULL,
+        recorded_at TEXT NOT NULL,
+        FOREIGN KEY (project_id) REFERENCES projects(project_id) ON DELETE RESTRICT
+    ) STRICT
+    """,
+    """
+    CREATE TABLE audit_events (
+        sequence INTEGER PRIMARY KEY CHECK (sequence >= 1),
+        event_id TEXT NOT NULL UNIQUE,
+        event_type TEXT NOT NULL CHECK (
+            event_type IN (
+                'project.registered', 'candidate.created', 'candidate.transitioned',
+                'candidate.evidence-bound', 'candidate.evaluation-recorded',
+                'candidate.attestation-recorded'
+            )
+        ),
+        occurred_at TEXT NOT NULL,
+        project_id TEXT NOT NULL,
+        candidate_id TEXT,
+        subject_schema_version TEXT NOT NULL,
+        subject_id TEXT NOT NULL,
+        subject_fingerprint TEXT NOT NULL,
+        event_json TEXT NOT NULL,
+        FOREIGN KEY (candidate_id) REFERENCES candidates(candidate_id) ON DELETE RESTRICT
+    ) STRICT
+    """,
+    "CREATE INDEX audit_events_project_sequence ON audit_events(project_id, sequence)",
+    "CREATE INDEX audit_events_candidate_sequence ON audit_events(candidate_id, sequence)",
+    """
+    CREATE TRIGGER projects_guard_update
+    BEFORE UPDATE ON projects
+    BEGIN
+        SELECT RAISE(ABORT, 'project registrations are immutable');
+    END
+    """,
+    """
+    CREATE TRIGGER projects_guard_delete
+    BEFORE DELETE ON projects
+    BEGIN
+        SELECT RAISE(ABORT, 'project registrations are immutable');
+    END
+    """,
+    """
+    CREATE TRIGGER project_idempotency_records_guard_update
+    BEFORE UPDATE ON project_idempotency_records
+    BEGIN
+        SELECT RAISE(ABORT, 'project idempotency records are immutable');
+    END
+    """,
+    """
+    CREATE TRIGGER project_idempotency_records_guard_delete
+    BEFORE DELETE ON project_idempotency_records
+    BEGIN
+        SELECT RAISE(ABORT, 'project idempotency records are immutable');
+    END
+    """,
+    """
+    CREATE TRIGGER audit_events_guard_update
+    BEFORE UPDATE ON audit_events
+    BEGIN
+        SELECT RAISE(ABORT, 'audit events are append-only');
+    END
+    """,
+    """
+    CREATE TRIGGER audit_events_guard_delete
+    BEFORE DELETE ON audit_events
+    BEGIN
+        SELECT RAISE(ABORT, 'audit events are append-only');
+    END
+    """,
+)
+
 _REQUIRED_OBJECTS_V1 = frozenset(
     {
         ("table", "forgegate_metadata"),
@@ -353,6 +447,20 @@ _REQUIRED_OBJECTS_V3 = _REQUIRED_OBJECTS_V2 | frozenset(
     }
 )
 
+_REQUIRED_OBJECTS_V4 = _REQUIRED_OBJECTS_V3 | frozenset(
+    {
+        ("table", "projects"),
+        ("table", "project_idempotency_records"),
+        ("table", "audit_events"),
+        ("trigger", "projects_guard_update"),
+        ("trigger", "projects_guard_delete"),
+        ("trigger", "project_idempotency_records_guard_update"),
+        ("trigger", "project_idempotency_records_guard_delete"),
+        ("trigger", "audit_events_guard_update"),
+        ("trigger", "audit_events_guard_delete"),
+    }
+)
+
 
 class CandidateStoreError(RuntimeError):
     """Stable failure returned by the local candidate persistence boundary."""
@@ -387,7 +495,7 @@ class SQLiteCandidateRepository:
         self._failure_injector = _failure_injector
 
     def initialize(self) -> None:
-        """Create schema v3 or validate an existing current ForgeGate store."""
+        """Create schema v4 or validate an existing current ForgeGate store."""
         connection = self._open(require_exists=False)
         try:
             journal_mode = str(connection.execute("PRAGMA journal_mode = WAL").fetchone()[0])
@@ -413,6 +521,7 @@ class SQLiteCandidateRepository:
                     *_SCHEMA_V1_STATEMENTS,
                     *_SCHEMA_V2_STATEMENTS,
                     *_SCHEMA_V3_STATEMENTS,
+                    *_SCHEMA_V4_STATEMENTS,
                 ):
                     connection.execute(statement)
                 connection.executemany(
@@ -431,10 +540,11 @@ class SQLiteCandidateRepository:
             elif user_version in {
                 LEGACY_STORE_SCHEMA_VERSION,
                 PREVIOUS_STORE_SCHEMA_VERSION,
+                BINDING_STORE_SCHEMA_VERSION,
             }:
                 raise CandidateStoreError(
                     "STORE_MIGRATION_REQUIRED",
-                    f"candidate database schema v{user_version} requires explicit migration to v3",
+                    f"candidate database schema v{user_version} requires explicit migration to v4",
                 )
             self._validate_store(connection)
         except sqlite3.Error as exc:
@@ -444,7 +554,7 @@ class SQLiteCandidateRepository:
             connection.close()
 
     def migrate(self) -> None:
-        """Explicitly migrate a validated schema-v1/v2 store to schema v3."""
+        """Explicitly migrate a validated schema-v1/v2/v3 store to schema v4."""
         connection = self._open(require_exists=True)
         try:
             user_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
@@ -454,20 +564,29 @@ class SQLiteCandidateRepository:
             if user_version not in {
                 LEGACY_STORE_SCHEMA_VERSION,
                 PREVIOUS_STORE_SCHEMA_VERSION,
+                BINDING_STORE_SCHEMA_VERSION,
             }:
                 raise CandidateStoreError(
                     "STORE_SCHEMA_UNSUPPORTED",
-                    f"database schema version {user_version} cannot migrate to v3",
+                    f"database schema version {user_version} cannot migrate to v4",
                 )
             self._validate_store_version(connection, user_version)
             connection.execute("BEGIN IMMEDIATE")
-            migration_statements = (
-                (*_SCHEMA_V2_STATEMENTS, *_SCHEMA_V3_STATEMENTS)
-                if user_version == LEGACY_STORE_SCHEMA_VERSION
-                else _SCHEMA_V3_STATEMENTS
-            )
+            migration_statements = {
+                LEGACY_STORE_SCHEMA_VERSION: (
+                    *_SCHEMA_V2_STATEMENTS,
+                    *_SCHEMA_V3_STATEMENTS,
+                    *_SCHEMA_V4_STATEMENTS,
+                ),
+                PREVIOUS_STORE_SCHEMA_VERSION: (
+                    *_SCHEMA_V3_STATEMENTS,
+                    *_SCHEMA_V4_STATEMENTS,
+                ),
+                BINDING_STORE_SCHEMA_VERSION: _SCHEMA_V4_STATEMENTS,
+            }[user_version]
             for statement in migration_statements:
                 connection.execute(statement)
+            self._backfill_audit_events(connection)
             connection.execute(
                 "UPDATE forgegate_metadata SET value = ? WHERE key = 'schema_name'",
                 (STORE_SCHEMA_NAME,),
@@ -484,6 +603,150 @@ class SQLiteCandidateRepository:
             raise _translated_sqlite_error(exc) from exc
         finally:
             connection.close()
+
+    def register_project(
+        self,
+        config: ProjectConfig,
+        *,
+        registered_at: datetime,
+        idempotency_key: str,
+    ) -> RegisteredProject:
+        """Persist one immutable project profile with exact idempotent replay."""
+        key = _validated_idempotency_key(idempotency_key)
+        registration = create_registered_project(config, registered_at=registered_at)
+        registration_json = _model_json(registration)
+        registration = _decode_model(registration_json, RegisteredProject)
+        request_fingerprint = sha256_fingerprint(
+            {
+                "operation": "project.register",
+                "registration": registration.model_dump(mode="json"),
+            }
+        )
+        with self._transaction(write=True) as connection:
+            replay_row = connection.execute(
+                "SELECT * FROM project_idempotency_records WHERE idempotency_key = ?",
+                (key,),
+            ).fetchone()
+            if replay_row is not None:
+                if (
+                    replay_row["project_id"],
+                    replay_row["request_fingerprint"],
+                    replay_row["response_schema_version"],
+                ) != (
+                    registration.project_id,
+                    request_fingerprint,
+                    registration.schema_version,
+                ):
+                    raise CandidateStoreError(
+                        "STORE_IDEMPOTENCY_CONFLICT",
+                        "idempotency key was already used for a different request",
+                    )
+                replay = _decode_model(str(replay_row["response_json"]), RegisteredProject)
+                durable = self._load_project(connection, registration.project_id)
+                _require(replay == durable, "project replay does not match durable registration")
+                return replay
+
+            existing_row = connection.execute(
+                "SELECT project_id FROM projects WHERE project_id = ?",
+                (registration.project_id,),
+            ).fetchone()
+            if existing_row is None:
+                connection.execute(
+                    """
+                    INSERT INTO projects(
+                        project_id, profile_version, registration_id, config_fingerprint,
+                        project_json, registered_at
+                    ) VALUES (?, ?, ?, ?, ?, ?)
+                    """,
+                    (
+                        registration.project_id,
+                        registration.profile_version,
+                        registration.registration_id,
+                        registration.config_fingerprint,
+                        registration_json,
+                        _json_timestamp(registration.registered_at),
+                    ),
+                )
+                self._append_subject_audit_event(
+                    connection,
+                    event_type=AuditEventType.PROJECT_REGISTERED,
+                    occurred_at=registration.registered_at,
+                    project_id=registration.project_id,
+                    candidate_id=None,
+                    subject_id=registration.registration_id,
+                    subject=registration,
+                )
+                self._checkpoint("after_project_insert", connection)
+            else:
+                existing = self._load_project(connection, registration.project_id)
+                if existing != registration:
+                    raise CandidateStoreError(
+                        "STORE_PROJECT_CONFLICT",
+                        "project ID already has a different immutable registration",
+                    )
+            connection.execute(
+                """
+                INSERT INTO project_idempotency_records(
+                    idempotency_key, project_id, request_fingerprint,
+                    response_schema_version, response_json, recorded_at
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    key,
+                    registration.project_id,
+                    request_fingerprint,
+                    registration.schema_version,
+                    registration_json,
+                    _json_timestamp(registration.registered_at),
+                ),
+            )
+            self._checkpoint("after_project_idempotency_insert", connection)
+        return registration
+
+    def get_project(self, project_id: str) -> RegisteredProject:
+        """Read and validate one immutable project registration."""
+        with self._transaction(write=False) as connection:
+            return self._load_project(connection, project_id)
+
+    def audit_events(
+        self,
+        *,
+        after_sequence: int = 0,
+        limit: int = 100,
+        project_id: str | None = None,
+        candidate_id: str | None = None,
+    ) -> AuditEventPage:
+        """Return a bounded stable-cursor page over append-only audit events."""
+        if after_sequence < 0:
+            raise CandidateStoreError(
+                "STORE_AUDIT_CURSOR_INVALID", "after_sequence cannot be negative"
+            )
+        if not 1 <= limit <= 200:
+            raise CandidateStoreError(
+                "STORE_AUDIT_LIMIT_INVALID", "audit limit must be between 1 and 200"
+            )
+        clauses = ["sequence > ?"]
+        parameters: list[object] = [after_sequence]
+        if project_id is not None:
+            clauses.append("project_id = ?")
+            parameters.append(project_id)
+        if candidate_id is not None:
+            clauses.append("candidate_id = ?")
+            parameters.append(candidate_id)
+        parameters.append(limit + 1)
+        query = (
+            "SELECT * FROM audit_events WHERE "
+            + " AND ".join(clauses)
+            + " ORDER BY sequence LIMIT ?"
+        )
+        with self._transaction(write=False) as connection:
+            rows = list(connection.execute(query, parameters))
+            events = tuple(self._decode_audit_row(row) for row in rows[:limit])
+        return AuditEventPage(
+            events=events,
+            next_after_sequence=events[-1].sequence if events else None,
+            has_more=len(rows) > limit,
+        )
 
     def create(
         self,
@@ -546,6 +809,15 @@ class SQLiteCandidateRepository:
                     ),
                 )
                 self._insert_snapshot(connection, candidate, candidate_fingerprint, candidate_json)
+                self._append_subject_audit_event(
+                    connection,
+                    event_type=AuditEventType.CANDIDATE_CREATED,
+                    occurred_at=candidate.created_at,
+                    project_id=candidate.project_id,
+                    candidate_id=candidate.candidate_id,
+                    subject_id=candidate.candidate_id,
+                    subject=candidate,
+                )
                 self._checkpoint("after_candidate_insert", connection)
             else:
                 existing = self._load_history(connection, candidate.candidate_id).candidate
@@ -630,6 +902,15 @@ class SQLiteCandidateRepository:
                     )
             else:
                 self._insert_evidence_binding(connection, binding)
+                self._append_subject_audit_event(
+                    connection,
+                    event_type=AuditEventType.EVIDENCE_BOUND,
+                    occurred_at=binding.bound_at,
+                    project_id=history.candidate.project_id,
+                    candidate_id=candidate_id,
+                    subject_id=binding.binding_id,
+                    subject=binding,
+                )
                 self._checkpoint("after_evidence_binding_insert", connection)
             binding_json = _model_json(binding)
             self._insert_idempotency(
@@ -676,6 +957,15 @@ class SQLiteCandidateRepository:
                     )
                 return cast(PolicyEvaluation, self._load_evaluation(connection, candidate))
             self._insert_evaluation(connection, candidate, evaluation)
+            self._append_subject_audit_event(
+                connection,
+                event_type=AuditEventType.EVALUATION_RECORDED,
+                occurred_at=evaluation.evaluated_at,
+                project_id=candidate.project_id,
+                candidate_id=candidate_id,
+                subject_id=evaluation.evaluation_id,
+                subject=evaluation,
+            )
             self._checkpoint("after_evaluation_insert", connection)
         return evaluation
 
@@ -734,6 +1024,15 @@ class SQLiteCandidateRepository:
                     markdown,
                     _json_timestamp(attestation.issued_at),
                 ),
+            )
+            self._append_subject_audit_event(
+                connection,
+                event_type=AuditEventType.ATTESTATION_RECORDED,
+                occurred_at=attestation.issued_at,
+                project_id=history.candidate.project_id,
+                candidate_id=candidate_id,
+                subject_id=attestation.attestation_id,
+                subject=attestation,
             )
             self._checkpoint("after_attestation_insert", connection)
         return attestation
@@ -851,6 +1150,25 @@ class SQLiteCandidateRepository:
             )
             if evaluation is not None:
                 self._insert_evaluation(connection, result.candidate, evaluation)
+            self._append_subject_audit_event(
+                connection,
+                event_type=AuditEventType.CANDIDATE_TRANSITIONED,
+                occurred_at=result.transition.occurred_at,
+                project_id=result.candidate.project_id,
+                candidate_id=candidate_id,
+                subject_id=result.transition.transition_id,
+                subject=result.transition,
+            )
+            if evaluation is not None:
+                self._append_subject_audit_event(
+                    connection,
+                    event_type=AuditEventType.EVALUATION_RECORDED,
+                    occurred_at=evaluation.evaluated_at,
+                    project_id=result.candidate.project_id,
+                    candidate_id=candidate_id,
+                    subject_id=evaluation.evaluation_id,
+                    subject=evaluation,
+                )
             self._checkpoint("after_transition_append", connection)
             updated = connection.execute(
                 """
@@ -961,7 +1279,8 @@ class SQLiteCandidateRepository:
         required_objects = {
             LEGACY_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V1,
             PREVIOUS_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V2,
-            STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V3,
+            BINDING_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V3,
+            STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V4,
         }.get(expected_version)
         if required_objects is None:
             raise CandidateStoreError(
@@ -979,6 +1298,7 @@ class SQLiteCandidateRepository:
                 "schema_name": {
                     LEGACY_STORE_SCHEMA_VERSION: LEGACY_STORE_SCHEMA_NAME,
                     PREVIOUS_STORE_SCHEMA_VERSION: PREVIOUS_STORE_SCHEMA_NAME,
+                    BINDING_STORE_SCHEMA_VERSION: BINDING_STORE_SCHEMA_NAME,
                     STORE_SCHEMA_VERSION: STORE_SCHEMA_NAME,
                 }[expected_version],
                 "schema_version": str(expected_version),
@@ -987,6 +1307,217 @@ class SQLiteCandidateRepository:
         )
         foreign_key_errors = list(connection.execute("PRAGMA foreign_key_check"))
         _require(not foreign_key_errors, "candidate database foreign-key integrity failed")
+
+    def _load_project(
+        self,
+        connection: sqlite3.Connection,
+        project_id: str,
+    ) -> RegisteredProject:
+        row = connection.execute(
+            "SELECT * FROM projects WHERE project_id = ?",
+            (project_id,),
+        ).fetchone()
+        if row is None:
+            raise CandidateStoreError(
+                "STORE_PROJECT_NOT_FOUND", f"project does not exist: {project_id}"
+            )
+        project = _decode_model(str(row["project_json"]), RegisteredProject)
+        _require(
+            (
+                row["project_id"],
+                int(row["profile_version"]),
+                row["registration_id"],
+                row["config_fingerprint"],
+                row["registered_at"],
+            )
+            == (
+                project.project_id,
+                project.profile_version,
+                project.registration_id,
+                project.config_fingerprint,
+                _json_timestamp(project.registered_at),
+            ),
+            "project metadata does not match its registration document",
+        )
+        return project
+
+    @staticmethod
+    def _decode_audit_row(row: sqlite3.Row) -> AuditEvent:
+        event = _decode_model(str(row["event_json"]), AuditEvent)
+        _require(
+            (
+                int(row["sequence"]),
+                row["event_id"],
+                row["event_type"],
+                row["occurred_at"],
+                row["project_id"],
+                row["candidate_id"],
+                row["subject_schema_version"],
+                row["subject_id"],
+                row["subject_fingerprint"],
+            )
+            == (
+                event.sequence,
+                event.event_id,
+                event.event_type.value,
+                _json_timestamp(event.occurred_at),
+                event.project_id,
+                event.candidate_id,
+                event.subject_schema_version,
+                event.subject_id,
+                event.subject_fingerprint,
+            ),
+            "audit-event metadata does not match its document",
+        )
+        return event
+
+    def _append_subject_audit_event(
+        self,
+        connection: sqlite3.Connection,
+        *,
+        event_type: AuditEventType,
+        occurred_at: datetime,
+        project_id: str,
+        candidate_id: str | None,
+        subject_id: str,
+        subject: BaseModel,
+    ) -> AuditEvent:
+        schema_version = getattr(subject, "schema_version", None)
+        _require(isinstance(schema_version, str), "audit subject lacks a schema version")
+        sequence = int(
+            connection.execute(
+                "SELECT COALESCE(MAX(sequence), 0) + 1 FROM audit_events"
+            ).fetchone()[0]
+        )
+        event = create_audit_event(
+            sequence=sequence,
+            event_type=event_type,
+            occurred_at=occurred_at,
+            project_id=project_id,
+            candidate_id=candidate_id,
+            subject_schema_version=cast(str, schema_version),
+            subject_id=subject_id,
+            subject_fingerprint=sha256_fingerprint(subject.model_dump(mode="json")),
+        )
+        connection.execute(
+            """
+            INSERT INTO audit_events(
+                sequence, event_id, event_type, occurred_at, project_id, candidate_id,
+                subject_schema_version, subject_id, subject_fingerprint, event_json
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                event.sequence,
+                event.event_id,
+                event.event_type.value,
+                _json_timestamp(event.occurred_at),
+                event.project_id,
+                event.candidate_id,
+                event.subject_schema_version,
+                event.subject_id,
+                event.subject_fingerprint,
+                _model_json(event),
+            ),
+        )
+        return event
+
+    def _backfill_audit_events(self, connection: sqlite3.Connection) -> None:
+        """Project validated legacy documents into deterministic v4 audit events."""
+        pending: list[tuple[str, int, str, AuditEventType, str, str | None, BaseModel]] = []
+        project_by_candidate = {
+            str(row["candidate_id"]): str(row["project_id"])
+            for row in connection.execute("SELECT candidate_id, project_id FROM candidates")
+        }
+        for row in connection.execute(
+            "SELECT candidate_id, initial_candidate_json FROM candidates"
+        ):
+            candidate = _decode_model(str(row["initial_candidate_json"]), ReleaseCandidate)
+            pending.append(
+                (
+                    _json_timestamp(candidate.created_at),
+                    1,
+                    candidate.candidate_id,
+                    AuditEventType.CANDIDATE_CREATED,
+                    candidate.project_id,
+                    candidate.candidate_id,
+                    candidate,
+                )
+            )
+        for row in connection.execute("SELECT transition_json FROM candidate_transitions"):
+            transition = _decode_model(str(row["transition_json"]), CandidateTransition)
+            pending.append(
+                (
+                    _json_timestamp(transition.occurred_at),
+                    3,
+                    transition.transition_id,
+                    AuditEventType.CANDIDATE_TRANSITIONED,
+                    project_by_candidate[transition.candidate_id],
+                    transition.candidate_id,
+                    transition,
+                )
+            )
+        for row in connection.execute("SELECT binding_json FROM candidate_evidence_bindings"):
+            binding = _decode_model(str(row["binding_json"]), CandidateEvidenceBinding)
+            candidate_id = binding.candidate.candidate_id
+            pending.append(
+                (
+                    _json_timestamp(binding.bound_at),
+                    2,
+                    binding.binding_id,
+                    AuditEventType.EVIDENCE_BOUND,
+                    project_by_candidate[candidate_id],
+                    candidate_id,
+                    binding,
+                )
+            )
+        for row in connection.execute(
+            "SELECT candidate_id, evaluation_json FROM candidate_evaluations"
+        ):
+            evaluation = _decode_model(str(row["evaluation_json"]), PolicyEvaluation)
+            candidate_id = str(row["candidate_id"])
+            pending.append(
+                (
+                    _json_timestamp(evaluation.evaluated_at),
+                    4,
+                    evaluation.evaluation_id,
+                    AuditEventType.EVALUATION_RECORDED,
+                    project_by_candidate[candidate_id],
+                    candidate_id,
+                    evaluation,
+                )
+            )
+        for row in connection.execute("SELECT candidate_id, attestation_json FROM attestations"):
+            attestation = _decode_model(str(row["attestation_json"]), ReleaseAttestation)
+            candidate_id = str(row["candidate_id"])
+            pending.append(
+                (
+                    _json_timestamp(attestation.issued_at),
+                    5,
+                    attestation.attestation_id,
+                    AuditEventType.ATTESTATION_RECORDED,
+                    project_by_candidate[candidate_id],
+                    candidate_id,
+                    attestation,
+                )
+            )
+        for (
+            occurred_at,
+            _,
+            subject_id,
+            event_type,
+            project_id,
+            audit_candidate_id,
+            subject,
+        ) in sorted(pending, key=lambda item: (item[0], item[1], item[2])):
+            self._append_subject_audit_event(
+                connection,
+                event_type=event_type,
+                occurred_at=datetime.fromisoformat(occurred_at.replace("Z", "+00:00")),
+                project_id=project_id,
+                candidate_id=audit_candidate_id,
+                subject_id=subject_id,
+                subject=subject,
+            )
 
     def _load_history(self, connection: sqlite3.Connection, candidate_id: str) -> CandidateHistory:
         candidate_row = connection.execute(

@@ -28,6 +28,12 @@ companion document that binds one revision-one `COLLECTING` candidate snapshot
 to one complete audited assembly before a new SQLite-v3 candidate may become
 `READY`.
 
+`forgegate.registered-project.v1.schema.json` describes one immutable local
+project-profile registration. `forgegate.audit-event.v1.schema.json` describes
+content-bound metadata for one successful durable state change, while
+`forgegate.audit-event-page.v1.schema.json` describes bounded stable-cursor
+query output. These contracts do not authenticate an operator or producer.
+
 `forgegate.benchmark.v1.schema.json` is the ForgeGate-owned Benchmark artifact
 contract. `analog-validation.result-export.v1.schema.json` is ForgeGate's
 consumer-side structural mirror of the upstream Studio contract; it does not
