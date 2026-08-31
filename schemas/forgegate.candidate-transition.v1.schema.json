@@ -1,0 +1,108 @@
+{
+  "$defs": {
+    "CandidateStatus": {
+      "enum": [
+        "DRAFT",
+        "COLLECTING",
+        "READY",
+        "EVALUATING",
+        "PASS",
+        "FAIL",
+        "REVIEW",
+        "ERROR"
+      ],
+      "title": "CandidateStatus",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "candidate_id": {
+      "pattern": "^cand-[0-9a-f]{24}$",
+      "title": "Candidate Id",
+      "type": "string"
+    },
+    "evaluation_id": {
+      "anyOf": [
+        {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Evaluation Id"
+    },
+    "from_revision": {
+      "minimum": 0,
+      "title": "From Revision",
+      "type": "integer"
+    },
+    "from_status": {
+      "$ref": "#/$defs/CandidateStatus"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "title": "Occurred At",
+      "type": "string"
+    },
+    "prior_candidate_fingerprint": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Prior Candidate Fingerprint",
+      "type": "string"
+    },
+    "reason": {
+      "anyOf": [
+        {
+          "maxLength": 500,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Reason"
+    },
+    "result_candidate_fingerprint": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Result Candidate Fingerprint",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "forgegate.candidate-transition.v1",
+      "default": "forgegate.candidate-transition.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "to_revision": {
+      "minimum": 1,
+      "title": "To Revision",
+      "type": "integer"
+    },
+    "to_status": {
+      "$ref": "#/$defs/CandidateStatus"
+    },
+    "transition_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Transition Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "transition_id",
+    "candidate_id",
+    "from_status",
+    "to_status",
+    "from_revision",
+    "to_revision",
+    "prior_candidate_fingerprint",
+    "result_candidate_fingerprint",
+    "occurred_at"
+  ],
+  "title": "CandidateTransition",
+  "type": "object"
+}

@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.0.dev6 — 2026-08-30
+
+- Added immutable, versioned release-candidate, transition-event, and
+  transition-result contracts for the complete Phase 2 state graph.
+- Added deterministic candidate creation, exact lifecycle revisions,
+  non-regressing UTC timestamps, terminal-state immutability, and content-bound
+  transition SHA-256 identities.
+- Required PASS/FAIL/REVIEW terminal transitions to bind a matching policy
+  evaluation ID, commit, decision, and timestamp; ERROR may fail closed without
+  an evaluation result.
+- Added stateless `candidate create` and `candidate transition` CLI previews,
+  committed DRAFT/EVALUATING examples, Golden transitions, adversarial tests,
+  canonical Schemas, documentation, and installed-wheel smoke coverage.
+
 ## 0.1.0.dev5 — 2026-08-30
 
 - Added deterministic `forgegate.policy.v1` evaluation against immutable

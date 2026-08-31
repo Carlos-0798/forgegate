@@ -55,3 +55,14 @@ class Aggregation(StrEnum):
     COUNT = "count"
     ALL = "all"
     ANY = "any"
+
+
+class CandidateStatus(StrEnum):
+    DRAFT = "DRAFT"
+    COLLECTING = "COLLECTING"
+    READY = "READY"
+    EVALUATING = "EVALUATING"
+    PASS = "PASS"
+    FAIL = "FAIL"
+    REVIEW = "REVIEW"
+    ERROR = "ERROR"

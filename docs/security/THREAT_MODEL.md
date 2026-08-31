@@ -93,6 +93,19 @@ The current slice has no authenticated producer and runs no plugin code.
 | Decision detached from evaluated inputs | Policy/evidence SHA-256 fingerprints and timestamp-bound evaluation ID |
 | Unhandled expression failure becomes PASS | Per-rule defensive ERROR boundary and exit code 3 |
 
+## Addressed in the Phase 2 candidate-lifecycle slice
+
+| Threat | Current control |
+|---|---|
+| Candidate skips or reverses lifecycle state | Explicit one-way transition table and exact state revisions |
+| Terminal candidate is silently reopened | Terminal states have no outgoing transitions |
+| Transition event time rewrites history | Timezone-aware timestamps cannot precede current `updated_at` |
+| PASS manufactured without policy evaluation | PASS/FAIL/REVIEW require a matching evaluation ID, commit, decision, and time |
+| System error cannot be represented safely | ERROR permits a fail-closed transition without a policy result |
+| Transition content changes under the same ID | Model recomputes content-bound transition SHA-256 |
+| Event points to a different candidate result | Result envelope checks ID, state, time, evaluation, and result fingerprint |
+| CLI preview mistaken for durable state | Documentation and output boundary explicitly state no persistence or locking |
+
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;

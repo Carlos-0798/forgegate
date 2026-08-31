@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import hashlib
-import json
 import math
 from collections.abc import Mapping, Sequence
 from datetime import datetime
 from typing import Any
 
+from forgegate.canonical import canonical_json, sha256_fingerprint
 from forgegate.domain.enums import (
     Aggregation,
     Decision,
@@ -62,8 +61,8 @@ def evaluate_policy(
     _require_timezone(evaluated_at)
     if bundle.generated_at > evaluated_at:
         raise ValueError("evaluated_at cannot precede evidence bundle generation")
-    policy_fingerprint = _fingerprint(policy.model_dump(mode="json"))
-    evidence_fingerprint = _fingerprint(bundle.model_dump(mode="json"))
+    policy_fingerprint = sha256_fingerprint(policy.model_dump(mode="json"))
+    evidence_fingerprint = sha256_fingerprint(bundle.model_dump(mode="json"))
     results = [_evaluate_rule(rule, bundle.evidence, evaluated_at) for rule in policy.rules]
     mandatory_decisions = [result.decision for result in results if result.mandatory]
     decision = max(mandatory_decisions, key=DECISION_RANK.__getitem__, default=Decision.PASS)
@@ -76,7 +75,7 @@ def evaluate_policy(
         "evaluated_at": evaluated_at.isoformat(),
     }
     return PolicyEvaluation(
-        evaluation_id=_fingerprint(evaluation_input),
+        evaluation_id=sha256_fingerprint(evaluation_input),
         policy_name=policy.name,
         policy_fingerprint=policy_fingerprint,
         evidence_fingerprint=evidence_fingerprint,
@@ -163,7 +162,7 @@ def _evaluate_rule_checked(
         values = [_extract_value(record, rule.where.get("field")) for record in matched]
         evidence_ids = [record.evidence_id for record in matched]
         if rule.aggregation is Aggregation.VALUE:
-            canonical_values = {_canonical_json(value) for value, present in values if present}
+            canonical_values = {canonical_json(value) for value, present in values if present}
             if rule.operator is not Operator.EXISTS and any(not present for _, present in values):
                 raise ValueError("selected value field is missing")
             if rule.operator is Operator.EXISTS:
@@ -371,20 +370,6 @@ def _strict_equal(left: Any, right: Any) -> bool:
 
 def _is_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
-
-
-def _fingerprint(value: Any) -> str:
-    return "sha256:" + hashlib.sha256(_canonical_json(value).encode("utf-8")).hexdigest()
-
-
-def _canonical_json(value: Any) -> str:
-    return json.dumps(
-        value,
-        sort_keys=True,
-        separators=(",", ":"),
-        ensure_ascii=False,
-        allow_nan=False,
-    )
 
 
 def _require_timezone(value: datetime) -> None:

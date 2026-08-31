@@ -19,6 +19,8 @@ runner = CliRunner()
         "examples/sample-python-api/policies/production.yaml",
         "examples/sample-python-api/evidence/pass-bundle.json",
         "examples/sample-python-api/evidence/fail-bundle.json",
+        "examples/sample-python-api/candidates/draft.json",
+        "examples/sample-python-api/candidates/evaluating.json",
     ],
 )
 def test_examples_load(repository_root: Path, relative_path: str) -> None:
@@ -77,7 +79,7 @@ def test_doctor_reports_phase() -> None:
     result = runner.invoke(app, ["doctor"])
     assert result.exit_code == 0
     report = json.loads(result.stdout)
-    assert report["phase"] == "phase2-policy-evaluation"
+    assert report["phase"] == "phase2-candidate-lifecycle"
     assert report["supported_schemas"] == sorted(SCHEMAS)
 
 
@@ -94,6 +96,161 @@ def test_invalid_config_cli_uses_error_exit_code(tmp_path: Path) -> None:
     result = runner.invoke(app, ["validate-config", str(path)])
     assert result.exit_code == 3
     assert "unsupported schema_version" in result.output
+
+
+def test_candidate_create_cli_matches_committed_example(repository_root: Path) -> None:
+    result = runner.invoke(
+        app,
+        [
+            "candidate",
+            "create",
+            "--project",
+            "sample-api",
+            "--version",
+            "1.2.0",
+            "--commit",
+            "a" * 40,
+            "--created-at",
+            "2026-08-30T12:00:00Z",
+            "--branch",
+            "main",
+            "--track",
+            "pull-request",
+        ],
+    )
+    expected = json.loads(
+        (repository_root / "examples/sample-python-api/candidates/draft.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert result.exit_code == 0
+    assert json.loads(result.stdout) == expected
+
+
+def test_candidate_transition_cli_matches_golden(repository_root: Path) -> None:
+    root = repository_root / "examples/sample-python-api"
+    result = runner.invoke(
+        app,
+        [
+            "candidate",
+            "transition",
+            str(root / "candidates/draft.json"),
+            "--to",
+            "COLLECTING",
+            "--occurred-at",
+            "2026-08-30T12:01:00Z",
+            "--reason",
+            "begin evidence collection",
+        ],
+    )
+    expected = json.loads(
+        (repository_root / "tests/golden/candidate_collecting_transition.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert result.exit_code == 0
+    assert json.loads(result.stdout) == expected
+
+
+def test_candidate_terminal_transition_binds_policy_evaluation(
+    repository_root: Path,
+) -> None:
+    root = repository_root / "examples/sample-python-api"
+    result = runner.invoke(
+        app,
+        [
+            "candidate",
+            "transition",
+            str(root / "candidates/evaluating.json"),
+            "--to",
+            "PASS",
+            "--occurred-at",
+            "2026-08-30T21:00:00Z",
+            "--evaluation",
+            str(repository_root / "tests/golden/policy_pass.json"),
+            "--reason",
+            "policy evaluation passed",
+        ],
+    )
+    expected = json.loads(
+        (repository_root / "tests/golden/candidate_pass_transition.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert result.exit_code == 0
+    assert json.loads(result.stdout) == expected
+
+
+def test_candidate_cli_error_paths(repository_root: Path) -> None:
+    root = repository_root / "examples/sample-python-api"
+    create_error = runner.invoke(
+        app,
+        [
+            "candidate",
+            "create",
+            "--project",
+            "sample-api",
+            "--version",
+            "1.2.0",
+            "--commit",
+            "a" * 40,
+            "--created-at",
+            "not-a-timestamp",
+        ],
+    )
+    base_transition = [
+        "candidate",
+        "transition",
+        str(root / "candidates/draft.json"),
+        "--to",
+        "READY",
+        "--occurred-at",
+        "2026-08-30T12:01:00Z",
+    ]
+    illegal = runner.invoke(app, base_transition)
+    invalid_timestamp = runner.invoke(app, [*base_transition[:-1], "not-a-timestamp"])
+    blank_command = [*base_transition]
+    blank_command[4] = "COLLECTING"
+    blank_reason = runner.invoke(app, [*blank_command, "--reason", " "])
+    wrong_document = runner.invoke(
+        app,
+        [
+            "candidate",
+            "transition",
+            str(root / "policies/pull-request.yaml"),
+            "--to",
+            "COLLECTING",
+            "--occurred-at",
+            "2026-08-30T12:01:00Z",
+        ],
+    )
+    wrong_evaluation_document = runner.invoke(
+        app,
+        [
+            "candidate",
+            "transition",
+            str(root / "candidates/evaluating.json"),
+            "--to",
+            "PASS",
+            "--occurred-at",
+            "2026-08-30T21:00:00Z",
+            "--evaluation",
+            str(root / "evidence/pass-bundle.json"),
+        ],
+    )
+
+    assert create_error.exit_code == 3
+    assert "Invalid isoformat string" in create_error.output
+    assert illegal.exit_code == 3
+    assert "CANDIDATE_TRANSITION_INVALID" in illegal.output
+    assert invalid_timestamp.exit_code == 3
+    assert "Invalid isoformat string" in invalid_timestamp.output
+    assert blank_reason.exit_code == 3
+    assert "CANDIDATE_REASON_EMPTY" in blank_reason.output
+    assert wrong_document.exit_code == 3
+    assert "candidate path must contain" in wrong_document.output
+    assert wrong_evaluation_document.exit_code == 3
+    assert "evaluation path must contain" in wrong_evaluation_document.output
 
 
 @pytest.mark.parametrize(

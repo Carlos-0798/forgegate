@@ -1,5 +1,10 @@
 from pydantic import BaseModel
 
+from forgegate.candidates.models import (
+    CandidateTransition,
+    CandidateTransitionResult,
+    ReleaseCandidate,
+)
 from forgegate.domain.models import EvidenceBundle, PolicyConfig, ProjectConfig
 from forgegate.policy.models import PolicyEvaluation
 
@@ -8,6 +13,9 @@ SCHEMAS: dict[str, type[BaseModel]] = {
     "forgegate.policy.v1": PolicyConfig,
     "forgegate.evidence-bundle.v1": EvidenceBundle,
     "forgegate.policy-evaluation.v1": PolicyEvaluation,
+    "forgegate.release-candidate.v1": ReleaseCandidate,
+    "forgegate.candidate-transition.v1": CandidateTransition,
+    "forgegate.candidate-transition-result.v1": CandidateTransitionResult,
 }
 
 

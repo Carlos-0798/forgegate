@@ -11,7 +11,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — four versioned document schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — seven versioned document schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
 | Ruff | full repository | PASS |
@@ -43,12 +43,14 @@
 | Explicit time and evidence age | boundary/adversarial tests | PASS — local host |
 | Trust and verification thresholds | explicit-rank tests | PASS — local host |
 | 1,000-record policy evaluation | local performance guard | PASS — under 2 seconds |
-| Candidate lifecycle | state-transition tests | NOT IMPLEMENTED |
+| Candidate lifecycle | state-transition/adversarial tests | PASS — local host, 100% branch coverage |
+| Terminal evaluation binding | commit/decision/time mismatch tests | PASS — local host |
+| Candidate CLI preview | Golden create/transition output | PASS — stateless local host |
 | SQLite persistence | transaction/concurrency tests | NOT IMPLEMENTED |
 | JSON/Markdown attestations | deterministic golden output | NOT IMPLEMENTED |
 | AFE report compatibility | frozen public artifact contract | PLANNED |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
 
-See `reports/PHASE_2_POLICY_ENGINE_ACCEPTANCE_REPORT.md` for the current exact
+See `reports/PHASE_2_CANDIDATE_LIFECYCLE_ACCEPTANCE_REPORT.md` for the current exact
 test and coverage result. Earlier acceptance reports remain historical records.

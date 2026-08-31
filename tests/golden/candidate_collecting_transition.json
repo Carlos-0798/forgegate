@@ -1,0 +1,32 @@
+{
+  "schema_version": "forgegate.candidate-transition-result.v1",
+  "candidate": {
+    "schema_version": "forgegate.release-candidate.v1",
+    "candidate_id": "cand-dab25eb0be1a0107b3996080",
+    "project_id": "sample-api",
+    "version": "1.2.0",
+    "commit_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "source_branch": "main",
+    "release_track": "pull-request",
+    "status": "COLLECTING",
+    "revision": 1,
+    "created_at": "2026-08-30T12:00:00Z",
+    "updated_at": "2026-08-30T12:01:00Z",
+    "evaluated_at": null,
+    "evaluation_id": null
+  },
+  "transition": {
+    "schema_version": "forgegate.candidate-transition.v1",
+    "transition_id": "sha256:68231a877a97e94bd54d9ec712df38baf0d2bb57d05c3863254b2c440823cd19",
+    "candidate_id": "cand-dab25eb0be1a0107b3996080",
+    "from_status": "DRAFT",
+    "to_status": "COLLECTING",
+    "from_revision": 0,
+    "to_revision": 1,
+    "prior_candidate_fingerprint": "sha256:db837ca175d63c3dcb46fc91e1cb9ab4493b032443756e82f4bf44f14196da93",
+    "result_candidate_fingerprint": "sha256:f9301eaba34ebc5c964eeb73711d9a9883f75cfc1ff98314aad57cfc2858c1be",
+    "occurred_at": "2026-08-30T12:01:00Z",
+    "evaluation_id": null,
+    "reason": "begin evidence collection"
+  }
+}

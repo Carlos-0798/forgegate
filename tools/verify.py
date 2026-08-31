@@ -66,6 +66,34 @@ def main() -> int:
             "validate-config",
             "examples/sample-python-api/policies/production.yaml",
         ],
+        [
+            python,
+            "-m",
+            "forgegate",
+            "validate-config",
+            "examples/sample-python-api/candidates/draft.json",
+        ],
+        [
+            python,
+            "-m",
+            "forgegate",
+            "validate-config",
+            "examples/sample-python-api/candidates/evaluating.json",
+        ],
+        [
+            python,
+            "-m",
+            "forgegate",
+            "validate-config",
+            "tests/golden/candidate_collecting_transition.json",
+        ],
+        [
+            python,
+            "-m",
+            "forgegate",
+            "validate-config",
+            "tests/golden/candidate_pass_transition.json",
+        ],
     ]
     for command in commands:
         run(command)

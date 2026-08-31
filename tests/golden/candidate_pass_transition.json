@@ -1,0 +1,32 @@
+{
+  "schema_version": "forgegate.candidate-transition-result.v1",
+  "candidate": {
+    "schema_version": "forgegate.release-candidate.v1",
+    "candidate_id": "cand-dab25eb0be1a0107b3996080",
+    "project_id": "sample-api",
+    "version": "1.2.0",
+    "commit_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "source_branch": "main",
+    "release_track": "pull-request",
+    "status": "PASS",
+    "revision": 4,
+    "created_at": "2026-08-30T12:00:00Z",
+    "updated_at": "2026-08-30T21:00:00Z",
+    "evaluated_at": "2026-08-30T21:00:00Z",
+    "evaluation_id": "sha256:4ca0363cda7045ad855461a93f122d66561f5bd1017b68fa3cdb3c486cd8eb98"
+  },
+  "transition": {
+    "schema_version": "forgegate.candidate-transition.v1",
+    "transition_id": "sha256:f02b28e5a805189b0f9cdf407521c0e586ba2b60259b667a1ca40e5878fee822",
+    "candidate_id": "cand-dab25eb0be1a0107b3996080",
+    "from_status": "EVALUATING",
+    "to_status": "PASS",
+    "from_revision": 3,
+    "to_revision": 4,
+    "prior_candidate_fingerprint": "sha256:a483dc3587afc736252a3c4b873de567901c2559605db1338803b480a99e0bc0",
+    "result_candidate_fingerprint": "sha256:84d69ed4b3d796ae1e1eafe7f8df921ebc5a6594154233993427e1aa0bf17b60",
+    "occurred_at": "2026-08-30T21:00:00Z",
+    "evaluation_id": "sha256:4ca0363cda7045ad855461a93f122d66561f5bd1017b68fa3cdb3c486cd8eb98",
+    "reason": "policy evaluation passed"
+  }
+}

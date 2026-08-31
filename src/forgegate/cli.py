@@ -9,6 +9,12 @@ from pydantic import ValidationError
 
 from forgegate import __version__
 from forgegate.artifacts import ArtifactBoundaryError, ArtifactRegistry
+from forgegate.candidates import (
+    CandidateLifecycleError,
+    ReleaseCandidate,
+    create_candidate,
+    transition_candidate,
+)
 from forgegate.collectors import (
     BenchmarkCollectionRequest,
     BenchmarkJsonCollector,
@@ -23,9 +29,10 @@ from forgegate.collectors import (
     SarifCollector,
 )
 from forgegate.config import ConfigLoadError, load_config
-from forgegate.domain.enums import Decision, EvidenceTrust, VerificationLevel
+from forgegate.domain.enums import CandidateStatus, Decision, EvidenceTrust, VerificationLevel
 from forgegate.domain.models import EvidenceBundle, ExecutionContext, PolicyConfig
 from forgegate.policy import evaluate_policy
+from forgegate.policy.models import PolicyEvaluation
 from forgegate.schema_registry import SCHEMAS, schema_filename
 
 app = typer.Typer(
@@ -33,6 +40,8 @@ app = typer.Typer(
     help="ForgeGate evidence collection and release-assurance tools.",
     no_args_is_help=True,
 )
+candidate_app = typer.Typer(help="Create and advance immutable release candidates.")
+app.add_typer(candidate_app, name="candidate")
 
 
 @app.command()
@@ -43,7 +52,7 @@ def doctor() -> None:
         "python": platform.python_version(),
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
-        "phase": "phase2-policy-evaluation",
+        "phase": "phase2-candidate-lifecycle",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 
@@ -72,6 +81,66 @@ def export_schemas(
         payload = json.dumps(model.model_json_schema(), indent=2, sort_keys=True) + "\n"
         target.write_text(payload, encoding="utf-8")
         typer.echo(str(target))
+
+
+@candidate_app.command("create")
+def candidate_create(
+    project_id: Annotated[str, typer.Option("--project")],
+    version: Annotated[str, typer.Option("--version")],
+    commit: Annotated[str, typer.Option("--commit")],
+    created_at: Annotated[str, typer.Option("--created-at")],
+    source_branch: Annotated[str, typer.Option("--branch")] = "main",
+    release_track: Annotated[str, typer.Option("--track")] = "pull-request",
+) -> None:
+    """Create a deterministic DRAFT candidate document without persistence."""
+    try:
+        candidate = create_candidate(
+            project_id=project_id,
+            version=version,
+            commit_sha=commit,
+            source_branch=source_branch,
+            release_track=release_track,
+            created_at=datetime.fromisoformat(created_at.replace("Z", "+00:00")),
+        )
+    except (CandidateLifecycleError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(candidate.model_dump_json(indent=2))
+
+
+@candidate_app.command("transition")
+def candidate_transition(
+    candidate_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    to_status: Annotated[CandidateStatus, typer.Option("--to")],
+    occurred_at: Annotated[str, typer.Option("--occurred-at")],
+    reason: Annotated[str | None, typer.Option("--reason")] = None,
+    evaluation_path: Annotated[
+        Path | None,
+        typer.Option("--evaluation", exists=True, dir_okay=False, readable=True),
+    ] = None,
+) -> None:
+    """Preview one legal transition and emit the next candidate plus audit event."""
+    try:
+        candidate = load_config(candidate_path)
+        if not isinstance(candidate, ReleaseCandidate):
+            raise ValueError("candidate path must contain forgegate.release-candidate.v1")
+        evaluation = None
+        if evaluation_path is not None:
+            loaded_evaluation = load_config(evaluation_path)
+            if not isinstance(loaded_evaluation, PolicyEvaluation):
+                raise ValueError("evaluation path must contain forgegate.policy-evaluation.v1")
+            evaluation = loaded_evaluation
+        result = transition_candidate(
+            candidate,
+            to_status,
+            occurred_at=datetime.fromisoformat(occurred_at.replace("Z", "+00:00")),
+            reason=reason,
+            evaluation=evaluation,
+        )
+    except (CandidateLifecycleError, ConfigLoadError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(result.model_dump_json(indent=2))
 
 
 @app.command("evaluate-policy")

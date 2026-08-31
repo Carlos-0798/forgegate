@@ -6,7 +6,7 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 2 deterministic policy-evaluation slice accepted; still pre-MVP.**
+**Phase 2 release-candidate lifecycle slice accepted; still pre-MVP.**
 
 Implemented and host-verified in this checkpoint:
 
@@ -35,12 +35,19 @@ Implemented and host-verified in this checkpoint:
 - a versioned machine-readable policy-evaluation result with stable input
   fingerprints, per-rule explanations, evidence references, and remediation;
 - `evaluate-policy` with PASS/FAIL/REVIEW/ERROR exit codes 0/1/2/3 and generic
-  committed PASS/FAIL examples.
+  committed PASS/FAIL examples;
+- immutable release candidates with the exact DRAFT → COLLECTING → READY →
+  EVALUATING → PASS/FAIL/REVIEW/ERROR state graph;
+- deterministic candidate/transition identities, exact revisions, monotonic
+  timestamps, immutable terminal states, and before/after fingerprints;
+- mandatory policy-evaluation binding for PASS/FAIL/REVIEW terminal states;
+- stateless `candidate create` and `candidate transition` CLI previews with
+  committed structural and evaluation-bound Golden outputs.
 
 Not implemented yet:
 
-- candidate lifecycle, persistence, attestations, REST API, plugin execution,
-  GitHub integration, or signed provenance;
+- persistence, attestations, REST API, plugin execution, GitHub integration, or
+  signed provenance;
 - AFE or MSP430 compatibility collectors;
 - any AFE/MSP430 runtime integration or hardware operation;
 - any production deployment or public release.
@@ -87,6 +94,25 @@ Evaluate committed PASS and FAIL examples at a caller-supplied timestamp:
 Exit code `0` means PASS, `1` FAIL, `2` REVIEW, and `3` ERROR. Configuration or
 system errors also use `3`. The evaluator does not collect, rebuild, rerun, or
 authenticate evidence while deciding.
+
+Create a deterministic local DRAFT candidate, then preview one legal structural
+transition:
+
+```powershell
+.\.venv\Scripts\python.exe -m forgegate candidate create `
+  --project sample-api --version 1.2.0 `
+  --commit aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa `
+  --created-at 2026-08-30T12:00:00Z
+
+.\.venv\Scripts\python.exe -m forgegate candidate transition `
+  examples/sample-python-api/candidates/draft.json `
+  --to COLLECTING --occurred-at 2026-08-30T12:01:00Z
+```
+
+PASS/FAIL/REVIEW transitions additionally require `--evaluation` pointing to a
+matching `forgegate.policy-evaluation.v1` document. These commands emit new
+immutable documents but do not persist them; transactional SQLite storage is
+the next Phase 2 checkpoint.
 
 Coverage artifacts use the same provenance options:
 

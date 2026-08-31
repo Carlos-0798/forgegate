@@ -21,6 +21,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/DOMAIN_MODEL.md",
     "docs/architecture/SARIF_COLLECTOR.md",
     "docs/architecture/POLICY_ENGINE.md",
+    "docs/architecture/CANDIDATE_LIFECYCLE.md",
     "examples/sample-python-api/artifacts/junit.xml",
     "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
@@ -30,14 +31,20 @@ REQUIRED_SDIST_PATHS = (
     "examples/sample-python-api/forgegate.yaml",
     "examples/sample-python-api/evidence/pass-bundle.json",
     "examples/sample-python-api/evidence/fail-bundle.json",
+    "examples/sample-python-api/candidates/draft.json",
+    "examples/sample-python-api/candidates/evaluating.json",
     "reports/PHASE_1_JUNIT_SLICE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_1_COVERAGE_SLICE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_1_BENCHMARK_SLICE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_1_SARIF_SLICE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_2_POLICY_ENGINE_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_2_CANDIDATE_LIFECYCLE_ACCEPTANCE_REPORT.md",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
+    "schemas/forgegate.release-candidate.v1.schema.json",
+    "schemas/forgegate.candidate-transition.v1.schema.json",
+    "schemas/forgegate.candidate-transition-result.v1.schema.json",
     "schemas/forgegate.benchmark.v1.schema.json",
     "tests/test_models.py",
     "tests/golden/junit_summary.json",
@@ -46,8 +53,11 @@ REQUIRED_SDIST_PATHS = (
     "tests/golden/lcov_summary.json",
     "tests/golden/policy_pass.json",
     "tests/golden/policy_fail.json",
+    "tests/golden/candidate_collecting_transition.json",
+    "tests/golden/candidate_pass_transition.json",
     "tests/golden/sarif_summary.json",
     "tools/verify.py",
+    "tests/test_candidate_lifecycle.py",
 )
 
 
@@ -133,6 +143,56 @@ def main() -> int:
                 cwd=root,
                 expected_returncode=expected_returncode,
             )
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "candidate",
+                "create",
+                "--project",
+                "sample-api",
+                "--version",
+                "1.2.0",
+                "--commit",
+                "a" * 40,
+                "--created-at",
+                "2026-08-30T12:00:00Z",
+            ],
+            cwd=root,
+        )
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "candidate",
+                "transition",
+                str(REPOSITORY_ROOT / "examples/sample-python-api/candidates/draft.json"),
+                "--to",
+                "COLLECTING",
+                "--occurred-at",
+                "2026-08-30T12:01:00Z",
+            ],
+            cwd=root,
+        )
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "candidate",
+                "transition",
+                str(REPOSITORY_ROOT / "examples/sample-python-api/candidates/evaluating.json"),
+                "--to",
+                "PASS",
+                "--occurred-at",
+                "2026-08-30T21:00:00Z",
+                "--evaluation",
+                str(REPOSITORY_ROOT / "tests/golden/policy_pass.json"),
+            ],
+            cwd=root,
+        )
         run([str(python), "-m", "forgegate", "doctor"], cwd=root)
         run(
             [

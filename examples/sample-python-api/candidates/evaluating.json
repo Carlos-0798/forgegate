@@ -1,0 +1,15 @@
+{
+  "schema_version": "forgegate.release-candidate.v1",
+  "candidate_id": "cand-dab25eb0be1a0107b3996080",
+  "project_id": "sample-api",
+  "version": "1.2.0",
+  "commit_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "source_branch": "main",
+  "release_track": "pull-request",
+  "status": "EVALUATING",
+  "revision": 3,
+  "created_at": "2026-08-30T12:00:00Z",
+  "updated_at": "2026-08-30T20:59:00Z",
+  "evaluated_at": null,
+  "evaluation_id": null
+}

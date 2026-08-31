@@ -29,7 +29,7 @@
 - [x] Enforce trust, verification, age, presence, conflict, and strict operator
   semantics without silent PASS.
 - [x] Emit versioned per-rule machine results and CI exit codes 0/1/2/3.
-- [ ] Add release-candidate lifecycle and legal state transitions.
+- [x] Add release-candidate lifecycle and legal state transitions.
 - [ ] Add transactional SQLite persistence and concurrency controls.
 - [ ] Generate deterministic JSON and Markdown attestations.
 - [ ] Complete the local CLI MVP around persisted candidates.

@@ -1,8 +1,8 @@
 # Project status
 
 - Date: 2026-08-30
-- Version: 0.1.0.dev5
-- Stage: Phase 2 deterministic policy-evaluation slice complete
+- Version: 0.1.0.dev6
+- Stage: Phase 2 release-candidate lifecycle slice complete
 - Product maturity: pre-MVP
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
@@ -45,23 +45,32 @@
   fingerprints, evidence references, explanations, and remediation hints;
 - `evaluate-policy` PASS/FAIL/REVIEW/ERROR exit codes 0/1/2/3 with committed
   generic PASS and FAIL examples.
+- strict, versioned release-candidate, candidate-transition, and transition-result
+  contracts;
+- deterministic DRAFT creation plus the complete legal state graph with exact
+  revision, timestamp, terminal-state, and transition-fingerprint invariants;
+- PASS/FAIL/REVIEW terminal transitions bound to matching policy evaluation ID,
+  commit, decision, and timestamp;
+- stateless `candidate create` and `candidate transition` CLI previews with
+  generic DRAFT/EVALUATING fixtures and structural/evaluation-bound Goldens.
 
 ## Not implemented
 
-Candidate lifecycle, persistence, attestations, API, external plugins, GitHub
-integration, AFE collector, MSP430 collector, and hardware access.
+SQLite persistence, attestations, API, external plugins, GitHub integration,
+AFE collector, MSP430 collector, and hardware access. Candidate CLI commands
+currently emit documents and do not save application state.
 
 ## Accepted local checkpoint
 
 - PowerShell environment bootstrap: PASS
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
-- mypy strict: PASS across 21 package and verification-tool source files
-- pytest: 324 passed, 1 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 100% across 2,031 statements and 624 branches
+- mypy strict: PASS across 25 package and verification-tool source files
+- pytest: 357 passed, 1 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 100% across 2,246 statements and 698 branches
 - committed JSON Schema drift check: PASS
-- three example project/policy documents: VALID
-- four canonical versioned document Schemas plus one Benchmark artifact Schema:
+- project/policy/candidate/transition example documents: VALID
+- seven canonical versioned document Schemas plus one Benchmark artifact Schema:
   drift-checked and parsed
 - complete sdist manifest and wheel build: PASS
 - repository-external wheel installation and CLI smoke: PASS
@@ -71,4 +80,4 @@ integration, AFE collector, MSP430 collector, and hardware access.
 
 See `reports/PHASE_0_ENVIRONMENT_AUDIT.md` for the prerequisite audit and exact
 human-intervention boundary. See
-`reports/PHASE_2_POLICY_ENGINE_ACCEPTANCE_REPORT.md` for the current slice.
+`reports/PHASE_2_CANDIDATE_LIFECYCLE_ACCEPTANCE_REPORT.md` for the current slice.
