@@ -6,7 +6,7 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 3 Analog Validation Studio compatibility slice implemented; not production-ready.**
+**Phase 4 audited evidence-bundle assembly implemented; not production-ready.**
 
 Implemented and host-verified in this checkpoint:
 
@@ -69,12 +69,21 @@ Implemented and host-verified in this checkpoint:
   instrument identity or calibration provenance;
 - `collect-analog-validation` CLI preview, compatibility fixture, Golden
   projection, adversarial tests, Schema drift gate, and installed-wheel smoke.
+- strict, bounded collection-result JSON loading with referenced-artifact
+  byte revalidation;
+- `forgegate.evidence-bundle-assembly.v1` receipts preserving raw result
+  hashes, normalized fingerprints, collector versions, artifacts, evidence
+  IDs, and warnings;
+- `assemble-evidence` with candidate-commit binding, duplicate/conflict gates,
+  content-derived identity, and fail-closed warning handling;
+- policy evaluation of either a direct evidence bundle or a validated assembly.
 
 Not implemented yet:
 
 - REST API, plugin execution, GitHub integration, database authorization,
   backup/repair, or signed provenance/key management;
 - MSP430 compatibility collector;
+- persisted candidate-to-assembly binding and authenticated provenance;
 - any AFE/MSP430 runtime integration or hardware operation;
 - any production deployment or public release.
 
@@ -107,6 +116,22 @@ Preview the first collection path without making a release decision:
 The command's `COMPLETE` status means collection completed; the evidence's
 `passed` or `failed` status describes the tests. Policy evaluation is a separate
 explicit action.
+
+After saving one or more collection command JSON outputs beneath the same
+artifact root, assemble them for one candidate:
+
+```powershell
+.\.venv\Scripts\python.exe -m forgegate assemble-evidence `
+  work/junit.collection.json work/coverage.collection.json `
+  --root examples/sample-python-api `
+  --commit aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa `
+  --generated-at 2026-08-30T20:31:00Z
+```
+
+The original artifacts must still match the references in every collection
+result. Any warning rejects by default; `--retain-warnings` explicitly keeps
+the warnings in the audited envelope. The resulting JSON can be passed directly
+as the evidence argument to `evaluate-policy`.
 
 Evaluate committed PASS and FAIL examples at a caller-supplied timestamp:
 
@@ -265,8 +290,10 @@ until a separate ForgeGate policy evaluates it.
 ForgeGate does not run builds or tests, control devices, or perform analog
 measurements. The Studio integration consumes only its frozen public JSON
 artifact; it neither imports Studio code nor converts current `BENCH_*` labels
-into physical verification. The MSP430 controller may later expose a separate
-versioned artifact for another optional collector.
+into physical verification. Assembly only revalidates local artifacts and
+joins existing evidence; SHA-256 is not producer authentication. The MSP430
+controller may later expose a separate versioned artifact for another optional
+collector.
 
 ## License status
 

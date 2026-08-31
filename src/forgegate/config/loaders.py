@@ -3,6 +3,7 @@ from pathlib import Path
 import yaml
 from pydantic import ValidationError
 
+from forgegate.assembly import EvidenceBundleAssembly
 from forgegate.attestations import ReleaseAttestation
 from forgegate.candidates.models import (
     CandidateTransition,
@@ -17,6 +18,7 @@ type SupportedConfig = (
     ProjectConfig
     | PolicyConfig
     | EvidenceBundle
+    | EvidenceBundleAssembly
     | PolicyEvaluation
     | ReleaseCandidate
     | CandidateTransition
@@ -28,6 +30,7 @@ SCHEMA_MODELS: dict[str, type[SupportedConfig]] = {
     "forgegate.project.v1": ProjectConfig,
     "forgegate.policy.v1": PolicyConfig,
     "forgegate.evidence-bundle.v1": EvidenceBundle,
+    "forgegate.evidence-bundle-assembly.v1": EvidenceBundleAssembly,
     "forgegate.policy-evaluation.v1": PolicyEvaluation,
     "forgegate.release-candidate.v1": ReleaseCandidate,
     "forgegate.candidate-transition.v1": CandidateTransition,

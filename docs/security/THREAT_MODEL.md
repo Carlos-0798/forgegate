@@ -147,6 +147,21 @@ The current slice has no authenticated producer and runs no plugin code.
 | Pathological result JSON exhausts resources | Upstream 2,000,000-byte limit plus configured node/depth limits |
 | Claimed producer commit is confused with byte integrity | Separate caller execution context/trust from registry-owned artifact SHA-256 |
 
+## Addressed in the Phase 4 evidence-assembly slice
+
+| Threat | Current control |
+|---|---|
+| Malformed collection-result JSON crosses the collector boundary | Strict UTF-8, duplicate-key, finite-number, schema, node, and depth validation |
+| Collection result escapes the declared workspace | Root-confined regular-file registration with stable byte reads |
+| Original artifact changes after collection | Re-register every referenced artifact and require exact path, media type, size, and SHA-256 equality |
+| Same collection is silently counted twice | Reject duplicate raw source paths and duplicate normalized-result fingerprints |
+| Evidence is mixed across candidate commits | Nested `EvidenceBundle` requires every record commit to equal the candidate commit |
+| Receipt provenance is detached from bundle evidence | Require exact ordered evidence-ID coverage and receipt-owned artifact identity |
+| Same artifact path names conflicting bytes | Reject path collisions with different media type, size, or SHA-256 |
+| Collector warning disappears during aggregation | Reject by default; explicit retention preserves the complete warning records |
+| Assembly content changes under the same identity | Recompute `assembly_id` over the nested bundle and all receipts |
+| Byte integrity is mistaken for producer authenticity | Document SHA-256 as local identity only; no signature or CI identity claim |
+
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;

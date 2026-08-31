@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.0.dev10 — 2026-08-31
+
+- Added strict, bounded loading of collector `CollectionResult` JSON plus exact
+  revalidation of every referenced source artifact.
+- Added `forgegate.evidence-bundle-assembly.v1`, retaining raw result identity,
+  normalized fingerprints, collector versions, artifact references, ordered
+  evidence IDs, and warnings under a content-derived assembly ID.
+- Added `assemble-evidence`; warnings fail closed unless explicitly retained,
+  and duplicate results, conflicting artifacts, commit mismatches, and temporal
+  inconsistencies are rejected.
+- Allowed `evaluate-policy` to consume a validated assembly while preserving
+  compatibility with direct evidence bundles.
+- Added canonical Schema, deterministic Golden, adversarial tests,
+  architecture/threat documentation, and clean-wheel assembly/evaluation smoke.
+
 ## 0.1.0.dev9 — 2026-08-31
 
 - Added the optional, artifact-only Analog Validation Studio

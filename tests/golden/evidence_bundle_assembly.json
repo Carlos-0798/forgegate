@@ -1,0 +1,70 @@
+{
+  "schema_version": "forgegate.evidence-bundle-assembly.v1",
+  "assembly_id": "sha256:db3ef96d9de57804dd85068d439240f4a9caeec63e89a799f6b13ea8b2018eb2",
+  "warning_disposition": "none",
+  "bundle": {
+    "schema_version": "forgegate.evidence-bundle.v1",
+    "producer": "forgegate-test",
+    "producer_version": "1.0.0",
+    "candidate_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "generated_at": "2026-08-30T20:31:00Z",
+    "evidence": [
+      {
+        "evidence_id": "test-summary-12345678",
+        "kind": "test.summary",
+        "scope": "repository",
+        "value": {
+          "failures": 0
+        },
+        "unit": null,
+        "status": "passed",
+        "source_tool": "pytest",
+        "source_version": "8.4.2",
+        "execution_context": {
+          "commit_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+          "operating_system": null,
+          "architecture": null,
+          "runtime": null,
+          "ci_provider": null,
+          "ci_run_id": null,
+          "tags": {}
+        },
+        "artifact": {
+          "path_or_uri": "artifacts/junit.xml",
+          "media_type": "application/junit+xml",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "size_bytes": 100
+        },
+        "collected_at": "2026-08-30T20:30:00Z",
+        "trust": "claimed_ci_metadata",
+        "verification_level": "ci_validated",
+        "tags": {}
+      }
+    ]
+  },
+  "collections": [
+    {
+      "source": {
+        "path_or_uri": "collections/result.json",
+        "media_type": "application/vnd.forgegate.collection-result+json",
+        "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "size_bytes": 100
+      },
+      "collector_name": "test",
+      "collector_version": "forgegate-test.v1",
+      "result_fingerprint": "sha256:9dbe2e971b4bc4565cfa9f91e9a65c51fd6b079bc52bf9069b1365d80453b4e5",
+      "artifacts": [
+        {
+          "path_or_uri": "artifacts/junit.xml",
+          "media_type": "application/junit+xml",
+          "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "size_bytes": 100
+        }
+      ],
+      "evidence_ids": [
+        "test-summary-12345678"
+      ],
+      "warnings": []
+    }
+  ]
+}

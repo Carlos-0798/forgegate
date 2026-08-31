@@ -8,7 +8,14 @@ import typer
 from pydantic import ValidationError
 
 from forgegate import __version__
-from forgegate.artifacts import ArtifactBoundaryError, ArtifactRegistry
+from forgegate.artifacts import ArtifactBoundaryError, ArtifactError, ArtifactRegistry
+from forgegate.assembly import (
+    CollectionResultLoader,
+    CollectionResultLoadError,
+    EvidenceAssemblyError,
+    EvidenceBundleAssembly,
+    assemble_evidence_bundle,
+)
 from forgegate.attestations import AttestationPublishError, publish_attestation_bundle
 from forgegate.candidates import (
     CandidateLifecycleError,
@@ -58,7 +65,7 @@ def doctor() -> None:
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
         "supported_artifact_schemas": sorted(ARTIFACT_SCHEMAS),
-        "phase": "phase3-analog-validation-compatibility",
+        "phase": "phase4-evidence-bundle-assembly",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 
@@ -340,11 +347,18 @@ def evaluate_policy_command(
     """Evaluate a policy against an evidence bundle at an explicit timestamp."""
     try:
         policy = load_config(policy_path)
-        bundle = load_config(evidence_path)
+        evidence_document = load_config(evidence_path)
         if not isinstance(policy, PolicyConfig):
             raise ValueError("policy path must contain forgegate.policy.v1")
-        if not isinstance(bundle, EvidenceBundle):
-            raise ValueError("evidence path must contain forgegate.evidence-bundle.v1")
+        if isinstance(evidence_document, EvidenceBundleAssembly):
+            bundle = evidence_document.bundle
+        elif isinstance(evidence_document, EvidenceBundle):
+            bundle = evidence_document
+        else:
+            raise ValueError(
+                "evidence path must contain forgegate.evidence-bundle.v1 or "
+                "forgegate.evidence-bundle-assembly.v1"
+            )
         timestamp = datetime.fromisoformat(evaluated_at.replace("Z", "+00:00"))
         result = evaluate_policy(policy, bundle, evaluated_at=timestamp)
     except (ConfigLoadError, ValidationError, ValueError) as exc:
@@ -360,6 +374,43 @@ def evaluate_policy_command(
     }
     if result.decision is not Decision.PASS:
         raise typer.Exit(code=exit_codes[result.decision])
+
+
+@app.command("assemble-evidence")
+def assemble_evidence(
+    collection_paths: Annotated[
+        list[str], typer.Argument(help="Collection-result JSON paths relative to --root")
+    ],
+    commit: Annotated[str, typer.Option("--commit")],
+    generated_at: Annotated[str, typer.Option("--generated-at")],
+    root: Annotated[Path, typer.Option("--root", file_okay=False, resolve_path=True)] = Path("."),
+    producer: Annotated[str, typer.Option("--producer")] = "forgegate",
+    producer_version: Annotated[str, typer.Option("--producer-version")] = __version__,
+    retain_warnings: Annotated[bool, typer.Option("--retain-warnings")] = False,
+) -> None:
+    """Assemble audited collection results into one candidate-bound evidence bundle."""
+    try:
+        registry = ArtifactRegistry(root)
+        loader = CollectionResultLoader(registry)
+        loaded = [loader.load(path) for path in collection_paths]
+        assembly = assemble_evidence_bundle(
+            loaded,
+            candidate_commit=commit,
+            generated_at=datetime.fromisoformat(generated_at.replace("Z", "+00:00")),
+            producer=producer,
+            producer_version=producer_version,
+            retain_warnings=retain_warnings,
+        )
+    except (
+        ArtifactError,
+        CollectionResultLoadError,
+        EvidenceAssemblyError,
+        ValidationError,
+        ValueError,
+    ) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(assembly.model_dump_json(indent=2))
 
 
 @app.command("collect-junit")

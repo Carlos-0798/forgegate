@@ -49,3 +49,20 @@
   aligned in this project context and its public report contract is frozen.
 - [ ] Revisit human-readable Studio report ingestion only after its Phase 5
   product report contract is implemented and frozen upstream.
+
+## Phase 4 — audited evidence assembly
+
+- [x] Add a strict, versioned collection-result loader with duplicate-key,
+  non-finite-number, encoding, depth, node, and root-confinement gates.
+- [x] Revalidate every referenced artifact against its current exact bytes.
+- [x] Assemble multiple completed results for one candidate commit while
+  retaining raw result identity, normalized fingerprints, artifacts, evidence
+  IDs, and warnings.
+- [x] Reject warnings by default and require explicit retention without
+  suppressing them.
+- [x] Let the existing policy CLI consume either a direct evidence bundle or a
+  validated assembly.
+- [x] Add canonical Schema, Golden, adversarial tests, architecture/security
+  documentation, and clean-install smoke.
+- [ ] Bind an accepted assembly to the persisted candidate workflow; keep this
+  separate from signature or producer-authentication work.

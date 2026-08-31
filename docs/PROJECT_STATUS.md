@@ -1,9 +1,9 @@
 # Project status
 
 - Date: 2026-08-31
-- Version: 0.1.0.dev9
-- Stage: Phase 3 Analog Validation Studio compatibility slice implemented
-- Product maturity: local CLI MVP plus first software-peer collector; not production-ready
+- Version: 0.1.0.dev10
+- Stage: Phase 4 audited evidence-bundle assembly implemented
+- Product maturity: local CLI MVP with software-peer collection and audited aggregation; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
 - Remote/publication status: local only; no remote repository created
@@ -86,12 +86,27 @@
   `system_observed` and warned rather than promoted to physical verification;
 - committed sample, Golden normalization, compatibility Schema, adversarial
   tests, architecture/security documentation, and clean-install smoke path.
+- strict, bounded loading of collection-result JSON with UTF-8, duplicate-key,
+  finite-number, depth, node, and exact-model gates;
+- exact re-registration of every referenced artifact so missing, replaced, or
+  metadata-conflicting bytes fail before assembly;
+- versioned `forgegate.evidence-bundle-assembly.v1` containing a normal
+  candidate-bound bundle plus one audited receipt per collector output;
+- raw result file SHA-256, normalized result fingerprint, collector identity,
+  original artifact references, ordered evidence IDs, and warnings retained;
+- duplicate result/source, artifact conflict, evidence ownership, commit, time,
+  and content-derived assembly identity invariants;
+- `assemble-evidence` plus policy-CLI compatibility with direct bundles and
+  validated assemblies;
+- committed assembly Schema, Golden, adversarial tests, architecture/threat
+  documentation, and clean-install assembly-to-policy smoke path.
 
 ## Not implemented
 
 REST API, external plugins, GitHub integration, signatures/key management,
 database authorization, backup/repair, MSP430 collector, Studio Phase 5
-human-readable report ingestion, and hardware access.
+human-readable report ingestion, persisted candidate-to-assembly binding,
+authenticated provenance/signatures, and hardware access.
 
 ## Accepted local checkpoint
 
@@ -99,13 +114,15 @@ human-readable report ingestion, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 486 passed, 1 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 100% across 3,393 statements and 964 branches
+- pytest: 506 passed, 1 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 100% across 3,628 statements and 1,036 branches
 - Analog Validation collector focus: 59 passed; 100% across 431 statements and
   106 branches
+- evidence-assembly focus: 20 passed; 100% across 218 statements and 70
+  branches
 - committed JSON Schema drift check: PASS
 - project/policy/candidate/transition example documents: VALID
-- eight canonical versioned document Schemas plus Benchmark and Analog
+- nine canonical versioned document Schemas plus Benchmark and Analog
   Validation artifact Schemas: drift-checked and parsed
 - complete sdist manifest and wheel build: PASS
 - repository-external wheel installation and CLI smoke: PASS
@@ -115,5 +132,5 @@ human-readable report ingestion, and hardware access.
 
 See `reports/PHASE_0_ENVIRONMENT_AUDIT.md` for the prerequisite audit and exact
 human-intervention boundary. See
-`reports/PHASE_3_ANALOG_VALIDATION_COMPATIBILITY_ACCEPTANCE_REPORT.md` for the
+`reports/PHASE_4_EVIDENCE_BUNDLE_ASSEMBLY_ACCEPTANCE_REPORT.md` for the
 current slice.

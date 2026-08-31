@@ -101,6 +101,13 @@ def main() -> int:
             "validate-config",
             "tests/golden/release_attestation_pass.json",
         ],
+        [
+            python,
+            "-m",
+            "forgegate",
+            "validate-config",
+            "tests/golden/evidence_bundle_assembly.json",
+        ],
     ]
     for command in commands:
         run(command)

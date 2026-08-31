@@ -11,6 +11,11 @@ committed JSON Schemas with:
 Schema export is deterministic for a fixed ForgeGate version. Review and commit
 model changes and regenerated schemas together.
 
+`forgegate.evidence-bundle-assembly.v1.schema.json` describes the audited
+envelope around a candidate-bound evidence bundle and its collection receipts.
+It is accepted by configuration validation and policy evaluation without
+changing the nested evidence contract.
+
 `forgegate.benchmark.v1.schema.json` is the ForgeGate-owned Benchmark artifact
 contract. `analog-validation.result-export.v1.schema.json` is ForgeGate's
 consumer-side structural mirror of the upstream Studio contract; it does not

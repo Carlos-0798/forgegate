@@ -11,7 +11,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — eight document plus two artifact schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — nine document plus two artifact schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Analog Validation result Schema mirror | committed upstream-consumer contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
@@ -62,9 +62,14 @@
 | AFE `result-export.v1` compatibility | frozen public artifact, adversarial tests, Golden output | PASS — local host; no Studio import/device access |
 | AFE source-to-verification mapping | all nine v1 sources + bench cap tests | PASS — `BENCH_*` maxes at `system_observed` |
 | Installed AFE collector CLI | clean wheel + sample result | PASS — local host |
+| Collection-result strict loading | malformed/duplicate/non-finite/resource adversarial tests | PASS — local host |
+| Referenced-artifact revalidation | missing/replaced/path/hash tests | PASS — local host |
+| Multi-collector evidence assembly | model/service/CLI + committed Golden | PASS — local host |
+| Warning retention boundary | default rejection + explicit retention tests | PASS — local host |
+| Assembly-fed policy evaluation | direct and clean-wheel CLI integration | PASS — local host |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
 
-See `reports/PHASE_3_ANALOG_VALIDATION_COMPATIBILITY_ACCEPTANCE_REPORT.md` for
+See `reports/PHASE_4_EVIDENCE_BUNDLE_ASSEMBLY_ACCEPTANCE_REPORT.md` for
 the current exact test and coverage result. Earlier acceptance reports remain
 historical records.

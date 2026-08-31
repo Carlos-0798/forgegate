@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import os
+import shutil
 import subprocess
 import sys
 import tarfile
@@ -25,6 +26,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/SQLITE_CANDIDATE_STORE.md",
     "docs/architecture/ATTESTATIONS.md",
     "docs/architecture/ANALOG_VALIDATION_COLLECTOR.md",
+    "docs/architecture/EVIDENCE_BUNDLE_ASSEMBLY.md",
     "examples/sample-python-api/artifacts/junit.xml",
     "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
@@ -46,6 +48,7 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_2_SQLITE_CANDIDATE_STORE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_2_ATTESTATION_ACCEPTANCE_REPORT.md",
     "reports/PHASE_3_ANALOG_VALIDATION_COMPATIBILITY_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_4_EVIDENCE_BUNDLE_ASSEMBLY_ACCEPTANCE_REPORT.md",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
@@ -53,12 +56,14 @@ REQUIRED_SDIST_PATHS = (
     "schemas/forgegate.candidate-transition.v1.schema.json",
     "schemas/forgegate.candidate-transition-result.v1.schema.json",
     "schemas/forgegate.release-attestation.v1.schema.json",
+    "schemas/forgegate.evidence-bundle-assembly.v1.schema.json",
     "schemas/forgegate.benchmark.v1.schema.json",
     "schemas/analog-validation.result-export.v1.schema.json",
     "tests/test_models.py",
     "tests/golden/junit_summary.json",
     "tests/golden/benchmark_metrics.json",
     "tests/golden/analog_validation_result.json",
+    "tests/golden/evidence_bundle_assembly.json",
     "tests/golden/coverage_xml.json",
     "tests/golden/lcov_summary.json",
     "tests/golden/policy_pass.json",
@@ -74,6 +79,7 @@ REQUIRED_SDIST_PATHS = (
     "tests/test_candidate_store_cli.py",
     "tests/test_attestations.py",
     "tests/test_analog_validation_collector.py",
+    "tests/test_evidence_assembly.py",
 )
 
 
@@ -87,6 +93,18 @@ def run(
     completed = subprocess.run(command, cwd=cwd, check=False)
     if completed.returncode != expected_returncode:
         raise SystemExit(completed.returncode)
+
+
+def run_capture(command: list[str], output: Path, *, cwd: Path) -> None:
+    print(f"\n> {' '.join(command)}", flush=True)
+    completed = subprocess.run(command, cwd=cwd, check=False, capture_output=True, text=True)
+    if completed.stdout:
+        print(completed.stdout, end="", flush=True)
+    if completed.stderr:
+        print(completed.stderr, end="", file=sys.stderr, flush=True)
+    if completed.returncode != 0:
+        raise SystemExit(completed.returncode)
+    output.write_text(completed.stdout, encoding="utf-8")
 
 
 def clean_python(environment: Path) -> Path:
@@ -141,6 +159,107 @@ def main() -> int:
                 "install",
                 "--disable-pip-version-check",
                 str(wheel),
+            ],
+            cwd=root,
+        )
+        assembly_root = root / "assembly-inputs"
+        artifact_directory = assembly_root / "artifacts"
+        artifact_directory.mkdir(parents=True)
+        shutil.copyfile(
+            REPOSITORY_ROOT / "examples/sample-python-api/artifacts/junit-pass.xml",
+            artifact_directory / "junit-pass.xml",
+        )
+        shutil.copyfile(
+            REPOSITORY_ROOT / "examples/sample-python-api/artifacts/benchmark.json",
+            artifact_directory / "benchmark.json",
+        )
+        junit_collection = assembly_root / "junit.collection.json"
+        benchmark_collection = assembly_root / "benchmark.collection.json"
+        run_capture(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "collect-junit",
+                "artifacts/junit-pass.xml",
+                "--root",
+                str(assembly_root),
+                "--commit",
+                "a" * 40,
+                "--collected-at",
+                "2026-08-30T20:30:00Z",
+                "--source-tool",
+                "pytest",
+                "--source-version",
+                "8.4.2",
+                "--trust",
+                "claimed_ci_metadata",
+                "--verification-level",
+                "ci_validated",
+            ],
+            junit_collection,
+            cwd=root,
+        )
+        run_capture(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "collect-benchmark",
+                "artifacts/benchmark.json",
+                "--root",
+                str(assembly_root),
+                "--commit",
+                "a" * 40,
+                "--collected-at",
+                "2026-08-30T20:30:00Z",
+                "--trust",
+                "claimed_ci_metadata",
+                "--verification-level",
+                "ci_validated",
+            ],
+            benchmark_collection,
+            cwd=root,
+        )
+        assembly_path = assembly_root / "assembly.json"
+        run_capture(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "assemble-evidence",
+                junit_collection.name,
+                benchmark_collection.name,
+                "--root",
+                str(assembly_root),
+                "--commit",
+                "a" * 40,
+                "--generated-at",
+                "2026-08-30T20:31:00Z",
+            ],
+            assembly_path,
+            cwd=root,
+        )
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "validate-config",
+                str(assembly_path),
+            ],
+            cwd=root,
+        )
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "evaluate-policy",
+                str(REPOSITORY_ROOT / "examples/sample-python-api/policies/pull-request.yaml"),
+                str(assembly_path),
+                "--evaluated-at",
+                "2026-08-30T21:00:00Z",
             ],
             cwd=root,
         )
