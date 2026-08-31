@@ -1,0 +1,32 @@
+{
+  "schema_version": "forgegate.policy-evaluation.v1",
+  "evaluation_id": "sha256:5c3cff8b9614969aa770a0e6532737508ebdf05662ca9bb76e5e7dd7908aa3c4",
+  "policy_name": "pull-request",
+  "policy_fingerprint": "sha256:26de07d5718ca9d55362a958791d98993d6dc79ea244f48c003e32bd3a4f0f3d",
+  "evidence_fingerprint": "sha256:aba79a7f880ffb2e10a308eb5c4c289f1a0b5c5aadf830e48c05f5e328956fd1",
+  "candidate_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "evaluated_at": "2026-08-30T21:00:00Z",
+  "decision": "FAIL",
+  "rule_results": [
+    {
+      "rule_id": "tests-pass",
+      "claim": "tests.required-pass",
+      "decision": "FAIL",
+      "mandatory": true,
+      "evidence_kind": "test.summary",
+      "aggregation": "value",
+      "operator": "equals",
+      "expected": 0,
+      "actual": 1,
+      "evidence_ids": [
+        "test-summary-9b27d36ba60ddfd5"
+      ],
+      "reason_code": "RULE_NOT_SATISFIED",
+      "explanation": "Eligible evidence does not satisfy the policy expression.",
+      "remediation_hint": "Provide evidence that satisfies equals."
+    }
+  ],
+  "evaluated_evidence_ids": [
+    "test-summary-9b27d36ba60ddfd5"
+  ]
+}

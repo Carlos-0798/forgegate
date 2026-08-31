@@ -1,0 +1,47 @@
+{
+  "schema_version": "forgegate.evidence-bundle.v1",
+  "producer": "forgegate-example",
+  "producer_version": "0.1.0.dev5",
+  "candidate_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "generated_at": "2026-08-30T20:31:00Z",
+  "evidence": [
+    {
+      "evidence_id": "test-summary-d5babd93ca28025f",
+      "kind": "test.summary",
+      "scope": "repository",
+      "value": {
+        "total": 3,
+        "passed": 3,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "duration_seconds": 0.3
+      },
+      "unit": null,
+      "status": "passed",
+      "source_tool": "pytest",
+      "source_version": "8.4.2",
+      "execution_context": {
+        "commit_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "operating_system": null,
+        "architecture": null,
+        "runtime": null,
+        "ci_provider": null,
+        "ci_run_id": null,
+        "tags": {}
+      },
+      "artifact": {
+        "path_or_uri": "artifacts/junit-pass.xml",
+        "media_type": "application/junit+xml",
+        "sha256": "d5babd93ca28025fb34424c2514a00ea4cb26edda608406630e00cf253097fea",
+        "size_bytes": 380
+      },
+      "collected_at": "2026-08-30T20:30:00Z",
+      "trust": "claimed_ci_metadata",
+      "verification_level": "ci_validated",
+      "tags": {
+        "collector": "forgegate-junit.v1"
+      }
+    }
+  ]
+}

@@ -23,8 +23,9 @@ from forgegate.collectors import (
     SarifCollector,
 )
 from forgegate.config import ConfigLoadError, load_config
-from forgegate.domain.enums import EvidenceTrust, VerificationLevel
-from forgegate.domain.models import ExecutionContext
+from forgegate.domain.enums import Decision, EvidenceTrust, VerificationLevel
+from forgegate.domain.models import EvidenceBundle, ExecutionContext, PolicyConfig
+from forgegate.policy import evaluate_policy
 from forgegate.schema_registry import SCHEMAS, schema_filename
 
 app = typer.Typer(
@@ -42,7 +43,7 @@ def doctor() -> None:
         "python": platform.python_version(),
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
-        "phase": "phase1-standard-collectors",
+        "phase": "phase2-policy-evaluation",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 
@@ -71,6 +72,37 @@ def export_schemas(
         payload = json.dumps(model.model_json_schema(), indent=2, sort_keys=True) + "\n"
         target.write_text(payload, encoding="utf-8")
         typer.echo(str(target))
+
+
+@app.command("evaluate-policy")
+def evaluate_policy_command(
+    policy_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    evidence_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    evaluated_at: Annotated[str, typer.Option("--evaluated-at")],
+) -> None:
+    """Evaluate a policy against an evidence bundle at an explicit timestamp."""
+    try:
+        policy = load_config(policy_path)
+        bundle = load_config(evidence_path)
+        if not isinstance(policy, PolicyConfig):
+            raise ValueError("policy path must contain forgegate.policy.v1")
+        if not isinstance(bundle, EvidenceBundle):
+            raise ValueError("evidence path must contain forgegate.evidence-bundle.v1")
+        timestamp = datetime.fromisoformat(evaluated_at.replace("Z", "+00:00"))
+        result = evaluate_policy(policy, bundle, evaluated_at=timestamp)
+    except (ConfigLoadError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+
+    typer.echo(result.model_dump_json(indent=2))
+    exit_codes = {
+        Decision.PASS: 0,
+        Decision.FAIL: 1,
+        Decision.REVIEW: 2,
+        Decision.ERROR: 3,
+    }
+    if result.decision is not Decision.PASS:
+        raise typer.Exit(code=exit_codes[result.decision])
 
 
 @app.command("collect-junit")

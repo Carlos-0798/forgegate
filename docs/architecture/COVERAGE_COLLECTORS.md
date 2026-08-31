@@ -34,7 +34,7 @@ known zero-opportunity count has status `not_applicable`. If branch information
 is absent, no branch evidence is manufactured and an audit warning is returned.
 
 Percentages are rounded deterministically to six decimal places. They remain
-facts for the future policy engine; neither collector applies a minimum.
+facts for explicit policy evaluation; neither collector applies a minimum.
 
 ## Coverage XML v1
 

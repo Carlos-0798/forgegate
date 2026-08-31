@@ -11,7 +11,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — three configuration schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — four versioned document schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
 | Ruff | full repository | PASS |
@@ -38,10 +38,17 @@
 | Benchmark numeric/schema bounds | finite/range/unknown-field tests | PASS — local host |
 | Duplicate metric identity | scope/name collision tests | PASS — local host |
 | Installed Benchmark CLI path | clean wheel environment | PASS — local host |
-| Policy evaluation | unit/property/integration tests | NOT IMPLEMENTED |
+| Policy evaluation | unit/adversarial/integration tests | PASS — local host, 100% branch coverage |
+| Policy decision exit codes | installed CLI PASS/FAIL smoke | PASS — 0/1; unit-tested 2/3 |
+| Explicit time and evidence age | boundary/adversarial tests | PASS — local host |
+| Trust and verification thresholds | explicit-rank tests | PASS — local host |
+| 1,000-record policy evaluation | local performance guard | PASS — under 2 seconds |
+| Candidate lifecycle | state-transition tests | NOT IMPLEMENTED |
+| SQLite persistence | transaction/concurrency tests | NOT IMPLEMENTED |
+| JSON/Markdown attestations | deterministic golden output | NOT IMPLEMENTED |
 | AFE report compatibility | frozen public artifact contract | PLANNED |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
 
-See `reports/PHASE_1_BENCHMARK_SLICE_ACCEPTANCE_REPORT.md` for the current exact
+See `reports/PHASE_2_POLICY_ENGINE_ACCEPTANCE_REPORT.md` for the current exact
 test and coverage result. Earlier acceptance reports remain historical records.

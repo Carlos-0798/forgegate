@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.0.dev5 — 2026-08-30
+
+- Added deterministic `forgegate.policy.v1` evaluation against immutable
+  `forgegate.evidence-bundle.v1` inputs at an explicit timestamp.
+- Added explicit trust and verification ranking, evidence age gates, filter and
+  aggregation semantics, strict operators, conflict detection, and fail-closed
+  PASS/FAIL/REVIEW/ERROR precedence.
+- Added the versioned `forgegate.policy-evaluation.v1` result contract,
+  SHA-256 input/evaluation identities, rule explanations, remediation hints,
+  evidence references, and CI-compatible exit codes 0/1/2/3.
+- Added PASS/FAIL example bundles, adversarial tests, canonical Schema,
+  architecture documentation, and clean-wheel evaluation smoke coverage.
+
 ## 0.1.0.dev4 — 2026-08-30
 
 - Added the strict ForgeGate-owned `forgegate.benchmark.v1` artifact schema and

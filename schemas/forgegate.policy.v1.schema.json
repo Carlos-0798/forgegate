@@ -75,6 +75,20 @@
           "title": "Mandatory",
           "type": "boolean"
         },
+        "maximum_age_seconds": {
+          "anyOf": [
+            {
+              "maximum": 315576000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maximum Age Seconds"
+        },
         "minimum_trust": {
           "$ref": "#/$defs/EvidenceTrust",
           "default": "unsigned_local"

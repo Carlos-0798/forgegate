@@ -1,8 +1,8 @@
 # Project status
 
 - Date: 2026-08-30
-- Version: 0.1.0.dev4
-- Stage: Phase 1 standard collector baseline complete
+- Version: 0.1.0.dev5
+- Stage: Phase 2 deterministic policy-evaluation slice complete
 - Product maturity: pre-MVP
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
@@ -37,10 +37,18 @@
 - bounded Benchmark JSON collection into one `benchmark.metric` evidence record
   per unique scope/name, retaining value, unit, baseline, and tolerance;
 - `collect-benchmark` CLI preview, generic fixture, and golden output.
+- deterministic policy evaluation over immutable policy/evidence models at an
+  explicit timezone-aware timestamp;
+- explicit trust, verification, age, presence, filter, aggregation, strict
+  operator, conflict, and mandatory decision-precedence semantics;
+- versioned `forgegate.policy-evaluation.v1` outputs with canonical
+  fingerprints, evidence references, explanations, and remediation hints;
+- `evaluate-policy` PASS/FAIL/REVIEW/ERROR exit codes 0/1/2/3 with committed
+  generic PASS and FAIL examples.
 
 ## Not implemented
 
-Policy evaluation, persistence, attestations, API, external plugins, GitHub
+Candidate lifecycle, persistence, attestations, API, external plugins, GitHub
 integration, AFE collector, MSP430 collector, and hardware access.
 
 ## Accepted local checkpoint
@@ -48,12 +56,12 @@ integration, AFE collector, MSP430 collector, and hardware access.
 - PowerShell environment bootstrap: PASS
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
-- mypy strict: PASS across package and verification tools
-- pytest: 278 passed, 1 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 100% across 1,756 statements and 510 branches
+- mypy strict: PASS across 21 package and verification-tool source files
+- pytest: 324 passed, 1 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 100% across 2,031 statements and 624 branches
 - committed JSON Schema drift check: PASS
 - three example project/policy documents: VALID
-- three canonical configuration Schemas plus one Benchmark artifact Schema:
+- four canonical versioned document Schemas plus one Benchmark artifact Schema:
   drift-checked and parsed
 - complete sdist manifest and wheel build: PASS
 - repository-external wheel installation and CLI smoke: PASS
@@ -63,4 +71,4 @@ integration, AFE collector, MSP430 collector, and hardware access.
 
 See `reports/PHASE_0_ENVIRONMENT_AUDIT.md` for the prerequisite audit and exact
 human-intervention boundary. See
-`reports/PHASE_1_BENCHMARK_SLICE_ACCEPTANCE_REPORT.md` for the current slice.
+`reports/PHASE_2_POLICY_ENGINE_ACCEPTANCE_REPORT.md` for the current slice.

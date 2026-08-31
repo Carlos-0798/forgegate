@@ -20,33 +20,46 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/COVERAGE_COLLECTORS.md",
     "docs/architecture/DOMAIN_MODEL.md",
     "docs/architecture/SARIF_COLLECTOR.md",
+    "docs/architecture/POLICY_ENGINE.md",
     "examples/sample-python-api/artifacts/junit.xml",
+    "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
     "examples/sample-python-api/artifacts/security.sarif",
     "examples/sample-python-api/artifacts/coverage.info",
     "examples/sample-python-api/artifacts/coverage.xml",
     "examples/sample-python-api/forgegate.yaml",
+    "examples/sample-python-api/evidence/pass-bundle.json",
+    "examples/sample-python-api/evidence/fail-bundle.json",
     "reports/PHASE_1_JUNIT_SLICE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_1_COVERAGE_SLICE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_1_BENCHMARK_SLICE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_1_SARIF_SLICE_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_2_POLICY_ENGINE_ACCEPTANCE_REPORT.md",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
+    "schemas/forgegate.policy-evaluation.v1.schema.json",
     "schemas/forgegate.benchmark.v1.schema.json",
     "tests/test_models.py",
     "tests/golden/junit_summary.json",
     "tests/golden/benchmark_metrics.json",
     "tests/golden/coverage_xml.json",
     "tests/golden/lcov_summary.json",
+    "tests/golden/policy_pass.json",
+    "tests/golden/policy_fail.json",
     "tests/golden/sarif_summary.json",
     "tools/verify.py",
 )
 
 
-def run(command: list[str], *, cwd: Path = REPOSITORY_ROOT) -> None:
+def run(
+    command: list[str],
+    *,
+    cwd: Path = REPOSITORY_ROOT,
+    expected_returncode: int = 0,
+) -> None:
     print(f"\n> {' '.join(command)}", flush=True)
     completed = subprocess.run(command, cwd=cwd, check=False)
-    if completed.returncode != 0:
+    if completed.returncode != expected_returncode:
         raise SystemExit(completed.returncode)
 
 
@@ -105,6 +118,21 @@ def main() -> int:
             ],
             cwd=root,
         )
+        for bundle, expected_returncode in (("pass-bundle.json", 0), ("fail-bundle.json", 1)):
+            run(
+                [
+                    str(python),
+                    "-m",
+                    "forgegate",
+                    "evaluate-policy",
+                    str(REPOSITORY_ROOT / "examples/sample-python-api/policies/pull-request.yaml"),
+                    str(REPOSITORY_ROOT / "examples/sample-python-api/evidence" / bundle),
+                    "--evaluated-at",
+                    "2026-08-30T21:00:00Z",
+                ],
+                cwd=root,
+                expected_returncode=expected_returncode,
+            )
         run([str(python), "-m", "forgegate", "doctor"], cwd=root)
         run(
             [

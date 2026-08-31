@@ -4,7 +4,7 @@
 
 - versioned project and policy definitions;
 - evidence/artifact integrity metadata;
-- future release decisions and attestations;
+- release decisions and future attestations;
 - developer workstation paths and CI metadata.
 
 ## Trust boundaries
@@ -75,6 +75,23 @@ The current slice has no authenticated producer and runs no plugin code.
 | Percent versus absolute tolerance ambiguity | Required `mode` enum with `absolute` and `percent` only |
 | Pathological JSON shape or volume | Artifact byte, JSON node/depth, and metric-count limits |
 | Unknown fields silently ignored | Unknown root, tool, metric, and tolerance fields reject collection |
+
+## Addressed in the Phase 2 policy-engine slice
+
+| Threat | Current control |
+|---|---|
+| Wall-clock-dependent or irreproducible decision | Caller-supplied timezone-aware evaluation timestamp |
+| Evaluation predates its evidence bundle | Reject evaluation time before bundle generation |
+| NaN or Infinity creates non-standard input identity | Canonical JSON fingerprinting rejects non-finite values |
+| Enum text accidentally used as assurance ordering | Explicit trust and verification rank tables |
+| Missing evidence silently treated as a zero or empty all-set | Kind-level presence gate and no vacuous `all` evaluation |
+| Stale or future evidence accepted | Future rejection plus optional inclusive maximum age |
+| Conflicting producers collapsed into one value | Canonical distinct-value detection and REVIEW |
+| Weakly typed comparisons produce surprising PASS | Strict numeric, equality, containment, and existence semantics |
+| Optional failure accidentally blocks release | Mandatory-only overall decision with optional outcomes retained |
+| Fail/review/error precedence changes by rule order | Explicit ERROR > FAIL > REVIEW > PASS rank table |
+| Decision detached from evaluated inputs | Policy/evidence SHA-256 fingerprints and timestamp-bound evaluation ID |
+| Unhandled expression failure becomes PASS | Per-rule defensive ERROR boundary and exit code 3 |
 
 ## Deferred risks
 

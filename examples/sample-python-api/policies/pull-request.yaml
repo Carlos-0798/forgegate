@@ -8,7 +8,7 @@ rules:
     operator: equals
     expected: 0
     where:
-      field: failed
+      field: failures
     mandatory: true
     require_presence: true
     on_missing: REVIEW

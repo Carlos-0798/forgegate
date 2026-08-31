@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import math
 import re
+from collections.abc import Iterable
 from datetime import datetime
 from typing import Any, Literal
 
@@ -93,6 +95,12 @@ class PolicyRule(StrictModel):
     on_missing: Decision = Decision.REVIEW
     minimum_trust: EvidenceTrust = EvidenceTrust.UNSIGNED_LOCAL
     minimum_verification: VerificationLevel = VerificationLevel.DECLARED
+    maximum_age_seconds: int | None = Field(default=None, ge=0, le=315_576_000)
+
+    @field_validator("expected", "where")
+    @classmethod
+    def expression_values_must_be_json_compatible(cls, value: Any) -> Any:
+        return ensure_json_compatible(value)
 
     @model_validator(mode="after")
     def mandatory_rules_fail_closed(self) -> PolicyRule:
@@ -150,6 +158,11 @@ class EvidenceRecord(StrictModel):
     verification_level: VerificationLevel
     tags: dict[str, str] = Field(default_factory=dict)
 
+    @field_validator("value")
+    @classmethod
+    def value_must_be_json_compatible(cls, value: Any) -> Any:
+        return ensure_json_compatible(value)
+
     @field_validator("collected_at")
     @classmethod
     def timestamp_must_include_timezone(cls, value: datetime) -> datetime:
@@ -197,3 +210,38 @@ def _relative_path(value: str, field_name: str) -> str:
     if any(part == ".." for part in normalized.split("/")):
         raise ValueError(f"{field_name} cannot contain parent traversal")
     return value
+
+
+def ensure_json_compatible(value: Any) -> Any:
+    """Reject values that cannot participate in canonical JSON identity."""
+    try:
+        _check_json_value(value, set())
+    except RecursionError as exc:
+        raise ValueError("value exceeds supported JSON nesting depth") from exc
+    return value
+
+
+def _check_json_value(value: Any, active_containers: set[int]) -> None:
+    if value is None or isinstance(value, (str, bool, int)):
+        return
+    if isinstance(value, float):
+        if not math.isfinite(value):
+            raise ValueError("floating-point JSON values must be finite")
+        return
+    if isinstance(value, (dict, list)):
+        identity = id(value)
+        if identity in active_containers:
+            raise ValueError("cyclic JSON values are not supported")
+        active_containers.add(identity)
+        children: Iterable[Any]
+        if isinstance(value, dict):
+            if any(not isinstance(key, str) for key in value):
+                raise ValueError("JSON object keys must be strings")
+            children = value.values()
+        else:
+            children = value
+        for child in children:
+            _check_json_value(child, active_containers)
+        active_containers.remove(identity)
+        return
+    raise ValueError(f"value is not JSON-compatible: {type(value).__name__}")

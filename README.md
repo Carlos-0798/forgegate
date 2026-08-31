@@ -6,7 +6,7 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 1 standard collector baseline accepted; still pre-MVP.**
+**Phase 2 deterministic policy-evaluation slice accepted; still pre-MVP.**
 
 Implemented and host-verified in this checkpoint:
 
@@ -30,10 +30,16 @@ Implemented and host-verified in this checkpoint:
   for metric value, unit, scope, baseline, and tolerance facts;
 - `collect-junit`, `collect-coverage-xml`, `collect-lcov`, `collect-sarif`, and
   `collect-benchmark` CLI previews with deterministic golden-output coverage.
+- deterministic evaluation at an explicit timestamp with trust, verification,
+  age, presence, filter, aggregation, operator, and conflict semantics;
+- a versioned machine-readable policy-evaluation result with stable input
+  fingerprints, per-rule explanations, evidence references, and remediation;
+- `evaluate-policy` with PASS/FAIL/REVIEW/ERROR exit codes 0/1/2/3 and generic
+  committed PASS/FAIL examples.
 
 Not implemented yet:
 
-- policy evaluation, persistence, attestations, REST API, plugin execution,
+- candidate lifecycle, persistence, attestations, REST API, plugin execution,
   GitHub integration, or signed provenance;
 - AFE or MSP430 compatibility collectors;
 - any AFE/MSP430 runtime integration or hardware operation;
@@ -66,7 +72,21 @@ Preview the first collection path without making a release decision:
 ```
 
 The command's `COMPLETE` status means collection completed; the evidence's
-`passed` or `failed` status describes the tests. Neither is a release decision.
+`passed` or `failed` status describes the tests. Policy evaluation is a separate
+explicit action.
+
+Evaluate committed PASS and FAIL examples at a caller-supplied timestamp:
+
+```powershell
+.\.venv\Scripts\python.exe -m forgegate evaluate-policy `
+  examples/sample-python-api/policies/pull-request.yaml `
+  examples/sample-python-api/evidence/pass-bundle.json `
+  --evaluated-at 2026-08-30T21:00:00Z
+```
+
+Exit code `0` means PASS, `1` FAIL, `2` REVIEW, and `3` ERROR. Configuration or
+system errors also use `3`. The evaluator does not collect, rebuild, rerun, or
+authenticate evidence while deciding.
 
 Coverage artifacts use the same provenance options:
 
@@ -82,8 +102,8 @@ Coverage artifacts use the same provenance options:
   --collected-at 2026-08-30T22:00:00Z
 ```
 
-Coverage percentages are facts. ForgeGate does not decide whether they meet a
-release threshold until the future policy engine evaluates them.
+Coverage percentages remain facts until a policy rule explicitly evaluates
+them.
 
 SARIF 2.1.0 collection reads scanner identity from the artifact:
 
@@ -96,8 +116,8 @@ SARIF 2.1.0 collection reads scanner identity from the artifact:
 ```
 
 A `COMPLETE` result means the artifact was collected successfully. Finding
-levels, kinds, suppressions, and a zero-result summary remain evidence for the
-future policy engine; the collector does not issue a release decision.
+levels, kinds, suppressions, and a zero-result summary remain evidence; the
+collector does not issue a release decision.
 
 Benchmark collection reads tool identity and metrics from the versioned
 ForgeGate artifact:
@@ -111,8 +131,8 @@ ForgeGate artifact:
 ```
 
 Observed values, baselines, and absolute/percent tolerances remain facts. A
-`COMPLETE` collection does not assert that performance is acceptable; Phase 2
-policy evaluation will make that determination.
+`COMPLETE` collection does not assert that performance is acceptable; only an
+explicit matching policy rule can make that determination.
 
 ## Product boundary
 

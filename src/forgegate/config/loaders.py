@@ -4,14 +4,19 @@ import yaml
 from pydantic import ValidationError
 
 from forgegate.domain.models import EvidenceBundle, PolicyConfig, ProjectConfig
+from forgegate.policy.models import PolicyEvaluation
 
 MAX_CONFIG_BYTES = 1024 * 1024
-type SupportedConfig = ProjectConfig | PolicyConfig | EvidenceBundle
+type SupportedConfig = ProjectConfig | PolicyConfig | EvidenceBundle | PolicyEvaluation
 
-SCHEMA_MODELS: dict[str, type[ProjectConfig] | type[PolicyConfig] | type[EvidenceBundle]] = {
+SCHEMA_MODELS: dict[
+    str,
+    type[ProjectConfig] | type[PolicyConfig] | type[EvidenceBundle] | type[PolicyEvaluation],
+] = {
     "forgegate.project.v1": ProjectConfig,
     "forgegate.policy.v1": PolicyConfig,
     "forgegate.evidence-bundle.v1": EvidenceBundle,
+    "forgegate.policy-evaluation.v1": PolicyEvaluation,
 }
 
 

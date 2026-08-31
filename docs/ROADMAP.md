@@ -25,9 +25,14 @@
 
 ## Phase 2 — deterministic policy and CLI MVP
 
-Implement evaluation, candidate lifecycle, SQLite persistence, JSON/Markdown
-attestations, and CI-compatible exit codes. Missing, stale, conflicting, or
-insufficient-trust evidence must never silently PASS.
+- [x] Implement deterministic policy evaluation at an explicit timestamp.
+- [x] Enforce trust, verification, age, presence, conflict, and strict operator
+  semantics without silent PASS.
+- [x] Emit versioned per-rule machine results and CI exit codes 0/1/2/3.
+- [ ] Add release-candidate lifecycle and legal state transitions.
+- [ ] Add transactional SQLite persistence and concurrency controls.
+- [ ] Generate deterministic JSON and Markdown attestations.
+- [ ] Complete the local CLI MVP around persisted candidates.
 
 ## Later compatibility work
 

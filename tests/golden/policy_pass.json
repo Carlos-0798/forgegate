@@ -1,0 +1,32 @@
+{
+  "schema_version": "forgegate.policy-evaluation.v1",
+  "evaluation_id": "sha256:4ca0363cda7045ad855461a93f122d66561f5bd1017b68fa3cdb3c486cd8eb98",
+  "policy_name": "pull-request",
+  "policy_fingerprint": "sha256:26de07d5718ca9d55362a958791d98993d6dc79ea244f48c003e32bd3a4f0f3d",
+  "evidence_fingerprint": "sha256:9fb8fb19e9a44e4c830b7060bf4824231affbbcf56c43f097fe6c53a492ca861",
+  "candidate_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "evaluated_at": "2026-08-30T21:00:00Z",
+  "decision": "PASS",
+  "rule_results": [
+    {
+      "rule_id": "tests-pass",
+      "claim": "tests.required-pass",
+      "decision": "PASS",
+      "mandatory": true,
+      "evidence_kind": "test.summary",
+      "aggregation": "value",
+      "operator": "equals",
+      "expected": 0,
+      "actual": 0,
+      "evidence_ids": [
+        "test-summary-d5babd93ca28025f"
+      ],
+      "reason_code": "RULE_SATISFIED",
+      "explanation": "Eligible evidence satisfies the policy expression.",
+      "remediation_hint": null
+    }
+  ],
+  "evaluated_evidence_ids": [
+    "test-summary-d5babd93ca28025f"
+  ]
+}

@@ -17,6 +17,8 @@ runner = CliRunner()
         "examples/sample-python-api/forgegate.yaml",
         "examples/sample-python-api/policies/pull-request.yaml",
         "examples/sample-python-api/policies/production.yaml",
+        "examples/sample-python-api/evidence/pass-bundle.json",
+        "examples/sample-python-api/evidence/fail-bundle.json",
     ],
 )
 def test_examples_load(repository_root: Path, relative_path: str) -> None:
@@ -75,7 +77,7 @@ def test_doctor_reports_phase() -> None:
     result = runner.invoke(app, ["doctor"])
     assert result.exit_code == 0
     report = json.loads(result.stdout)
-    assert report["phase"] == "phase1-standard-collectors"
+    assert report["phase"] == "phase2-policy-evaluation"
     assert report["supported_schemas"] == sorted(SCHEMAS)
 
 
@@ -92,6 +94,115 @@ def test_invalid_config_cli_uses_error_exit_code(tmp_path: Path) -> None:
     result = runner.invoke(app, ["validate-config", str(path)])
     assert result.exit_code == 3
     assert "unsupported schema_version" in result.output
+
+
+@pytest.mark.parametrize(
+    ("bundle", "expected_exit", "expected_decision"),
+    [
+        ("pass-bundle.json", 0, "PASS"),
+        ("fail-bundle.json", 1, "FAIL"),
+    ],
+)
+def test_evaluate_policy_cli_exit_contract(
+    repository_root: Path,
+    bundle: str,
+    expected_exit: int,
+    expected_decision: str,
+) -> None:
+    root = repository_root / "examples/sample-python-api"
+    result = runner.invoke(
+        app,
+        [
+            "evaluate-policy",
+            str(root / "policies/pull-request.yaml"),
+            str(root / "evidence" / bundle),
+            "--evaluated-at",
+            "2026-08-30T21:00:00Z",
+        ],
+    )
+    assert result.exit_code == expected_exit
+    payload = json.loads(result.stdout)
+    expected = json.loads(
+        (repository_root / f"tests/golden/policy_{expected_decision.lower()}.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    assert payload == expected
+
+
+def test_evaluate_policy_cli_review_exit(repository_root: Path) -> None:
+    root = repository_root / "examples/sample-python-api"
+    result = runner.invoke(
+        app,
+        [
+            "evaluate-policy",
+            str(root / "policies/production.yaml"),
+            str(root / "evidence/pass-bundle.json"),
+            "--evaluated-at",
+            "2026-08-30T21:00:00Z",
+        ],
+    )
+    assert result.exit_code == 2
+    assert json.loads(result.stdout)["decision"] == "REVIEW"
+
+
+def test_evaluate_policy_cli_error_paths(repository_root: Path, tmp_path: Path) -> None:
+    root = repository_root / "examples/sample-python-api"
+    invalid_policy = tmp_path / "invalid-policy.yaml"
+    invalid_policy.write_text(
+        """schema_version: forgegate.policy.v1
+name: invalid-expression
+rules:
+  - id: invalid-field
+    claim: tests.required-pass
+    evidence_kind: test.summary
+    operator: equals
+    expected: 0
+    where:
+      field: missing
+    minimum_trust: claimed_ci_metadata
+    minimum_verification: ci_validated
+""",
+        encoding="utf-8",
+    )
+    command = [
+        "evaluate-policy",
+        str(invalid_policy),
+        str(root / "evidence/pass-bundle.json"),
+        "--evaluated-at",
+        "2026-08-30T21:00:00Z",
+    ]
+    evaluation_error = runner.invoke(app, command)
+    wrong_type = runner.invoke(
+        app,
+        [
+            "evaluate-policy",
+            str(root / "evidence/pass-bundle.json"),
+            str(root / "evidence/pass-bundle.json"),
+            "--evaluated-at",
+            "2026-08-30T21:00:00Z",
+        ],
+    )
+    wrong_bundle_type = runner.invoke(
+        app,
+        [
+            "evaluate-policy",
+            str(root / "policies/pull-request.yaml"),
+            str(root / "policies/pull-request.yaml"),
+            "--evaluated-at",
+            "2026-08-30T21:00:00Z",
+        ],
+    )
+    invalid_timestamp = runner.invoke(app, [*command[:-1], "not-a-timestamp"])
+
+    assert evaluation_error.exit_code == 3
+    assert json.loads(evaluation_error.stdout)["decision"] == "ERROR"
+    assert wrong_type.exit_code == 3
+    assert "policy path must contain" in wrong_type.output
+    assert wrong_bundle_type.exit_code == 3
+    assert "evidence path must contain" in wrong_bundle_type.output
+    assert invalid_timestamp.exit_code == 3
+    assert "Invalid isoformat string" in invalid_timestamp.output
 
 
 def test_collect_junit_cli_vertical_slice(repository_root: Path) -> None:
