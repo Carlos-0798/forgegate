@@ -653,10 +653,12 @@ def test_schema_export_cli(tmp_path: Path) -> None:
     for schema_version in SCHEMAS:
         path = output / schema_filename(schema_version)
         assert path.is_file()
+        assert b"\r\n" not in path.read_bytes()
         assert json.loads(path.read_text(encoding="utf-8"))["type"] == "object"
     for schema_name in ARTIFACT_SCHEMAS:
         path = output / schema_filename(schema_name)
         assert path.is_file()
+        assert b"\r\n" not in path.read_bytes()
         assert json.loads(path.read_text(encoding="utf-8"))["type"] == "object"
 
 

@@ -99,12 +99,12 @@ def export_schemas(
     for schema_version, model in sorted(SCHEMAS.items()):
         target = output_dir / schema_filename(schema_version)
         payload = json.dumps(model.model_json_schema(), indent=2, sort_keys=True) + "\n"
-        target.write_text(payload, encoding="utf-8")
+        target.write_bytes(payload.encode("utf-8"))
         typer.echo(str(target))
     for schema_name, schema in sorted(ARTIFACT_SCHEMAS.items()):
         target = output_dir / schema_filename(schema_name)
         payload = json.dumps(schema, indent=2, sort_keys=True) + "\n"
-        target.write_text(payload, encoding="utf-8")
+        target.write_bytes(payload.encode("utf-8"))
         typer.echo(str(target))
 
 
@@ -126,7 +126,7 @@ def export_openapi(
         )
         + "\n"
     )
-    output_file.write_text(payload, encoding="utf-8")
+    output_file.write_bytes(payload.encode("utf-8"))
     typer.echo(str(output_file))
 
 

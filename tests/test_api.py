@@ -457,6 +457,7 @@ def test_openapi_export_is_deterministic_and_complete(tmp_path: Path) -> None:
     schema = create_api_app(tmp_path / "unused.db").openapi()
 
     assert result.exit_code == 0, result.output
+    assert b"\r\n" not in output.read_bytes()
     assert json.loads(output.read_text(encoding="utf-8")) == schema
     assert set(schema["paths"]) == {
         "/healthz",

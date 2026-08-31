@@ -13,6 +13,9 @@
 - Added loopback Host validation, a declared 4 MiB request-length gate,
   adversarial state/concurrency tests, expanded OpenAPI, and clean-wheel
   operation checks.
+- Made Schema and OpenAPI export bytes platform-independent by writing canonical
+  UTF-8/LF output, with Windows regression coverage after the first GitHub
+  Actions run exposed a CRLF-only clean-wheel mismatch.
 
 ## 0.1.0.dev12 — 2026-08-31
 
