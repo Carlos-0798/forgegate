@@ -10,6 +10,8 @@ from pydantic import ValidationError
 from forgegate import __version__
 from forgegate.artifacts import ArtifactBoundaryError, ArtifactRegistry
 from forgegate.collectors import (
+    BenchmarkCollectionRequest,
+    BenchmarkJsonCollector,
     CollectionResult,
     CollectionStatus,
     CoverageCollectionRequest,
@@ -185,6 +187,33 @@ def collect_sarif(
         typer.echo(f"ERROR: {exc}", err=True)
         raise typer.Exit(code=3) from exc
     _emit_collection(SarifCollector(registry).collect(request))
+
+
+@app.command("collect-benchmark")
+def collect_benchmark(
+    source_path: Annotated[str, typer.Argument(help="Artifact path relative to --root")],
+    commit: Annotated[str, typer.Option("--commit")],
+    collected_at: Annotated[str, typer.Option("--collected-at")],
+    root: Annotated[Path, typer.Option("--root", file_okay=False, resolve_path=True)] = Path("."),
+    trust: Annotated[EvidenceTrust, typer.Option("--trust")] = EvidenceTrust.UNSIGNED_LOCAL,
+    verification_level: Annotated[
+        VerificationLevel, typer.Option("--verification-level")
+    ] = VerificationLevel.DECLARED,
+) -> None:
+    """Collect forgegate.benchmark.v1 JSON into normalized metric evidence."""
+    try:
+        registry = ArtifactRegistry(root)
+        request = BenchmarkCollectionRequest(
+            source_path=source_path,
+            execution_context=ExecutionContext(commit_sha=commit),
+            collected_at=datetime.fromisoformat(collected_at.replace("Z", "+00:00")),
+            trust=trust,
+            verification_level=verification_level,
+        )
+    except (ArtifactBoundaryError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    _emit_collection(BenchmarkJsonCollector(registry).collect(request))
 
 
 def _coverage_inputs(

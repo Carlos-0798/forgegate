@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.0.dev4 — 2026-08-30
+
+- Added the strict ForgeGate-owned `forgegate.benchmark.v1` artifact schema and
+  bounded Benchmark JSON v1 collector.
+- Normalized metric name, value, unit, scope, optional baseline, and explicit
+  absolute/percent tolerance into provenance-bound `benchmark.metric` evidence.
+- Added duplicate-key, unknown-field, finite-number, numeric-range, duplicate
+  metric, tolerance/baseline, depth, node, and metric-count rejection gates.
+- Added a generic fixture, committed schema drift gate, golden projection, CLI
+  path, adversarial tests, architecture/threat documentation, and release smoke.
+
 ## 0.1.0.dev3 — 2026-08-30
 
 - Added a bounded, fail-closed SARIF 2.1.0 v1 collector.

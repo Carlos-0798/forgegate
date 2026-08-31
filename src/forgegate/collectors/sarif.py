@@ -407,7 +407,7 @@ def _load_json(content: bytes) -> Any:
         )
     except SarifParseError:
         raise
-    except (json.JSONDecodeError, RecursionError) as exc:
+    except (json.JSONDecodeError, RecursionError, ValueError) as exc:
         raise SarifParseError("SARIF_JSON_INVALID", f"invalid SARIF JSON: {exc}") from exc
 
 

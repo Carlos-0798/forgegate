@@ -63,6 +63,19 @@ The current slice has no authenticated producer and runs no plugin code.
 | Fabricated fingerprint stability | Prefer declared full/partial fingerprints; label fallback explicitly as ForgeGate-derived SHA-256 |
 | Suppressed result treated as active | Preserve suppression records and mark accepted suppressions explicitly |
 
+## Addressed in the Phase 1 Benchmark slice
+
+| Threat | Current control |
+|---|---|
+| Ambiguous producer-specific benchmark shape | Exact `forgegate.benchmark.v1` schema version and strict field allowlists |
+| Empty benchmark represented as successful evidence | Reject empty metric arrays; complete collections always contain metrics |
+| Duplicate metric overwrites or double counting | Reject duplicate `(scope, name)` identities |
+| NaN, Infinity, overflow, or underflow distortion | Decimal JSON parsing plus finite/range and conversion checks |
+| Tolerance interpreted without comparison point | Any tolerance requires an explicit baseline |
+| Percent versus absolute tolerance ambiguity | Required `mode` enum with `absolute` and `percent` only |
+| Pathological JSON shape or volume | Artifact byte, JSON node/depth, and metric-count limits |
+| Unknown fields silently ignored | Unknown root, tool, metric, and tolerance fields reject collection |
+
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;

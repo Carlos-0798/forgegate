@@ -6,7 +6,7 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 1 standard collectors — JUnit, coverage, and SARIF accepted; still pre-MVP.**
+**Phase 1 standard collector baseline accepted; still pre-MVP.**
 
 Implemented and host-verified in this checkpoint:
 
@@ -26,14 +26,16 @@ Implemented and host-verified in this checkpoint:
   branch coverage for repository, package, and module scopes;
 - a bounded SARIF 2.1.0 collector that emits an explicit summary even when a
   successful scan contains zero results, plus one normalized record per finding;
-- `collect-junit`, `collect-coverage-xml`, `collect-lcov`, and `collect-sarif`
-  CLI previews with deterministic golden-output coverage.
+- a strict ForgeGate-owned `forgegate.benchmark.v1` schema and bounded collector
+  for metric value, unit, scope, baseline, and tolerance facts;
+- `collect-junit`, `collect-coverage-xml`, `collect-lcov`, `collect-sarif`, and
+  `collect-benchmark` CLI previews with deterministic golden-output coverage.
 
 Not implemented yet:
 
 - policy evaluation, persistence, attestations, REST API, plugin execution,
   GitHub integration, or signed provenance;
-- benchmark, AFE, or MSP430 collectors;
+- AFE or MSP430 compatibility collectors;
 - any AFE/MSP430 runtime integration or hardware operation;
 - any production deployment or public release.
 
@@ -96,6 +98,21 @@ SARIF 2.1.0 collection reads scanner identity from the artifact:
 A `COMPLETE` result means the artifact was collected successfully. Finding
 levels, kinds, suppressions, and a zero-result summary remain evidence for the
 future policy engine; the collector does not issue a release decision.
+
+Benchmark collection reads tool identity and metrics from the versioned
+ForgeGate artifact:
+
+```powershell
+.\.venv\Scripts\python.exe -m forgegate collect-benchmark `
+  artifacts/benchmark.json --root examples/sample-python-api `
+  --commit dddddddddddddddddddddddddddddddddddddddd `
+  --collected-at 2026-08-31T00:00:00Z `
+  --trust claimed_ci_metadata --verification-level ci_validated
+```
+
+Observed values, baselines, and absolute/percent tolerances remain facts. A
+`COMPLETE` collection does not assert that performance is acceptable; Phase 2
+policy evaluation will make that determination.
 
 ## Product boundary
 

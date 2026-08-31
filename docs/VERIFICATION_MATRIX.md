@@ -11,7 +11,8 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — three schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — three configuration schemas |
+| Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
 | Ruff | full repository | PASS |
 | mypy strict | package and verification tools | PASS |
@@ -33,11 +34,14 @@
 | Successful zero-result SARIF scan | explicit summary evidence | PASS — local host |
 | Failed/ambiguous SARIF scan | invocation/rule-reference rejection | PASS — local host |
 | Installed SARIF CLI path | clean wheel environment | PASS — local host |
-| Benchmark JSON collection | adversarial fixtures | NOT IMPLEMENTED |
+| Benchmark JSON collection | adversarial fixtures + golden output | PASS — local host |
+| Benchmark numeric/schema bounds | finite/range/unknown-field tests | PASS — local host |
+| Duplicate metric identity | scope/name collision tests | PASS — local host |
+| Installed Benchmark CLI path | clean wheel environment | PASS — local host |
 | Policy evaluation | unit/property/integration tests | NOT IMPLEMENTED |
 | AFE report compatibility | frozen public artifact contract | PLANNED |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
 
-See `reports/PHASE_1_SARIF_SLICE_ACCEPTANCE_REPORT.md` for the current exact
+See `reports/PHASE_1_BENCHMARK_SLICE_ACCEPTANCE_REPORT.md` for the current exact
 test and coverage result. Earlier acceptance reports remain historical records.

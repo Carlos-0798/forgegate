@@ -1,8 +1,8 @@
 # Project status
 
 - Date: 2026-08-30
-- Version: 0.1.0.dev3
-- Stage: Phase 1 standard collectors — JUnit, coverage, and SARIF
+- Version: 0.1.0.dev4
+- Stage: Phase 1 standard collector baseline complete
 - Product maturity: pre-MVP
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
@@ -31,13 +31,17 @@
 - bounded SARIF 2.1.0 collection with strict JSON parsing, verified-success
   invocation state, rule/location/fingerprint normalization, and explicit
   zero-result summary evidence;
-- `collect-sarif` CLI preview, generic fixture, and golden output.
+- `collect-sarif` CLI preview, generic fixture, and golden output;
+- strict `forgegate.benchmark.v1` artifact contract with deterministic committed
+  JSON Schema drift verification;
+- bounded Benchmark JSON collection into one `benchmark.metric` evidence record
+  per unique scope/name, retaining value, unit, baseline, and tolerance;
+- `collect-benchmark` CLI preview, generic fixture, and golden output.
 
 ## Not implemented
 
-Benchmark collector, policy evaluation, persistence, attestations, API,
-external plugins, GitHub integration, AFE collector, MSP430 collector, and
-hardware access.
+Policy evaluation, persistence, attestations, API, external plugins, GitHub
+integration, AFE collector, MSP430 collector, and hardware access.
 
 ## Accepted local checkpoint
 
@@ -45,11 +49,12 @@ hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification tools
-- pytest: 226 passed, 1 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 100% across 1,523 statements and 448 branches
+- pytest: 278 passed, 1 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 100% across 1,756 statements and 510 branches
 - committed JSON Schema drift check: PASS
 - three example project/policy documents: VALID
-- three canonical JSON Schemas: exported and parsed
+- three canonical configuration Schemas plus one Benchmark artifact Schema:
+  drift-checked and parsed
 - complete sdist manifest and wheel build: PASS
 - repository-external wheel installation and CLI smoke: PASS
 - Git Bash shell-script syntax check: PASS
@@ -58,4 +63,4 @@ hardware access.
 
 See `reports/PHASE_0_ENVIRONMENT_AUDIT.md` for the prerequisite audit and exact
 human-intervention boundary. See
-`reports/PHASE_1_SARIF_SLICE_ACCEPTANCE_REPORT.md` for the current slice.
+`reports/PHASE_1_BENCHMARK_SLICE_ACCEPTANCE_REPORT.md` for the current slice.

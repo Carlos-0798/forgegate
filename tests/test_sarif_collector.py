@@ -531,3 +531,5 @@ def test_low_level_json_guards_are_defensive() -> None:
         )
     with pytest.raises(SarifParseError, match="invalid SARIF JSON"):
         _load_json(b"[")
+    with pytest.raises(SarifParseError, match="invalid SARIF JSON"):
+        _load_json(('{"number":' + "1" * 5000 + "}").encode())

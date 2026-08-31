@@ -1,0 +1,75 @@
+{
+  "collector_name": "benchmark_json",
+  "collector_version": "forgegate-benchmark-json.v1",
+  "status": "COMPLETE",
+  "artifact": {
+    "path_or_uri": "artifacts/benchmark.json",
+    "media_type": "application/vnd.forgegate.benchmark+json",
+    "sha256": "120aca724cae171d34d902cddb0903465a9b8a34a7bfacf48ced84e9b5e4be90",
+    "size_bytes": 665
+  },
+  "evidence": [
+    {
+      "evidence_id": "benchmark-metric-120aca724cae-1eb1e433830f",
+      "kind": "benchmark.metric",
+      "scope": "endpoint:GET /health",
+      "value": {
+        "metric": "api.request_latency.p95",
+        "value": 42.75,
+        "baseline": 40.0,
+        "tolerance": {
+          "value": 10.0,
+          "mode": "percent"
+        }
+      },
+      "unit": "ms",
+      "status": "observed",
+      "source_tool": "sample-benchmark",
+      "source_version": "1.0.0",
+      "tags": {
+        "collector": "forgegate-benchmark-json.v1"
+      }
+    },
+    {
+      "evidence_id": "benchmark-metric-120aca724cae-683d95712d13",
+      "kind": "benchmark.metric",
+      "scope": "repository",
+      "value": {
+        "metric": "api.throughput",
+        "value": 1250,
+        "baseline": 1200,
+        "tolerance": {
+          "value": 100,
+          "mode": "absolute"
+        }
+      },
+      "unit": "requests/second",
+      "status": "observed",
+      "source_tool": "sample-benchmark",
+      "source_version": "1.0.0",
+      "tags": {
+        "collector": "forgegate-benchmark-json.v1"
+      }
+    },
+    {
+      "evidence_id": "benchmark-metric-120aca724cae-faf4bc97a926",
+      "kind": "benchmark.metric",
+      "scope": "repository",
+      "value": {
+        "metric": "api.peak_memory",
+        "value": 28.5,
+        "baseline": null,
+        "tolerance": null
+      },
+      "unit": "MiB",
+      "status": "observed",
+      "source_tool": "sample-benchmark",
+      "source_version": "1.0.0",
+      "tags": {
+        "collector": "forgegate-benchmark-json.v1"
+      }
+    }
+  ],
+  "warnings": [],
+  "rejected_records": []
+}

@@ -4,6 +4,7 @@ from forgegate.collectors.base import (
     CollectionStatus,
     IssueSeverity,
 )
+from forgegate.collectors.benchmark import BenchmarkCollectionRequest, BenchmarkJsonCollector
 from forgegate.collectors.coverage import (
     CoverageCollectionRequest,
     CoverageXmlCollector,
@@ -13,6 +14,8 @@ from forgegate.collectors.junit import JUnitCollectionRequest, JUnitCollector
 from forgegate.collectors.sarif import SarifCollectionRequest, SarifCollector
 
 __all__ = [
+    "BenchmarkCollectionRequest",
+    "BenchmarkJsonCollector",
     "CollectionIssue",
     "CollectionResult",
     "CollectionStatus",

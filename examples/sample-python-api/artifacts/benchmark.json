@@ -1,0 +1,35 @@
+{
+  "schema_version": "forgegate.benchmark.v1",
+  "tool": {
+    "name": "sample-benchmark",
+    "version": "1.0.0"
+  },
+  "metrics": [
+    {
+      "name": "api.request_latency.p95",
+      "value": 42.75,
+      "unit": "ms",
+      "scope": "endpoint:GET /health",
+      "baseline": 40.0,
+      "tolerance": {
+        "value": 10.0,
+        "mode": "percent"
+      }
+    },
+    {
+      "name": "api.throughput",
+      "value": 1250,
+      "unit": "requests/second",
+      "baseline": 1200,
+      "tolerance": {
+        "value": 100,
+        "mode": "absolute"
+      }
+    },
+    {
+      "name": "api.peak_memory",
+      "value": 28.5,
+      "unit": "MiB"
+    }
+  ]
+}

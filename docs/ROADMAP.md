@@ -21,7 +21,7 @@
 - [x] Add Cobertura/coverage.py XML with repository/package/module scopes.
 - [x] Add LCOV with strict record validation and module scopes.
 - [x] Add SARIF 2.1.0 collector with explicit zero-result evidence.
-- [ ] Add generic benchmark JSON collector.
+- [x] Add strict generic Benchmark JSON schema and collector.
 
 ## Phase 2 — deterministic policy and CLI MVP
 

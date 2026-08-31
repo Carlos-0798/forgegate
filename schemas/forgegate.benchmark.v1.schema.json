@@ -1,0 +1,99 @@
+{
+  "$id": "urn:forgegate:schema:benchmark:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": false,
+  "properties": {
+    "metrics": {
+      "items": {
+        "additionalProperties": false,
+        "dependentRequired": {
+          "tolerance": [
+            "baseline"
+          ]
+        },
+        "properties": {
+          "baseline": {
+            "type": "number"
+          },
+          "name": {
+            "maxLength": 255,
+            "pattern": "^[A-Za-z][A-Za-z0-9._/-]{0,254}$",
+            "type": "string"
+          },
+          "scope": {
+            "maxLength": 255,
+            "minLength": 1,
+            "type": "string"
+          },
+          "tolerance": {
+            "additionalProperties": false,
+            "properties": {
+              "mode": {
+                "enum": [
+                  "absolute",
+                  "percent"
+                ]
+              },
+              "value": {
+                "minimum": 0,
+                "type": "number"
+              }
+            },
+            "required": [
+              "value",
+              "mode"
+            ],
+            "type": "object"
+          },
+          "unit": {
+            "maxLength": 64,
+            "minLength": 1,
+            "type": "string"
+          },
+          "value": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "name",
+          "value",
+          "unit"
+        ],
+        "type": "object"
+      },
+      "maxItems": 100000,
+      "minItems": 1,
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "forgegate.benchmark.v1"
+    },
+    "tool": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "type": "string"
+        },
+        "version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ],
+      "type": "object"
+    }
+  },
+  "required": [
+    "schema_version",
+    "tool",
+    "metrics"
+  ],
+  "title": "ForgeGate Benchmark Artifact v1",
+  "type": "object"
+}

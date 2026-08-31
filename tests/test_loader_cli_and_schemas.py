@@ -309,6 +309,74 @@ def test_collect_sarif_cli_rejects_invalid_inputs(repository_root: Path, tmp_pat
     assert json.loads(rejected.stdout)["status"] == "REJECTED"
 
 
+def test_collect_benchmark_cli_vertical_slice(repository_root: Path) -> None:
+    root = repository_root / "examples/sample-python-api"
+    result = runner.invoke(
+        app,
+        [
+            "collect-benchmark",
+            "artifacts/benchmark.json",
+            "--root",
+            str(root),
+            "--commit",
+            "d" * 40,
+            "--collected-at",
+            "2026-08-31T00:00:00Z",
+            "--trust",
+            "claimed_ci_metadata",
+            "--verification-level",
+            "ci_validated",
+        ],
+    )
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["status"] == "COMPLETE"
+    assert len(payload["evidence"]) == 3
+    assert all(record["kind"] == "benchmark.metric" for record in payload["evidence"])
+
+
+def test_collect_benchmark_cli_rejects_invalid_inputs(
+    repository_root: Path, tmp_path: Path
+) -> None:
+    root = repository_root / "examples/sample-python-api"
+    invalid_timestamp = runner.invoke(
+        app,
+        [
+            "collect-benchmark",
+            "artifacts/benchmark.json",
+            "--root",
+            str(root),
+            "--commit",
+            "d" * 40,
+            "--collected-at",
+            "not-a-timestamp",
+        ],
+    )
+    assert invalid_timestamp.exit_code == 3
+    assert "Invalid isoformat string" in invalid_timestamp.output
+
+    invalid_benchmark = tmp_path / "invalid.json"
+    invalid_benchmark.write_text(
+        '{"schema_version":"forgegate.benchmark.v1","tool":{},"metrics":[]}',
+        encoding="utf-8",
+    )
+    rejected = runner.invoke(
+        app,
+        [
+            "collect-benchmark",
+            "invalid.json",
+            "--root",
+            str(tmp_path),
+            "--commit",
+            "d" * 40,
+            "--collected-at",
+            "2026-08-31T00:00:00Z",
+        ],
+    )
+    assert rejected.exit_code == 3
+    assert json.loads(rejected.stdout)["status"] == "REJECTED"
+
+
 def test_schema_export_cli(tmp_path: Path) -> None:
     output = tmp_path / "schemas"
     result = runner.invoke(app, ["export-schemas", str(output)])
