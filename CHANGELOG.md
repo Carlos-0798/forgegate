@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.0.dev3 — 2026-08-30
+
+- Added a bounded, fail-closed SARIF 2.1.0 v1 collector.
+- Normalized explicit scan summaries, individual findings, scanner/rule
+  metadata, locations, fingerprints, suppression state, and baseline state
+  without making policy decisions.
+- Required unsuccessful invocations, ambiguous rule references, duplicate JSON
+  keys, non-finite numbers, malformed structures, and resource-limit violations
+  to reject collection.
+- Added a generic SARIF fixture, deterministic golden projection, CLI path,
+  adversarial tests, architecture/threat documentation, and clean-install smoke.
+
 ## 0.1.0.dev2 — 2026-08-30
 
 - Added strict Cobertura/coverage.py XML and LCOV v1 collectors.

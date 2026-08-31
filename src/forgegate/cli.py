@@ -17,6 +17,8 @@ from forgegate.collectors import (
     JUnitCollectionRequest,
     JUnitCollector,
     LcovCollector,
+    SarifCollectionRequest,
+    SarifCollector,
 )
 from forgegate.config import ConfigLoadError, load_config
 from forgegate.domain.enums import EvidenceTrust, VerificationLevel
@@ -156,6 +158,33 @@ def collect_lcov(
         verification_level=verification_level,
     )
     _emit_collection(LcovCollector(registry).collect(request))
+
+
+@app.command("collect-sarif")
+def collect_sarif(
+    source_path: Annotated[str, typer.Argument(help="Artifact path relative to --root")],
+    commit: Annotated[str, typer.Option("--commit")],
+    collected_at: Annotated[str, typer.Option("--collected-at")],
+    root: Annotated[Path, typer.Option("--root", file_okay=False, resolve_path=True)] = Path("."),
+    trust: Annotated[EvidenceTrust, typer.Option("--trust")] = EvidenceTrust.UNSIGNED_LOCAL,
+    verification_level: Annotated[
+        VerificationLevel, typer.Option("--verification-level")
+    ] = VerificationLevel.DECLARED,
+) -> None:
+    """Collect SARIF 2.1.0 into normalized summary and finding evidence."""
+    try:
+        registry = ArtifactRegistry(root)
+        request = SarifCollectionRequest(
+            source_path=source_path,
+            execution_context=ExecutionContext(commit_sha=commit),
+            collected_at=datetime.fromisoformat(collected_at.replace("Z", "+00:00")),
+            trust=trust,
+            verification_level=verification_level,
+        )
+    except (ArtifactBoundaryError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    _emit_collection(SarifCollector(registry).collect(request))
 
 
 def _coverage_inputs(

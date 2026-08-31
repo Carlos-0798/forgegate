@@ -50,6 +50,19 @@ The current slice has no authenticated producer and runs no plugin code.
 | Oversized LCOV record set | 500,000-line default limit plus artifact byte limit |
 | Missing branch detail hidden as observation | Explicit summary-only warning or unavailable warning |
 
+## Addressed in the Phase 1 SARIF slice
+
+| Threat | Current control |
+|---|---|
+| Missing scan represented as no evidence | Every successfully parsed run set emits an explicit summary, including zero results |
+| Failed scanner invocation represented as valid evidence | Any declared unsuccessful invocation rejects the artifact |
+| Ambiguous or absent rule identity | Require `ruleId` or a resolvable `ruleIndex`; conflicting references reject |
+| Duplicate JSON keys or non-finite numbers | Strict object-pair and numeric-constant rejection |
+| Pathological JSON shape or result volume | Node, depth, run, result, rule, location, suppression, and fingerprint limits |
+| Unsupported nested detail silently normalized | Retain exact artifact bytes and emit `SARIF_DETAIL_NOT_NORMALIZED` warnings |
+| Fabricated fingerprint stability | Prefer declared full/partial fingerprints; label fallback explicitly as ForgeGate-derived SHA-256 |
+| Suppressed result treated as active | Preserve suppression records and mark accepted suppressions explicitly |
+
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;

@@ -1,0 +1,172 @@
+{
+  "collector_name": "sarif",
+  "collector_version": "forgegate-sarif.v1",
+  "status": "COMPLETE",
+  "artifact": {
+    "path_or_uri": "artifacts/security.sarif",
+    "media_type": "application/sarif+json",
+    "sha256": "35931a4f35c531a8480966c67ff0f13e9ddb5b8a65a76478e57a058af0ec076a",
+    "size_bytes": 2719
+  },
+  "evidence": [
+    {
+      "evidence_id": "static-analysis-summary-35931a4f35c531a8",
+      "kind": "static_analysis.summary",
+      "scope": "repository",
+      "value": {
+        "total": 2,
+        "active": 1,
+        "suppressed": 1,
+        "by_level": {"error": 1, "warning": 1, "note": 0, "none": 0},
+        "by_kind": {
+          "fail": 1,
+          "informational": 0,
+          "notApplicable": 0,
+          "open": 0,
+          "pass": 0,
+          "review": 1
+        },
+        "tools": [
+          {
+            "name": "SampleScanner",
+            "version": "1.2.3",
+            "semantic_version": "1.2.3",
+            "information_uri": "https://example.invalid/sample-scanner"
+          }
+        ]
+      },
+      "status": "observed",
+      "source_tool": "sarif",
+      "source_version": "2.1.0",
+      "tags": {"collector": "forgegate-sarif.v1"}
+    },
+    {
+      "evidence_id": "static-analysis-finding-35931a4f35c5-r0n0",
+      "kind": "static_analysis.finding",
+      "scope": "repository",
+      "value": {
+        "rule_id": "S001",
+        "level": "error",
+        "kind": "fail",
+        "message": "Credential-like value is embedded in source.",
+        "locations": [
+          {
+            "physical": {
+              "uri": "src/sample/api.py",
+              "uri_base_id": null,
+              "region": {
+                "start_line": 2,
+                "start_column": 1,
+                "end_line": 2,
+                "end_column": 6
+              }
+            },
+            "logical": []
+          }
+        ],
+        "fingerprint": {
+          "source": "fingerprints.primaryLocationLineHash/v1",
+          "value": "sample-s001-line2"
+        },
+        "fingerprints": {"primaryLocationLineHash/v1": "sample-s001-line2"},
+        "partial_fingerprints": {},
+        "suppression_states": [],
+        "baseline_state": "new",
+        "tool": {
+          "name": "SampleScanner",
+          "version": "1.2.3",
+          "semantic_version": "1.2.3",
+          "information_uri": "https://example.invalid/sample-scanner"
+        },
+        "rule": {
+          "id": "S001",
+          "name": "HardcodedSecret",
+          "short_description": "Potential hard-coded secret",
+          "help_uri": "https://example.invalid/rules/S001",
+          "default_level": "error",
+          "tags": ["security", "credential"]
+        }
+      },
+      "status": "fail",
+      "source_tool": "SampleScanner",
+      "source_version": "1.2.3",
+      "tags": {
+        "collector": "forgegate-sarif.v1",
+        "run_index": "0",
+        "result_index": "0"
+      }
+    },
+    {
+      "evidence_id": "static-analysis-finding-35931a4f35c5-r0n1",
+      "kind": "static_analysis.finding",
+      "scope": "repository",
+      "value": {
+        "rule_id": "S002",
+        "level": "warning",
+        "kind": "review",
+        "message": "Review whether **debug mode** is reachable in production.",
+        "locations": [
+          {
+            "physical": {
+              "uri": "src/sample/config.py",
+              "uri_base_id": "%SRCROOT%",
+              "region": {
+                "start_line": 8,
+                "start_column": null,
+                "end_line": null,
+                "end_column": null
+              }
+            },
+            "logical": [
+              {
+                "name": null,
+                "fully_qualified_name": "sample.config.DEBUG",
+                "kind": "variable"
+              }
+            ]
+          }
+        ],
+        "fingerprint": {
+          "source": "partialFingerprints.primaryLocationStartColumnFingerprint",
+          "value": "sample-s002"
+        },
+        "fingerprints": {},
+        "partial_fingerprints": {
+          "primaryLocationStartColumnFingerprint": "sample-s002"
+        },
+        "suppression_states": [
+          {
+            "kind": "external",
+            "status": "accepted",
+            "justification": "Accepted in the intentionally insecure sample fixture."
+          }
+        ],
+        "baseline_state": "unchanged",
+        "tool": {
+          "name": "SampleScanner",
+          "version": "1.2.3",
+          "semantic_version": "1.2.3",
+          "information_uri": "https://example.invalid/sample-scanner"
+        },
+        "rule": {
+          "id": "S002",
+          "name": "RiskyDebugMode",
+          "short_description": "Debug mode should be disabled",
+          "help_uri": null,
+          "default_level": "warning",
+          "tags": ["security", "configuration"]
+        }
+      },
+      "status": "suppressed",
+      "source_tool": "SampleScanner",
+      "source_version": "1.2.3",
+      "tags": {
+        "collector": "forgegate-sarif.v1",
+        "run_index": "0",
+        "result_index": "1"
+      }
+    }
+  ],
+  "warnings": [],
+  "rejected_records": []
+}

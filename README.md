@@ -6,7 +6,7 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 1 standard collectors — JUnit and coverage accepted; still pre-MVP.**
+**Phase 1 standard collectors — JUnit, coverage, and SARIF accepted; still pre-MVP.**
 
 Implemented and host-verified in this checkpoint:
 
@@ -24,14 +24,16 @@ Implemented and host-verified in this checkpoint:
   explicit warnings or rejections;
 - bounded Cobertura/coverage.py XML and LCOV collectors that emit line and
   branch coverage for repository, package, and module scopes;
-- `collect-junit`, `collect-coverage-xml`, and `collect-lcov` CLI previews with
-  deterministic golden-output coverage.
+- a bounded SARIF 2.1.0 collector that emits an explicit summary even when a
+  successful scan contains zero results, plus one normalized record per finding;
+- `collect-junit`, `collect-coverage-xml`, `collect-lcov`, and `collect-sarif`
+  CLI previews with deterministic golden-output coverage.
 
 Not implemented yet:
 
 - policy evaluation, persistence, attestations, REST API, plugin execution,
   GitHub integration, or signed provenance;
-- SARIF, benchmark, AFE, or MSP430 collectors;
+- benchmark, AFE, or MSP430 collectors;
 - any AFE/MSP430 runtime integration or hardware operation;
 - any production deployment or public release.
 
@@ -80,6 +82,20 @@ Coverage artifacts use the same provenance options:
 
 Coverage percentages are facts. ForgeGate does not decide whether they meet a
 release threshold until the future policy engine evaluates them.
+
+SARIF 2.1.0 collection reads scanner identity from the artifact:
+
+```powershell
+.\.venv\Scripts\python.exe -m forgegate collect-sarif `
+  artifacts/security.sarif --root examples/sample-python-api `
+  --commit cccccccccccccccccccccccccccccccccccccccc `
+  --collected-at 2026-08-30T23:00:00Z `
+  --trust claimed_ci_metadata --verification-level ci_validated
+```
+
+A `COMPLETE` result means the artifact was collected successfully. Finding
+levels, kinds, suppressions, and a zero-result summary remain evidence for the
+future policy engine; the collector does not issue a release decision.
 
 ## Product boundary
 

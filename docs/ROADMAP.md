@@ -20,7 +20,7 @@
 - [x] Add golden fixtures and audit warnings/rejections.
 - [x] Add Cobertura/coverage.py XML with repository/package/module scopes.
 - [x] Add LCOV with strict record validation and module scopes.
-- [ ] Add SARIF 2.1.0 collector.
+- [x] Add SARIF 2.1.0 collector with explicit zero-result evidence.
 - [ ] Add generic benchmark JSON collector.
 
 ## Phase 2 — deterministic policy and CLI MVP

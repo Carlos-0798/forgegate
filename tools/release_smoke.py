@@ -18,18 +18,22 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/ARTIFACT_AND_JUNIT_SLICE.md",
     "docs/architecture/COVERAGE_COLLECTORS.md",
     "docs/architecture/DOMAIN_MODEL.md",
+    "docs/architecture/SARIF_COLLECTOR.md",
     "examples/sample-python-api/artifacts/junit.xml",
+    "examples/sample-python-api/artifacts/security.sarif",
     "examples/sample-python-api/artifacts/coverage.info",
     "examples/sample-python-api/artifacts/coverage.xml",
     "examples/sample-python-api/forgegate.yaml",
     "reports/PHASE_1_JUNIT_SLICE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_1_COVERAGE_SLICE_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_1_SARIF_SLICE_ACCEPTANCE_REPORT.md",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "tests/test_models.py",
     "tests/golden/junit_summary.json",
     "tests/golden/coverage_xml.json",
     "tests/golden/lcov_summary.json",
+    "tests/golden/sarif_summary.json",
     "tools/verify.py",
 )
 
@@ -159,6 +163,26 @@ def main() -> int:
                 ],
                 cwd=root,
             )
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "collect-sarif",
+                "artifacts/security.sarif",
+                "--root",
+                str(REPOSITORY_ROOT / "examples/sample-python-api"),
+                "--commit",
+                "c" * 40,
+                "--collected-at",
+                "2026-08-30T23:00:00Z",
+                "--trust",
+                "claimed_ci_metadata",
+                "--verification-level",
+                "ci_validated",
+            ],
+            cwd=root,
+        )
 
         print(f"\nwheel sha256={sha256(wheel)}", flush=True)
         print(f"sdist sha256={sha256(sdist)}", flush=True)

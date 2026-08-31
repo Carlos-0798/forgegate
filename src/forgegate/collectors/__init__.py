@@ -10,6 +10,7 @@ from forgegate.collectors.coverage import (
     LcovCollector,
 )
 from forgegate.collectors.junit import JUnitCollectionRequest, JUnitCollector
+from forgegate.collectors.sarif import SarifCollectionRequest, SarifCollector
 
 __all__ = [
     "CollectionIssue",
@@ -21,4 +22,6 @@ __all__ = [
     "JUnitCollectionRequest",
     "JUnitCollector",
     "LcovCollector",
+    "SarifCollectionRequest",
+    "SarifCollector",
 ]

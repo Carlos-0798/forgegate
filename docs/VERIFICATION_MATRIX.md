@@ -29,12 +29,15 @@
 | Coverage repository/package/module scopes | unit + golden tests | PASS — local host |
 | Declared/observed coverage mismatch audit | unit tests | PASS — local host |
 | Installed coverage CLI paths | clean wheel environment | PASS — local host |
-| SARIF collection | adversarial fixtures | NOT IMPLEMENTED |
+| SARIF 2.1.0 collection | adversarial fixtures + golden output | PASS — local host |
+| Successful zero-result SARIF scan | explicit summary evidence | PASS — local host |
+| Failed/ambiguous SARIF scan | invocation/rule-reference rejection | PASS — local host |
+| Installed SARIF CLI path | clean wheel environment | PASS — local host |
 | Benchmark JSON collection | adversarial fixtures | NOT IMPLEMENTED |
 | Policy evaluation | unit/property/integration tests | NOT IMPLEMENTED |
 | AFE report compatibility | frozen public artifact contract | PLANNED |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
 
-See `reports/PHASE_1_COVERAGE_SLICE_ACCEPTANCE_REPORT.md` for the current exact
+See `reports/PHASE_1_SARIF_SLICE_ACCEPTANCE_REPORT.md` for the current exact
 test and coverage result. Earlier acceptance reports remain historical records.

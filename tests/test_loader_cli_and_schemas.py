@@ -243,6 +243,72 @@ def test_collect_coverage_cli_rejects_invalid_inputs(repository_root: Path, tmp_
     assert json.loads(rejected.stdout)["status"] == "REJECTED"
 
 
+def test_collect_sarif_cli_vertical_slice(repository_root: Path) -> None:
+    root = repository_root / "examples/sample-python-api"
+    result = runner.invoke(
+        app,
+        [
+            "collect-sarif",
+            "artifacts/security.sarif",
+            "--root",
+            str(root),
+            "--commit",
+            "c" * 40,
+            "--collected-at",
+            "2026-08-30T23:00:00Z",
+            "--trust",
+            "claimed_ci_metadata",
+            "--verification-level",
+            "ci_validated",
+        ],
+    )
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["status"] == "COMPLETE"
+    assert [record["kind"] for record in payload["evidence"]] == [
+        "static_analysis.summary",
+        "static_analysis.finding",
+        "static_analysis.finding",
+    ]
+
+
+def test_collect_sarif_cli_rejects_invalid_inputs(repository_root: Path, tmp_path: Path) -> None:
+    root = repository_root / "examples/sample-python-api"
+    invalid_timestamp = runner.invoke(
+        app,
+        [
+            "collect-sarif",
+            "artifacts/security.sarif",
+            "--root",
+            str(root),
+            "--commit",
+            "c" * 40,
+            "--collected-at",
+            "not-a-timestamp",
+        ],
+    )
+    assert invalid_timestamp.exit_code == 3
+    assert "Invalid isoformat string" in invalid_timestamp.output
+
+    invalid_sarif = tmp_path / "invalid.sarif"
+    invalid_sarif.write_text('{"version":"2.1.0","runs":[]}', encoding="utf-8")
+    rejected = runner.invoke(
+        app,
+        [
+            "collect-sarif",
+            "invalid.sarif",
+            "--root",
+            str(tmp_path),
+            "--commit",
+            "c" * 40,
+            "--collected-at",
+            "2026-08-30T23:00:00Z",
+        ],
+    )
+    assert rejected.exit_code == 3
+    assert json.loads(rejected.stdout)["status"] == "REJECTED"
+
+
 def test_schema_export_cli(tmp_path: Path) -> None:
     output = tmp_path / "schemas"
     result = runner.invoke(app, ["export-schemas", str(output)])

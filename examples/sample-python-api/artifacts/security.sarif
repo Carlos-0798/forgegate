@@ -1,0 +1,84 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "SampleScanner",
+          "semanticVersion": "1.2.3",
+          "informationUri": "https://example.invalid/sample-scanner",
+          "rules": [
+            {
+              "id": "S001",
+              "name": "HardcodedSecret",
+              "shortDescription": {"text": "Potential hard-coded secret"},
+              "helpUri": "https://example.invalid/rules/S001",
+              "defaultConfiguration": {"level": "error"},
+              "properties": {"tags": ["security", "credential"]}
+            },
+            {
+              "id": "S002",
+              "name": "RiskyDebugMode",
+              "shortDescription": {"text": "Debug mode should be disabled"},
+              "defaultConfiguration": {"level": "warning"},
+              "properties": {"tags": ["security", "configuration"]}
+            }
+          ]
+        }
+      },
+      "invocations": [{"executionSuccessful": true}],
+      "results": [
+        {
+          "ruleId": "S001",
+          "level": "error",
+          "kind": "fail",
+          "message": {"text": "Credential-like value is embedded in source."},
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {"uri": "src/sample/api.py"},
+                "region": {
+                  "startLine": 2,
+                  "startColumn": 1,
+                  "endLine": 2,
+                  "endColumn": 6
+                }
+              }
+            }
+          ],
+          "fingerprints": {"primaryLocationLineHash/v1": "sample-s001-line2"},
+          "baselineState": "new"
+        },
+        {
+          "ruleIndex": 1,
+          "kind": "review",
+          "message": {"markdown": "Review whether **debug mode** is reachable in production."},
+          "locations": [
+            {
+              "physicalLocation": {
+                "artifactLocation": {
+                  "uri": "src/sample/config.py",
+                  "uriBaseId": "%SRCROOT%"
+                },
+                "region": {"startLine": 8}
+              },
+              "logicalLocations": [
+                {"fullyQualifiedName": "sample.config.DEBUG", "kind": "variable"}
+              ]
+            }
+          ],
+          "partialFingerprints": {"primaryLocationStartColumnFingerprint": "sample-s002"},
+          "suppressions": [
+            {
+              "kind": "external",
+              "status": "accepted",
+              "justification": "Accepted in the intentionally insecure sample fixture."
+            }
+          ],
+          "baselineState": "unchanged"
+        }
+      ]
+    }
+  ]
+}
