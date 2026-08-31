@@ -6,7 +6,8 @@
 - Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, and durable lifecycle binding; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
-- Remote/publication status: local only; no remote repository created
+- Remote/publication status: synchronized to private `Carlos-0798/forgegate`;
+  no public release, License, or LinkedIn publication authorized
 
 ## Implemented
 
@@ -171,8 +172,10 @@ attestation embedding of assembly receipts, and hardware access.
 - complete sdist manifest and wheel build: PASS
 - repository-external wheel installation and CLI smoke: PASS
 - Git Bash shell-script syntax check: PASS
-- GitHub Actions: Windows/Linux/macOS matrix defined; NOT RUN because no remote
-  repository exists
+- GitHub Actions: PASS on Windows, Ubuntu, and macOS; run `33403322055`
+  executed both `tools/verify.py` and `tools/release_smoke.py`
+- private GitHub synchronization: `main` pushed with noreply commit identity;
+  repository visibility, default branch, About, and ten Topics read back
 
 See `reports/PHASE_0_ENVIRONMENT_AUDIT.md` for the prerequisite audit and exact
 human-intervention boundary. See

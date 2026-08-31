@@ -46,7 +46,7 @@ collector rather than a runtime or hardware dependency.
 | Static quality gates | Ruff, formatting, and strict mypy passed | Local host test |
 | Contracts | JSON Schema and OpenAPI drift checks passed | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
-| GitHub Actions | Windows/Linux/macOS matrix defined | Not run before the initial private push |
+| GitHub Actions | Windows, Ubuntu, and macOS completed `verify.py` and `release_smoke.py` | PASS — [run 33403322055](https://github.com/Carlos-0798/forgegate/actions/runs/33403322055) |
 | Hardware/device behavior | Not exercised by ForgeGate | Out of scope |
 
 ## Key design decisions
