@@ -87,6 +87,78 @@
         "title": "ArtifactReference",
         "type": "object"
       },
+      "CandidateAdvanceCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "to_status": {
+            "$ref": "#/components/schemas/CandidateStatus"
+          }
+        },
+        "required": [
+          "to_status",
+          "expected_revision",
+          "occurred_at"
+        ],
+        "title": "CandidateAdvanceCommand",
+        "type": "object"
+      },
+      "CandidateAttestCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "issued_at": {
+            "format": "date-time",
+            "title": "Issued At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "issued_at"
+        ],
+        "title": "CandidateAttestCommand",
+        "type": "object"
+      },
+      "CandidateBindEvidenceCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "assembly": {
+            "$ref": "#/components/schemas/EvidenceBundleAssembly"
+          },
+          "bound_at": {
+            "format": "date-time",
+            "title": "Bound At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assembly",
+          "bound_at"
+        ],
+        "title": "CandidateBindEvidenceCommand",
+        "type": "object"
+      },
       "CandidateCreateCommand": {
         "additionalProperties": false,
         "properties": {
@@ -132,6 +204,61 @@
           "created_at"
         ],
         "title": "CandidateCreateCommand",
+        "type": "object"
+      },
+      "CandidateEvaluateCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "evaluated_at": {
+            "format": "date-time",
+            "title": "Evaluated At",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/PolicyConfig"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "policy",
+          "expected_revision",
+          "evaluated_at"
+        ],
+        "title": "CandidateEvaluateCommand",
+        "type": "object"
+      },
+      "CandidateEvaluationResult": {
+        "additionalProperties": false,
+        "properties": {
+          "evaluation": {
+            "$ref": "#/components/schemas/PolicyEvaluation"
+          },
+          "transition": {
+            "$ref": "#/components/schemas/CandidateTransitionResult"
+          }
+        },
+        "required": [
+          "evaluation",
+          "transition"
+        ],
+        "title": "CandidateEvaluationResult",
         "type": "object"
       },
       "CandidateEvidenceBinding": {
@@ -320,6 +447,29 @@
           "occurred_at"
         ],
         "title": "CandidateTransition",
+        "type": "object"
+      },
+      "CandidateTransitionResult": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate": {
+            "$ref": "#/components/schemas/ReleaseCandidate"
+          },
+          "schema_version": {
+            "const": "forgegate.candidate-transition-result.v1",
+            "default": "forgegate.candidate-transition-result.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "transition": {
+            "$ref": "#/components/schemas/CandidateTransition"
+          }
+        },
+        "required": [
+          "candidate",
+          "transition"
+        ],
+        "title": "CandidateTransitionResult",
         "type": "object"
       },
       "CollectionIssue": {
@@ -764,6 +914,36 @@
         "title": "Operator",
         "type": "string"
       },
+      "PolicyConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Name",
+            "type": "string"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/PolicyRule"
+            },
+            "minItems": 1,
+            "title": "Rules",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "forgegate.policy.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "name",
+          "rules"
+        ],
+        "title": "PolicyConfig",
+        "type": "object"
+      },
       "PolicyEvaluation": {
         "additionalProperties": false,
         "properties": {
@@ -834,6 +1014,85 @@
           "evaluated_evidence_ids"
         ],
         "title": "PolicyEvaluation",
+        "type": "object"
+      },
+      "PolicyRule": {
+        "additionalProperties": false,
+        "properties": {
+          "aggregation": {
+            "$ref": "#/components/schemas/Aggregation",
+            "default": "value"
+          },
+          "claim": {
+            "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z0-9_-]+)+$",
+            "title": "Claim",
+            "type": "string"
+          },
+          "evidence_kind": {
+            "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z0-9_-]+)+$",
+            "title": "Evidence Kind",
+            "type": "string"
+          },
+          "expected": {
+            "title": "Expected"
+          },
+          "id": {
+            "pattern": "^[a-z][a-z0-9._-]{1,127}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "mandatory": {
+            "default": true,
+            "title": "Mandatory",
+            "type": "boolean"
+          },
+          "maximum_age_seconds": {
+            "anyOf": [
+              {
+                "maximum": 315576000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maximum Age Seconds"
+          },
+          "minimum_trust": {
+            "$ref": "#/components/schemas/EvidenceTrust",
+            "default": "unsigned_local"
+          },
+          "minimum_verification": {
+            "$ref": "#/components/schemas/VerificationLevel",
+            "default": "declared"
+          },
+          "on_missing": {
+            "$ref": "#/components/schemas/Decision",
+            "default": "REVIEW"
+          },
+          "operator": {
+            "$ref": "#/components/schemas/Operator"
+          },
+          "require_presence": {
+            "default": true,
+            "title": "Require Presence",
+            "type": "boolean"
+          },
+          "where": {
+            "additionalProperties": true,
+            "title": "Where",
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "claim",
+          "evidence_kind",
+          "operator",
+          "expected"
+        ],
+        "title": "PolicyRule",
         "type": "object"
       },
       "ReleaseAttestation": {
@@ -1134,7 +1393,7 @@
   "info": {
     "summary": "Local release-assurance candidate API",
     "title": "ForgeGate Local API",
-    "version": "0.1.0.dev12"
+    "version": "0.1.0.dev13"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -1223,6 +1482,16 @@
               }
             },
             "description": "Request conflicts with durable state"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request body exceeds local API limit"
           },
           "422": {
             "content": {
@@ -1316,6 +1585,16 @@
             },
             "description": "Request conflicts with durable state"
           },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request body exceeds local API limit"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -1408,6 +1687,16 @@
             },
             "description": "Request conflicts with durable state"
           },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request body exceeds local API limit"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -1442,6 +1731,237 @@
         "summary": "Get Candidate Attestation Endpoint",
         "tags": [
           "candidates"
+        ]
+      },
+      "post": {
+        "operationId": "attestCandidate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateAttestCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseAttestation"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request conflicts with durable state"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request body exceeds local API limit"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Strict request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fail-closed internal error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate store unavailable"
+          }
+        },
+        "summary": "Attest Candidate Endpoint",
+        "tags": [
+          "candidate commands"
+        ]
+      }
+    },
+    "/v1/candidates/{candidate_id}/evaluate": {
+      "post": {
+        "operationId": "evaluateCandidate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateEvaluateCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateEvaluationResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request conflicts with durable state"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request body exceeds local API limit"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Strict request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fail-closed internal error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate store unavailable"
+          }
+        },
+        "summary": "Evaluate Candidate Endpoint",
+        "tags": [
+          "candidate commands"
         ]
       }
     },
@@ -1500,6 +2020,16 @@
             },
             "description": "Request conflicts with durable state"
           },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request body exceeds local API limit"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -1534,6 +2064,125 @@
         "summary": "Get Candidate Evidence Endpoint",
         "tags": [
           "candidates"
+        ]
+      },
+      "post": {
+        "operationId": "bindCandidateEvidence",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateBindEvidenceCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateEvidenceBinding"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request conflicts with durable state"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request body exceeds local API limit"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Strict request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fail-closed internal error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate store unavailable"
+          }
+        },
+        "summary": "Bind Candidate Evidence Endpoint",
+        "tags": [
+          "candidate commands"
         ]
       }
     },
@@ -1592,6 +2241,16 @@
             },
             "description": "Request conflicts with durable state"
           },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request body exceeds local API limit"
+          },
           "422": {
             "content": {
               "application/json": {
@@ -1626,6 +2285,127 @@
         "summary": "Get Candidate History Endpoint",
         "tags": [
           "candidates"
+        ]
+      }
+    },
+    "/v1/candidates/{candidate_id}/transitions": {
+      "post": {
+        "operationId": "advanceCandidate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateAdvanceCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateTransitionResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request conflicts with durable state"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request body exceeds local API limit"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Strict request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fail-closed internal error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate store unavailable"
+          }
+        },
+        "summary": "Advance Candidate Endpoint",
+        "tags": [
+          "candidate commands"
         ]
       }
     }

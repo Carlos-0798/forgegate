@@ -16,8 +16,13 @@ from starlette.responses import JSONResponse, Response
 from forgegate import __version__
 from forgegate.api.models import ApiError, ApiErrorResponse, HealthResponse
 from forgegate.application import (
+    CandidateAdvanceCommand,
     CandidateApplication,
+    CandidateAttestCommand,
+    CandidateBindEvidenceCommand,
     CandidateCreateCommand,
+    CandidateEvaluateCommand,
+    CandidateEvaluationResult,
     CandidateHistoryView,
 )
 from forgegate.attestations import ReleaseAttestation
@@ -27,13 +32,17 @@ from forgegate.candidates import (
     CandidateStoreError,
     ReleaseCandidate,
 )
+from forgegate.candidates.models import CandidateTransitionResult
+from forgegate.network import is_loopback_host
 
 REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
+MAX_REQUEST_BODY_BYTES = 4 * 1024 * 1024
 
 ERROR_RESPONSES: dict[int | str, dict[str, object]] = {
     400: {"model": ApiErrorResponse, "description": "Invalid request"},
     404: {"model": ApiErrorResponse, "description": "Candidate resource not found"},
     409: {"model": ApiErrorResponse, "description": "Request conflicts with durable state"},
+    413: {"model": ApiErrorResponse, "description": "Request body exceeds local API limit"},
     422: {"model": ApiErrorResponse, "description": "Strict request validation failed"},
     500: {"model": ApiErrorResponse, "description": "Fail-closed internal error"},
     503: {"model": ApiErrorResponse, "description": "Candidate store unavailable"},
@@ -77,6 +86,38 @@ def create_api_app(
                 replacement,
             )
         request.state.request_id = request_id
+        if not is_loopback_host(request.url.hostname):
+            return _error_response(
+                status.HTTP_400_BAD_REQUEST,
+                "API_HOST_INVALID",
+                "Host must identify localhost or a loopback IP address",
+                request_id,
+            )
+        content_length = request.headers.get("Content-Length")
+        if content_length is not None:
+            try:
+                body_length = int(content_length)
+            except ValueError:
+                return _error_response(
+                    status.HTTP_400_BAD_REQUEST,
+                    "API_CONTENT_LENGTH_INVALID",
+                    "Content-Length must be a non-negative integer",
+                    request_id,
+                )
+            if body_length < 0:
+                return _error_response(
+                    status.HTTP_400_BAD_REQUEST,
+                    "API_CONTENT_LENGTH_INVALID",
+                    "Content-Length must be a non-negative integer",
+                    request_id,
+                )
+            if body_length > MAX_REQUEST_BODY_BYTES:
+                return _error_response(
+                    status.HTTP_413_CONTENT_TOO_LARGE,
+                    "API_BODY_TOO_LARGE",
+                    "request body exceeds the 4 MiB local API limit",
+                    request_id,
+                )
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
         return response
@@ -161,6 +202,73 @@ def create_api_app(
             idempotency_key=idempotency_key,
         )
 
+    @app.post(
+        "/v1/candidates/{candidate_id}/transitions",
+        response_model=CandidateTransitionResult,
+        operation_id="advanceCandidate",
+        tags=["candidate commands"],
+        responses=ERROR_RESPONSES,
+    )
+    def advance_candidate_endpoint(
+        candidate_id: str,
+        command: CandidateAdvanceCommand,
+        idempotency_key: Annotated[str, Header(alias="Idempotency-Key")],
+    ) -> CandidateTransitionResult:
+        return candidate_application.advance_candidate(
+            candidate_id,
+            command,
+            idempotency_key=idempotency_key,
+        )
+
+    @app.post(
+        "/v1/candidates/{candidate_id}/evidence",
+        response_model=CandidateEvidenceBinding,
+        operation_id="bindCandidateEvidence",
+        tags=["candidate commands"],
+        responses=ERROR_RESPONSES,
+    )
+    def bind_candidate_evidence_endpoint(
+        candidate_id: str,
+        command: CandidateBindEvidenceCommand,
+        idempotency_key: Annotated[str, Header(alias="Idempotency-Key")],
+    ) -> CandidateEvidenceBinding:
+        return candidate_application.bind_evidence(
+            candidate_id,
+            command,
+            idempotency_key=idempotency_key,
+        )
+
+    @app.post(
+        "/v1/candidates/{candidate_id}/evaluate",
+        response_model=CandidateEvaluationResult,
+        operation_id="evaluateCandidate",
+        tags=["candidate commands"],
+        responses=ERROR_RESPONSES,
+    )
+    def evaluate_candidate_endpoint(
+        candidate_id: str,
+        command: CandidateEvaluateCommand,
+        idempotency_key: Annotated[str, Header(alias="Idempotency-Key")],
+    ) -> CandidateEvaluationResult:
+        return candidate_application.evaluate_candidate(
+            candidate_id,
+            command,
+            idempotency_key=idempotency_key,
+        )
+
+    @app.post(
+        "/v1/candidates/{candidate_id}/attestation",
+        response_model=ReleaseAttestation,
+        operation_id="attestCandidate",
+        tags=["candidate commands"],
+        responses=ERROR_RESPONSES,
+    )
+    def attest_candidate_endpoint(
+        candidate_id: str,
+        command: CandidateAttestCommand,
+    ) -> ReleaseAttestation:
+        return candidate_application.attest_candidate(candidate_id, command)
+
     @app.get(
         "/v1/candidates/{candidate_id}",
         response_model=ReleaseCandidate,
@@ -234,6 +342,7 @@ def _store_error_status(code: str) -> int:
         return status.HTTP_404_NOT_FOUND
     if code in {
         "STORE_CANDIDATE_CONFLICT",
+        "STORE_ATTESTATION_CONFLICT",
         "STORE_EVIDENCE_BINDING_CONFLICT",
         "STORE_EVALUATION_CONFLICT",
         "STORE_IDEMPOTENCY_CONFLICT",
@@ -251,4 +360,4 @@ def _store_error_status(code: str) -> int:
     return status.HTTP_400_BAD_REQUEST
 
 
-__all__ = ["REQUEST_ID_PATTERN", "create_api_app"]
+__all__ = ["MAX_REQUEST_BODY_BYTES", "REQUEST_ID_PATTERN", "create_api_app"]

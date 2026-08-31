@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -13,9 +12,13 @@ from typer.testing import CliRunner
 
 from forgegate import __version__
 from forgegate.api import ApiErrorResponse, create_api_app
-from forgegate.api.app import _error_message, _request_id, _store_error_status
+from forgegate.api.app import (
+    MAX_REQUEST_BODY_BYTES,
+    _error_message,
+    _request_id,
+    _store_error_status,
+)
 from forgegate.application import CandidateApplication, CandidateCreateCommand
-from forgegate.assembly import EvidenceBundleAssembly
 from forgegate.candidates import (
     CandidateLifecycleError,
     CandidateStoreError,
@@ -23,9 +26,7 @@ from forgegate.candidates import (
 )
 from forgegate.cli import app as cli_app
 from forgegate.config import load_config
-from forgegate.domain.enums import CandidateStatus
-from forgegate.domain.models import PolicyConfig
-from forgegate.policy import evaluate_policy
+from forgegate.network import is_loopback_host
 
 runner = CliRunner()
 
@@ -53,7 +54,9 @@ def assert_error(response: Any, status_code: int, code: str) -> dict[str, Any]:
 
 def test_health_and_candidate_read_write_contract(tmp_path: Path) -> None:
     request_id = "test-request-0001"
-    with TestClient(create_api_app(tmp_path / "forgegate.db")) as client:
+    with TestClient(
+        create_api_app(tmp_path / "forgegate.db"), base_url="http://127.0.0.1"
+    ) as client:
         health = client.get("/healthz", headers={"X-Request-ID": request_id})
         created = client.post(
             "/v1/candidates",
@@ -89,7 +92,9 @@ def test_health_and_candidate_read_write_contract(tmp_path: Path) -> None:
 
 
 def test_api_rejects_invalid_request_ids_and_strict_inputs(tmp_path: Path) -> None:
-    with TestClient(create_api_app(tmp_path / "forgegate.db")) as client:
+    with TestClient(
+        create_api_app(tmp_path / "forgegate.db"), base_url="http://127.0.0.1"
+    ) as client:
         bad_id = client.get("/healthz", headers={"X-Request-ID": "bad id"})
         missing_key = client.post("/v1/candidates", json=candidate_payload())
         unknown_field = client.post(
@@ -104,8 +109,47 @@ def test_api_rejects_invalid_request_ids_and_strict_inputs(tmp_path: Path) -> No
     assert_error(unknown_field, 422, "API_REQUEST_VALIDATION_FAILED")
 
 
+def test_api_enforces_local_host_and_bounded_content_length(tmp_path: Path) -> None:
+    assert is_loopback_host(None) is False
+    with TestClient(
+        create_api_app(tmp_path / "external-host.db"), base_url="http://example.invalid"
+    ) as external_client:
+        external_host = external_client.get("/healthz")
+    with TestClient(create_api_app(tmp_path / "length.db"), base_url="http://127.0.0.1") as client:
+        invalid_length = client.get("/healthz", headers={"Content-Length": "invalid"})
+        negative_length = client.get("/healthz", headers={"Content-Length": "-1"})
+        oversized = client.get(
+            "/healthz", headers={"Content-Length": str(MAX_REQUEST_BODY_BYTES + 1)}
+        )
+
+    assert_error(external_host, 400, "API_HOST_INVALID")
+    assert_error(invalid_length, 400, "API_CONTENT_LENGTH_INVALID")
+    assert_error(negative_length, 400, "API_CONTENT_LENGTH_INVALID")
+    assert_error(oversized, 413, "API_BODY_TOO_LARGE")
+
+
+@pytest.mark.parametrize(
+    ("base_url", "host_header"),
+    [
+        ("http://localhost", None),
+        ("http://127.0.0.1", None),
+        ("http://127.0.0.1", "[::1]"),
+    ],
+)
+def test_api_accepts_only_explicit_loopback_hosts(
+    tmp_path: Path,
+    base_url: str,
+    host_header: str | None,
+) -> None:
+    with TestClient(create_api_app(tmp_path / "forgegate.db"), base_url=base_url) as client:
+        headers = {"Host": host_header} if host_header is not None else None
+        assert client.get("/healthz", headers=headers).status_code == 200
+
+
 def test_api_maps_conflict_and_missing_resources(tmp_path: Path) -> None:
-    with TestClient(create_api_app(tmp_path / "forgegate.db")) as client:
+    with TestClient(
+        create_api_app(tmp_path / "forgegate.db"), base_url="http://127.0.0.1"
+    ) as client:
         created = client.post(
             "/v1/candidates",
             headers={"Idempotency-Key": "api:create:conflict"},
@@ -128,77 +172,194 @@ def test_api_maps_conflict_and_missing_resources(tmp_path: Path) -> None:
     assert_error(missing_attestation, 404, "STORE_ATTESTATION_NOT_FOUND")
 
 
-def test_api_reads_durable_evidence_and_attestation(
+def test_api_command_endpoints_fail_closed_on_state_and_concurrency(
+    tmp_path: Path,
+    repository_root: Path,
+) -> None:
+    assembly = load_config(repository_root / "tests/golden/evidence_bundle_assembly.json")
+    policy = load_config(repository_root / "examples/sample-python-api/policies/pull-request.yaml")
+    with TestClient(
+        create_api_app(tmp_path / "forgegate.db"), base_url="http://127.0.0.1"
+    ) as client:
+        created = client.post(
+            "/v1/candidates",
+            headers={"Idempotency-Key": "api:create:guarded"},
+            json=candidate_payload(),
+        ).json()
+        candidate_id = created["candidate_id"]
+        transition_path = f"/v1/candidates/{candidate_id}/transitions"
+        bind_draft = client.post(
+            f"/v1/candidates/{candidate_id}/evidence",
+            headers={"Idempotency-Key": "api:bind:draft"},
+            json={
+                "assembly": assembly.model_dump(mode="json"),
+                "bound_at": "2026-08-30T20:31:00Z",
+            },
+        )
+        evaluate_without_binding = client.post(
+            f"/v1/candidates/{candidate_id}/evaluate",
+            headers={"Idempotency-Key": "api:evaluate:no-binding"},
+            json={
+                "policy": policy.model_dump(mode="json"),
+                "expected_revision": 0,
+                "evaluated_at": "2026-08-30T21:00:00Z",
+            },
+        )
+        attest_draft = client.post(
+            f"/v1/candidates/{candidate_id}/attestation",
+            json={"issued_at": "2026-08-30T22:00:00Z"},
+        )
+        collecting_command = {
+            "to_status": "COLLECTING",
+            "expected_revision": 0,
+            "occurred_at": "2026-08-30T12:01:00Z",
+        }
+        collecting = client.post(
+            transition_path,
+            headers={"Idempotency-Key": "api:advance:guarded"},
+            json=collecting_command,
+        )
+        key_conflict = client.post(
+            transition_path,
+            headers={"Idempotency-Key": "api:advance:guarded"},
+            json={**collecting_command, "reason": "different request"},
+        )
+        stale_revision = client.post(
+            transition_path,
+            headers={"Idempotency-Key": "api:advance:stale"},
+            json={
+                "to_status": "READY",
+                "expected_revision": 0,
+                "occurred_at": "2026-08-30T20:32:00Z",
+            },
+        )
+
+    assert_error(bind_draft, 400, "STORE_EVIDENCE_BINDING_INVALID")
+    assert_error(evaluate_without_binding, 404, "STORE_EVIDENCE_BINDING_NOT_FOUND")
+    assert_error(attest_draft, 400, "STORE_ATTESTATION_INVALID")
+    assert collecting.status_code == 200
+    assert_error(key_conflict, 409, "STORE_IDEMPOTENCY_CONFLICT")
+    assert_error(stale_revision, 409, "STORE_REVISION_CONFLICT")
+
+
+def test_api_executes_and_replays_complete_local_candidate_workflow(
     tmp_path: Path,
     repository_root: Path,
 ) -> None:
     database = tmp_path / "forgegate.db"
-    application = CandidateApplication.for_database(database)
-    with TestClient(create_api_app(database, application=application)) as client:
+    with TestClient(create_api_app(database), base_url="http://127.0.0.1") as client:
         created = client.post(
             "/v1/candidates",
             headers={"Idempotency-Key": "api:create:durable"},
             json=candidate_payload(),
         ).json()
         candidate_id = created["candidate_id"]
-        repository = application.repository
-        collecting = repository.advance(
-            candidate_id,
-            CandidateStatus.COLLECTING,
-            expected_revision=0,
-            occurred_at=datetime(2026, 8, 30, 12, 1, tzinfo=UTC),
-            idempotency_key="api:advance:collecting",
-        ).candidate
-        assembly = load_config(repository_root / "tests/golden/evidence_bundle_assembly.json")
-        assert isinstance(assembly, EvidenceBundleAssembly)
-        binding = repository.bind_evidence(
-            candidate_id,
-            assembly,
-            bound_at=datetime(2026, 8, 30, 20, 31, tzinfo=UTC),
-            idempotency_key="api:bind:evidence",
+        transition_path = f"/v1/candidates/{candidate_id}/transitions"
+        collecting_command = {
+            "to_status": "COLLECTING",
+            "expected_revision": 0,
+            "occurred_at": "2026-08-30T12:01:00Z",
+            "reason": "begin audited collection",
+        }
+        collecting = client.post(
+            transition_path,
+            headers={"Idempotency-Key": "api:advance:collecting"},
+            json=collecting_command,
         )
-        ready = repository.advance(
-            candidate_id,
-            CandidateStatus.READY,
-            expected_revision=collecting.revision,
-            occurred_at=datetime(2026, 8, 30, 20, 32, tzinfo=UTC),
-            idempotency_key="api:advance:ready",
-        ).candidate
-        evaluating = repository.advance(
-            candidate_id,
-            CandidateStatus.EVALUATING,
-            expected_revision=ready.revision,
-            occurred_at=datetime(2026, 8, 30, 20, 33, tzinfo=UTC),
-            idempotency_key="api:advance:evaluating",
-        ).candidate
+        collecting_replay = client.post(
+            transition_path,
+            headers={"Idempotency-Key": "api:advance:collecting"},
+            json=collecting_command,
+        )
+        assembly = load_config(repository_root / "tests/golden/evidence_bundle_assembly.json")
+        binding = client.post(
+            f"/v1/candidates/{candidate_id}/evidence",
+            headers={"Idempotency-Key": "api:bind:evidence"},
+            json={
+                "assembly": assembly.model_dump(mode="json"),
+                "bound_at": "2026-08-30T20:31:00Z",
+            },
+        )
+        ready = client.post(
+            transition_path,
+            headers={"Idempotency-Key": "api:advance:ready"},
+            json={
+                "to_status": "READY",
+                "expected_revision": 1,
+                "occurred_at": "2026-08-30T20:32:00Z",
+            },
+        )
+        evaluating = client.post(
+            transition_path,
+            headers={"Idempotency-Key": "api:advance:evaluating"},
+            json={
+                "to_status": "EVALUATING",
+                "expected_revision": 2,
+                "occurred_at": "2026-08-30T20:33:00Z",
+            },
+        )
         policy = load_config(
             repository_root / "examples/sample-python-api/policies/pull-request.yaml"
         )
-        assert isinstance(policy, PolicyConfig)
-        evaluated_at = datetime(2026, 8, 30, 21, 0, tzinfo=UTC)
-        evaluation = evaluate_policy(policy, assembly.bundle, evaluated_at=evaluated_at)
-        terminal = repository.advance(
-            candidate_id,
-            CandidateStatus.PASS,
-            expected_revision=evaluating.revision,
-            occurred_at=evaluated_at,
-            idempotency_key="api:advance:pass",
-            evaluation=evaluation,
-        ).candidate
-        attestation = repository.attest(
-            candidate_id,
-            issued_at=datetime(2026, 8, 30, 22, 0, tzinfo=UTC),
-            generator_version=__version__,
+        evaluation_command = {
+            "policy": policy.model_dump(mode="json"),
+            "expected_revision": 3,
+            "evaluated_at": "2026-08-30T21:00:00Z",
+            "reason": "evaluate the bound evidence",
+        }
+        invalid_evaluation = client.post(
+            f"/v1/candidates/{candidate_id}/evaluate",
+            headers={"Idempotency-Key": "api:evaluate:too-early"},
+            json={**evaluation_command, "evaluated_at": "2026-08-30T20:30:00Z"},
+        )
+        mismatched_policy = client.post(
+            f"/v1/candidates/{candidate_id}/evaluate",
+            headers={"Idempotency-Key": "api:evaluate:wrong-track"},
+            json={
+                **evaluation_command,
+                "policy": {**evaluation_command["policy"], "name": "production"},
+            },
+        )
+        evaluated = client.post(
+            f"/v1/candidates/{candidate_id}/evaluate",
+            headers={"Idempotency-Key": "api:evaluate:pass"},
+            json=evaluation_command,
+        )
+        evaluated_replay = client.post(
+            f"/v1/candidates/{candidate_id}/evaluate",
+            headers={"Idempotency-Key": "api:evaluate:pass"},
+            json=evaluation_command,
+        )
+        attestation = client.post(
+            f"/v1/candidates/{candidate_id}/attestation",
+            json={"issued_at": "2026-08-30T22:00:00Z"},
+        )
+        attestation_replay = client.post(
+            f"/v1/candidates/{candidate_id}/attestation",
+            json={"issued_at": "2026-08-30T22:00:00Z"},
+        )
+        attestation_conflict = client.post(
+            f"/v1/candidates/{candidate_id}/attestation",
+            json={"issued_at": "2026-08-30T22:01:00Z"},
         )
 
         evidence_response = client.get(f"/v1/candidates/{candidate_id}/evidence")
         attestation_response = client.get(f"/v1/candidates/{candidate_id}/attestation")
         history_response = client.get(f"/v1/candidates/{candidate_id}/history")
 
-    assert evidence_response.status_code == attestation_response.status_code == 200
-    assert evidence_response.json() == binding.model_dump(mode="json")
-    assert attestation_response.json() == attestation.model_dump(mode="json")
-    assert history_response.json()["candidate"] == terminal.model_dump(mode="json")
+    assert collecting.status_code == collecting_replay.status_code == 200
+    assert collecting.json() == collecting_replay.json()
+    assert binding.status_code == ready.status_code == evaluating.status_code == 200
+    assert_error(invalid_evaluation, 422, "CANDIDATE_POLICY_EVALUATION_INVALID")
+    assert_error(mismatched_policy, 422, "CANDIDATE_EVALUATION_POLICY_MISMATCH")
+    assert evaluated.status_code == evaluated_replay.status_code == 200
+    assert evaluated.json() == evaluated_replay.json()
+    assert evaluated.json()["evaluation"]["decision"] == "PASS"
+    assert attestation.status_code == attestation_replay.status_code == 200
+    assert_error(attestation_conflict, 409, "STORE_ATTESTATION_CONFLICT")
+    assert attestation.json() == attestation_replay.json() == attestation_response.json()
+    assert evidence_response.json() == binding.json()
+    assert history_response.json()["candidate"] == evaluated.json()["transition"]["candidate"]
     assert history_response.json()["evidence_binding_required"] is True
 
 
@@ -215,7 +376,9 @@ def test_api_exception_handlers_fail_closed(
         raise CandidateLifecycleError("CANDIDATE_TEST_FAILURE", "safe lifecycle message")
 
     monkeypatch.setattr(CandidateApplication, "create_candidate", raise_lifecycle)
-    with TestClient(create_api_app(tmp_path / "lifecycle.db")) as client:
+    with TestClient(
+        create_api_app(tmp_path / "lifecycle.db"), base_url="http://127.0.0.1"
+    ) as client:
         lifecycle = client.post(
             "/v1/candidates",
             headers={"Idempotency-Key": "api:create:lifecycle"},
@@ -233,7 +396,9 @@ def test_api_exception_handlers_fail_closed(
         CandidateCreateCommand.model_validate({"created_at": "invalid"})
 
     monkeypatch.setattr(CandidateApplication, "create_candidate", raise_validation)
-    with TestClient(create_api_app(tmp_path / "validation.db")) as client:
+    with TestClient(
+        create_api_app(tmp_path / "validation.db"), base_url="http://127.0.0.1"
+    ) as client:
         validation = client.post(
             "/v1/candidates",
             headers={"Idempotency-Key": "api:create:validation"},
@@ -246,7 +411,9 @@ def test_api_exception_handlers_fail_closed(
 
     monkeypatch.setattr(CandidateApplication, "get_candidate", raise_unexpected)
     with TestClient(
-        create_api_app(tmp_path / "unexpected.db"), raise_server_exceptions=False
+        create_api_app(tmp_path / "unexpected.db"),
+        base_url="http://127.0.0.1",
+        raise_server_exceptions=False,
     ) as client:
         unexpected = client.get("/v1/candidates/cand-000000000000000000000000")
     payload = assert_error(unexpected, 500, "API_INTERNAL_ERROR")
@@ -258,6 +425,7 @@ def test_api_exception_handlers_fail_closed(
     [
         ("STORE_CANDIDATE_NOT_FOUND", 404),
         ("STORE_CANDIDATE_CONFLICT", 409),
+        ("STORE_ATTESTATION_CONFLICT", 409),
         ("STORE_EVIDENCE_BINDING_CONFLICT", 409),
         ("STORE_EVALUATION_CONFLICT", 409),
         ("STORE_IDEMPOTENCY_CONFLICT", 409),
@@ -297,8 +465,14 @@ def test_openapi_export_is_deterministic_and_complete(tmp_path: Path) -> None:
         "/v1/candidates/{candidate_id}/history",
         "/v1/candidates/{candidate_id}/evidence",
         "/v1/candidates/{candidate_id}/attestation",
+        "/v1/candidates/{candidate_id}/transitions",
+        "/v1/candidates/{candidate_id}/evaluate",
     }
     assert schema["paths"]["/v1/candidates"]["post"]["operationId"] == "createCandidate"
+    assert (
+        schema["paths"]["/v1/candidates/{candidate_id}/evaluate"]["post"]["operationId"]
+        == "evaluateCandidate"
+    )
     assert (
         schema["paths"]["/v1/candidates"]["post"]["responses"]["409"]["content"][
             "application/json"
@@ -376,7 +550,7 @@ def test_cli_and_api_candidate_creation_share_the_same_contract(tmp_path: Path) 
     api_database = tmp_path / "api.db"
     cli_database = tmp_path / "cli.db"
     SQLiteCandidateRepository(cli_database).initialize()
-    with TestClient(create_api_app(api_database)) as client:
+    with TestClient(create_api_app(api_database), base_url="http://127.0.0.1") as client:
         api_created = client.post(
             "/v1/candidates",
             headers={"Idempotency-Key": "parity:create:001"},

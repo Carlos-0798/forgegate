@@ -78,9 +78,16 @@
 | Loopback-only API bind | IPv4/IPv6/localhost allowlist + external-address rejection | PASS — local host |
 | OpenAPI 3.1 contract | committed byte comparison + installed-wheel export | PASS — drift-checked |
 | Authenticated/non-loopback API | identity, authorization, transport controls | NOT IMPLEMENTED |
+| REST lifecycle transitions | expected revision + idempotent replay/conflict | PASS — local host |
+| REST evidence binding | strict nested assembly + immutable SQLite binding | PASS — local host |
+| REST bound-evidence evaluation | policy engine + atomic terminal transition | PASS — local host |
+| Release-track policy identity | mismatch rejection before terminal commit | PASS — local host |
+| REST attestation persistence | deterministic create/replay/conflict | PASS — database only |
+| HTTP Host and declared body length | loopback allowlist + 4 MiB Content-Length gate | PASS — local host |
+| HTTP artifact loading/file publication | no loader/output path; nested metadata is not dereferenced | OUT OF SCOPE |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
 
-See `reports/PHASE_5_LOCAL_REST_API_BASELINE_ACCEPTANCE_REPORT.md` for
+See `reports/PHASE_6_LOCAL_REST_COMMAND_WORKFLOW_ACCEPTANCE_REPORT.md` for
 the current exact test and coverage result. Earlier acceptance reports remain
 historical records.

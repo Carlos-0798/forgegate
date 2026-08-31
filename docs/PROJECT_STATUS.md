@@ -1,8 +1,8 @@
 # Project status
 
 - Date: 2026-08-31
-- Version: 0.1.0.dev12
-- Stage: Phase 5 local REST API baseline implemented
+- Version: 0.1.0.dev13
+- Stage: Phase 6 local REST command workflow implemented
 - Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, and durable lifecycle binding; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
@@ -125,12 +125,26 @@
   drift gate, and clean-wheel comparison;
 - API/CLI creation parity plus full durable evidence-binding, terminal
   attestation, and history readback integration coverage.
+- shared application commands for candidate advancement, evidence binding,
+  policy evaluation, and durable attestation creation;
+- REST transition commands with caller-owned idempotency keys and optimistic
+  `expected_revision` control;
+- REST evidence binding that accepts a strict assembly document but no path
+  from which the API loads an assembly or artifact;
+- REST evaluation that uses only the candidate's persisted binding and commits
+  the resulting terminal transition atomically;
+- release-track/policy-name matching in the candidate lifecycle boundary;
+- REST attestation persistence with deterministic replay and no filesystem
+  output parameter;
+- loopback HTTP Host enforcement, declared 4 MiB request-length rejection, and
+  state/concurrency/error adversarial tests.
 
 ## Not implemented
 
-Authenticated/non-loopback API deployment, HTTP lifecycle/evaluation writes,
-external plugins, GitHub integration, signatures/key management, database
-authorization, backup/repair, MSP430 collector, Studio Phase 5
+Authenticated/non-loopback API deployment, HTTP artifact collection and file
+publication, project/audit APIs, external plugins, GitHub integration,
+signatures/key management, database authorization, backup/repair, MSP430
+collector, Studio Phase 5
 human-readable report ingestion, authenticated provenance/signatures, portable
 attestation embedding of assembly receipts, and hardware access.
 
@@ -140,10 +154,10 @@ attestation embedding of assembly receipts, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 550 passed, 1 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 100% across 4,007 statements and 1,106 branches
-- local API/application focus: 27 passed; 100% across 173 statements and 12
-  branches
+- pytest: 557 passed, 1 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 100% across 4,106 statements and 1,120 branches
+- local API/application/network focus: 34 passed; 100% across 282 statements
+  and 28 branches
 - Analog Validation collector focus: 59 passed; 100% across 431 statements and
   106 branches
 - evidence-assembly focus: 20 passed; 100% across 218 statements and 70
@@ -162,5 +176,5 @@ attestation embedding of assembly receipts, and hardware access.
 
 See `reports/PHASE_0_ENVIRONMENT_AUDIT.md` for the prerequisite audit and exact
 human-intervention boundary. See
-`reports/PHASE_5_LOCAL_REST_API_BASELINE_ACCEPTANCE_REPORT.md` for the
+`reports/PHASE_6_LOCAL_REST_COMMAND_WORKFLOW_ACCEPTANCE_REPORT.md` for the
 current slice.

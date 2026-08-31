@@ -165,6 +165,11 @@ def _validated_evaluation_id(
             "CANDIDATE_EVALUATION_COMMIT_MISMATCH",
             "policy evaluation commit does not match candidate",
         )
+    if evaluation.policy_name != candidate.release_track:
+        raise CandidateLifecycleError(
+            "CANDIDATE_EVALUATION_POLICY_MISMATCH",
+            "policy evaluation name does not match the candidate release track",
+        )
     if evaluation.decision.value != to_status.value:
         raise CandidateLifecycleError(
             "CANDIDATE_EVALUATION_DECISION_MISMATCH",

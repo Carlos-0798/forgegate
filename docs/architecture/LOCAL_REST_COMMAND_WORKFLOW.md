@@ -1,0 +1,80 @@
+# Local REST command workflow
+
+## Command boundary
+
+Phase 6 completes the local candidate workflow over HTTP without turning the
+service into a remote or multi-user system. The authority model is deliberately
+the same as the CLI: a process running under the local OS account and able to
+reach the loopback port may issue commands. ForgeGate provides no internal user
+identity, login, role, or producer authentication.
+
+The command routes are:
+
+| Route | Durable effect | Concurrency/replay control |
+|---|---|---|
+| `POST /v1/candidates` | Create deterministic DRAFT | `Idempotency-Key` |
+| `POST /v1/candidates/{id}/transitions` | Append one legal state event | `Idempotency-Key` + `expected_revision` |
+| `POST /v1/candidates/{id}/evidence` | Bind one immutable audited assembly | `Idempotency-Key` + state gate |
+| `POST /v1/candidates/{id}/evaluate` | Evaluate binding and append terminal event | `Idempotency-Key` + `expected_revision` |
+| `POST /v1/candidates/{id}/attestation` | Persist deterministic attestation | Terminal immutability + exact replay |
+
+All routes retain the existing structured error and request-correlation
+contract. Stable store conflicts map to HTTP 409; lifecycle and strict request
+failures map to 422 or the existing fail-closed store status.
+
+## State and evidence flow
+
+The intended sequence is:
+
+```text
+create DRAFT
+  -> transition COLLECTING
+  -> bind forgegate.evidence-bundle-assembly.v1
+  -> transition READY
+  -> transition EVALUATING
+  -> evaluate persisted binding -> PASS / FAIL / REVIEW / ERROR
+  -> persist forgegate.release-attestation.v1
+```
+
+The evaluate request supplies a strict `PolicyConfig`, timestamp, expected
+revision, and idempotency key. It does not supply an evidence bundle. The
+application loads the candidate's immutable binding and evaluates its nested
+bundle. The policy name must equal the candidate release track. The repository
+then verifies the evidence fingerprint and commits the evaluation plus terminal
+transition atomically.
+
+A generic transition request may record an explicit fail-closed `ERROR` without
+a policy result, matching the existing domain contract. PASS, FAIL, and REVIEW
+cannot be manufactured through that route because the lifecycle requires a
+matching evaluation document.
+
+## Filesystem and upstream isolation
+
+The bind route accepts the complete strict assembly document, not a path. The
+API never reopens the assembly's original artifact paths; those bytes were
+validated when the assembly was produced. Collection remains a separate local
+CLI operation.
+
+Attestation creation persists the self-validating JSON document in SQLite but
+does not accept an output directory or publish JSON/Markdown files. Explicit
+filesystem publication remains CLI-only so an HTTP caller cannot choose a
+local write target.
+
+Nothing in this workflow imports Analog Validation Studio, opens an MSP430
+serial port, or assigns ForgeGate ownership to upstream evidence. Both peers
+can later supply versioned artifacts through optional collectors and the same
+generic assembly boundary.
+
+## Local transport controls and residual risk
+
+Both the socket bind value and each HTTP Host must identify localhost or a
+loopback IP. Non-loopback and wildcard values fail closed. Requests declaring
+more than 4 MiB through `Content-Length` reject before model validation. CORS is
+not enabled.
+
+These controls reduce accidental exposure and ordinary browser-origin access;
+they do not authenticate a local caller or defend against a hostile local
+account. The current body guard does not provide an exact streaming limit for
+unknown-length/chunked requests. Any non-loopback, proxied, tunneled, shared, or
+production deployment remains prohibited until explicit identity,
+authorization, transport, rate-limit, and streaming-boundary designs exist.

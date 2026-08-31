@@ -6,7 +6,7 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 5 local REST API baseline implemented; not production-ready.**
+**Phase 6 local REST command workflow implemented; not production-ready.**
 
 Implemented and host-verified in this checkpoint:
 
@@ -94,12 +94,23 @@ Implemented and host-verified in this checkpoint:
   `export-openapi` and a committed OpenAPI 3.1 drift gate;
 - API/CLI candidate-creation parity, durable SQLite readback integration, and
   installed-wheel OpenAPI smoke verification.
+- idempotent, expected-revision REST transitions plus immutable audited
+  assembly binding;
+- REST policy evaluation that reads only the persisted binding, computes the
+  decision, and atomically records the matching terminal transition;
+- durable REST attestation creation without accepting a filesystem output
+  path or publishing files;
+- release-track/policy-name matching, loopback Host validation, and a declared
+  4 MiB request-length guard;
+- complete HTTP create → collect-state → bind → ready → evaluate → attest
+  integration with exact replay and conflict tests.
 
 Not implemented yet:
 
-- authenticated or non-loopback API deployment, HTTP lifecycle/evaluation
-  writes, plugin execution, GitHub integration, database authorization,
-  backup/repair, or signed provenance/key management;
+- authenticated or non-loopback API deployment, HTTP artifact collection or
+  filesystem publication, project/audit APIs, plugin execution, GitHub
+  integration, database authorization, backup/repair, or signed
+  provenance/key management;
 - MSP430 compatibility collector;
 - authenticated provenance, signatures, or trusted producer/CI identity;
 - any AFE/MSP430 runtime integration or hardware operation;
@@ -128,10 +139,15 @@ Start the local API against an existing or new local candidate database:
   --host 127.0.0.1 --port 8000
 ```
 
-The server accepts only `localhost` or a loopback IP. Its current write surface
-is limited to `POST /v1/candidates`, which requires `Idempotency-Key`; the
-remaining v1 candidate endpoints are reads. OpenAPI is available at
-`/openapi.json`, and the committed copy can be regenerated with:
+The server accepts only `localhost` or a loopback IP and also rejects a
+non-loopback HTTP `Host`. Candidate creation, transition, evidence binding, and
+evaluation writes require `Idempotency-Key`; transitions and evaluation also
+require `expected_revision`. Attestation creation is content-deterministic and
+persists only to SQLite. The API never accepts a path from which to load an
+assembly/artifact or an attestation output directory; path metadata already
+inside a validated assembly is not dereferenced. OpenAPI is available at
+`/openapi.json`, and the
+committed copy can be regenerated with:
 
 ```powershell
 .\.venv\Scripts\python.exe -m forgegate export-openapi `

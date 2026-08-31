@@ -78,7 +78,14 @@
   local-only boundary.
 - [x] Commit and drift-check OpenAPI 3.1; verify API/CLI parity and clean-wheel
   export behavior.
-- [ ] Add lifecycle, evidence-binding, evaluation, and attestation HTTP writes
-  only after their authorization and concurrency contracts are frozen.
+- [x] Freeze the local command authority as equivalent to the local CLI: no
+  internal identity, loopback bind plus Host checks, and no remote deployment.
+- [x] Add idempotent expected-revision lifecycle writes and immutable assembly
+  binding without accepting local artifact paths over HTTP.
+- [x] Evaluate only the persisted binding, atomically record the terminal
+  transition, and persist deterministic attestations without file publication.
+- [x] Require evaluation policy names to match candidate release tracks.
 - [ ] Add authenticated operator/producer identity before considering any
   non-loopback deployment.
+- [ ] Add projects and audit-event query APIs after their durable contracts are
+  implemented.

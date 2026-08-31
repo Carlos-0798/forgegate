@@ -191,6 +191,22 @@ The current slice has no authenticated producer and runs no plugin code.
 | OpenAPI silently diverges from the implementation | Deterministic export, committed byte-for-byte drift gate, and installed-wheel comparison |
 | Local transport is mistaken for authenticated authority | Documentation explicitly states no identity, authorization, TLS, or non-loopback deployment claim |
 
+## Addressed in the Phase 6 local REST command workflow
+
+| Threat | Current control |
+|---|---|
+| HTTP and CLI mutate candidates through different policy paths | Shared application commands delegate both transports to the same SQLite repository and domain lifecycle |
+| Concurrent HTTP writers silently overwrite a candidate | Every transition/evaluation supplies `expected_revision`; SQLite performs transactional compare-and-swap |
+| Retried transition, binding, or evaluation duplicates state | Caller idempotency key plus canonical request fingerprint and stored exact response |
+| HTTP policy evaluates evidence different from the persisted binding | Application loads the immutable binding and passes its nested bundle directly to the policy engine |
+| Weaker unrelated policy is used for a release track | Terminal lifecycle requires `evaluation.policy_name == candidate.release_track` |
+| Evaluation result and terminal state diverge | Application derives the target state from the policy decision and stores both in one repository transaction |
+| API reads or publishes arbitrary local paths | No loader/output path is accepted; nested assembly path metadata is not dereferenced, and file publication remains CLI-only |
+| Attestation request races mutable candidate state | Store accepts only a terminal immutable revision-four candidate and exact deterministic replay |
+| DNS rebinding or forged HTTP Host bypasses bind intent | Middleware requires the request Host itself to be localhost or a loopback IP |
+| Declared oversized JSON exhausts ordinary local use | Requests declaring more than 4 MiB in `Content-Length` reject before validation |
+| Local command endpoint is mistaken for operator authentication | Authority remains the local OS process/account boundary; no ForgeGate user identity is claimed |
+
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;
@@ -202,3 +218,5 @@ The current slice has no authenticated producer and runs no plugin code.
   management;
 - database authorization, API authentication, audit retention, backup, repair,
   encryption at rest, and administrator-resistant tamper evidence.
+- an exact streaming request-body limiter for unknown-length/chunked HTTP
+  bodies; the current 4 MiB gate covers declared `Content-Length` only.

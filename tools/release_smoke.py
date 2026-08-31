@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import os
 import shutil
 import subprocess
@@ -29,6 +30,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/EVIDENCE_BUNDLE_ASSEMBLY.md",
     "docs/architecture/CANDIDATE_EVIDENCE_BINDING.md",
     "docs/architecture/LOCAL_REST_API.md",
+    "docs/architecture/LOCAL_REST_COMMAND_WORKFLOW.md",
     "examples/sample-python-api/artifacts/junit.xml",
     "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
@@ -53,6 +55,7 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_4_EVIDENCE_BUNDLE_ASSEMBLY_ACCEPTANCE_REPORT.md",
     "reports/PHASE_4_CANDIDATE_EVIDENCE_BINDING_ACCEPTANCE_REPORT.md",
     "reports/PHASE_5_LOCAL_REST_API_BASELINE_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_6_LOCAL_REST_COMMAND_WORKFLOW_ACCEPTANCE_REPORT.md",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
@@ -266,6 +269,16 @@ def main() -> int:
             != (REPOSITORY_ROOT / "schemas/forgegate.openapi.v1.json").read_bytes()
         ):
             raise SystemExit("installed wheel OpenAPI contract differs from committed contract")
+        openapi = json.loads(exported_openapi.read_text(encoding="utf-8"))
+        expected_operations = {
+            ("/v1/candidates/{candidate_id}/transitions", "post"): "advanceCandidate",
+            ("/v1/candidates/{candidate_id}/evidence", "post"): "bindCandidateEvidence",
+            ("/v1/candidates/{candidate_id}/evaluate", "post"): "evaluateCandidate",
+            ("/v1/candidates/{candidate_id}/attestation", "post"): "attestCandidate",
+        }
+        for (path, method), operation_id in expected_operations.items():
+            if openapi["paths"][path][method]["operationId"] != operation_id:
+                raise SystemExit(f"installed wheel is missing API operation: {operation_id}")
         run(
             [
                 str(python),

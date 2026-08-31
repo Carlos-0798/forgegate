@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.0.dev13 — 2026-08-31
+
+- Added local REST commands for optimistic/idempotent candidate transitions,
+  audited evidence-assembly binding, bound-evidence policy evaluation, and
+  durable attestation creation.
+- Expanded `CandidateApplication` so CLI and HTTP share advance, bind, and
+  attest paths; API evaluation computes from the persisted binding before the
+  atomic terminal transition.
+- Required policy evaluation names to match the candidate release track and
+  retained exact revision, evidence fingerprint, decision, and timestamp gates.
+- Added loopback Host validation, a declared 4 MiB request-length gate,
+  adversarial state/concurrency tests, expanded OpenAPI, and clean-wheel
+  operation checks.
+
 ## 0.1.0.dev12 — 2026-08-31
 
 - Added a FastAPI-based, versioned local REST API with health, idempotent

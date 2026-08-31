@@ -1,4 +1,3 @@
-import ipaddress
 import json
 import platform
 from datetime import datetime
@@ -9,7 +8,13 @@ import typer
 from pydantic import ValidationError
 
 from forgegate import __version__
-from forgegate.application import CandidateApplication, CandidateCreateCommand
+from forgegate.application import (
+    CandidateAdvanceCommand,
+    CandidateApplication,
+    CandidateAttestCommand,
+    CandidateBindEvidenceCommand,
+    CandidateCreateCommand,
+)
 from forgegate.artifacts import ArtifactBoundaryError, ArtifactError, ArtifactRegistry
 from forgegate.assembly import (
     CollectionResultLoader,
@@ -44,6 +49,7 @@ from forgegate.collectors import (
 from forgegate.config import ConfigLoadError, load_config
 from forgegate.domain.enums import CandidateStatus, Decision, EvidenceTrust, VerificationLevel
 from forgegate.domain.models import EvidenceBundle, ExecutionContext, PolicyConfig
+from forgegate.network import validated_loopback_host
 from forgegate.policy import evaluate_policy
 from forgegate.policy.models import PolicyEvaluation
 from forgegate.schema_registry import ARTIFACT_SCHEMAS, SCHEMAS, schema_filename
@@ -66,7 +72,7 @@ def doctor() -> None:
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
         "supported_artifact_schemas": sorted(ARTIFACT_SCHEMAS),
-        "phase": "phase5-local-rest-api-baseline",
+        "phase": "phase6-local-rest-command-workflow",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 
@@ -136,7 +142,7 @@ def serve(
     from forgegate.api import create_api_app
 
     try:
-        bind_host = _validated_loopback_host(host)
+        bind_host = validated_loopback_host(host)
         application = CandidateApplication.for_database(database)
         application.initialize()
     except (CandidateStoreError, ValueError) as exc:
@@ -262,13 +268,15 @@ def candidate_advance(
     """Atomically append one persisted transition at an expected revision."""
     try:
         evaluation = _load_policy_evaluation(evaluation_path)
-        result = SQLiteCandidateRepository(database).advance(
+        result = CandidateApplication.for_database(database).advance_candidate(
             candidate_id,
-            to_status,
-            expected_revision=expected_revision,
-            occurred_at=datetime.fromisoformat(occurred_at.replace("Z", "+00:00")),
+            CandidateAdvanceCommand(
+                to_status=to_status,
+                expected_revision=expected_revision,
+                occurred_at=datetime.fromisoformat(occurred_at.replace("Z", "+00:00")),
+                reason=reason,
+            ),
             idempotency_key=idempotency_key,
-            reason=reason,
             evaluation=evaluation,
         )
     except (
@@ -325,10 +333,12 @@ def candidate_bind_evidence(
     """Bind one validated assembly to a persisted COLLECTING candidate."""
     try:
         assembly = _load_evidence_assembly(assembly_path)
-        binding = SQLiteCandidateRepository(database).bind_evidence(
+        binding = CandidateApplication.for_database(database).bind_evidence(
             candidate_id,
-            assembly,
-            bound_at=datetime.fromisoformat(bound_at.replace("Z", "+00:00")),
+            CandidateBindEvidenceCommand(
+                assembly=assembly,
+                bound_at=datetime.fromisoformat(bound_at.replace("Z", "+00:00")),
+            ),
             idempotency_key=idempotency_key,
         )
     except (CandidateStoreError, ConfigLoadError, ValidationError, ValueError) as exc:
@@ -377,11 +387,11 @@ def candidate_attest(
 ) -> None:
     """Persist and atomically publish deterministic JSON/Markdown attestation files."""
     try:
-        repository = SQLiteCandidateRepository(database)
-        attestation = repository.attest(
+        attestation = CandidateApplication.for_database(database).attest_candidate(
             candidate_id,
-            issued_at=datetime.fromisoformat(issued_at.replace("Z", "+00:00")),
-            generator_version=__version__,
+            CandidateAttestCommand(
+                issued_at=datetime.fromisoformat(issued_at.replace("Z", "+00:00")),
+            ),
         )
         published = publish_attestation_bundle(attestation, output_root)
     except (
@@ -414,19 +424,6 @@ def candidate_show_attestation(
         typer.echo(f"ERROR: {exc}", err=True)
         raise typer.Exit(code=3) from exc
     typer.echo(attestation.model_dump_json(indent=2))
-
-
-def _validated_loopback_host(host: str) -> str:
-    normalized = host.strip().lower()
-    if normalized == "localhost":
-        return normalized
-    try:
-        address = ipaddress.ip_address(normalized)
-    except ValueError as exc:
-        raise ValueError("--host must be localhost or a loopback IP address") from exc
-    if not address.is_loopback:
-        raise ValueError("--host must be localhost or a loopback IP address")
-    return normalized
 
 
 def _load_policy_evaluation(path: Path | None) -> PolicyEvaluation | None:

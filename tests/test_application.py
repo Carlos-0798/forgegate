@@ -7,8 +7,16 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from forgegate.application import CandidateApplication, CandidateCreateCommand
+from forgegate.application import (
+    CandidateAdvanceCommand,
+    CandidateApplication,
+    CandidateAttestCommand,
+    CandidateBindEvidenceCommand,
+    CandidateCreateCommand,
+    CandidateEvaluateCommand,
+)
 from forgegate.candidates import CandidateStoreError
+from forgegate.config import load_config
 
 
 def command(**updates: Any) -> CandidateCreateCommand:
@@ -29,6 +37,46 @@ def test_candidate_create_command_is_strict_and_requires_offset_time() -> None:
         command(created_at=datetime(2026, 8, 30, 12, 0))
     with pytest.raises(ValidationError, match="extra_forbidden"):
         CandidateCreateCommand.model_validate({**command().model_dump(), "unexpected": True})
+
+
+def test_candidate_write_commands_require_offset_times(repository_root: Path) -> None:
+    assembly = load_config(repository_root / "tests/golden/evidence_bundle_assembly.json")
+    policy = load_config(repository_root / "examples/sample-python-api/policies/pull-request.yaml")
+
+    invalid_commands = (
+        (
+            CandidateAdvanceCommand,
+            {
+                "to_status": "COLLECTING",
+                "expected_revision": 0,
+                "occurred_at": datetime(2026, 8, 30, 12, 1),
+            },
+            "occurred_at must include a UTC offset",
+        ),
+        (
+            CandidateBindEvidenceCommand,
+            {"assembly": assembly, "bound_at": datetime(2026, 8, 30, 20, 31)},
+            "bound_at must include a UTC offset",
+        ),
+        (
+            CandidateEvaluateCommand,
+            {
+                "policy": policy,
+                "expected_revision": 3,
+                "evaluated_at": datetime(2026, 8, 30, 21, 0),
+            },
+            "evaluated_at must include a UTC offset",
+        ),
+        (
+            CandidateAttestCommand,
+            {"issued_at": datetime(2026, 8, 30, 22, 0)},
+            "issued_at must include a UTC offset",
+        ),
+    )
+
+    for model, values, message in invalid_commands:
+        with pytest.raises(ValidationError, match=message):
+            model.model_validate(values)
 
 
 def test_candidate_application_create_replay_and_read_contract(tmp_path: Path) -> None:

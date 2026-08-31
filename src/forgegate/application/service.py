@@ -3,14 +3,34 @@ from __future__ import annotations
 from dataclasses import dataclass
 from pathlib import Path
 
-from forgegate.application.models import CandidateCreateCommand, CandidateHistoryView
+from forgegate import __version__
+from forgegate.application.models import (
+    CandidateAdvanceCommand,
+    CandidateAttestCommand,
+    CandidateBindEvidenceCommand,
+    CandidateCreateCommand,
+    CandidateEvaluateCommand,
+    CandidateEvaluationResult,
+    CandidateHistoryView,
+)
 from forgegate.attestations import ReleaseAttestation
 from forgegate.candidates import (
     CandidateEvidenceBinding,
+    CandidateLifecycleError,
     ReleaseCandidate,
     SQLiteCandidateRepository,
     create_candidate,
 )
+from forgegate.candidates.models import CandidateTransitionResult
+from forgegate.domain.enums import CandidateStatus, Decision
+from forgegate.policy import PolicyEvaluation, evaluate_policy
+
+DECISION_STATUS = {
+    Decision.PASS: CandidateStatus.PASS,
+    Decision.FAIL: CandidateStatus.FAIL,
+    Decision.REVIEW: CandidateStatus.REVIEW,
+    Decision.ERROR: CandidateStatus.ERROR,
+}
 
 
 @dataclass(frozen=True)
@@ -47,6 +67,79 @@ class CandidateApplication:
     def get_candidate(self, candidate_id: str) -> ReleaseCandidate:
         return self.repository.get(candidate_id)
 
+    def advance_candidate(
+        self,
+        candidate_id: str,
+        command: CandidateAdvanceCommand,
+        *,
+        idempotency_key: str,
+        evaluation: PolicyEvaluation | None = None,
+    ) -> CandidateTransitionResult:
+        return self.repository.advance(
+            candidate_id,
+            command.to_status,
+            expected_revision=command.expected_revision,
+            occurred_at=command.occurred_at,
+            idempotency_key=idempotency_key,
+            reason=command.reason,
+            evaluation=evaluation,
+        )
+
+    def bind_evidence(
+        self,
+        candidate_id: str,
+        command: CandidateBindEvidenceCommand,
+        *,
+        idempotency_key: str,
+    ) -> CandidateEvidenceBinding:
+        return self.repository.bind_evidence(
+            candidate_id,
+            command.assembly,
+            bound_at=command.bound_at,
+            idempotency_key=idempotency_key,
+        )
+
+    def evaluate_candidate(
+        self,
+        candidate_id: str,
+        command: CandidateEvaluateCommand,
+        *,
+        idempotency_key: str,
+    ) -> CandidateEvaluationResult:
+        binding = self.repository.get_evidence_binding(candidate_id)
+        try:
+            evaluation = evaluate_policy(
+                command.policy,
+                binding.assembly.bundle,
+                evaluated_at=command.evaluated_at,
+            )
+        except ValueError as exc:
+            raise CandidateLifecycleError(
+                "CANDIDATE_POLICY_EVALUATION_INVALID",
+                str(exc),
+            ) from exc
+        transition = self.repository.advance(
+            candidate_id,
+            DECISION_STATUS[evaluation.decision],
+            expected_revision=command.expected_revision,
+            occurred_at=command.evaluated_at,
+            idempotency_key=idempotency_key,
+            reason=command.reason,
+            evaluation=evaluation,
+        )
+        return CandidateEvaluationResult(evaluation=evaluation, transition=transition)
+
+    def attest_candidate(
+        self,
+        candidate_id: str,
+        command: CandidateAttestCommand,
+    ) -> ReleaseAttestation:
+        return self.repository.attest(
+            candidate_id,
+            issued_at=command.issued_at,
+            generator_version=__version__,
+        )
+
     def get_history(self, candidate_id: str) -> CandidateHistoryView:
         return CandidateHistoryView.from_history(self.repository.history(candidate_id))
 
@@ -57,4 +150,4 @@ class CandidateApplication:
         return self.repository.get_attestation(candidate_id)
 
 
-__all__ = ["CandidateApplication"]
+__all__ = ["DECISION_STATUS", "CandidateApplication"]

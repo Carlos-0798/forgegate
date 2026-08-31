@@ -11,16 +11,23 @@ The v1 baseline includes:
 
 - `GET /healthz`;
 - `POST /v1/candidates`;
+- `POST /v1/candidates/{candidate_id}/transitions`;
+- `POST /v1/candidates/{candidate_id}/evidence`;
+- `POST /v1/candidates/{candidate_id}/evaluate`;
+- `POST /v1/candidates/{candidate_id}/attestation`;
 - `GET /v1/candidates/{candidate_id}`;
 - `GET /v1/candidates/{candidate_id}/history`;
 - `GET /v1/candidates/{candidate_id}/evidence`;
 - `GET /v1/candidates/{candidate_id}/attestation`.
 
-Candidate creation is the only HTTP write. It requires `Idempotency-Key` and
-uses the same durable idempotency record as the CLI. Lifecycle advancement,
-evidence binding, evaluation import, and attestation creation remain CLI/store
-operations until their HTTP authorization and concurrency contracts are
-designed explicitly.
+Candidate creation, advancement, evidence binding, and evaluation require
+`Idempotency-Key` and use the same durable idempotency records as the CLI/store.
+Advancement and evaluation also require `expected_revision`. Attestation
+creation is deterministic against an immutable terminal candidate and replays
+the stored document exactly.
+
+No API command accepts an artifact input path or attestation output directory.
+Collection and filesystem publication remain explicit CLI operations.
 
 ## Shared application boundary
 
@@ -38,9 +45,10 @@ CLI command ─┐
 HTTP route ──┘
 ```
 
-This slice does not move transition/evaluation/binding writes into the service;
-those CLI paths retain their existing repository calls until their future HTTP
-commands are introduced.
+The shared service now owns create, advance, bind, evaluate, attest, and read
+commands. Evaluation loads the persisted binding, passes its nested evidence
+bundle to the policy engine, derives the terminal state from the decision, and
+uses one repository transaction for the evaluation plus terminal transition.
 
 ## Validation and error contract
 
@@ -57,10 +65,15 @@ a replacement safe ID.
 ## Local serving boundary
 
 `forgegate serve` accepts `localhost` or an IP address for which the standard
-library reports `is_loopback`. Wildcard, LAN, public, and unparseable host
-values reject before the database or server is opened. This is a safety guard,
-not authentication: any process or user able to connect to the loopback port
-has the API's current local permissions.
+library reports `is_loopback`. Wildcard, LAN, public, and unparseable bind
+values reject before the database or server is opened. Middleware separately
+requires the HTTP `Host` to identify localhost or a loopback IP. Requests with
+a declared `Content-Length` above 4 MiB reject before model validation.
+
+These are safety guards, not authentication: any process or user able to
+connect to the loopback port has the API's current local permissions. The body
+limit does not yet enforce an exact streaming ceiling for unknown-length or
+chunked requests.
 
 No TLS, identity, authorization, rate limiting, multi-tenant isolation, reverse
 proxy trust, or hostile-local-user defense is claimed. The server must not be
@@ -76,8 +89,9 @@ the committed contract. Release smoke builds a wheel, installs it outside the
 repository, exports OpenAPI again, compares the bytes, and confirms that an
 external bind request fails.
 
-Tests cover API/CLI candidate-create parity, exact replay and conflict,
-structured validation/store/internal failures, correlation IDs, loopback
-addresses, contract paths, and readback of a real durable evidence binding and
-release attestation. These are local-host software results only; they do not
-exercise AFE runtime code, MSP430 hardware, a network deployment, or remote CI.
+Tests cover API/CLI parity, exact replay/conflict, expected-revision races,
+invalid states, release-track policy mismatch, structured failures,
+correlation IDs, loopback bind/Host handling, declared body size, contract
+paths, and a complete durable candidate workflow. These are local-host
+software results only; they do not exercise AFE runtime code, MSP430 hardware,
+a network deployment, or remote CI.
