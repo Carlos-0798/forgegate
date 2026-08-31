@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.0.dev11 — 2026-08-31
+
+- Added self-validating `forgegate.candidate-evidence-binding.v1` documents
+  covering the revision-one candidate snapshot, complete audited assembly,
+  canonical fingerprints, binding time, and content-derived identity.
+- Upgraded the SQLite candidate store to schema v3 with immutable binding rows,
+  idempotent `bind-evidence`, validated `show-evidence`, and read-time
+  candidate/assembly/audit-chain checks.
+- Required new v3 candidates to bind evidence before `READY` and required the
+  terminal policy evaluation to fingerprint the bound assembly's nested
+  evidence bundle.
+- Added explicit v1/v2-to-v3 migration without fabricating historical bindings,
+  plus Schema, Golden, corruption/migration/CLI tests, architecture/threat
+  documentation, and clean-wheel end-to-end binding smoke.
+
 ## 0.1.0.dev10 — 2026-08-31
 
 - Added strict, bounded loading of collector `CollectionResult` JSON plus exact

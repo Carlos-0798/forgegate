@@ -108,6 +108,13 @@ def main() -> int:
             "validate-config",
             "tests/golden/evidence_bundle_assembly.json",
         ],
+        [
+            python,
+            "-m",
+            "forgegate",
+            "validate-config",
+            "tests/golden/candidate_evidence_binding.json",
+        ],
     ]
     for command in commands:
         run(command)

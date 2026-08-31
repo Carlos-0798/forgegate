@@ -132,7 +132,7 @@ The current slice has no authenticated producer and runs no plugin code.
 | Symlink or irregular output target redirects publication | Reject symlink roots/targets and require exactly two safe regular files for replay |
 | Mid-publication failure is mistaken for data loss | Store attestation transaction first; exact rerun publishes the same durable document or reports a conflict |
 | Local record is mistaken for signed authority | Required `assurance: unsigned_local` plus explicit JSON/Markdown documentation boundary |
-| Legacy migration fabricates a missing evaluation | Explicit v1-to-v2 migration leaves it absent; exact matching evaluation import is required before attestation |
+| Legacy migration fabricates a missing evaluation | Explicit v1/v2-to-v3 migration leaves it absent; exact matching evaluation import is required before attestation |
 
 ## Addressed in the Phase 3 Analog Validation compatibility slice
 
@@ -161,6 +161,20 @@ The current slice has no authenticated producer and runs no plugin code.
 | Collector warning disappears during aggregation | Reject by default; explicit retention preserves the complete warning records |
 | Assembly content changes under the same identity | Recompute `assembly_id` over the nested bundle and all receipts |
 | Byte integrity is mistaken for producer authenticity | Document SHA-256 as local identity only; no signature or CI identity claim |
+
+## Addressed in the Phase 4 candidate-evidence-binding slice
+
+| Threat | Current control |
+|---|---|
+| Candidate reaches `READY` without durable audited evidence | New v3 candidates require one binding before the `COLLECTING -> READY` transition |
+| Assembly is bound to another candidate or commit | Embed the revision-one candidate and require its commit to equal the nested bundle commit |
+| Binding content is changed under the same identity | Recompute candidate, assembly, and whole-binding SHA-256 fingerprints on every load |
+| Binding is replaced after lifecycle advancement | One-row association, foreign key, append-only update/delete triggers, and read-time chain validation |
+| Terminal decision evaluates different evidence | Require policy-evaluation `evidence_fingerprint` to equal the bound nested bundle fingerprint |
+| Lifecycle chronology predates evidence acceptance | Binding cannot predate candidate/assembly; `READY` cannot predate binding |
+| Retry key is reused to smuggle different input | Canonical request fingerprint, immutable response, exact replay, and conflict rejection |
+| Migration invents assurance that did not exist | Legacy v1/v2 candidates retain an immutable no-binding-required marker; no binding is fabricated |
+| Binding hash is mistaken for authenticated provenance | Explicit unsigned-local boundary; no producer, operator, CI, clock, or commit authentication claim |
 
 ## Deferred risks
 

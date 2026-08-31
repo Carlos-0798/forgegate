@@ -1,5 +1,9 @@
 from typing import TYPE_CHECKING, Any
 
+from forgegate.candidates.evidence_binding import (
+    CandidateEvidenceBinding,
+    create_candidate_evidence_binding,
+)
 from forgegate.candidates.lifecycle import (
     CandidateLifecycleError,
     create_candidate,
@@ -19,6 +23,7 @@ if TYPE_CHECKING:
     )
 
 __all__ = [
+    "CandidateEvidenceBinding",
     "CandidateHistory",
     "CandidateLifecycleError",
     "CandidateStoreError",
@@ -27,6 +32,7 @@ __all__ = [
     "ReleaseCandidate",
     "SQLiteCandidateRepository",
     "create_candidate",
+    "create_candidate_evidence_binding",
     "transition_candidate",
 ]
 

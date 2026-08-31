@@ -1,9 +1,9 @@
 # Project status
 
 - Date: 2026-08-31
-- Version: 0.1.0.dev10
-- Stage: Phase 4 audited evidence-bundle assembly implemented
-- Product maturity: local CLI MVP with software-peer collection and audited aggregation; not production-ready
+- Version: 0.1.0.dev11
+- Stage: Phase 4 persisted candidate-evidence binding implemented
+- Product maturity: local CLI MVP with software-peer collection, audited aggregation, and durable lifecycle binding; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
 - Remote/publication status: local only; no remote repository created
@@ -53,7 +53,7 @@
   commit, decision, and timestamp;
 - stateless `candidate create` and `candidate transition` CLI previews with
   generic DRAFT/EVALUATING fixtures and structural/evaluation-bound Goldens;
-- SQLite candidate-store schema v2 with ForgeGate application identity, WAL,
+- SQLite candidate-store schema v3 with ForgeGate application identity, WAL,
   FULL synchronous durability, foreign keys, exact-version validation, and
   explicit read/write transactions;
 - append-only canonical candidate snapshots, content-addressed transitions,
@@ -63,7 +63,7 @@
   detection;
 - persisted candidate create/advance/show/history CLI flow while retaining the
   stateless preview commands;
-- explicit, validated SQLite v1-to-v2 migration plus exact legacy terminal
+- explicit, validated SQLite v1/v2-to-v3 migration plus exact legacy terminal
   evaluation backfill;
 - durable append-only policy-evaluation and release-attestation documents bound
   to the authoritative candidate audit chain;
@@ -100,13 +100,26 @@
   validated assemblies;
 - committed assembly Schema, Golden, adversarial tests, architecture/threat
   documentation, and clean-install assembly-to-policy smoke path.
+- strict `forgegate.candidate-evidence-binding.v1` contract embedding the
+  revision-one `COLLECTING` snapshot and complete audited assembly;
+- canonical candidate, assembly, and binding fingerprints plus commit and
+  monotonic-time invariants on every construction and load;
+- immutable/idempotent SQLite binding persistence with candidate-chain metadata
+  validation and append-only triggers;
+- `candidate bind-evidence` and `show-evidence` CLI paths;
+- mandatory binding before new v3 candidates reach `READY`, and terminal policy
+  evaluation enforcement against the bound nested evidence bundle;
+- explicit legacy semantics that preserve v1/v2 candidates without inventing a
+  historical binding;
+- committed binding Schema, Golden, migration/corruption/adversarial tests,
+  architecture/threat documentation, and clean-wheel end-to-end binding smoke.
 
 ## Not implemented
 
 REST API, external plugins, GitHub integration, signatures/key management,
 database authorization, backup/repair, MSP430 collector, Studio Phase 5
-human-readable report ingestion, persisted candidate-to-assembly binding,
-authenticated provenance/signatures, and hardware access.
+human-readable report ingestion, authenticated provenance/signatures, portable
+attestation embedding of assembly receipts, and hardware access.
 
 ## Accepted local checkpoint
 
@@ -114,15 +127,17 @@ authenticated provenance/signatures, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 506 passed, 1 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 100% across 3,628 statements and 1,036 branches
+- pytest: 523 passed, 1 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 100% across 3,799 statements and 1,088 branches
 - Analog Validation collector focus: 59 passed; 100% across 431 statements and
   106 branches
 - evidence-assembly focus: 20 passed; 100% across 218 statements and 70
   branches
+- candidate evidence-binding/store focus: 71 passed; 100% across 526 statements
+  and 138 branches
 - committed JSON Schema drift check: PASS
 - project/policy/candidate/transition example documents: VALID
-- nine canonical versioned document Schemas plus Benchmark and Analog
+- ten canonical versioned document Schemas plus Benchmark and Analog
   Validation artifact Schemas: drift-checked and parsed
 - complete sdist manifest and wheel build: PASS
 - repository-external wheel installation and CLI smoke: PASS
@@ -132,5 +147,5 @@ authenticated provenance/signatures, and hardware access.
 
 See `reports/PHASE_0_ENVIRONMENT_AUDIT.md` for the prerequisite audit and exact
 human-intervention boundary. See
-`reports/PHASE_4_EVIDENCE_BUNDLE_ASSEMBLY_ACCEPTANCE_REPORT.md` for the
+`reports/PHASE_4_CANDIDATE_EVIDENCE_BINDING_ACCEPTANCE_REPORT.md` for the
 current slice.

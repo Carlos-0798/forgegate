@@ -65,7 +65,7 @@ def doctor() -> None:
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
         "supported_artifact_schemas": sorted(ARTIFACT_SCHEMAS),
-        "phase": "phase4-evidence-bundle-assembly",
+        "phase": "phase4-candidate-evidence-binding",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 
@@ -140,7 +140,7 @@ def candidate_create(
 def candidate_init_store(
     database: Annotated[Path, typer.Argument(dir_okay=False)],
 ) -> None:
-    """Initialize or validate a local SQLite WAL candidate store at schema v2."""
+    """Initialize or validate a local SQLite WAL candidate store at schema v3."""
     try:
         repository = SQLiteCandidateRepository(database)
         repository.initialize()
@@ -154,7 +154,7 @@ def candidate_init_store(
 def candidate_migrate_store(
     database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
 ) -> None:
-    """Explicitly migrate a validated candidate store from schema v1 to v2."""
+    """Explicitly migrate a validated candidate store from schema v1/v2 to v3."""
     try:
         repository = SQLiteCandidateRepository(database)
         repository.migrate()
@@ -260,8 +260,51 @@ def candidate_history(
     payload = {
         "candidate": history.candidate.model_dump(mode="json"),
         "transitions": [event.model_dump(mode="json") for event in history.transitions],
+        "evidence_binding_required": history.evidence_binding_required,
+        "evidence_binding": (
+            history.evidence_binding.model_dump(mode="json")
+            if history.evidence_binding is not None
+            else None
+        ),
     }
     typer.echo(json.dumps(payload, indent=2, sort_keys=True))
+
+
+@candidate_app.command("bind-evidence")
+def candidate_bind_evidence(
+    database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    candidate_id: Annotated[str, typer.Argument()],
+    assembly_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    bound_at: Annotated[str, typer.Option("--bound-at")],
+    idempotency_key: Annotated[str, typer.Option("--idempotency-key")],
+) -> None:
+    """Bind one validated assembly to a persisted COLLECTING candidate."""
+    try:
+        assembly = _load_evidence_assembly(assembly_path)
+        binding = SQLiteCandidateRepository(database).bind_evidence(
+            candidate_id,
+            assembly,
+            bound_at=datetime.fromisoformat(bound_at.replace("Z", "+00:00")),
+            idempotency_key=idempotency_key,
+        )
+    except (CandidateStoreError, ConfigLoadError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(binding.model_dump_json(indent=2))
+
+
+@candidate_app.command("show-evidence")
+def candidate_show_evidence(
+    database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    candidate_id: Annotated[str, typer.Argument()],
+) -> None:
+    """Read and validate a candidate's durable evidence binding."""
+    try:
+        binding = SQLiteCandidateRepository(database).get_evidence_binding(candidate_id)
+    except CandidateStoreError as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(binding.model_dump_json(indent=2))
 
 
 @candidate_app.command("import-evaluation")
@@ -336,6 +379,13 @@ def _load_policy_evaluation(path: Path | None) -> PolicyEvaluation | None:
     if not isinstance(evaluation, PolicyEvaluation):
         raise ValueError("evaluation path must contain forgegate.policy-evaluation.v1")
     return evaluation
+
+
+def _load_evidence_assembly(path: Path) -> EvidenceBundleAssembly:
+    assembly = load_config(path)
+    if not isinstance(assembly, EvidenceBundleAssembly):
+        raise ValueError("assembly path must contain forgegate.evidence-bundle-assembly.v1")
+    return assembly
 
 
 @app.command("evaluate-policy")

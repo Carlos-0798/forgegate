@@ -6,7 +6,7 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 4 audited evidence-bundle assembly implemented; not production-ready.**
+**Phase 4 persisted candidate-evidence binding implemented; not production-ready.**
 
 Implemented and host-verified in this checkpoint:
 
@@ -43,14 +43,14 @@ Implemented and host-verified in this checkpoint:
 - mandatory policy-evaluation binding for PASS/FAIL/REVIEW terminal states;
 - stateless `candidate create` and `candidate transition` CLI previews with
   committed structural and evaluation-bound Golden outputs;
-- a local SQLite v2 candidate store with WAL, FULL synchronous durability,
+- a local SQLite v3 candidate store with WAL, FULL synchronous durability,
   foreign keys, exact application/schema identity, and explicit transactions;
 - canonical append-only candidate snapshots and transition events with an
   optimistic current-revision pointer and immutable idempotency responses;
 - exact retry replay, conflicting-key rejection, stale-write protection,
   restart recovery, bounded writer contention, and audit-chain validation;
 - persisted `candidate create`, `advance`, `show`, and `history` CLI paths;
-- explicit validated v1-to-v2 migration and legacy evaluation backfill;
+- explicit validated v1/v2-to-v3 migration and legacy evaluation backfill;
 - durable append-only policy evaluations and release attestations;
 - self-validating `forgegate.release-attestation.v1` records containing the
   terminal candidate, transition chain, evaluation, and content fingerprints;
@@ -77,13 +77,21 @@ Implemented and host-verified in this checkpoint:
 - `assemble-evidence` with candidate-commit binding, duplicate/conflict gates,
   content-derived identity, and fail-closed warning handling;
 - policy evaluation of either a direct evidence bundle or a validated assembly.
+- a self-validating `forgegate.candidate-evidence-binding.v1` document covering
+  the revision-one `COLLECTING` snapshot and complete audited assembly;
+- immutable, idempotent SQLite binding persistence plus `bind-evidence` and
+  `show-evidence` CLI paths;
+- mandatory binding and chronology gates before a new v3 candidate reaches
+  `READY`;
+- terminal evaluation enforcement against the bound assembly's nested
+  evidence-bundle fingerprint, with non-fabricating v1/v2 migration semantics.
 
 Not implemented yet:
 
 - REST API, plugin execution, GitHub integration, database authorization,
   backup/repair, or signed provenance/key management;
 - MSP430 compatibility collector;
-- persisted candidate-to-assembly binding and authenticated provenance;
+- authenticated provenance, signatures, or trusted producer/CI identity;
 - any AFE/MSP430 runtime integration or hardware operation;
 - any production deployment or public release.
 
@@ -183,14 +191,25 @@ New-Item -ItemType Directory -Force work | Out-Null
   --occurred-at 2026-08-30T12:01:00Z `
   --idempotency-key advance:sample-api-collecting
 
+.\.venv\Scripts\python.exe -m forgegate candidate bind-evidence `
+  work/forgegate.db cand-dab25eb0be1a0107b3996080 `
+  work/evidence-assembly.json `
+  --bound-at 2026-08-30T20:31:00Z `
+  --idempotency-key bind-evidence:sample-api-1.2.0
+
+.\.venv\Scripts\python.exe -m forgegate candidate show-evidence `
+  work/forgegate.db cand-dab25eb0be1a0107b3996080
+
 .\.venv\Scripts\python.exe -m forgegate candidate history `
   work/forgegate.db cand-dab25eb0be1a0107b3996080
 ```
 
 Every persisted write requires a caller-owned idempotency key. Exact retries
 return the original response; reuse for different normalized input and stale
-revisions fail closed. The database establishes local transaction ordering, not
-producer authenticity or operator authorization.
+revisions fail closed. New v3 candidates cannot advance to `READY` before an
+immutable binding is present, and the terminal evaluation must be produced from
+that assembly's nested bundle. The database establishes local transaction
+ordering, not producer authenticity or operator authorization.
 
 After reaching PASS, FAIL, REVIEW, or ERROR, persist and publish a deterministic
 attestation bundle:
@@ -211,17 +230,20 @@ bytes; ForgeGate does not overwrite a conflicting target. Database persistence
 commits before filesystem publication, so an output failure is recovered by
 rerunning the same command.
 
-For a schema-v1 database created by 0.1.0.dev7, migration is explicit:
+For a schema-v1 or schema-v2 database created by 0.1.0.dev7/dev8, migration is
+explicit:
 
 ```powershell
 .\.venv\Scripts\python.exe -m forgegate candidate migrate-store work/forgegate.db
 ```
 
-If that database already contains a terminal candidate, it references but does
-not contain its original policy evaluation. Import the exact original document
-with `candidate import-evaluation` before attesting. ForgeGate verifies the
-evaluation ID, commit, decision, and timestamp; it does not reconstruct or
-invent missing evidence.
+Migration preserves existing candidates with no binding requirement; it does
+not fabricate a historical assembly. If a v1 database already contains a
+terminal candidate, it references but does not contain its original policy
+evaluation. Import the exact original document with `candidate
+import-evaluation` before attesting. ForgeGate verifies the evaluation ID,
+commit, decision, and timestamp; it does not reconstruct or invent missing
+evidence.
 
 Coverage artifacts use the same provenance options:
 
@@ -291,9 +313,10 @@ ForgeGate does not run builds or tests, control devices, or perform analog
 measurements. The Studio integration consumes only its frozen public JSON
 artifact; it neither imports Studio code nor converts current `BENCH_*` labels
 into physical verification. Assembly only revalidates local artifacts and
-joins existing evidence; SHA-256 is not producer authentication. The MSP430
-controller may later expose a separate versioned artifact for another optional
-collector.
+joins existing evidence; persisted binding connects that local assembly to the
+candidate lifecycle but does not authenticate it. SHA-256 is not producer
+authentication. The MSP430 controller may later expose a separate versioned
+artifact for another optional collector.
 
 ## License status
 

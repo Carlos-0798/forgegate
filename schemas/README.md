@@ -16,6 +16,11 @@ envelope around a candidate-bound evidence bundle and its collection receipts.
 It is accepted by configuration validation and policy evaluation without
 changing the nested evidence contract.
 
+`forgegate.candidate-evidence-binding.v1.schema.json` describes the immutable
+companion document that binds one revision-one `COLLECTING` candidate snapshot
+to one complete audited assembly before a new SQLite-v3 candidate may become
+`READY`.
+
 `forgegate.benchmark.v1.schema.json` is the ForgeGate-owned Benchmark artifact
 contract. `analog-validation.result-export.v1.schema.json` is ForgeGate's
 consumer-side structural mirror of the upstream Studio contract; it does not

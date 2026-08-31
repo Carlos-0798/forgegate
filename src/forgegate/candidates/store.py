@@ -11,10 +11,15 @@ from typing import cast
 
 from pydantic import BaseModel, ValidationError
 
+from forgegate.assembly import EvidenceBundleAssembly
 from forgegate.attestations import (
     ReleaseAttestation,
     create_release_attestation,
     render_attestation_markdown,
+)
+from forgegate.candidates.evidence_binding import (
+    CandidateEvidenceBinding,
+    create_candidate_evidence_binding,
 )
 from forgegate.candidates.lifecycle import CandidateLifecycleError, transition_candidate
 from forgegate.candidates.models import (
@@ -29,8 +34,10 @@ from forgegate.policy.models import PolicyEvaluation
 STORE_APPLICATION_ID = 0x46474154  # ASCII "FGAT"
 LEGACY_STORE_SCHEMA_VERSION = 1
 LEGACY_STORE_SCHEMA_NAME = "forgegate.candidate-store.v1"
-STORE_SCHEMA_VERSION = 2
-STORE_SCHEMA_NAME = "forgegate.candidate-store.v2"
+PREVIOUS_STORE_SCHEMA_VERSION = 2
+PREVIOUS_STORE_SCHEMA_NAME = "forgegate.candidate-store.v2"
+STORE_SCHEMA_VERSION = 3
+STORE_SCHEMA_NAME = "forgegate.candidate-store.v3"
 IDEMPOTENCY_KEY_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
 
 _SCHEMA_V1_STATEMENTS = (
@@ -223,6 +230,91 @@ _SCHEMA_V2_STATEMENTS = (
     """,
 )
 
+_SCHEMA_V3_STATEMENTS = (
+    """
+    ALTER TABLE candidates
+    ADD COLUMN evidence_binding_required INTEGER NOT NULL DEFAULT 0
+        CHECK (evidence_binding_required IN (0, 1))
+    """,
+    """
+    CREATE TABLE candidate_evidence_bindings (
+        candidate_id TEXT PRIMARY KEY,
+        binding_id TEXT NOT NULL UNIQUE,
+        candidate_fingerprint TEXT NOT NULL,
+        assembly_id TEXT NOT NULL,
+        assembly_fingerprint TEXT NOT NULL,
+        binding_json TEXT NOT NULL,
+        bound_at TEXT NOT NULL,
+        FOREIGN KEY (candidate_id) REFERENCES candidates(candidate_id) ON DELETE RESTRICT
+    ) STRICT
+    """,
+    """
+    CREATE TRIGGER candidates_binding_requirement_guard_update
+    BEFORE UPDATE ON candidates
+    WHEN OLD.evidence_binding_required IS NOT NEW.evidence_binding_required
+    BEGIN
+        SELECT RAISE(ABORT, 'candidate evidence-binding requirement is immutable');
+    END
+    """,
+    """
+    CREATE TRIGGER candidate_evidence_bindings_guard_update
+    BEFORE UPDATE ON candidate_evidence_bindings
+    BEGIN
+        SELECT RAISE(ABORT, 'candidate evidence bindings are immutable');
+    END
+    """,
+    """
+    CREATE TRIGGER candidate_evidence_bindings_guard_delete
+    BEFORE DELETE ON candidate_evidence_bindings
+    BEGIN
+        SELECT RAISE(ABORT, 'candidate evidence bindings are immutable');
+    END
+    """,
+    "DROP TRIGGER idempotency_records_guard_update",
+    "DROP TRIGGER idempotency_records_guard_delete",
+    "ALTER TABLE idempotency_records RENAME TO idempotency_records_v2",
+    """
+    CREATE TABLE idempotency_records (
+        idempotency_key TEXT PRIMARY KEY,
+        operation_kind TEXT NOT NULL CHECK (
+            operation_kind IN (
+                'candidate.create', 'candidate.bind-evidence', 'candidate.advance'
+            )
+        ),
+        candidate_id TEXT NOT NULL,
+        request_fingerprint TEXT NOT NULL,
+        response_schema_version TEXT NOT NULL,
+        response_json TEXT NOT NULL,
+        recorded_at TEXT NOT NULL,
+        FOREIGN KEY (candidate_id) REFERENCES candidates(candidate_id) ON DELETE RESTRICT
+    ) STRICT
+    """,
+    """
+    INSERT INTO idempotency_records(
+        idempotency_key, operation_kind, candidate_id, request_fingerprint,
+        response_schema_version, response_json, recorded_at
+    )
+    SELECT idempotency_key, operation_kind, candidate_id, request_fingerprint,
+           response_schema_version, response_json, recorded_at
+    FROM idempotency_records_v2
+    """,
+    "DROP TABLE idempotency_records_v2",
+    """
+    CREATE TRIGGER idempotency_records_guard_update
+    BEFORE UPDATE ON idempotency_records
+    BEGIN
+        SELECT RAISE(ABORT, 'idempotency records are immutable');
+    END
+    """,
+    """
+    CREATE TRIGGER idempotency_records_guard_delete
+    BEFORE DELETE ON idempotency_records
+    BEGIN
+        SELECT RAISE(ABORT, 'idempotency records are immutable');
+    END
+    """,
+)
+
 _REQUIRED_OBJECTS_V1 = frozenset(
     {
         ("table", "forgegate_metadata"),
@@ -252,6 +344,15 @@ _REQUIRED_OBJECTS_V2 = _REQUIRED_OBJECTS_V1 | frozenset(
     }
 )
 
+_REQUIRED_OBJECTS_V3 = _REQUIRED_OBJECTS_V2 | frozenset(
+    {
+        ("table", "candidate_evidence_bindings"),
+        ("trigger", "candidates_binding_requirement_guard_update"),
+        ("trigger", "candidate_evidence_bindings_guard_update"),
+        ("trigger", "candidate_evidence_bindings_guard_delete"),
+    }
+)
+
 
 class CandidateStoreError(RuntimeError):
     """Stable failure returned by the local candidate persistence boundary."""
@@ -265,6 +366,8 @@ class CandidateStoreError(RuntimeError):
 class CandidateHistory:
     candidate: ReleaseCandidate
     transitions: tuple[CandidateTransition, ...]
+    evidence_binding: CandidateEvidenceBinding | None
+    evidence_binding_required: bool
 
 
 class SQLiteCandidateRepository:
@@ -284,7 +387,7 @@ class SQLiteCandidateRepository:
         self._failure_injector = _failure_injector
 
     def initialize(self) -> None:
-        """Create schema v2 or validate an existing current ForgeGate store."""
+        """Create schema v3 or validate an existing current ForgeGate store."""
         connection = self._open(require_exists=False)
         try:
             journal_mode = str(connection.execute("PRAGMA journal_mode = WAL").fetchone()[0])
@@ -306,7 +409,11 @@ class SQLiteCandidateRepository:
                     )
                 connection.execute("BEGIN IMMEDIATE")
                 connection.execute(f"PRAGMA application_id = {STORE_APPLICATION_ID}")
-                for statement in (*_SCHEMA_V1_STATEMENTS, *_SCHEMA_V2_STATEMENTS):
+                for statement in (
+                    *_SCHEMA_V1_STATEMENTS,
+                    *_SCHEMA_V2_STATEMENTS,
+                    *_SCHEMA_V3_STATEMENTS,
+                ):
                     connection.execute(statement)
                 connection.executemany(
                     "INSERT INTO forgegate_metadata(key, value) VALUES (?, ?)",
@@ -321,10 +428,13 @@ class SQLiteCandidateRepository:
                 raise CandidateStoreError(
                     "STORE_NOT_FORGEGATE", "database application ID is not ForgeGate"
                 )
-            elif user_version == LEGACY_STORE_SCHEMA_VERSION:
+            elif user_version in {
+                LEGACY_STORE_SCHEMA_VERSION,
+                PREVIOUS_STORE_SCHEMA_VERSION,
+            }:
                 raise CandidateStoreError(
                     "STORE_MIGRATION_REQUIRED",
-                    "candidate database schema v1 requires explicit migration to v2",
+                    f"candidate database schema v{user_version} requires explicit migration to v3",
                 )
             self._validate_store(connection)
         except sqlite3.Error as exc:
@@ -334,21 +444,29 @@ class SQLiteCandidateRepository:
             connection.close()
 
     def migrate(self) -> None:
-        """Explicitly migrate a validated schema-v1 store to schema v2."""
+        """Explicitly migrate a validated schema-v1/v2 store to schema v3."""
         connection = self._open(require_exists=True)
         try:
             user_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
             if user_version == STORE_SCHEMA_VERSION:
                 self._validate_store(connection)
                 return
-            if user_version != LEGACY_STORE_SCHEMA_VERSION:
+            if user_version not in {
+                LEGACY_STORE_SCHEMA_VERSION,
+                PREVIOUS_STORE_SCHEMA_VERSION,
+            }:
                 raise CandidateStoreError(
                     "STORE_SCHEMA_UNSUPPORTED",
-                    f"database schema version {user_version} cannot migrate to v2",
+                    f"database schema version {user_version} cannot migrate to v3",
                 )
-            self._validate_store_version(connection, LEGACY_STORE_SCHEMA_VERSION)
+            self._validate_store_version(connection, user_version)
             connection.execute("BEGIN IMMEDIATE")
-            for statement in _SCHEMA_V2_STATEMENTS:
+            migration_statements = (
+                (*_SCHEMA_V2_STATEMENTS, *_SCHEMA_V3_STATEMENTS)
+                if user_version == LEGACY_STORE_SCHEMA_VERSION
+                else _SCHEMA_V3_STATEMENTS
+            )
+            for statement in migration_statements:
                 connection.execute(statement)
             connection.execute(
                 "UPDATE forgegate_metadata SET value = ? WHERE key = 'schema_name'",
@@ -405,8 +523,8 @@ class SQLiteCandidateRepository:
                         candidate_id, project_id, version, commit_sha, source_branch,
                         release_track, created_at, initial_fingerprint, initial_candidate_json,
                         current_revision, current_status, updated_at, current_fingerprint,
-                        current_candidate_json, evaluation_id
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        current_candidate_json, evaluation_id, evidence_binding_required
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         candidate.candidate_id,
@@ -424,6 +542,7 @@ class SQLiteCandidateRepository:
                         candidate_fingerprint,
                         candidate_json,
                         candidate.evaluation_id,
+                        1,
                     ),
                 )
                 self._insert_snapshot(connection, candidate, candidate_fingerprint, candidate_json)
@@ -457,6 +576,85 @@ class SQLiteCandidateRepository:
         """Load the current candidate and all ordered append-only transitions."""
         with self._transaction(write=False) as connection:
             return self._load_history(connection, candidate_id)
+
+    def bind_evidence(
+        self,
+        candidate_id: str,
+        assembly: EvidenceBundleAssembly,
+        *,
+        bound_at: datetime,
+        idempotency_key: str,
+    ) -> CandidateEvidenceBinding:
+        """Persist one immutable assembly binding for a COLLECTING candidate."""
+        key = _validated_idempotency_key(idempotency_key)
+        timestamp = _normalized_timestamp(bound_at)
+        request_fingerprint = sha256_fingerprint(
+            {
+                "operation": "candidate.bind-evidence",
+                "candidate_id": candidate_id,
+                "assembly": assembly.model_dump(mode="json"),
+                "bound_at": _json_timestamp(timestamp),
+            }
+        )
+        with self._transaction(write=True) as connection:
+            replay = self._binding_replay(
+                connection,
+                key=key,
+                candidate_id=candidate_id,
+                request_fingerprint=request_fingerprint,
+            )
+            if replay is not None:
+                return replay
+            history = self._load_history(connection, candidate_id)
+            if not history.evidence_binding_required:
+                raise CandidateStoreError(
+                    "STORE_EVIDENCE_BINDING_LEGACY",
+                    "migrated legacy candidates do not gain a fabricated binding requirement",
+                )
+            try:
+                binding = create_candidate_evidence_binding(
+                    history.candidate,
+                    assembly,
+                    bound_at=timestamp,
+                )
+            except (ValidationError, ValueError) as exc:
+                raise CandidateStoreError(
+                    "STORE_EVIDENCE_BINDING_INVALID", f"cannot bind evidence assembly: {exc}"
+                ) from exc
+            existing = history.evidence_binding
+            if existing is not None:
+                if existing != binding:
+                    raise CandidateStoreError(
+                        "STORE_EVIDENCE_BINDING_CONFLICT",
+                        "candidate already has a different durable evidence binding",
+                    )
+            else:
+                self._insert_evidence_binding(connection, binding)
+                self._checkpoint("after_evidence_binding_insert", connection)
+            binding_json = _model_json(binding)
+            self._insert_idempotency(
+                connection,
+                key=key,
+                operation_kind="candidate.bind-evidence",
+                candidate_id=candidate_id,
+                request_fingerprint=request_fingerprint,
+                response_schema_version=binding.schema_version,
+                response_json=binding_json,
+                recorded_at=_json_timestamp(binding.bound_at),
+            )
+            self._checkpoint("after_idempotency_insert", connection)
+        return binding
+
+    def get_evidence_binding(self, candidate_id: str) -> CandidateEvidenceBinding:
+        """Read and validate the candidate's durable assembly binding."""
+        with self._transaction(write=False) as connection:
+            history = self._load_history(connection, candidate_id)
+            if history.evidence_binding is None:
+                raise CandidateStoreError(
+                    "STORE_EVIDENCE_BINDING_NOT_FOUND",
+                    f"candidate has no evidence binding: {candidate_id}",
+                )
+            return history.evidence_binding
 
     def record_evaluation(
         self, candidate_id: str, evaluation: PolicyEvaluation
@@ -592,13 +790,35 @@ class SQLiteCandidateRepository:
             )
             if replay is not None:
                 return replay
-            current = self._load_history(connection, candidate_id).candidate
+            history = self._load_history(connection, candidate_id)
+            current = history.candidate
             if current.revision != expected_revision:
                 raise CandidateStoreError(
                     "STORE_REVISION_CONFLICT",
                     "expected revision "
                     f"{expected_revision}, current revision is {current.revision}",
                 )
+            binding = history.evidence_binding
+            if to_status is CandidateStatus.READY and history.evidence_binding_required:
+                if binding is None:
+                    raise CandidateStoreError(
+                        "STORE_EVIDENCE_BINDING_REQUIRED",
+                        "COLLECTING to READY requires a durable evidence assembly binding",
+                    )
+                if timestamp < binding.bound_at:
+                    raise CandidateStoreError(
+                        "STORE_EVIDENCE_BINDING_TIME_MISMATCH",
+                        "READY transition cannot precede evidence binding time",
+                    )
+            if evaluation is not None and binding is not None:
+                evidence_fingerprint = sha256_fingerprint(
+                    binding.assembly.bundle.model_dump(mode="json")
+                )
+                if evaluation.evidence_fingerprint != evidence_fingerprint:
+                    raise CandidateStoreError(
+                        "STORE_EVALUATION_EVIDENCE_MISMATCH",
+                        "policy evaluation does not reference the bound evidence bundle",
+                    )
             result = transition_candidate(
                 current,
                 to_status,
@@ -738,11 +958,16 @@ class SQLiteCandidateRepository:
                 "SELECT type, name FROM sqlite_master WHERE type IN ('table', 'trigger')"
             )
         }
-        required_objects = (
-            _REQUIRED_OBJECTS_V1
-            if expected_version == LEGACY_STORE_SCHEMA_VERSION
-            else _REQUIRED_OBJECTS_V2
-        )
+        required_objects = {
+            LEGACY_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V1,
+            PREVIOUS_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V2,
+            STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V3,
+        }.get(expected_version)
+        if required_objects is None:
+            raise CandidateStoreError(
+                "STORE_SCHEMA_UNSUPPORTED",
+                f"database schema version {expected_version} is not supported",
+            )
         _require(objects >= required_objects, "candidate database schema objects are missing")
         metadata = {
             str(row[0]): str(row[1])
@@ -751,11 +976,11 @@ class SQLiteCandidateRepository:
         _require(
             metadata
             == {
-                "schema_name": (
-                    LEGACY_STORE_SCHEMA_NAME
-                    if expected_version == LEGACY_STORE_SCHEMA_VERSION
-                    else STORE_SCHEMA_NAME
-                ),
+                "schema_name": {
+                    LEGACY_STORE_SCHEMA_VERSION: LEGACY_STORE_SCHEMA_NAME,
+                    PREVIOUS_STORE_SCHEMA_VERSION: PREVIOUS_STORE_SCHEMA_NAME,
+                    STORE_SCHEMA_VERSION: STORE_SCHEMA_NAME,
+                }[expected_version],
                 "schema_version": str(expected_version),
             },
             "candidate database metadata is invalid",
@@ -899,7 +1124,93 @@ class SQLiteCandidateRepository:
             ),
             "candidate current pointer or immutable identity is corrupt",
         )
-        return CandidateHistory(candidate=current, transitions=tuple(transitions))
+        required_value = int(candidate_row["evidence_binding_required"])
+        _require(required_value in {0, 1}, "candidate evidence-binding requirement is invalid")
+        binding_required = bool(required_value)
+        binding = self._load_evidence_binding(connection, snapshots)
+        if not binding_required:
+            _require(binding is None, "legacy candidate has an unexpected evidence binding")
+        if binding_required and current.revision >= 2:
+            _require(binding is not None, "READY candidate is missing its evidence binding")
+            assert binding is not None
+            _require(
+                snapshots[2].updated_at >= binding.bound_at,
+                "candidate advanced before its evidence binding timestamp",
+            )
+            if current.evaluation_id is not None:
+                evaluation = self._load_evaluation(connection, current)
+                assert evaluation is not None
+                _require(
+                    evaluation.evidence_fingerprint
+                    == sha256_fingerprint(binding.assembly.bundle.model_dump(mode="json")),
+                    "candidate evaluation is detached from its evidence binding",
+                )
+        return CandidateHistory(
+            candidate=current,
+            transitions=tuple(transitions),
+            evidence_binding=binding,
+            evidence_binding_required=binding_required,
+        )
+
+    @staticmethod
+    def _insert_evidence_binding(
+        connection: sqlite3.Connection,
+        binding: CandidateEvidenceBinding,
+    ) -> None:
+        connection.execute(
+            """
+            INSERT INTO candidate_evidence_bindings(
+                candidate_id, binding_id, candidate_fingerprint, assembly_id,
+                assembly_fingerprint, binding_json, bound_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                binding.candidate.candidate_id,
+                binding.binding_id,
+                binding.candidate_fingerprint,
+                binding.assembly.assembly_id,
+                binding.assembly_fingerprint,
+                _model_json(binding),
+                _json_timestamp(binding.bound_at),
+            ),
+        )
+
+    @staticmethod
+    def _load_evidence_binding(
+        connection: sqlite3.Connection,
+        snapshots: list[ReleaseCandidate],
+    ) -> CandidateEvidenceBinding | None:
+        row = connection.execute(
+            "SELECT * FROM candidate_evidence_bindings WHERE candidate_id = ?",
+            (snapshots[0].candidate_id,),
+        ).fetchone()
+        if row is None:
+            return None
+        binding = _decode_model(str(row["binding_json"]), CandidateEvidenceBinding)
+        _require(
+            len(snapshots) >= 2 and binding.candidate == snapshots[1],
+            "evidence binding is detached from the COLLECTING candidate snapshot",
+        )
+        _require(
+            (
+                row["candidate_id"],
+                row["binding_id"],
+                row["candidate_fingerprint"],
+                row["assembly_id"],
+                row["assembly_fingerprint"],
+                row["bound_at"],
+            )
+            == (
+                binding.candidate.candidate_id,
+                binding.binding_id,
+                binding.candidate_fingerprint,
+                binding.assembly.assembly_id,
+                binding.assembly_fingerprint,
+                _json_timestamp(binding.bound_at),
+            ),
+            "evidence binding metadata does not match its document",
+        )
+        return binding
 
     @staticmethod
     def _require_evaluation_matches_candidate(
@@ -1076,6 +1387,32 @@ class SQLiteCandidateRepository:
         _require(
             replay.transition in history.transitions,
             "transition replay event is absent from the durable audit chain",
+        )
+        return replay
+
+    def _binding_replay(
+        self,
+        connection: sqlite3.Connection,
+        *,
+        key: str,
+        candidate_id: str,
+        request_fingerprint: str,
+    ) -> CandidateEvidenceBinding | None:
+        row = self._idempotency_row(connection, key)
+        if row is None:
+            return None
+        self._validate_replay_row(
+            row,
+            operation_kind="candidate.bind-evidence",
+            candidate_id=candidate_id,
+            request_fingerprint=request_fingerprint,
+            response_schema_version="forgegate.candidate-evidence-binding.v1",
+        )
+        replay = _decode_model(str(row["response_json"]), CandidateEvidenceBinding)
+        history = self._load_history(connection, candidate_id)
+        _require(
+            history.evidence_binding == replay,
+            "evidence-binding replay does not match the durable binding",
         )
         return replay
 

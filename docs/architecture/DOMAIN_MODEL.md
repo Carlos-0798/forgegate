@@ -9,16 +9,19 @@ Project -> ReleaseTrack -> Policy -> PolicyRule
                                       +-> producer identity claim
 
 PolicyRule + matching valid evidence -> RuleEvaluation -> PolicyEvaluation
-                                                        -> ReleaseCandidate terminal
-                                                        -> ReleaseAttestation
+                                                         -> ReleaseCandidate terminal
+                                                         -> ReleaseAttestation
+
+CollectionResult(s) -> EvidenceBundleAssembly -> CandidateEvidenceBinding
+                                              -> ReleaseCandidate READY gate
 ```
 
 Phase 0 established `ProjectConfig`, `PolicyConfig`, and `EvidenceBundle`.
 Phase 2 now adds immutable evaluation results, `ReleaseCandidate`,
 `CandidateTransition`, and `CandidateTransitionResult`. The SQLite candidate
-store durably appends candidate snapshots, transition events, evaluations,
-attestations, and idempotency records while maintaining one compare-and-swap
-current pointer.
+store durably appends candidate snapshots, transition events, candidate-evidence
+bindings, evaluations, attestations, and idempotency records while maintaining
+one compare-and-swap current pointer.
 
 ## Invariants already enforced
 
@@ -52,14 +55,17 @@ current pointer.
 - transition IDs bind all event content plus before/after candidate fingerprints;
 - PASS/FAIL/REVIEW require a policy evaluation with matching commit, decision,
   and timestamp; ERROR may represent a fail-closed system outcome without one.
+- new SQLite-v3 candidates require one immutable assembly binding before
+  `READY`; a terminal evaluation must fingerprint that assembly's nested bundle.
 
 ## Persistence invariants now enforced
 
-- schema version and ForgeGate application identity are exact; v1-to-v2
+- schema version and ForgeGate application identity are exact; v1/v2-to-v3
   migration is explicit and validated rather than automatic;
 - WAL, FULL synchronous durability, foreign keys, and explicit transactions are
   checked on every repository operation;
-- snapshots, transitions, and idempotency records are append-only;
+- snapshots, transitions, evidence bindings, and idempotency records are
+  append-only;
 - current revision uses optimistic compare-and-swap and advances by exactly one;
 - exact idempotency replays return the original response while conflicting key
   reuse fails closed;

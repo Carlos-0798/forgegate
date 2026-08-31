@@ -5,6 +5,7 @@ from pydantic import ValidationError
 
 from forgegate.assembly import EvidenceBundleAssembly
 from forgegate.attestations import ReleaseAttestation
+from forgegate.candidates import CandidateEvidenceBinding
 from forgegate.candidates.models import (
     CandidateTransition,
     CandidateTransitionResult,
@@ -23,6 +24,7 @@ type SupportedConfig = (
     | ReleaseCandidate
     | CandidateTransition
     | CandidateTransitionResult
+    | CandidateEvidenceBinding
     | ReleaseAttestation
 )
 
@@ -35,6 +37,7 @@ SCHEMA_MODELS: dict[str, type[SupportedConfig]] = {
     "forgegate.release-candidate.v1": ReleaseCandidate,
     "forgegate.candidate-transition.v1": CandidateTransition,
     "forgegate.candidate-transition-result.v1": CandidateTransitionResult,
+    "forgegate.candidate-evidence-binding.v1": CandidateEvidenceBinding,
     "forgegate.release-attestation.v1": ReleaseAttestation,
 }
 

@@ -11,7 +11,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — nine document plus two artifact schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — ten document plus two artifact schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Analog Validation result Schema mirror | committed upstream-consumer contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
@@ -53,7 +53,7 @@
 | Idempotent writes | exact replay/conflicting-key tests | PASS — local host |
 | Append-only audit history | trigger and corruption tests | PASS — local host |
 | Persisted candidate CLI | clean-process create/advance/show/history smoke | PASS — local host |
-| SQLite v1 migration | explicit migration/backfill/rollback tests | PASS — local host |
+| SQLite v1/v2 migration | explicit migration/backfill/rollback tests | PASS — local host; no historical binding fabricated |
 | Durable evaluation binding | restart/corruption/append-only tests | PASS — local host |
 | JSON/Markdown attestations | deterministic Golden byte comparison | PASS — local host |
 | Attestation self-consistency | adversarial model/chain/evaluation tests | PASS — local host |
@@ -67,9 +67,13 @@
 | Multi-collector evidence assembly | model/service/CLI + committed Golden | PASS — local host |
 | Warning retention boundary | default rejection + explicit retention tests | PASS — local host |
 | Assembly-fed policy evaluation | direct and clean-wheel CLI integration | PASS — local host |
+| Candidate-to-assembly binding | model/Golden/store/CLI tests | PASS — local host, immutable SQLite v3 record |
+| `COLLECTING -> READY` evidence gate | missing/time/legacy migration tests | PASS — local host |
+| Bound terminal evaluation | nested-bundle fingerprint mismatch tests | PASS — local host |
+| Installed binding workflow | clean-wheel assembly/bind/READY/terminal/attest smoke | PASS — local host |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
 
-See `reports/PHASE_4_EVIDENCE_BUNDLE_ASSEMBLY_ACCEPTANCE_REPORT.md` for
+See `reports/PHASE_4_CANDIDATE_EVIDENCE_BINDING_ACCEPTANCE_REPORT.md` for
 the current exact test and coverage result. Earlier acceptance reports remain
 historical records.

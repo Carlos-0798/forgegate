@@ -27,6 +27,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/ATTESTATIONS.md",
     "docs/architecture/ANALOG_VALIDATION_COLLECTOR.md",
     "docs/architecture/EVIDENCE_BUNDLE_ASSEMBLY.md",
+    "docs/architecture/CANDIDATE_EVIDENCE_BINDING.md",
     "examples/sample-python-api/artifacts/junit.xml",
     "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
@@ -49,6 +50,7 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_2_ATTESTATION_ACCEPTANCE_REPORT.md",
     "reports/PHASE_3_ANALOG_VALIDATION_COMPATIBILITY_ACCEPTANCE_REPORT.md",
     "reports/PHASE_4_EVIDENCE_BUNDLE_ASSEMBLY_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_4_CANDIDATE_EVIDENCE_BINDING_ACCEPTANCE_REPORT.md",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
@@ -57,6 +59,7 @@ REQUIRED_SDIST_PATHS = (
     "schemas/forgegate.candidate-transition-result.v1.schema.json",
     "schemas/forgegate.release-attestation.v1.schema.json",
     "schemas/forgegate.evidence-bundle-assembly.v1.schema.json",
+    "schemas/forgegate.candidate-evidence-binding.v1.schema.json",
     "schemas/forgegate.benchmark.v1.schema.json",
     "schemas/analog-validation.result-export.v1.schema.json",
     "tests/test_models.py",
@@ -64,6 +67,7 @@ REQUIRED_SDIST_PATHS = (
     "tests/golden/benchmark_metrics.json",
     "tests/golden/analog_validation_result.json",
     "tests/golden/evidence_bundle_assembly.json",
+    "tests/golden/candidate_evidence_binding.json",
     "tests/golden/coverage_xml.json",
     "tests/golden/lcov_summary.json",
     "tests/golden/policy_pass.json",
@@ -80,6 +84,7 @@ REQUIRED_SDIST_PATHS = (
     "tests/test_attestations.py",
     "tests/test_analog_validation_collector.py",
     "tests/test_evidence_assembly.py",
+    "tests/test_candidate_evidence_binding.py",
 )
 
 
@@ -250,7 +255,8 @@ def main() -> int:
             ],
             cwd=root,
         )
-        run(
+        assembly_evaluation = assembly_root / "assembly.evaluation.json"
+        run_capture(
             [
                 str(python),
                 "-m",
@@ -261,6 +267,7 @@ def main() -> int:
                 "--evaluated-at",
                 "2026-08-30T21:00:00Z",
             ],
+            assembly_evaluation,
             cwd=root,
         )
         for bundle, expected_returncode in (("pass-bundle.json", 0), ("fail-bundle.json", 1)):
@@ -372,9 +379,37 @@ def main() -> int:
         ]
         run(persisted_advance, cwd=root)
         run(persisted_advance, cwd=root)
+        bind_evidence = [
+            str(python),
+            "-m",
+            "forgegate",
+            "candidate",
+            "bind-evidence",
+            str(candidate_store),
+            candidate_id,
+            str(assembly_path),
+            "--bound-at",
+            "2026-08-30T20:31:00Z",
+            "--idempotency-key",
+            "bind-evidence:release-smoke-001",
+        ]
+        run(bind_evidence, cwd=root)
+        run(bind_evidence, cwd=root)
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "candidate",
+                "show-evidence",
+                str(candidate_store),
+                candidate_id,
+            ],
+            cwd=root,
+        )
         for revision, status, timestamp in (
-            (1, "READY", "2026-08-30T12:02:00Z"),
-            (2, "EVALUATING", "2026-08-30T12:03:00Z"),
+            (1, "READY", "2026-08-30T20:32:00Z"),
+            (2, "EVALUATING", "2026-08-30T20:33:00Z"),
             (3, "PASS", "2026-08-30T21:00:00Z"),
         ):
             advance_command = [
@@ -398,7 +433,7 @@ def main() -> int:
                 advance_command.extend(
                     [
                         "--evaluation",
-                        str(REPOSITORY_ROOT / "tests/golden/policy_pass.json"),
+                        str(assembly_evaluation),
                     ]
                 )
             run(advance_command, cwd=root)
@@ -411,7 +446,7 @@ def main() -> int:
                 "import-evaluation",
                 str(candidate_store),
                 candidate_id,
-                str(REPOSITORY_ROOT / "tests/golden/policy_pass.json"),
+                str(assembly_evaluation),
             ],
             cwd=root,
         )

@@ -46,6 +46,15 @@ and generation times earlier than collection all fail closed.
 an assembly it evaluates only the validated nested bundle; the assembly
 receipts remain audit provenance and do not become policy facts.
 
+## Persisted candidate binding
+
+An accepted assembly can be stored against a revision-one `COLLECTING`
+candidate with `candidate bind-evidence`. New SQLite-v3 candidates must have
+this immutable companion record before `READY`; their terminal evaluation must
+then reference the canonical fingerprint of the assembly's nested evidence
+bundle. See `CANDIDATE_EVIDENCE_BINDING.md` for the lifecycle and migration
+contract.
+
 ## Explicit non-claims
 
 SHA-256 establishes local byte identity, not producer authenticity. A claimed

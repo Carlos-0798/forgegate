@@ -6,28 +6,77 @@ from pathlib import Path
 
 from typer.testing import CliRunner
 
+import forgegate.candidates.store as candidate_store_module
 from forgegate.candidates.store import (
-    LEGACY_STORE_SCHEMA_NAME,
-    LEGACY_STORE_SCHEMA_VERSION,
+    PREVIOUS_STORE_SCHEMA_NAME,
+    PREVIOUS_STORE_SCHEMA_VERSION,
 )
 from forgegate.cli import app
 
 runner = CliRunner()
 
 
-def _downgrade_to_schema_v1(database: Path) -> None:
+def _downgrade_to_schema_v2(database: Path) -> None:
     with sqlite3.connect(database) as connection:
-        connection.execute("DROP TABLE attestations")
-        connection.execute("DROP TABLE candidate_evaluations")
+        connection.execute("PRAGMA foreign_keys = OFF")
+        connection.execute("DROP TABLE candidate_evidence_bindings")
+        connection.execute("DROP TRIGGER candidates_binding_requirement_guard_update")
+        connection.execute("DROP TRIGGER candidates_guard_update")
+        connection.execute("DROP TRIGGER candidates_guard_delete")
+        connection.execute(
+            candidate_store_module._SCHEMA_V1_STATEMENTS[1].replace(
+                "CREATE TABLE candidates", "CREATE TABLE candidates_v2"
+            )
+        )
+        candidate_columns = (
+            "candidate_id, project_id, version, commit_sha, source_branch, release_track, "
+            "created_at, initial_fingerprint, initial_candidate_json, current_revision, "
+            "current_status, updated_at, current_fingerprint, current_candidate_json, "
+            "evaluation_id"
+        )
+        connection.execute(
+            f"INSERT INTO candidates_v2({candidate_columns}) "
+            f"SELECT {candidate_columns} FROM candidates"
+        )
+        connection.execute("DROP TABLE candidates")
+        connection.execute("ALTER TABLE candidates_v2 RENAME TO candidates")
+        connection.execute(candidate_store_module._SCHEMA_V1_STATEMENTS[5])
+        connection.execute(candidate_store_module._SCHEMA_V1_STATEMENTS[6])
+
+        connection.execute("DROP TRIGGER idempotency_records_guard_update")
+        connection.execute("DROP TRIGGER idempotency_records_guard_delete")
+        connection.execute(
+            candidate_store_module._SCHEMA_V1_STATEMENTS[4].replace(
+                "CREATE TABLE idempotency_records", "CREATE TABLE idempotency_records_v2"
+            )
+        )
+        columns = (
+            "idempotency_key, operation_kind, candidate_id, request_fingerprint, "
+            "response_schema_version, response_json, recorded_at"
+        )
+        connection.execute(
+            f"INSERT INTO idempotency_records_v2({columns}) "
+            f"SELECT {columns} FROM idempotency_records "
+            "WHERE operation_kind != 'candidate.bind-evidence'"
+        )
+        connection.execute("DROP TABLE idempotency_records")
+        connection.execute("ALTER TABLE idempotency_records_v2 RENAME TO idempotency_records")
+        connection.execute(candidate_store_module._SCHEMA_V1_STATEMENTS[11])
+        connection.execute(candidate_store_module._SCHEMA_V1_STATEMENTS[12])
+        connection.execute("DROP TRIGGER candidate_evaluations_guard_update")
+        connection.execute("DROP TRIGGER candidate_evaluations_guard_delete")
+        connection.execute("DELETE FROM candidate_evaluations")
+        connection.execute(candidate_store_module._SCHEMA_V2_STATEMENTS[2])
+        connection.execute(candidate_store_module._SCHEMA_V2_STATEMENTS[3])
         connection.execute(
             "UPDATE forgegate_metadata SET value = ? WHERE key = 'schema_name'",
-            (LEGACY_STORE_SCHEMA_NAME,),
+            (PREVIOUS_STORE_SCHEMA_NAME,),
         )
         connection.execute(
             "UPDATE forgegate_metadata SET value = ? WHERE key = 'schema_version'",
-            (str(LEGACY_STORE_SCHEMA_VERSION),),
+            (str(PREVIOUS_STORE_SCHEMA_VERSION),),
         )
-        connection.execute(f"PRAGMA user_version = {LEGACY_STORE_SCHEMA_VERSION}")
+        connection.execute(f"PRAGMA user_version = {PREVIOUS_STORE_SCHEMA_VERSION}")
 
 
 def _create_command(
@@ -53,6 +102,45 @@ def _create_command(
     if include_key:
         command.extend(["--idempotency-key", "create:cli-sample-01"])
     return command
+
+
+def _bind_evidence(
+    database: Path,
+    candidate_id: str,
+    repository_root: Path,
+    *,
+    key: str = "bind-evidence:cli-001",
+):
+    return runner.invoke(
+        app,
+        [
+            "candidate",
+            "bind-evidence",
+            str(database),
+            candidate_id,
+            str(repository_root / "tests/golden/evidence_bundle_assembly.json"),
+            "--bound-at",
+            "2026-08-30T20:31:00Z",
+            "--idempotency-key",
+            key,
+        ],
+    )
+
+
+def _assembly_evaluation(repository_root: Path, output: Path) -> Path:
+    result = runner.invoke(
+        app,
+        [
+            "evaluate-policy",
+            str(repository_root / "examples/sample-python-api/policies/pull-request.yaml"),
+            str(repository_root / "tests/golden/evidence_bundle_assembly.json"),
+            "--evaluated-at",
+            "2026-08-30T21:00:00Z",
+        ],
+    )
+    assert result.exit_code == 0
+    output.write_text(result.stdout, encoding="utf-8")
+    return output
 
 
 def test_candidate_store_cli_create_advance_show_history_and_replay(tmp_path: Path) -> None:
@@ -128,12 +216,37 @@ def test_candidate_store_cli_terminal_transition_loads_evaluation(
     runner.invoke(app, ["candidate", "init-store", str(database)])
     created = runner.invoke(app, _create_command(database, created_at="2026-08-30T12:00:00Z"))
     candidate_id = json.loads(created.stdout)["candidate_id"]
+    for revision, (status, timestamp) in enumerate((("COLLECTING", "2026-08-30T12:01:00Z"),)):
+        result = runner.invoke(
+            app,
+            [
+                "candidate",
+                "advance",
+                str(database),
+                candidate_id,
+                "--to",
+                status,
+                "--expected-revision",
+                str(revision),
+                "--occurred-at",
+                timestamp,
+                "--idempotency-key",
+                f"advance:cli-phase-{revision}",
+            ],
+        )
+        assert result.exit_code == 0
+    binding = _bind_evidence(database, candidate_id, repository_root)
+    binding_replay = _bind_evidence(database, candidate_id, repository_root)
+    shown_binding = runner.invoke(app, ["candidate", "show-evidence", str(database), candidate_id])
+    assert binding.exit_code == binding_replay.exit_code == shown_binding.exit_code == 0
+    assert json.loads(binding.stdout) == json.loads(binding_replay.stdout)
+    assert json.loads(shown_binding.stdout) == json.loads(binding.stdout)
     for revision, (status, timestamp) in enumerate(
         (
-            ("COLLECTING", "2026-08-30T12:01:00Z"),
-            ("READY", "2026-08-30T12:02:00Z"),
-            ("EVALUATING", "2026-08-30T12:03:00Z"),
-        )
+            ("READY", "2026-08-30T20:32:00Z"),
+            ("EVALUATING", "2026-08-30T20:33:00Z"),
+        ),
+        start=1,
     ):
         result = runner.invoke(
             app,
@@ -153,6 +266,8 @@ def test_candidate_store_cli_terminal_transition_loads_evaluation(
             ],
         )
         assert result.exit_code == 0
+
+    evaluation_path = _assembly_evaluation(repository_root, tmp_path / "assembly-evaluation.json")
 
     wrong_document = runner.invoke(
         app,
@@ -189,7 +304,7 @@ def test_candidate_store_cli_terminal_transition_loads_evaluation(
             "--idempotency-key",
             "advance:cli-terminal-001",
             "--evaluation",
-            str(repository_root / "tests/golden/policy_pass.json"),
+            str(evaluation_path),
         ],
     )
 
@@ -226,20 +341,38 @@ def test_candidate_store_cli_terminal_transition_loads_evaluation(
     )
 
 
-def test_candidate_store_cli_migrates_and_backfills_legacy_terminal_evaluation(
+def test_candidate_store_cli_migrates_v2_and_backfills_terminal_evaluation(
     tmp_path: Path, repository_root: Path
 ) -> None:
     database = tmp_path / "forgegate.db"
     runner.invoke(app, ["candidate", "init-store", str(database)])
     created = runner.invoke(app, _create_command(database, created_at="2026-08-30T12:00:00Z"))
     candidate_id = json.loads(created.stdout)["candidate_id"]
+    evaluation_path = _assembly_evaluation(repository_root, tmp_path / "migration-evaluation.json")
+    for revision, (status, timestamp) in enumerate((("COLLECTING", "2026-08-30T12:01:00Z"),)):
+        command = [
+            "candidate",
+            "advance",
+            str(database),
+            candidate_id,
+            "--to",
+            status,
+            "--expected-revision",
+            str(revision),
+            "--occurred-at",
+            timestamp,
+            "--idempotency-key",
+            f"advance:legacy-phase-{revision}",
+        ]
+        assert runner.invoke(app, command).exit_code == 0
+    assert _bind_evidence(database, candidate_id, repository_root).exit_code == 0
     for revision, (status, timestamp) in enumerate(
         (
-            ("COLLECTING", "2026-08-30T12:01:00Z"),
-            ("READY", "2026-08-30T12:02:00Z"),
-            ("EVALUATING", "2026-08-30T12:03:00Z"),
+            ("READY", "2026-08-30T20:32:00Z"),
+            ("EVALUATING", "2026-08-30T20:33:00Z"),
             ("PASS", "2026-08-30T21:00:00Z"),
-        )
+        ),
+        start=1,
     ):
         command = [
             "candidate",
@@ -256,10 +389,10 @@ def test_candidate_store_cli_migrates_and_backfills_legacy_terminal_evaluation(
             f"advance:legacy-phase-{revision}",
         ]
         if status == "PASS":
-            command.extend(["--evaluation", str(repository_root / "tests/golden/policy_pass.json")])
+            command.extend(["--evaluation", str(evaluation_path)])
         assert runner.invoke(app, command).exit_code == 0
 
-    _downgrade_to_schema_v1(database)
+    _downgrade_to_schema_v2(database)
     initialize = runner.invoke(app, ["candidate", "init-store", str(database)])
     import_before_migration = runner.invoke(
         app,
@@ -268,7 +401,7 @@ def test_candidate_store_cli_migrates_and_backfills_legacy_terminal_evaluation(
             "import-evaluation",
             str(database),
             candidate_id,
-            str(repository_root / "tests/golden/policy_pass.json"),
+            str(evaluation_path),
         ],
     )
     migrated = runner.invoke(app, ["candidate", "migrate-store", str(database)])
@@ -292,7 +425,7 @@ def test_candidate_store_cli_migrates_and_backfills_legacy_terminal_evaluation(
             "import-evaluation",
             str(database),
             candidate_id,
-            str(repository_root / "tests/golden/policy_pass.json"),
+            str(evaluation_path),
         ],
     )
     attested = runner.invoke(
@@ -322,7 +455,7 @@ def test_candidate_store_cli_migrates_and_backfills_legacy_terminal_evaluation(
     assert attested.exit_code == 0
 
 
-def test_candidate_store_cli_error_contracts(tmp_path: Path) -> None:
+def test_candidate_store_cli_error_contracts(tmp_path: Path, repository_root: Path) -> None:
     database = tmp_path / "forgegate.db"
     idempotency_without_database = runner.invoke(
         app,
@@ -346,6 +479,23 @@ def test_candidate_store_cli_error_contracts(tmp_path: Path) -> None:
     missing_key = runner.invoke(app, _create_command(database, include_key=False))
     created = runner.invoke(app, _create_command(database))
     candidate_id = json.loads(created.stdout)["candidate_id"]
+    wrong_binding_document = runner.invoke(
+        app,
+        [
+            "candidate",
+            "bind-evidence",
+            str(database),
+            candidate_id,
+            str(repository_root / "examples/sample-python-api/forgegate.yaml"),
+            "--bound-at",
+            "2026-08-31T12:01:00Z",
+            "--idempotency-key",
+            "bind-evidence:wrong-document",
+        ],
+    )
+    missing_binding = runner.invoke(
+        app, ["candidate", "show-evidence", str(database), candidate_id]
+    )
     invalid_time = runner.invoke(
         app,
         [
@@ -379,6 +529,10 @@ def test_candidate_store_cli_error_contracts(tmp_path: Path) -> None:
     assert "STORE_NOT_INITIALIZED" in missing_store.output
     assert missing_key.exit_code == 3
     assert "--database requires --idempotency-key" in missing_key.output
+    assert wrong_binding_document.exit_code == 3
+    assert "assembly path must contain" in wrong_binding_document.output
+    assert missing_binding.exit_code == 3
+    assert "STORE_EVIDENCE_BINDING_NOT_FOUND" in missing_binding.output
     assert invalid_time.exit_code == 3
     assert "Invalid isoformat string" in invalid_time.output
     assert show_missing.exit_code == history_missing.exit_code == 3

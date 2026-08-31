@@ -8,10 +8,11 @@ transition-result document schemas and does not store upstream AFE/MSP430
 internals.
 
 `SQLiteCandidateRepository` owns one local database file. Initialization sets a
-ForgeGate application ID, schema version 2, WAL journaling, FULL synchronous
+ForgeGate application ID, schema version 3, WAL journaling, FULL synchronous
 durability, foreign keys, and a bounded busy timeout. A future schema version is
-rejected. An existing schema-v1 store is never changed by `init-store`; the
-owner must run the explicit, validated `migrate-store` operation.
+rejected. An existing schema-v1 or schema-v2 store is never changed by
+`init-store`; the owner must run the explicit, validated `migrate-store`
+operation.
 
 ## Tables and ordering
 
@@ -25,25 +26,29 @@ owner must run the explicit, validated `migrate-store` operation.
   fingerprint and response document;
 - `candidate_evaluations` stores the exact terminal policy evaluation and its
   canonical fingerprint;
+- `candidate_evidence_bindings` stores the complete self-validating assembly
+  binding for a new v3 candidate;
 - `attestations` stores one exact JSON attestation and deterministic Markdown
   rendering per candidate;
 - `forgegate_metadata` identifies the exact storage schema.
 
 Database triggers reject candidate deletion, identity rewriting, non-unit
 current-revision updates, and every update/delete of snapshot, transition, and
-idempotency, evaluation, and attestation rows. These controls protect accidental or direct SQL mutation;
+idempotency, evidence-binding, evaluation, and attestation rows. These controls
+protect accidental or direct SQL mutation;
 they are not an authorization boundary against an administrator who can replace
 the database file or rewrite its schema.
 
 ## Transaction contract
 
-Candidate creation and advancement use `BEGIN IMMEDIATE`. Advancement performs
-the following operations in one transaction:
+Candidate creation, evidence binding, and advancement use `BEGIN IMMEDIATE`.
+Advancement performs the following operations in one transaction:
 
 1. verify the idempotency key or recognize an exact replay;
 2. load and validate the entire current snapshot/event chain;
 3. compare the caller's `expected_revision` with the current revision;
-4. run the pure lifecycle transition and evaluation-binding checks;
+4. enforce the candidate evidence-binding gate, then run the pure lifecycle
+   transition and evaluation-binding checks;
 5. append the next snapshot and transition and, for an evaluated terminal
    decision, its exact evaluation document;
 6. update the current pointer with `WHERE current_revision = ?`;
@@ -70,16 +75,24 @@ Reopening the database reconstructs authoritative state from durable rows. It
 does not rerun collectors or policy evaluation. Evaluation and attestation
 loads also verify stored metadata, canonical documents, rendered Markdown, and
 association with the current candidate and complete transition chain.
+Evidence-binding loads additionally recompute the binding, candidate, and
+assembly identities and compare the embedded candidate with revision one.
 Corruption fails closed with a stable store error; this checkpoint does not
 repair, salvage, back up, encrypt, or replicate a damaged database.
 
-## Explicit v1 migration
+## Explicit v1/v2 migration
 
-`candidate migrate-store DATABASE` accepts only a fully valid schema-v1 store.
-It adds the two v2 tables and append-only triggers in one transaction, updates
-both metadata values and `PRAGMA user_version`, and then revalidates the result.
-Calling it on v2 is an idempotent validation. Unknown, foreign, or corrupt
-stores fail closed.
+`candidate migrate-store DATABASE` accepts only a fully valid schema-v1 or
+schema-v2 store. A v1 migration adds both v2 and v3 objects; a v2 migration adds
+the v3 binding objects and extends the immutable idempotency operation set. The
+operation updates both metadata values and `PRAGMA user_version` in one
+transaction, then revalidates the result. Calling it on v3 is an idempotent
+validation. Unknown, foreign, or corrupt stores fail closed.
+
+Existing candidates receive an immutable `evidence_binding_required = 0`
+marker. This preserves the historical state without fabricating an assembly
+binding. Every candidate created under v3 sets the marker to one and must bind
+evidence before `READY`.
 
 A v1 terminal candidate contains only an evaluation reference, not the full
 evaluation document. After migration, `candidate import-evaluation` must be
@@ -90,8 +103,9 @@ stored. Attestation is refused until this backfill is complete.
 ## CLI boundary
 
 `candidate init-store`, `migrate-store`, persisted `candidate create
---database`, `advance`, `show`, `history`, `import-evaluation`, `attest`, and
-`show-attestation` expose this repository. The original `candidate create`
+--database`, `bind-evidence`, `show-evidence`, `advance`, `show`, `history`,
+`import-evaluation`, `attest`, and `show-attestation` expose this repository.
+The original `candidate create`
 without `--database` and `candidate transition` remain deterministic, stateless
 preview paths.
 

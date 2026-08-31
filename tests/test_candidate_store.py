@@ -9,12 +9,15 @@ from typing import Any
 import pytest
 
 import forgegate.candidates.store as candidate_store_module
+from forgegate.assembly import LoadedCollectionResult, assemble_evidence_bundle
 from forgegate.candidates import (
+    CandidateEvidenceBinding,
     CandidateLifecycleError,
     CandidateStoreError,
     ReleaseCandidate,
     SQLiteCandidateRepository,
     create_candidate,
+    create_candidate_evidence_binding,
     transition_candidate,
 )
 from forgegate.candidates.store import (
@@ -24,7 +27,9 @@ from forgegate.candidates.store import (
     STORE_SCHEMA_VERSION,
 )
 from forgegate.canonical import sha256_fingerprint
+from forgegate.collectors import CollectionResult
 from forgegate.domain.enums import Aggregation, CandidateStatus, Decision, Operator
+from forgegate.domain.models import ArtifactReference, EvidenceRecord, ExecutionContext
 from forgegate.policy.models import PolicyEvaluation, RuleEvaluation
 
 CREATED = datetime(2026, 8, 31, 12, 0, tzinfo=UTC)
@@ -44,9 +49,13 @@ def draft(**updates: Any) -> ReleaseCandidate:
     return create_candidate(**values)
 
 
-def evaluation(decision: Decision, evaluated_at: datetime) -> PolicyEvaluation:
+def evaluation(
+    decision: Decision,
+    evaluated_at: datetime,
+    *,
+    evidence_fingerprint: str = "sha256:" + "3" * 64,
+) -> PolicyEvaluation:
     policy_fingerprint = "sha256:" + "2" * 64
-    evidence_fingerprint = "sha256:" + "3" * 64
     return PolicyEvaluation(
         evaluation_id=sha256_fingerprint(
             {
@@ -81,6 +90,65 @@ def evaluation(decision: Decision, evaluated_at: datetime) -> PolicyEvaluation:
     )
 
 
+def evidence_assembly(
+    *,
+    commit: str = COMMIT,
+    producer_version: str = "1.0.0",
+):
+    artifact = ArtifactReference(
+        path_or_uri="artifacts/junit.xml",
+        media_type="application/junit+xml",
+        sha256="b" * 64,
+        size_bytes=100,
+    )
+    record = EvidenceRecord(
+        evidence_id="test-summary-12345678",
+        kind="test.summary",
+        scope="repository",
+        value={"failures": 0},
+        status="passed",
+        source_tool="pytest",
+        source_version="8.4.2",
+        execution_context=ExecutionContext(commit_sha=commit),
+        artifact=artifact,
+        collected_at=CREATED + timedelta(minutes=1),
+        trust="claimed_ci_metadata",
+        verification_level="ci_validated",
+    )
+    result = CollectionResult(
+        collector_name="junit",
+        collector_version="forgegate-junit.v1",
+        status="COMPLETE",
+        artifacts=[artifact],
+        evidence=[record],
+    )
+    source = ArtifactReference(
+        path_or_uri="collections/junit.json",
+        media_type="application/vnd.forgegate.collection-result+json",
+        sha256="c" * 64,
+        size_bytes=100,
+    )
+    return assemble_evidence_bundle(
+        [LoadedCollectionResult(source=source, result=result)],
+        candidate_commit=commit,
+        generated_at=CREATED + timedelta(minutes=1, seconds=15),
+        producer="forgegate-test",
+        producer_version=producer_version,
+    )
+
+
+def bind_in(
+    repository: SQLiteCandidateRepository,
+    candidate: ReleaseCandidate,
+) -> CandidateEvidenceBinding:
+    return repository.bind_evidence(
+        candidate.candidate_id,
+        evidence_assembly(),
+        bound_at=CREATED + timedelta(minutes=1, seconds=30),
+        idempotency_key="bind-evidence:sample-001",
+    )
+
+
 def initialized_repository(tmp_path: Path) -> SQLiteCandidateRepository:
     tmp_path.mkdir(parents=True, exist_ok=True)
     repository = SQLiteCandidateRepository(tmp_path / "forgegate.db")
@@ -95,10 +163,16 @@ def create_in(repository: SQLiteCandidateRepository) -> ReleaseCandidate:
 
 def advance_to_evaluating(repository: SQLiteCandidateRepository) -> ReleaseCandidate:
     candidate = create_in(repository)
-    for index, status in enumerate(
-        (CandidateStatus.COLLECTING, CandidateStatus.READY, CandidateStatus.EVALUATING),
-        start=1,
-    ):
+    for index, status in enumerate((CandidateStatus.COLLECTING,), start=1):
+        candidate = repository.advance(
+            candidate.candidate_id,
+            status,
+            expected_revision=candidate.revision,
+            occurred_at=CREATED + timedelta(minutes=index),
+            idempotency_key=f"advance:sample-{index:03d}",
+        ).candidate
+    bind_in(repository, candidate)
+    for index, status in enumerate((CandidateStatus.READY, CandidateStatus.EVALUATING), start=2):
         candidate = repository.advance(
             candidate.candidate_id,
             status,
@@ -114,7 +188,12 @@ def advance_to_pass(
 ) -> tuple[ReleaseCandidate, PolicyEvaluation]:
     candidate = advance_to_evaluating(repository)
     evaluated_at = CREATED + timedelta(minutes=4)
-    policy_result = evaluation(Decision.PASS, evaluated_at)
+    binding = repository.get_evidence_binding(candidate.candidate_id)
+    policy_result = evaluation(
+        Decision.PASS,
+        evaluated_at,
+        evidence_fingerprint=sha256_fingerprint(binding.assembly.bundle.model_dump(mode="json")),
+    )
     result = repository.advance(
         candidate.candidate_id,
         CandidateStatus.PASS,
@@ -130,6 +209,52 @@ def advance_to_pass(
 def _downgrade_to_schema_v1(database: Path) -> None:
     """Turn a current fixture into an exact legacy schema without its new documents."""
     with sqlite3.connect(database) as connection:
+        connection.execute("PRAGMA foreign_keys = OFF")
+        connection.execute("DROP TABLE candidate_evidence_bindings")
+        connection.execute("DROP TRIGGER candidates_binding_requirement_guard_update")
+        connection.execute("DROP TRIGGER candidates_guard_update")
+        connection.execute("DROP TRIGGER candidates_guard_delete")
+        connection.execute(
+            candidate_store_module._SCHEMA_V1_STATEMENTS[1].replace(
+                "CREATE TABLE candidates", "CREATE TABLE candidates_v1"
+            )
+        )
+        candidate_columns = (
+            "candidate_id, project_id, version, commit_sha, source_branch, release_track, "
+            "created_at, initial_fingerprint, initial_candidate_json, current_revision, "
+            "current_status, updated_at, current_fingerprint, current_candidate_json, "
+            "evaluation_id"
+        )
+        connection.execute(
+            f"INSERT INTO candidates_v1({candidate_columns}) "
+            f"SELECT {candidate_columns} FROM candidates"
+        )
+        connection.execute("DROP TABLE candidates")
+        connection.execute("ALTER TABLE candidates_v1 RENAME TO candidates")
+        connection.execute(candidate_store_module._SCHEMA_V1_STATEMENTS[5])
+        connection.execute(candidate_store_module._SCHEMA_V1_STATEMENTS[6])
+
+        connection.execute("DROP TRIGGER idempotency_records_guard_update")
+        connection.execute("DROP TRIGGER idempotency_records_guard_delete")
+        connection.execute(
+            candidate_store_module._SCHEMA_V1_STATEMENTS[4].replace(
+                "CREATE TABLE idempotency_records",
+                "CREATE TABLE idempotency_records_v1",
+            )
+        )
+        idempotency_columns = (
+            "idempotency_key, operation_kind, candidate_id, request_fingerprint, "
+            "response_schema_version, response_json, recorded_at"
+        )
+        connection.execute(
+            f"INSERT INTO idempotency_records_v1({idempotency_columns}) "
+            f"SELECT {idempotency_columns} FROM idempotency_records "
+            "WHERE operation_kind != 'candidate.bind-evidence'"
+        )
+        connection.execute("DROP TABLE idempotency_records")
+        connection.execute("ALTER TABLE idempotency_records_v1 RENAME TO idempotency_records")
+        connection.execute(candidate_store_module._SCHEMA_V1_STATEMENTS[11])
+        connection.execute(candidate_store_module._SCHEMA_V1_STATEMENTS[12])
         connection.execute("DROP TABLE attestations")
         connection.execute("DROP TABLE candidate_evaluations")
         connection.execute(
@@ -240,6 +365,7 @@ def test_advance_compare_and_swap_replay_and_restart(tmp_path: Path) -> None:
         idempotency_key="advance:collect-001",
         reason="begin collection",
     )
+    binding = bind_in(repository, first.candidate)
     second = repository.advance(
         candidate.candidate_id,
         CandidateStatus.READY,
@@ -262,6 +388,8 @@ def test_advance_compare_and_swap_replay_and_restart(tmp_path: Path) -> None:
     history = reopened.history(candidate.candidate_id)
     assert history.candidate == second.candidate
     assert history.transitions == (first.transition, second.transition)
+    assert history.evidence_binding == binding
+    assert history.evidence_binding_required is True
 
     with pytest.raises(CandidateStoreError, match="STORE_REVISION_CONFLICT"):
         repository.advance(
@@ -279,6 +407,113 @@ def test_advance_compare_and_swap_replay_and_restart(tmp_path: Path) -> None:
             occurred_at=offset_time,
             idempotency_key="advance:collect-001",
             reason="different request",
+        )
+
+
+def test_ready_requires_durable_binding_and_nonregressing_time(tmp_path: Path) -> None:
+    repository = initialized_repository(tmp_path)
+    candidate = create_in(repository)
+    collecting = repository.advance(
+        candidate.candidate_id,
+        CandidateStatus.COLLECTING,
+        expected_revision=0,
+        occurred_at=CREATED + timedelta(minutes=1),
+        idempotency_key="advance:binding-required",
+    ).candidate
+
+    with pytest.raises(CandidateStoreError, match="STORE_EVIDENCE_BINDING_REQUIRED"):
+        repository.advance(
+            candidate.candidate_id,
+            CandidateStatus.READY,
+            expected_revision=1,
+            occurred_at=CREATED + timedelta(minutes=2),
+            idempotency_key="advance:ready-unbound",
+        )
+
+    bind_in(repository, collecting)
+    with pytest.raises(CandidateStoreError, match="STORE_EVIDENCE_BINDING_TIME_MISMATCH"):
+        repository.advance(
+            candidate.candidate_id,
+            CandidateStatus.READY,
+            expected_revision=1,
+            occurred_at=CREATED + timedelta(minutes=1, seconds=20),
+            idempotency_key="advance:ready-before-binding",
+        )
+
+
+def test_binding_replay_restart_conflict_and_error_contracts(tmp_path: Path) -> None:
+    repository = initialized_repository(tmp_path)
+    draft_candidate = create_in(repository)
+    with pytest.raises(CandidateStoreError, match="STORE_EVIDENCE_BINDING_INVALID"):
+        repository.bind_evidence(
+            draft_candidate.candidate_id,
+            evidence_assembly(),
+            bound_at=CREATED + timedelta(minutes=1, seconds=30),
+            idempotency_key="bind-evidence:draft-001",
+        )
+
+    collecting = repository.advance(
+        draft_candidate.candidate_id,
+        CandidateStatus.COLLECTING,
+        expected_revision=0,
+        occurred_at=CREATED + timedelta(minutes=1),
+        idempotency_key="advance:binding-replay",
+    ).candidate
+    first = bind_in(repository, collecting)
+    replay = repository.bind_evidence(
+        collecting.candidate_id,
+        evidence_assembly(),
+        bound_at=CREATED + timedelta(minutes=1, seconds=30),
+        idempotency_key="bind-evidence:sample-001",
+    )
+    replay_with_new_key = repository.bind_evidence(
+        collecting.candidate_id,
+        evidence_assembly(),
+        bound_at=CREATED + timedelta(minutes=1, seconds=30),
+        idempotency_key="bind-evidence:exact-content-new-key",
+    )
+    reopened = SQLiteCandidateRepository(repository.database_path)
+
+    assert first == replay == replay_with_new_key
+    assert first == reopened.get_evidence_binding(collecting.candidate_id)
+    with pytest.raises(CandidateStoreError, match="STORE_IDEMPOTENCY_CONFLICT"):
+        repository.bind_evidence(
+            collecting.candidate_id,
+            evidence_assembly(),
+            bound_at=CREATED + timedelta(minutes=1, seconds=31),
+            idempotency_key="bind-evidence:exact-content-new-key",
+        )
+    with pytest.raises(CandidateStoreError, match="STORE_IDEMPOTENCY_CONFLICT"):
+        repository.bind_evidence(
+            collecting.candidate_id,
+            evidence_assembly(),
+            bound_at=CREATED + timedelta(minutes=1, seconds=31),
+            idempotency_key="bind-evidence:sample-001",
+        )
+    with pytest.raises(CandidateStoreError, match="STORE_EVIDENCE_BINDING_CONFLICT"):
+        repository.bind_evidence(
+            collecting.candidate_id,
+            evidence_assembly(producer_version="2.0.0"),
+            bound_at=CREATED + timedelta(minutes=1, seconds=30),
+            idempotency_key="bind-evidence:conflict-01",
+        )
+    missing_repository = initialized_repository(tmp_path / "missing")
+    missing_candidate = create_in(missing_repository)
+    with pytest.raises(CandidateStoreError, match="STORE_EVIDENCE_BINDING_NOT_FOUND"):
+        missing_repository.get_evidence_binding(missing_candidate.candidate_id)
+
+
+def test_terminal_evaluation_must_reference_bound_bundle(tmp_path: Path) -> None:
+    repository = initialized_repository(tmp_path)
+    candidate = advance_to_evaluating(repository)
+    with pytest.raises(CandidateStoreError, match="STORE_EVALUATION_EVIDENCE_MISMATCH"):
+        repository.advance(
+            candidate.candidate_id,
+            CandidateStatus.PASS,
+            expected_revision=3,
+            occurred_at=CREATED + timedelta(minutes=4),
+            idempotency_key="advance:evidence-mismatch",
+            evaluation=evaluation(Decision.PASS, CREATED + timedelta(minutes=4)),
         )
 
 
@@ -325,7 +560,12 @@ def test_terminal_evaluation_is_durably_bound(tmp_path: Path) -> None:
     repository = initialized_repository(tmp_path)
     candidate = advance_to_evaluating(repository)
     evaluated_at = CREATED + timedelta(minutes=4)
-    policy_result = evaluation(Decision.PASS, evaluated_at)
+    binding = repository.get_evidence_binding(candidate.candidate_id)
+    policy_result = evaluation(
+        Decision.PASS,
+        evaluated_at,
+        evidence_fingerprint=sha256_fingerprint(binding.assembly.bundle.model_dump(mode="json")),
+    )
 
     result = repository.advance(
         candidate.candidate_id,
@@ -358,6 +598,14 @@ def test_schema_v1_requires_explicit_migration_and_evaluation_backfill(
     legacy.migrate()
     legacy.migrate()
     assert legacy.get(candidate.candidate_id) == candidate
+    assert legacy.history(candidate.candidate_id).evidence_binding_required is False
+    with pytest.raises(CandidateStoreError, match="STORE_EVIDENCE_BINDING_LEGACY"):
+        legacy.bind_evidence(
+            candidate.candidate_id,
+            evidence_assembly(),
+            bound_at=candidate.updated_at + timedelta(minutes=1),
+            idempotency_key="bind-evidence:legacy-not-fabricated",
+        )
     with pytest.raises(CandidateStoreError, match="STORE_EVALUATION_NOT_FOUND"):
         legacy.evaluation(candidate.candidate_id)
 
@@ -385,6 +633,15 @@ def test_migration_rejects_invalid_legacy_and_unknown_schemas(tmp_path: Path) ->
         connection.execute(f"PRAGMA user_version = {STORE_SCHEMA_VERSION + 1}")
     with pytest.raises(CandidateStoreError, match="STORE_SCHEMA_UNSUPPORTED"):
         future.migrate()
+
+    defensive = initialized_repository(tmp_path / "defensive")
+    connection = defensive._open(require_exists=True)
+    try:
+        connection.execute(f"PRAGMA user_version = {STORE_SCHEMA_VERSION + 9}")
+        with pytest.raises(CandidateStoreError, match="STORE_SCHEMA_UNSUPPORTED"):
+            defensive._validate_store_version(connection, STORE_SCHEMA_VERSION + 9)
+    finally:
+        connection.close()
 
 
 def test_evaluation_backfill_rejects_nonterminal_or_mismatched_inputs(tmp_path: Path) -> None:
@@ -455,7 +712,12 @@ def test_attestation_rejects_nonterminal_and_reports_missing_record(tmp_path: Pa
 def test_evaluation_and_attestation_failure_injection_rolls_back(tmp_path: Path) -> None:
     healthy = initialized_repository(tmp_path)
     evaluating = advance_to_evaluating(healthy)
-    policy_result = evaluation(Decision.PASS, CREATED + timedelta(minutes=4))
+    binding = healthy.get_evidence_binding(evaluating.candidate_id)
+    policy_result = evaluation(
+        Decision.PASS,
+        CREATED + timedelta(minutes=4),
+        evidence_fingerprint=sha256_fingerprint(binding.assembly.bundle.model_dump(mode="json")),
+    )
 
     def fail_evaluation(name: str, _connection: sqlite3.Connection) -> None:
         if name == "after_transition_append":
@@ -584,6 +846,43 @@ def test_advance_failure_injection_rolls_back(tmp_path: Path, checkpoint: str) -
     assert recovered.candidate.revision == 1
 
 
+@pytest.mark.parametrize(
+    "checkpoint", ["after_evidence_binding_insert", "after_idempotency_insert"]
+)
+def test_evidence_binding_failure_injection_rolls_back(tmp_path: Path, checkpoint: str) -> None:
+    healthy = initialized_repository(tmp_path)
+    candidate = create_in(healthy)
+    collecting = healthy.advance(
+        candidate.candidate_id,
+        CandidateStatus.COLLECTING,
+        expected_revision=0,
+        occurred_at=CREATED + timedelta(minutes=1),
+        idempotency_key="advance:binding-rollback",
+    ).candidate
+
+    def fail(name: str, _connection: sqlite3.Connection) -> None:
+        if name == checkpoint:
+            raise RuntimeError("injected binding failure")
+
+    failing = SQLiteCandidateRepository(healthy.database_path, _failure_injector=fail)
+    with pytest.raises(RuntimeError, match="injected binding failure"):
+        failing.bind_evidence(
+            candidate.candidate_id,
+            evidence_assembly(),
+            bound_at=CREATED + timedelta(minutes=1, seconds=30),
+            idempotency_key="bind-evidence:rollback-01",
+        )
+    with pytest.raises(CandidateStoreError, match="STORE_EVIDENCE_BINDING_NOT_FOUND"):
+        healthy.get_evidence_binding(candidate.candidate_id)
+    recovered = healthy.bind_evidence(
+        candidate.candidate_id,
+        evidence_assembly(),
+        bound_at=CREATED + timedelta(minutes=1, seconds=30),
+        idempotency_key="bind-evidence:rollback-01",
+    )
+    assert recovered.candidate == collecting
+
+
 def test_compare_and_swap_defense_rolls_back_on_zero_row_update(tmp_path: Path) -> None:
     healthy = initialized_repository(tmp_path)
     candidate = create_in(healthy)
@@ -626,6 +925,7 @@ def test_writer_lock_reports_busy_without_partial_write(tmp_path: Path) -> None:
     "statement",
     [
         "UPDATE candidates SET project_id = 'other-api'",
+        "UPDATE candidates SET evidence_binding_required = 0",
         "DELETE FROM candidates",
         "UPDATE candidate_snapshots SET status = 'READY'",
         "DELETE FROM candidate_snapshots",
@@ -674,6 +974,94 @@ def test_v2_database_triggers_enforce_append_only_records(tmp_path: Path, statem
         pytest.raises(sqlite3.IntegrityError),
     ):
         connection.execute(statement)
+
+
+@pytest.mark.parametrize(
+    "statement",
+    [
+        "UPDATE candidate_evidence_bindings SET bound_at = '2026-08-31T00:00:00Z'",
+        "DELETE FROM candidate_evidence_bindings",
+    ],
+)
+def test_v3_binding_triggers_enforce_append_only_records(tmp_path: Path, statement: str) -> None:
+    repository = initialized_repository(tmp_path)
+    candidate = create_in(repository)
+    collecting = repository.advance(
+        candidate.candidate_id,
+        CandidateStatus.COLLECTING,
+        expected_revision=0,
+        occurred_at=CREATED + timedelta(minutes=1),
+        idempotency_key="advance:binding-trigger",
+    ).candidate
+    bind_in(repository, collecting)
+    with (
+        sqlite3.connect(repository.database_path) as connection,
+        pytest.raises(sqlite3.IntegrityError),
+    ):
+        connection.execute(statement)
+
+
+def test_corrupt_evidence_binding_is_rejected(tmp_path: Path) -> None:
+    repository = initialized_repository(tmp_path)
+    candidate = create_in(repository)
+    collecting = repository.advance(
+        candidate.candidate_id,
+        CandidateStatus.COLLECTING,
+        expected_revision=0,
+        occurred_at=CREATED + timedelta(minutes=1),
+        idempotency_key="advance:binding-corrupt",
+    ).candidate
+    bind_in(repository, collecting)
+    _rewrite_with_trigger_restored(
+        repository.database_path,
+        "candidate_evidence_bindings_guard_update",
+        "UPDATE candidate_evidence_bindings SET assembly_id = 'sha256:" + "0" * 64 + "'",
+    )
+    with pytest.raises(CandidateStoreError, match="STORE_CORRUPT"):
+        repository.get_evidence_binding(candidate.candidate_id)
+
+
+def test_binding_chronology_and_terminal_evaluation_are_revalidated(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    chronology_repository = initialized_repository(tmp_path / "chronology")
+    evaluating = advance_to_evaluating(chronology_repository)
+    binding = chronology_repository.get_evidence_binding(evaluating.candidate_id)
+    regressed = create_candidate_evidence_binding(
+        binding.candidate,
+        binding.assembly,
+        bound_at=CREATED + timedelta(minutes=2, seconds=30),
+    )
+    _rewrite_with_trigger_restored(
+        chronology_repository.database_path,
+        "candidate_evidence_bindings_guard_update",
+        """
+        UPDATE candidate_evidence_bindings
+        SET binding_id = ?, candidate_fingerprint = ?, assembly_id = ?,
+            assembly_fingerprint = ?, binding_json = ?, bound_at = ?
+        """,
+        (
+            regressed.binding_id,
+            regressed.candidate_fingerprint,
+            regressed.assembly.assembly_id,
+            regressed.assembly_fingerprint,
+            candidate_store_module._model_json(regressed),
+            regressed.bound_at.isoformat().replace("+00:00", "Z"),
+        ),
+    )
+    with pytest.raises(CandidateStoreError, match="STORE_CORRUPT"):
+        chronology_repository.history(evaluating.candidate_id)
+
+    evaluation_repository = initialized_repository(tmp_path / "evaluation")
+    terminal, policy_result = advance_to_pass(evaluation_repository)
+    detached = policy_result.model_copy(update={"evidence_fingerprint": "sha256:" + "0" * 64})
+    monkeypatch.setattr(
+        evaluation_repository,
+        "_load_evaluation",
+        lambda connection, candidate: detached,
+    )
+    with pytest.raises(CandidateStoreError, match="STORE_CORRUPT"):
+        evaluation_repository.history(terminal.candidate_id)
 
 
 def test_repository_path_and_initialization_errors(tmp_path: Path) -> None:

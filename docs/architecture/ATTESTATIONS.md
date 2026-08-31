@@ -50,10 +50,11 @@ gate.
 
 ## Persistence and publication
 
-SQLite schema v2 stores exactly one immutable attestation per candidate,
+SQLite schema v3 stores exactly one immutable attestation per candidate,
 including canonical JSON and deterministic Markdown. Reads reconstruct and
 validate the model, rerender Markdown, and compare the embedded inputs with the
-authoritative candidate, transition, and evaluation rows.
+authoritative candidate, transition, evaluation, and, for new v3 candidates,
+evidence-binding rows.
 
 `candidate attest DATABASE CANDIDATE_ID --issued-at TIME --output-root DIR`
 first creates or exactly replays the durable row. It then stages
@@ -78,3 +79,9 @@ Validation Studio or MSP430 code and makes no device or electrical claim.
 Future compatibility collectors may normalize versioned public reports into
 generic ForgeGate evidence before policy evaluation; the attestation format
 does not need upstream repository internals.
+
+Attestation v1 carries the terminal evaluation's evidence fingerprint but does
+not embed the complete assembly binding or its receipts. The durable companion
+record is `forgegate.candidate-evidence-binding.v1`, available through
+`candidate show-evidence`. This limitation is explicit rather than silently
+changing the frozen attestation v1 contract.

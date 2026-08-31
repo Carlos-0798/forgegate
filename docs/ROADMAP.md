@@ -64,5 +64,5 @@
   validated assembly.
 - [x] Add canonical Schema, Golden, adversarial tests, architecture/security
   documentation, and clean-install smoke.
-- [ ] Bind an accepted assembly to the persisted candidate workflow; keep this
+- [x] Bind an accepted assembly to the persisted candidate workflow; keep this
   separate from signature or producer-authentication work.
