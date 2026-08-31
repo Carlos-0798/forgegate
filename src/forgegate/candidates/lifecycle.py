@@ -4,9 +4,12 @@ from datetime import UTC, datetime
 
 from forgegate.candidates.models import (
     ALLOWED_CANDIDATE_TRANSITIONS,
+    CANDIDATE_DOCUMENT_ADAPTER,
     TERMINAL_CANDIDATE_STATUSES,
+    CandidateDocument,
     CandidateTransition,
     CandidateTransitionResult,
+    ProfileBoundReleaseCandidate,
     ReleaseCandidate,
 )
 from forgegate.canonical import sha256_fingerprint
@@ -54,8 +57,50 @@ def create_candidate(
     )
 
 
+def create_profile_bound_candidate(
+    *,
+    project_id: str,
+    version: str,
+    commit_sha: str,
+    source_branch: str,
+    release_track: str,
+    created_at: datetime,
+    project_profile_id: str,
+    project_profile_version: int,
+) -> ProfileBoundReleaseCandidate:
+    timestamp = _normalized_timestamp(created_at, field_name="created_at")
+    normalized_project_id = project_id.strip()
+    normalized_version = version.strip()
+    normalized_commit_sha = commit_sha.lower()
+    normalized_source_branch = source_branch.strip()
+    normalized_release_track = canonical_release_track_name(release_track)
+    identity: dict[str, object] = {
+        "project_id": normalized_project_id,
+        "version": normalized_version,
+        "commit_sha": normalized_commit_sha,
+        "source_branch": normalized_source_branch,
+        "release_track": normalized_release_track,
+        "created_at": _json_timestamp(timestamp),
+        "project_profile_id": project_profile_id,
+        "project_profile_version": project_profile_version,
+    }
+    candidate_id = "cand-" + sha256_fingerprint(identity).removeprefix("sha256:")[:24]
+    return ProfileBoundReleaseCandidate(
+        candidate_id=candidate_id,
+        project_id=normalized_project_id,
+        version=normalized_version,
+        commit_sha=normalized_commit_sha,
+        source_branch=normalized_source_branch,
+        release_track=normalized_release_track,
+        created_at=timestamp,
+        updated_at=timestamp,
+        project_profile_id=project_profile_id,
+        project_profile_version=project_profile_version,
+    )
+
+
 def transition_candidate(
-    candidate: ReleaseCandidate,
+    candidate: CandidateDocument,
     to_status: CandidateStatus,
     *,
     occurred_at: datetime,
@@ -88,7 +133,7 @@ def transition_candidate(
         evaluated_at=(timestamp if to_status in TERMINAL_CANDIDATE_STATUSES else None),
         evaluation_id=evaluation_id,
     )
-    next_candidate = ReleaseCandidate.model_validate(next_values)
+    next_candidate = CANDIDATE_DOCUMENT_ADAPTER.validate_python(next_values)
     prior_fingerprint = sha256_fingerprint(candidate.model_dump(mode="json"))
     result_fingerprint = sha256_fingerprint(next_candidate.model_dump(mode="json"))
     event_values = {
@@ -141,7 +186,7 @@ def _json_timestamp(value: datetime) -> str:
 
 
 def _validated_evaluation_id(
-    candidate: ReleaseCandidate,
+    candidate: CandidateDocument,
     to_status: CandidateStatus,
     *,
     timestamp: datetime,

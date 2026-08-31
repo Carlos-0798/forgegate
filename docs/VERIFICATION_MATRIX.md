@@ -11,7 +11,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — fifteen document plus two artifact schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — eighteen document plus two artifact schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Analog Validation result Schema mirror | committed upstream-consumer contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
@@ -84,20 +84,25 @@
 | Release-track policy identity | mismatch rejection before terminal commit | PASS — local host |
 | REST attestation persistence | deterministic create/replay/conflict | PASS — database only |
 | HTTP Host and declared body length | loopback allowlist + 4 MiB Content-Length gate | PASS — local host |
-| Immutable project registration | model/store/idempotency/conflict tests | PASS — introduced in SQLite v4, retained in v5 |
+| Immutable project registration | model/store/idempotency/conflict tests | PASS — introduced in SQLite v4, retained in v6 |
 | Project CLI and REST readback | shared application + installed-wheel smoke | PASS — local host |
 | Transactional state-change audit | create/bind/transition/evaluate/attest tests | PASS — local host |
 | Audit cursor pagination and filters | bounded/empty/multi-page/adversarial tests | PASS — local host |
-| SQLite v1/v2/v3/v4-to-v5 migration | complete-chain audit projection and v4 index-only tests | PASS — no project/identity fabrication or duplicate audit |
+| SQLite v1/v2/v3/v4/v5-to-v6 migration | audit/profile backfill and legacy-candidate tests | PASS — registration profiles only; no candidate-profile fabrication or duplicate audit |
 | Project/audit contract drift | five JSON Schemas + OpenAPI | PASS — byte checked |
 | Registered-project candidate authority | application/CLI/API/store tests | PASS — unregistered project and missing track fail closed |
 | Release-track normalization | underscore compatibility plus ambiguity tests | PASS — new candidate/policy identity is canonical hyphen form |
 | Project/candidate discovery | bounded page model, stable cursor, CLI/API, installed-wheel smoke | PASS — candidates are project-scoped |
-| Project-profile revision mutation | architecture contract only | NOT IMPLEMENTED — append-only/CAS semantics defined for Phase 9 |
+| Project-profile revision contract | model/Schema/identity/chain tests | PASS — complete append-only replacement with previous-profile linkage |
+| Project-profile CAS/idempotency | store concurrency/replay/conflict/time tests | PASS — local host, SQLite v6 |
+| Profile current/history surfaces | application/CLI/REST/OpenAPI/clean-wheel smoke | PASS — bounded version cursor |
+| Profile-bound candidate v2 | store/application/CLI/REST/lifecycle tests | PASS — exact profile ID/version retained across transitions |
+| Track revision isolation | addition/removal and historical-read tests | PASS — only later candidates use the revised profile |
+| Legacy candidate profile semantics | v5 migration and corruption tests | PASS — v1 remains readable with no fabricated binding |
 | HTTP artifact loading/file publication | no loader/output path; nested metadata is not dereferenced | OUT OF SCOPE |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
 
-See `reports/PHASE_8_PROJECT_AUTHORITY_DISCOVERY_ACCEPTANCE_REPORT.md` for the
+See `reports/PHASE_9_PROJECT_PROFILE_REVISIONS_ACCEPTANCE_REPORT.md` for the
 current exact test and coverage result. Earlier acceptance reports remain
 historical records.

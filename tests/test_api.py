@@ -121,7 +121,7 @@ def test_health_and_candidate_read_write_contract(tmp_path: Path) -> None:
         "status": "ok",
         "api_version": "v1",
         "forgegate_version": __version__,
-        "store_schema": "forgegate.candidate-store.v5",
+        "store_schema": "forgegate.candidate-store.v6",
     }
     assert health.headers["X-Request-ID"] == request_id
     assert created.status_code == replay.status_code == 201
@@ -511,6 +511,8 @@ def test_openapi_export_is_deterministic_and_complete(tmp_path: Path) -> None:
         "/v1/projects",
         "/v1/projects/{project_id}",
         "/v1/projects/{project_id}/candidates",
+        "/v1/projects/{project_id}/profile",
+        "/v1/projects/{project_id}/revisions",
         "/v1/audit-events",
         "/v1/candidates",
         "/v1/candidates/{candidate_id}",

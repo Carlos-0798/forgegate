@@ -8,7 +8,8 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 8 project authority and bounded discovery implemented; not production-ready.**
+**Phase 9 profile-bound candidates and append-only project revisions implemented;
+not production-ready.**
 
 This private-development checkpoint provides a working Python 3.12 CLI and a
 loopback-only REST API. Its strongest ForgeGate-owned evidence is local host
@@ -27,7 +28,10 @@ JUnit / coverage / SARIF / benchmark / optional Studio artifact
              audited, commit-bound evidence assembly
                               |
                               v
-registered project/track -> release candidate -> persisted evidence binding
+current immutable project profile -> profile-bound release candidate
+                              |
+                              v
+                  persisted evidence binding
                               |
                               v
                    versioned policy evaluation
@@ -44,8 +48,8 @@ collector rather than a runtime or hardware dependency.
 
 | Gate | Result | Evidence level |
 |---|---|---|
-| Python tests | 568 passed, 1 skipped because Windows symlink creation was unavailable | Local host test |
-| Branch-aware coverage | 100% across 4,501 statements and 1,214 branches | Local host test |
+| Python tests | 573 passed, 1 skipped because Windows symlink creation was unavailable | Local host test |
+| Branch-aware coverage | 99.05% across 4,799 statements and 1,284 branches | Local host test |
 | Static quality gates | Ruff, formatting, and strict mypy passed | Local host test |
 | Contracts | JSON Schema and OpenAPI drift checks passed | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
@@ -61,8 +65,11 @@ collector rather than a runtime or hardware dependency.
   operator authenticity.
 - Candidate writes use caller-owned idempotency keys and optimistic revisions;
   persisted history is append-only.
-- New persisted candidates require an immutable registered project and exactly
-  one configured release track; legacy candidates remain directly readable.
+- New persisted candidates bind the exact immutable project-profile ID/version
+  that authorized creation; later revisions cannot reinterpret them.
+- Project revisions are complete append-only replacements guarded by expected
+  profile version and exact idempotency; legacy candidates remain readable
+  without fabricated profile bindings.
 - The REST API shares its application service with the CLI, accepts no local
   artifact-loader or output-directory path, and is restricted to loopback.
 - Upstream AFE or future MSP430 results retain their original evidence level;
@@ -106,15 +113,16 @@ Implemented and host-verified in this checkpoint:
 - mandatory policy-evaluation binding for PASS/FAIL/REVIEW terminal states;
 - stateless `candidate create` and `candidate transition` CLI previews with
   committed structural and evaluation-bound Golden outputs;
-- a local SQLite v5 candidate/project store with WAL, FULL synchronous durability,
+- a local SQLite v6 candidate/project store with WAL, FULL synchronous durability,
   foreign keys, exact application/schema identity, and explicit transactions;
 - canonical append-only candidate snapshots and transition events with an
   optimistic current-revision pointer and immutable idempotency responses;
 - exact retry replay, conflicting-key rejection, stale-write protection,
   restart recovery, bounded writer contention, and audit-chain validation;
 - persisted `candidate create`, `advance`, `show`, and `history` CLI paths;
-- explicit validated v1/v2/v3/v4-to-v5 migration, audit projection, discovery
-  indexing, and legacy evaluation backfill;
+- explicit validated v1/v2/v3/v4/v5-to-v6 migration, audit projection,
+  registration-profile backfill, discovery indexing, and legacy evaluation
+  backfill without candidate-profile fabrication;
 - durable append-only policy evaluations and release attestations;
 - self-validating `forgegate.release-attestation.v1` records containing the
   terminal candidate, transition chain, evaluation, and content fingerprints;
@@ -145,8 +153,8 @@ Implemented and host-verified in this checkpoint:
   the revision-one `COLLECTING` snapshot and complete audited assembly;
 - immutable, idempotent SQLite binding persistence plus `bind-evidence` and
   `show-evidence` CLI paths;
-- mandatory binding and chronology gates before a new v3-or-later candidate reaches
-  `READY`;
+- mandatory evidence binding and chronology gates before a new persisted
+  candidate reaches `READY`;
 - terminal evaluation enforcement against the bound assembly's nested
   evidence-bundle fingerprint, with non-fabricating v1/v2 migration semantics.
 - a shared candidate application-service boundary used by both CLI and HTTP;
@@ -178,8 +186,14 @@ Implemented and host-verified in this checkpoint:
   including fail-closed normalized release-track resolution;
 - bounded `project list` and project-scoped `candidate list` contracts through
   CLI and REST, backed by the SQLite v5 composite discovery index;
-- explicit v1/v2/v3/v4-to-v5 migration without replaying v4 audit events, plus
-  a frozen append-only design boundary for future profile revisions.
+- `forgegate.project-profile-revision.v1`, bounded profile history, current
+  profile reads, CAS/idempotent revision writes, and profile-revision audit
+  events through the application, CLI, and REST boundaries;
+- `forgegate.release-candidate.v2` with immutable profile ID/version binding,
+  exact replay across later revisions, and track changes applied only to later
+  candidates;
+- explicit v1/v2/v3/v4/v5-to-v6 migration without replaying existing audit
+  events or fabricating profile links for legacy candidates.
 
 
 </details>
@@ -236,6 +250,12 @@ events:
 
 .\.venv\Scripts\python.exe -m forgegate project show `
   work/forgegate.db sample-api
+
+.\.venv\Scripts\python.exe -m forgegate project current `
+  work/forgegate.db sample-api
+
+.\.venv\Scripts\python.exe -m forgegate project history `
+  work/forgegate.db sample-api --limit 100
 
 .\.venv\Scripts\python.exe -m forgegate project list `
   work/forgegate.db --limit 100
@@ -309,8 +329,9 @@ transition without persistence:
 PASS/FAIL/REVIEW transitions additionally require `--evaluation` pointing to a
 matching `forgegate.policy-evaluation.v1` document.
 
-Initialize a local store, persist the same deterministic candidate, atomically
-advance the expected revision, and read its validated audit history:
+Initialize a local store, persist a profile-bound candidate, atomically advance
+the expected revision, and read its validated audit history. Use the
+`candidate_id` returned by persisted creation in later commands:
 
 ```powershell
 New-Item -ItemType Directory -Force work | Out-Null
@@ -319,34 +340,35 @@ New-Item -ItemType Directory -Force work | Out-Null
 .\.venv\Scripts\python.exe -m forgegate candidate create `
   --project sample-api --version 1.2.0 `
   --commit aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa `
-  --created-at 2026-08-30T12:00:00Z `
+  --created-at 2026-08-31T15:00:00Z `
   --database work/forgegate.db `
   --idempotency-key create:sample-api-1.2.0
 
 .\.venv\Scripts\python.exe -m forgegate candidate advance `
-  work/forgegate.db cand-dab25eb0be1a0107b3996080 `
+  work/forgegate.db <candidate_id-from-create> `
   --to COLLECTING --expected-revision 0 `
-  --occurred-at 2026-08-30T12:01:00Z `
+  --occurred-at 2026-08-31T15:01:00Z `
   --idempotency-key advance:sample-api-collecting
 
 .\.venv\Scripts\python.exe -m forgegate candidate bind-evidence `
-  work/forgegate.db cand-dab25eb0be1a0107b3996080 `
+  work/forgegate.db <candidate_id-from-create> `
   work/evidence-assembly.json `
   --bound-at 2026-08-30T20:31:00Z `
   --idempotency-key bind-evidence:sample-api-1.2.0
 
 .\.venv\Scripts\python.exe -m forgegate candidate show-evidence `
-  work/forgegate.db cand-dab25eb0be1a0107b3996080
+  work/forgegate.db <candidate_id-from-create>
 
 .\.venv\Scripts\python.exe -m forgegate candidate list `
   work/forgegate.db --project sample-api --limit 100
 
 .\.venv\Scripts\python.exe -m forgegate candidate history `
-  work/forgegate.db cand-dab25eb0be1a0107b3996080
+  work/forgegate.db <candidate_id-from-create>
 ```
 
-Every persisted candidate creation first requires the registered project and a
-uniquely configured release track. Configuration keys such as `pull_request`
+Every persisted candidate creation first requires the current project profile
+and a uniquely configured release track. Its v2 document records that exact
+profile ID and version. Configuration keys such as `pull_request`
 are matched to the canonical candidate/policy identity `pull-request`; an
 ambiguous normalized configuration is rejected. Every persisted write requires
 a caller-owned idempotency key. Exact retries
@@ -361,12 +383,12 @@ attestation bundle:
 
 ```powershell
 .\.venv\Scripts\python.exe -m forgegate candidate attest `
-  work/forgegate.db cand-dab25eb0be1a0107b3996080 `
+  work/forgegate.db <candidate_id-from-create> `
   --issued-at 2026-08-30T22:00:00Z `
   --output-root work/attestations
 
 .\.venv\Scripts\python.exe -m forgegate candidate show-attestation `
-  work/forgegate.db cand-dab25eb0be1a0107b3996080
+  work/forgegate.db <candidate_id-from-create>
 ```
 
 The bundle contains `attestation.json` and `attestation.md` beneath a directory
@@ -375,7 +397,7 @@ bytes; ForgeGate does not overwrite a conflicting target. Database persistence
 commits before filesystem publication, so an output failure is recovered by
 rerunning the same command.
 
-For a schema-v1, v2, v3, or v4 database, migration is explicit:
+For a schema-v1, v2, v3, v4, or v5 database, migration is explicit:
 
 ```powershell
 .\.venv\Scripts\python.exe -m forgegate candidate migrate-store work/forgegate.db
@@ -469,8 +491,7 @@ Not implemented yet:
 
 - authenticated or non-loopback API deployment;
 - HTTP artifact collection or filesystem publication;
-- project profile updates, rejected-request audit ingestion,
-  audit export/retention, plugin execution,
+- rejected-request audit ingestion, audit export/retention, plugin execution,
   or product-level GitHub integration;
 - database authorization, backup/repair, signatures, or trusted producer/CI
   identity;
@@ -491,12 +512,11 @@ another optional collector.
 
 ## Roadmap
 
-The next core slice will bind each new candidate to the exact immutable project
-profile version used at creation, then implement append-only profile revisions
-under optimistic concurrency. Authenticated identity must still precede any
-non-loopback deployment. MSP430 compatibility remains gated on a separately
-frozen public result contract. See [docs/ROADMAP.md](docs/ROADMAP.md) for
-acceptance-level tasks.
+The next core slice will strengthen the relationship between a profile's policy
+path and the exact policy bytes used for evaluation. Authenticated identity must
+still precede any non-loopback deployment. MSP430 compatibility remains gated
+on a separately frozen public result contract. See
+[docs/ROADMAP.md](docs/ROADMAP.md) for acceptance-level tasks.
 
 ## License status
 

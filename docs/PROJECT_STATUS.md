@@ -1,9 +1,9 @@
 # Project status
 
 - Date: 2026-08-31
-- Version: 0.1.0.dev15
-- Stage: Phase 8 project authority and bounded-discovery slice implemented
-- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, authoritative project registration, and bounded state discovery; not production-ready
+- Version: 0.1.0.dev16
+- Stage: Phase 9 profile-bound candidate and append-only project-revision slice implemented
+- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, and bounded state discovery; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
 - Remote/publication status: synchronized to private `Carlos-0798/forgegate`;
@@ -54,7 +54,7 @@
   commit, decision, and timestamp;
 - stateless `candidate create` and `candidate transition` CLI previews with
   generic DRAFT/EVALUATING fixtures and structural/evaluation-bound Goldens;
-- SQLite candidate-store schema v5 with ForgeGate application identity, WAL,
+- SQLite candidate-store schema v6 with ForgeGate application identity, WAL,
   FULL synchronous durability, foreign keys, exact-version validation, and
   explicit read/write transactions;
 - append-only canonical candidate snapshots, content-addressed transitions,
@@ -64,7 +64,7 @@
   detection;
 - persisted candidate create/advance/show/history CLI flow while retaining the
   stateless preview commands;
-- explicit, validated SQLite v1/v2/v3/v4-to-v5 migration plus exact legacy
+- explicit, validated SQLite v1/v2/v3/v4/v5-to-v6 migration plus exact legacy
   terminal evaluation and audit backfill where applicable;
 - durable append-only policy-evaluation and release-attestation documents bound
   to the authoritative candidate audit chain;
@@ -160,14 +160,29 @@
   `forgegate.release-candidate-page.v1` discovery contracts through CLI/API;
 - SQLite v5 composite project/candidate index and explicit v4 migration without
   duplicate audit projection;
-- documented append-only, compare-and-swap project-profile revision semantics,
-  intentionally preceding any mutation implementation.
+- the previously frozen append-only, compare-and-swap project-profile revision
+  semantics implemented without rewriting the initial registration;
+- strict `forgegate.project-profile-revision.v1` and bounded
+  `forgegate.project-profile-page.v1` contracts with content-derived identity,
+  previous-profile linkage, full replacement configuration, and effective time;
+- SQLite v6 append-only profile ledger, compare-and-swap profile head,
+  immutable revision-idempotency records, profile-revision audit events, and
+  validated v1-v5 migration that backfills registrations only;
+- `project revise/current/history` and matching loopback REST/application
+  surfaces with exact replay, stale-version, time-regression, and project-ID
+  rejection;
+- `forgegate.release-candidate.v2` with the exact governing profile ID/version,
+  immutable durable binding rows, profile-preserving lifecycle transitions, and
+  fail-closed corruption checks;
+- release-track additions/removals applied only to later candidates, historical
+  candidate/profile resolution preserved, and legacy v1 candidates retained
+  without fabricated binding rows.
 
 ## Not implemented
 
 Authenticated/non-loopback API deployment, HTTP artifact collection and file
-publication, project profile revisions and candidate profile-version binding,
-rejected-request/warning audit ingestion, audit export/retention,
+publication, policy-file byte binding, rejected-request/warning audit ingestion,
+audit export/retention,
 external plugins, GitHub integration,
 signatures/key management, database authorization, backup/repair, MSP430
 collector, Studio Phase 5
@@ -180,10 +195,10 @@ attestation embedding of assembly receipts, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 568 passed, 1 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 100% across 4,501 statements and 1,214 branches
-- local API/application/network focus: 34 passed; 100% across 282 statements
-  and 28 branches
+- pytest: 573 passed, 1 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 99.05% across 4,799 statements and 1,284 branches
+- project-profile revision focus: 5 passed, including migration, corruption,
+  REST, and CLI contracts
 - Analog Validation collector focus: 59 passed; 100% across 431 statements and
   106 branches
 - evidence-assembly focus: 20 passed; 100% across 218 statements and 70
@@ -192,7 +207,7 @@ attestation embedding of assembly receipts, and hardware access.
   and 138 branches
 - committed JSON Schema and OpenAPI drift checks: PASS
 - project/policy/candidate/transition example documents: VALID
-- fifteen canonical versioned document Schemas plus Benchmark and Analog
+- eighteen canonical versioned document Schemas plus Benchmark and Analog
   Validation artifact Schemas: drift-checked and parsed
 - complete sdist manifest and wheel build: PASS
 - repository-external wheel installation and CLI smoke: PASS
@@ -209,4 +224,6 @@ previous REST command slice and
 `reports/PHASE_7_PROJECT_REGISTRY_AUDIT_QUERY_ACCEPTANCE_REPORT.md` for the
 project-registry baseline and
 `reports/PHASE_8_PROJECT_AUTHORITY_DISCOVERY_ACCEPTANCE_REPORT.md` for the
-current slice.
+previous authority/discovery slice. See
+`reports/PHASE_9_PROJECT_PROFILE_REVISIONS_ACCEPTANCE_REPORT.md` for the current
+slice.

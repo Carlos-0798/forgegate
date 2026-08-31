@@ -3,16 +3,17 @@
 ## Scope
 
 The Phase 2 candidate store makes the already-frozen release-candidate
-lifecycle durable. It does not change the release-candidate, transition, or
-transition-result document schemas and does not store upstream AFE/MSP430
-internals.
+lifecycle durable. Phase 9 adds a profile-bound candidate v2 while retaining
+the original v1 document for legacy/stateless compatibility. The store does not
+contain upstream AFE/MSP430 internals.
 
 `SQLiteCandidateRepository` owns one local database file. Initialization sets a
-ForgeGate application ID, schema version 5, WAL journaling, FULL synchronous
+ForgeGate application ID, schema version 6, WAL journaling, FULL synchronous
 durability, foreign keys, and a bounded busy timeout. A future schema version is
 rejected. An existing schema-v1, schema-v2, schema-v3, or schema-v4 store is
 never changed by `init-store`; the owner must run the explicit, validated
-`migrate-store` operation.
+`migrate-store` operation. Validated schema-v5 stores follow the same explicit
+migration rule.
 
 ## Tables and ordering
 
@@ -33,12 +34,18 @@ never changed by `init-store`; the owner must run the explicit, validated
 - `projects` stores one immutable registered project profile;
 - `project_idempotency_records` binds project-registration retries to exact
   request and response content;
+- `project_profiles` stores the canonical append-only registration/revision
+  ledger, and `project_profile_heads` selects its current version under CAS;
+- `project_revision_idempotency_records` binds one revision request to its exact
+  immutable response;
+- `candidate_profile_bindings` links every v2 candidate to its exact governing
+  profile identity/version without rewriting candidate history;
 - `audit_events` stores ordered content-bound metadata for successful durable
   state changes;
 - `forgegate_metadata` identifies the exact storage schema.
 
-Schema v5 also indexes `(project_id, candidate_id)` so project-scoped candidate
-discovery has a bounded, deterministic access path.
+Schema v6 retains the v5 `(project_id, candidate_id)` discovery index and adds a
+version-ordered project-profile index.
 
 Database triggers reject candidate deletion, identity rewriting, non-unit
 current-revision updates, and every update/delete of snapshot, transition, and
@@ -50,12 +57,20 @@ the database file or rewrite its schema.
 ## Transaction contract
 
 Candidate creation, evidence binding, and advancement use `BEGIN IMMEDIATE`.
-Product-surface creation first resolves the immutable project row and requires
+Product-surface creation first resolves the current immutable profile and requires
 exactly one configured release-track key to normalize to the candidate's
 canonical hyphen track. A missing project, missing track, ambiguous normalized
 keys, or noncanonical new identity fails before any candidate or audit row is
-written. The low-level legacy creation method remains only for compatibility
-tests and earlier persisted stores.
+written. It then creates a v2 candidate containing that exact profile ID/version
+and appends the corresponding binding row in the same transaction. The
+low-level v1 creation method remains only for compatibility tests and earlier
+persisted stores. Exact creation retries resolve their original response before
+current authority, so later profile revisions do not reinterpret them.
+
+Project revision also uses `BEGIN IMMEDIATE`: validate exact replay, load the
+current profile chain, compare `expected_profile_version`, reject project-ID or
+effective-time regression, append the full replacement revision, advance the
+head by one, append the audit event, and persist the idempotency response.
 
 Advancement performs the following operations in one transaction:
 
@@ -85,6 +100,11 @@ Every read is a consistent SQLite transaction and validates:
 - snapshot count and exact revision ordering;
 - transition metadata and before/after fingerprint links;
 - immutable identity and current-pointer agreement with the audit chain.
+- contiguous project-profile versions, previous-profile links, monotonic
+  effective times, and agreement between the initial registration, ledger, and
+  current head;
+- v2 candidate binding metadata, referenced profile identity/version, and the
+  invariant that every lifecycle snapshot preserves one binding.
 
 Reopening the database reconstructs authoritative state from durable rows. It
 does not rerun collectors or policy evaluation. Evaluation and attestation
@@ -95,16 +115,18 @@ assembly identities and compare the embedded candidate with revision one.
 Corruption fails closed with a stable store error; this checkpoint does not
 repair, salvage, back up, encrypt, or replicate a damaged database.
 
-## Explicit v1/v2/v3/v4 migration
+## Explicit v1/v2/v3/v4/v5 migration
 
 `candidate migrate-store DATABASE` accepts only a fully valid schema-v1,
-schema-v2, schema-v3, or schema-v4 store. Missing historical layers are added
+schema-v2, schema-v3, schema-v4, or schema-v5 store. Missing historical layers are added
 before the v4 project/audit objects. Existing immutable candidate documents are
 then projected into deterministic audit-event order. The v4-to-v5 step adds
 only the project/candidate discovery index and never replays those audit events.
-No project profile, evidence, rejected request, or actor identity is fabricated.
+The v5-to-v6 step projects each existing registered project into profile version
+one and creates its head. It deliberately does not fabricate a profile binding
+for any legacy candidate, evidence, rejected request, or actor identity.
 The operation updates both metadata values and `PRAGMA user_version` in one
-transaction, then revalidates the result. Calling it on v5 is an idempotent
+transaction, then revalidates the result. Calling it on v6 is an idempotent
 validation. Unknown, foreign, or corrupt stores fail closed.
 
 Existing candidates receive an immutable `evidence_binding_required = 0`
@@ -123,7 +145,8 @@ stored. Attestation is refused until this backfill is complete.
 `candidate init-store`, `migrate-store`, persisted `candidate create
 --database`, `list`, `bind-evidence`, `show-evidence`, `advance`, `show`, `history`,
 `import-evaluation`, `attest`, and `show-attestation` expose this repository.
-`project list` provides the bounded registered-project discovery path.
+`project list` provides the bounded registered-project discovery path;
+`project revise`, `current`, and `history` expose the versioned profile ledger.
 The original `candidate create`
 without `--database` and `candidate transition` remain deterministic, stateless
 preview paths.

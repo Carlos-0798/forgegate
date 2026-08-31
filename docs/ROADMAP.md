@@ -113,13 +113,24 @@
 
 ## Phase 9 — profile-bound candidates and append-only revisions
 
-- [ ] Add a candidate contract that binds the exact registered project profile
+- [x] Add a candidate contract that binds the exact registered project profile
   identity and version used at creation.
-- [ ] Add an append-only project-profile revision document with previous-profile
+- [x] Add an append-only project-profile revision document with previous-profile
   linkage and content-derived identity.
-- [ ] Persist revisions under expected-version compare-and-swap and exact
+- [x] Persist revisions under expected-version compare-and-swap and exact
   idempotency without rewriting historical profiles.
-- [ ] Apply track additions/removals only to later candidates while preserving
+- [x] Apply track additions/removals only to later candidates while preserving
   historical candidate/profile resolution.
-- [ ] Expose revision history and current-profile reads through bounded CLI/API
+- [x] Expose revision history and current-profile reads through bounded CLI/API
   contracts before considering any mutation convenience surface.
+
+## Phase 10 — profile-authorized policy materialization
+
+- [ ] Resolve the selected release-track policy from an explicit project root
+  and retain its exact bytes, media type, size, and SHA-256 identity.
+- [ ] Bind evaluation to policy material authorized by the candidate's frozen
+  profile rather than accepting name equality as sufficient authority.
+- [ ] Preserve path-free REST operation by accepting or referencing a validated
+  policy document, never dereferencing client-controlled server paths.
+- [ ] Define migration and legacy semantics without fabricating historical
+  policy bytes or producer authenticity.

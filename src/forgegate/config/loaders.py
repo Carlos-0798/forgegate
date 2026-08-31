@@ -9,10 +9,12 @@ from forgegate.candidates import CandidateEvidenceBinding
 from forgegate.candidates.models import (
     CandidateTransition,
     CandidateTransitionResult,
+    ProfileBoundReleaseCandidate,
     ReleaseCandidate,
 )
 from forgegate.domain.models import EvidenceBundle, PolicyConfig, ProjectConfig
 from forgegate.policy.models import PolicyEvaluation
+from forgegate.projects import ProjectProfileRevision
 
 MAX_CONFIG_BYTES = 1024 * 1024
 type SupportedConfig = (
@@ -22,10 +24,12 @@ type SupportedConfig = (
     | EvidenceBundleAssembly
     | PolicyEvaluation
     | ReleaseCandidate
+    | ProfileBoundReleaseCandidate
     | CandidateTransition
     | CandidateTransitionResult
     | CandidateEvidenceBinding
     | ReleaseAttestation
+    | ProjectProfileRevision
 )
 
 SCHEMA_MODELS: dict[str, type[SupportedConfig]] = {
@@ -35,10 +39,12 @@ SCHEMA_MODELS: dict[str, type[SupportedConfig]] = {
     "forgegate.evidence-bundle-assembly.v1": EvidenceBundleAssembly,
     "forgegate.policy-evaluation.v1": PolicyEvaluation,
     "forgegate.release-candidate.v1": ReleaseCandidate,
+    "forgegate.release-candidate.v2": ProfileBoundReleaseCandidate,
     "forgegate.candidate-transition.v1": CandidateTransition,
     "forgegate.candidate-transition-result.v1": CandidateTransitionResult,
     "forgegate.candidate-evidence-binding.v1": CandidateEvidenceBinding,
     "forgegate.release-attestation.v1": ReleaseAttestation,
+    "forgegate.project-profile-revision.v1": ProjectProfileRevision,
 }
 
 

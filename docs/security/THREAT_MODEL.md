@@ -233,7 +233,22 @@ The current slice has no authenticated producer and runs no plugin code.
 | Unbounded list request exhausts local resources | Strict page contracts enforce a one-to-200 limit and exclusive stable slug cursors |
 | Legacy candidate becomes unreadable after the authority gate | Existing direct candidate/history reads remain available; only new product-surface writes require registration |
 | Project configuration is mistaken for operator authorization | Documentation explicitly separates profile authority from absent caller identity/authentication |
-| Mutable profile silently changes historical candidate meaning | No mutation surface exists; append-only revision and exact candidate-profile binding are deferred to Phase 9 |
+| Mutable profile silently changes historical candidate meaning | Phase 9 uses append-only revisions and exact candidate-profile binding; no historical profile is rewritten |
+
+## Addressed in the Phase 9 project-profile revision slice
+
+| Threat | Current control |
+|---|---|
+| Concurrent profile writers overwrite one another | Caller expected version and one-step SQLite head CAS reject stale writers |
+| Revision rewrites or deletes prior authority | Full replacement documents append to a guarded ledger; profile and binding update/delete triggers fail closed |
+| Revision chain points to unrelated content | Content identity includes the immediate previous profile ID, complete config, version, and effective time; every read validates the contiguous chain |
+| Project identity changes through a revision | Request and model require the replacement config project ID to equal the immutable registered project ID |
+| Effective authority moves backward in time | Revision and candidate creation reject time before the governing current profile |
+| Idempotency retry is reinterpreted under a later profile | Candidate and revision replay resolves the exact durable response before applying current authority |
+| Track removal alters historical candidate meaning | Candidate v2 identity and immutable binding row retain the exact profile ID/version used at creation |
+| Migration invents a historical candidate/profile link | v5-to-v6 migration backfills version-one registrations only; legacy v1 candidates have no binding row |
+| Binding metadata is deleted or detached | Every candidate read validates snapshot identity, binding row, referenced profile, and chronology; corruption fails closed |
+| Profile path is mistaken for exact policy authority | Documentation identifies absent policy-byte binding as a Phase 10 residual risk |
 
 ## Deferred risks
 

@@ -7,11 +7,15 @@ from forgegate.candidates.evidence_binding import (
 from forgegate.candidates.lifecycle import (
     CandidateLifecycleError,
     create_candidate,
+    create_profile_bound_candidate,
     transition_candidate,
 )
 from forgegate.candidates.models import (
+    CANDIDATE_DOCUMENT_ADAPTER,
+    CandidateDocument,
     CandidateTransition,
     CandidateTransitionResult,
+    ProfileBoundReleaseCandidate,
     ReleaseCandidate,
     ReleaseCandidatePage,
 )
@@ -24,17 +28,21 @@ if TYPE_CHECKING:
     )
 
 __all__ = [
+    "CANDIDATE_DOCUMENT_ADAPTER",
+    "CandidateDocument",
     "CandidateEvidenceBinding",
     "CandidateHistory",
     "CandidateLifecycleError",
     "CandidateStoreError",
     "CandidateTransition",
     "CandidateTransitionResult",
+    "ProfileBoundReleaseCandidate",
     "ReleaseCandidate",
     "ReleaseCandidatePage",
     "SQLiteCandidateRepository",
     "create_candidate",
     "create_candidate_evidence_binding",
+    "create_profile_bound_candidate",
     "transition_candidate",
 ]
 

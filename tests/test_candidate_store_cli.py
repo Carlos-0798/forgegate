@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from datetime import UTC, datetime
 from pathlib import Path
 
 from typer.testing import CliRunner
 
 import forgegate.candidates.store as candidate_store_module
+from forgegate.candidates import SQLiteCandidateRepository, create_candidate
 from forgegate.candidates.store import (
     PREVIOUS_STORE_SCHEMA_NAME,
     PREVIOUS_STORE_SCHEMA_VERSION,
@@ -19,6 +21,10 @@ runner = CliRunner()
 def _downgrade_to_schema_v2(database: Path) -> None:
     with sqlite3.connect(database) as connection:
         connection.execute("PRAGMA foreign_keys = OFF")
+        connection.execute("DROP TABLE candidate_profile_bindings")
+        connection.execute("DROP TABLE project_revision_idempotency_records")
+        connection.execute("DROP TABLE project_profile_heads")
+        connection.execute("DROP TABLE project_profiles")
         connection.execute("DROP TABLE audit_events")
         connection.execute("DROP TABLE project_idempotency_records")
         connection.execute("DROP TABLE projects")
@@ -371,8 +377,22 @@ def test_candidate_store_cli_migrates_v2_and_backfills_terminal_evaluation(
     database = tmp_path / "forgegate.db"
     runner.invoke(app, ["candidate", "init-store", str(database)])
     _register_project(database, repository_root)
-    created = runner.invoke(app, _create_command(database, created_at="2026-08-30T12:00:00Z"))
-    candidate_id = json.loads(created.stdout)["candidate_id"]
+    legacy_candidate = create_candidate(
+        project_id="sample-api",
+        version="1.2.0",
+        commit_sha="a" * 40,
+        source_branch="main",
+        release_track="pull-request",
+        created_at=datetime(2026, 8, 30, 12, 0, tzinfo=UTC),
+    )
+    candidate_id = (
+        SQLiteCandidateRepository(database)
+        .create(
+            legacy_candidate,
+            idempotency_key="candidate:create:legacy-v2",
+        )
+        .candidate_id
+    )
     evaluation_path = _assembly_evaluation(repository_root, tmp_path / "migration-evaluation.json")
     for revision, (status, timestamp) in enumerate((("COLLECTING", "2026-08-30T12:01:00Z"),)):
         command = [

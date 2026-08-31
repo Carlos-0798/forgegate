@@ -3,6 +3,7 @@
     "AuditEventType": {
       "enum": [
         "project.registered",
+        "project.profile-revised",
         "candidate.created",
         "candidate.transitioned",
         "candidate.evidence-bound",

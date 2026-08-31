@@ -1,5 +1,22 @@
 {
   "$defs": {
+    "CandidateDocument": {
+      "discriminator": {
+        "mapping": {
+          "forgegate.release-candidate.v1": "#/$defs/ReleaseCandidate",
+          "forgegate.release-candidate.v2": "#/$defs/ProfileBoundReleaseCandidate"
+        },
+        "propertyName": "schema_version"
+      },
+      "oneOf": [
+        {
+          "$ref": "#/$defs/ReleaseCandidate"
+        },
+        {
+          "$ref": "#/$defs/ProfileBoundReleaseCandidate"
+        }
+      ]
+    },
     "CandidateStatus": {
       "enum": [
         "DRAFT",
@@ -104,6 +121,120 @@
         "occurred_at"
       ],
       "title": "CandidateTransition",
+      "type": "object"
+    },
+    "ProfileBoundReleaseCandidate": {
+      "additionalProperties": false,
+      "description": "Candidate bound to the exact immutable project profile used at creation.",
+      "properties": {
+        "candidate_id": {
+          "pattern": "^cand-[0-9a-f]{24}$",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "commit_sha": {
+          "pattern": "^[0-9a-fA-F]{7,64}$",
+          "title": "Commit Sha",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "evaluated_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evaluated At"
+        },
+        "evaluation_id": {
+          "anyOf": [
+            {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evaluation Id"
+        },
+        "project_id": {
+          "pattern": "^[a-z][a-z0-9-]{1,62}$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "project_profile_id": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Project Profile Id",
+          "type": "string"
+        },
+        "project_profile_version": {
+          "minimum": 1,
+          "title": "Project Profile Version",
+          "type": "integer"
+        },
+        "release_track": {
+          "pattern": "^[a-z][a-z0-9_-]{1,63}$",
+          "title": "Release Track",
+          "type": "string"
+        },
+        "revision": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "forgegate.release-candidate.v2",
+          "default": "forgegate.release-candidate.v2",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_branch": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Source Branch",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/CandidateStatus",
+          "default": "DRAFT"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        },
+        "version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "project_id",
+        "version",
+        "commit_sha",
+        "source_branch",
+        "release_track",
+        "created_at",
+        "updated_at",
+        "project_profile_id",
+        "project_profile_version"
+      ],
+      "title": "ProfileBoundReleaseCandidate",
       "type": "object"
     },
     "ReleaseCandidate": {
@@ -211,7 +342,7 @@
   "additionalProperties": false,
   "properties": {
     "candidate": {
-      "$ref": "#/$defs/ReleaseCandidate"
+      "$ref": "#/$defs/CandidateDocument"
     },
     "schema_version": {
       "const": "forgegate.candidate-transition-result.v1",

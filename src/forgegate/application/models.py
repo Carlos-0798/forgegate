@@ -8,9 +8,9 @@ from forgegate.assembly import EvidenceBundleAssembly
 from forgegate.candidates import CandidateEvidenceBinding, CandidateHistory
 from forgegate.candidates.models import (
     CANDIDATE_ID_PATTERN,
+    CandidateDocument,
     CandidateTransition,
     CandidateTransitionResult,
-    ReleaseCandidate,
 )
 from forgegate.domain.enums import CandidateStatus
 from forgegate.domain.models import (
@@ -49,6 +49,23 @@ class ProjectRegisterCommand(StrictModel):
         return _timezone_aware(value, "registered_at")
 
 
+class ProjectReviseCommand(StrictModel):
+    config: ProjectConfig
+    expected_profile_version: int = Field(ge=1)
+    effective_at: datetime
+
+    @field_validator("effective_at")
+    @classmethod
+    def effective_at_must_include_timezone(cls, value: datetime) -> datetime:
+        return _timezone_aware(value, "effective_at")
+
+
+class ProjectProfileQuery(StrictModel):
+    project_id: str = Field(pattern=SLUG_PATTERN)
+    after_profile_version: int = Field(default=0, ge=0)
+    limit: int = Field(default=100, ge=1, le=200)
+
+
 class ProjectQuery(StrictModel):
     after_project_id: str | None = Field(default=None, pattern=SLUG_PATTERN)
     limit: int = Field(default=100, ge=1, le=200)
@@ -68,7 +85,7 @@ class AuditEventQuery(StrictModel):
 
 
 class CandidateHistoryView(StrictModel):
-    candidate: ReleaseCandidate
+    candidate: CandidateDocument
     transitions: tuple[CandidateTransition, ...]
     evidence_binding_required: bool
     evidence_binding: CandidateEvidenceBinding | None
@@ -147,6 +164,8 @@ __all__ = [
     "CandidateEvaluationResult",
     "CandidateHistoryView",
     "CandidateQuery",
+    "ProjectProfileQuery",
     "ProjectQuery",
     "ProjectRegisterCommand",
+    "ProjectReviseCommand",
 ]

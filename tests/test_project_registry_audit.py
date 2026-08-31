@@ -300,6 +300,10 @@ def test_v3_migration_backfills_complete_audit_chain(
 
     with sqlite3.connect(repository.database_path) as connection:
         connection.execute("PRAGMA foreign_keys = OFF")
+        connection.execute("DROP TABLE candidate_profile_bindings")
+        connection.execute("DROP TABLE project_revision_idempotency_records")
+        connection.execute("DROP TABLE project_profile_heads")
+        connection.execute("DROP TABLE project_profiles")
         connection.execute("DROP INDEX candidates_project_candidate")
         connection.execute("DROP TABLE audit_events")
         connection.execute("DROP TABLE project_idempotency_records")

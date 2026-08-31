@@ -93,7 +93,7 @@ def test_new_candidate_authority_normalizes_tracks_and_fails_closed(tmp_path: Pa
         normalized,
         idempotency_key="candidate:create:authorized",
     )
-    assert stored == repository.get(normalized.candidate_id)
+    assert stored == repository.get(stored.candidate_id)
 
     missing_track = candidate("sample-api", version="2.0.0", release_track="production")
     with pytest.raises(CandidateStoreError, match="STORE_RELEASE_TRACK_NOT_FOUND"):
@@ -161,17 +161,20 @@ def test_project_and_candidate_discovery_pages_are_bounded_and_stable(tmp_path: 
         candidate("sample-api", version="1.0.0"),
         candidate("sample-api", version="2.0.0", created_at=CREATED_AT + timedelta(minutes=1)),
     ]
+    stored_candidates = []
     for index, draft in enumerate(sample_candidates, start=1):
-        repository.create_for_registered_project(
-            draft,
-            idempotency_key=f"candidate:create:sample:{index:03d}",
+        stored_candidates.append(
+            repository.create_for_registered_project(
+                draft,
+                idempotency_key=f"candidate:create:sample:{index:03d}",
+            )
         )
     repository.create_for_registered_project(
         candidate("beta-api"),
         idempotency_key="candidate:create:beta:001",
     )
 
-    expected = sorted(draft.candidate_id for draft in sample_candidates)
+    expected = sorted(item.candidate_id for item in stored_candidates)
     first_candidates = repository.candidates("sample-api", limit=1)
     second_candidates = repository.candidates(
         "sample-api",
@@ -258,6 +261,11 @@ def test_v4_migration_adds_discovery_index_without_replaying_audit(tmp_path: Pat
     event_count = len(repository.audit_events().events)
 
     with sqlite3.connect(repository.database_path) as connection:
+        connection.execute("PRAGMA foreign_keys = OFF")
+        connection.execute("DROP TABLE candidate_profile_bindings")
+        connection.execute("DROP TABLE project_revision_idempotency_records")
+        connection.execute("DROP TABLE project_profile_heads")
+        connection.execute("DROP TABLE project_profiles")
         connection.execute("DROP INDEX candidates_project_candidate")
         connection.execute(
             "UPDATE forgegate_metadata SET value = ? WHERE key = 'schema_name'",

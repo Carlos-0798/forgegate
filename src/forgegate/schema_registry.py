@@ -7,6 +7,7 @@ from forgegate.candidates import CandidateEvidenceBinding
 from forgegate.candidates.models import (
     CandidateTransition,
     CandidateTransitionResult,
+    ProfileBoundReleaseCandidate,
     ReleaseCandidate,
     ReleaseCandidatePage,
 )
@@ -14,7 +15,12 @@ from forgegate.collectors.analog_validation import AFE_RESULT_JSON_SCHEMA
 from forgegate.collectors.benchmark import BENCHMARK_JSON_SCHEMA
 from forgegate.domain.models import EvidenceBundle, PolicyConfig, ProjectConfig
 from forgegate.policy.models import PolicyEvaluation
-from forgegate.projects import RegisteredProject, RegisteredProjectPage
+from forgegate.projects import (
+    ProjectProfilePage,
+    ProjectProfileRevision,
+    RegisteredProject,
+    RegisteredProjectPage,
+)
 
 SCHEMAS: dict[str, type[BaseModel]] = {
     "forgegate.project.v1": ProjectConfig,
@@ -23,6 +29,7 @@ SCHEMAS: dict[str, type[BaseModel]] = {
     "forgegate.evidence-bundle-assembly.v1": EvidenceBundleAssembly,
     "forgegate.policy-evaluation.v1": PolicyEvaluation,
     "forgegate.release-candidate.v1": ReleaseCandidate,
+    "forgegate.release-candidate.v2": ProfileBoundReleaseCandidate,
     "forgegate.release-candidate-page.v1": ReleaseCandidatePage,
     "forgegate.candidate-transition.v1": CandidateTransition,
     "forgegate.candidate-transition-result.v1": CandidateTransitionResult,
@@ -30,6 +37,8 @@ SCHEMAS: dict[str, type[BaseModel]] = {
     "forgegate.release-attestation.v1": ReleaseAttestation,
     "forgegate.registered-project.v1": RegisteredProject,
     "forgegate.registered-project-page.v1": RegisteredProjectPage,
+    "forgegate.project-profile-revision.v1": ProjectProfileRevision,
+    "forgegate.project-profile-page.v1": ProjectProfilePage,
     "forgegate.audit-event.v1": AuditEvent,
     "forgegate.audit-event-page.v1": AuditEventPage,
 }

@@ -14,12 +14,15 @@ from forgegate.application.models import (
     CandidateEvaluationResult,
     CandidateHistoryView,
     CandidateQuery,
+    ProjectProfileQuery,
     ProjectQuery,
     ProjectRegisterCommand,
+    ProjectReviseCommand,
 )
 from forgegate.attestations import ReleaseAttestation
 from forgegate.audit import AuditEventPage
 from forgegate.candidates import (
+    CandidateDocument,
     CandidateEvidenceBinding,
     CandidateLifecycleError,
     ReleaseCandidate,
@@ -30,7 +33,13 @@ from forgegate.candidates import (
 from forgegate.candidates.models import CandidateTransitionResult
 from forgegate.domain.enums import CandidateStatus, Decision
 from forgegate.policy import PolicyEvaluation, evaluate_policy
-from forgegate.projects import RegisteredProject, RegisteredProjectPage
+from forgegate.projects import (
+    ProjectProfileDocument,
+    ProjectProfilePage,
+    ProjectProfileRevision,
+    RegisteredProject,
+    RegisteredProjectPage,
+)
 
 DECISION_STATUS = {
     Decision.PASS: CandidateStatus.PASS,
@@ -66,6 +75,31 @@ class CandidateApplication:
     def get_project(self, project_id: str) -> RegisteredProject:
         return self.repository.get_project(project_id)
 
+    def revise_project(
+        self,
+        project_id: str,
+        command: ProjectReviseCommand,
+        *,
+        idempotency_key: str,
+    ) -> ProjectProfileRevision:
+        return self.repository.revise_project(
+            project_id,
+            command.config,
+            expected_profile_version=command.expected_profile_version,
+            effective_at=command.effective_at,
+            idempotency_key=idempotency_key,
+        )
+
+    def get_current_project_profile(self, project_id: str) -> ProjectProfileDocument:
+        return self.repository.get_current_project_profile(project_id)
+
+    def list_project_profiles(self, query: ProjectProfileQuery) -> ProjectProfilePage:
+        return self.repository.project_profiles(
+            query.project_id,
+            after_profile_version=query.after_profile_version,
+            limit=query.limit,
+        )
+
     def list_projects(self, query: ProjectQuery) -> RegisteredProjectPage:
         return self.repository.projects(
             after_project_id=query.after_project_id,
@@ -96,14 +130,14 @@ class CandidateApplication:
         command: CandidateCreateCommand,
         *,
         idempotency_key: str,
-    ) -> ReleaseCandidate:
+    ) -> CandidateDocument:
         candidate = self.preview_candidate(command)
         return self.repository.create_for_registered_project(
             candidate,
             idempotency_key=idempotency_key,
         )
 
-    def get_candidate(self, candidate_id: str) -> ReleaseCandidate:
+    def get_candidate(self, candidate_id: str) -> CandidateDocument:
         return self.repository.get(candidate_id)
 
     def list_candidates(self, query: CandidateQuery) -> ReleaseCandidatePage:

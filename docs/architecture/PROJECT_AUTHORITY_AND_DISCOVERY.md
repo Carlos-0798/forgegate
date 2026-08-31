@@ -29,10 +29,12 @@ configuration key as the hyphen form used by candidates and policy names. Zero
 matches rejects as not configured; multiple normalized matches reject as
 ambiguous. ForgeGate never chooses one ambiguous policy path silently.
 
-An exact retry is checked under the same current immutable project authority.
-The registration cannot be deleted or modified in schema v5. A legacy
-candidate may be read directly without a fabricated registration, but
-project-scoped discovery requires the project to exist.
+An exact retry returns the originally persisted response before resolving the
+current profile, so a later revision cannot change retry meaning. Initial
+registrations and later profile revisions cannot be deleted or rewritten in
+schema v6. A legacy candidate may be read directly without a fabricated
+registration or profile binding, but project-scoped discovery requires the
+project to exist.
 
 ## Discovery contracts
 
@@ -77,10 +79,9 @@ v1/v2/v3/v4 stores. A v4-to-v5 migration adds only the index and does not replay
 existing audit events; earlier migrations retain the Phase 7 deterministic
 audit projection.
 
-## Frozen direction for future profile revisions
+## Phase 9 realization of the frozen revision direction
 
-Mutable project configuration remains unimplemented. Before adding it, the
-following semantics are fixed as the design boundary:
+Phase 9 implements the previously frozen semantics as follows:
 
 - `project_id` is permanently immutable;
 - a revision supplies the complete replacement profile, caller idempotency key,
@@ -90,7 +91,7 @@ following semantics are fixed as the design boundary:
   pointer; it never updates or deletes a historical profile document;
 - the revision identity binds the previous identity, full new configuration,
   canonical fingerprint, version, and effective time;
-- a future candidate contract must bind the exact project-profile identity and
+- the v2 candidate contract binds the exact project-profile identity and
   version used at creation, so later track changes cannot reinterpret an older
   candidate;
 - removed tracks affect only later candidates; historical candidates and audit
@@ -98,14 +99,14 @@ following semantics are fixed as the design boundary:
 - conflicting expected versions, idempotency reuse, project-ID changes, time
   regression, and ambiguous normalized tracks fail closed.
 
-No update command, endpoint, database table, or revision document schema is
-implemented in Phase 8. Implementing those surfaces requires the candidate
-profile-binding contract first.
+The detailed document, storage, CLI, and REST contracts are in
+`PROJECT_PROFILE_REVISIONS.md`. The original registration remains the immutable
+version-one profile; revisions append version two and later documents.
 
 ## Residual boundary
 
 Discovery is local database navigation, not authorization. Results are current
 validated state, not a signed inventory, remote registry, or compliance export.
 Rejected requests are still not inserted into the durable audit log. Profile
-revision, deletion, organization ownership, authentication, policy-file byte
-binding, retention, signatures, and non-loopback operation remain deferred.
+deletion, organization ownership, authentication, policy-file byte binding,
+retention, signatures, and non-loopback operation remain deferred.

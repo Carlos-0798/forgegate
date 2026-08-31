@@ -6,10 +6,12 @@ from typing import Literal
 from pydantic import Field, field_validator, model_validator
 
 from forgegate.candidates.models import (
+    CANDIDATE_DOCUMENT_ADAPTER,
     EVALUATION_REQUIRED_STATUSES,
     TERMINAL_CANDIDATE_STATUSES,
+    CandidateDocument,
     CandidateTransition,
-    ReleaseCandidate,
+    candidate_identity,
 )
 from forgegate.canonical import sha256_fingerprint
 from forgegate.domain.enums import Decision
@@ -32,7 +34,7 @@ class ReleaseAttestation(StrictModel):
     generator_version: str = Field(min_length=1, max_length=120)
     assurance: Literal["unsigned_local"] = "unsigned_local"
     issued_at: datetime
-    candidate: ReleaseCandidate
+    candidate: CandidateDocument
     candidate_fingerprint: str = Field(pattern=FINGERPRINT_PATTERN)
     transitions: list[CandidateTransition] = Field(min_length=4, max_length=4)
     transition_chain_fingerprint: str = Field(pattern=FINGERPRINT_PATTERN)
@@ -53,17 +55,8 @@ class ReleaseAttestation(StrictModel):
             raise ValueError("attestation requires a terminal revision-four candidate")
         if self.issued_at < candidate.updated_at:
             raise ValueError("issued_at cannot precede the terminal candidate timestamp")
-        candidate_identity = {
-            "project_id": candidate.project_id,
-            "version": candidate.version,
-            "commit_sha": candidate.commit_sha.lower(),
-            "source_branch": candidate.source_branch,
-            "release_track": candidate.release_track,
-            "created_at": _json_timestamp(candidate.created_at),
-        }
-        expected_candidate_id = (
-            "cand-" + sha256_fingerprint(candidate_identity).removeprefix("sha256:")[:24]
-        )
+        identity = candidate_identity(candidate)
+        expected_candidate_id = "cand-" + sha256_fingerprint(identity).removeprefix("sha256:")[:24]
         if candidate.candidate_id != expected_candidate_id:
             raise ValueError("candidate_id does not match the candidate identity")
         candidate_fingerprint = sha256_fingerprint(candidate.model_dump(mode="json"))
@@ -77,16 +70,15 @@ class ReleaseAttestation(StrictModel):
         return self
 
     def _validate_transition_chain(self, candidate_fingerprint: str) -> None:
-        current = ReleaseCandidate(
-            candidate_id=self.candidate.candidate_id,
-            project_id=self.candidate.project_id,
-            version=self.candidate.version,
-            commit_sha=self.candidate.commit_sha,
-            source_branch=self.candidate.source_branch,
-            release_track=self.candidate.release_track,
-            created_at=self.candidate.created_at,
+        initial_values = self.candidate.model_dump(mode="python")
+        initial_values.update(
+            status="DRAFT",
+            revision=0,
             updated_at=self.candidate.created_at,
+            evaluated_at=None,
+            evaluation_id=None,
         )
+        current = CANDIDATE_DOCUMENT_ADAPTER.validate_python(initial_values)
         for index, transition in enumerate(self.transitions):
             if (
                 transition.candidate_id != self.candidate.candidate_id
@@ -106,7 +98,7 @@ class ReleaseAttestation(StrictModel):
                 ),
                 evaluation_id=transition.evaluation_id,
             )
-            next_candidate = ReleaseCandidate.model_validate(next_values)
+            next_candidate = CANDIDATE_DOCUMENT_ADAPTER.validate_python(next_values)
             if (
                 transition.from_status is not current.status
                 or transition.occurred_at < current.updated_at

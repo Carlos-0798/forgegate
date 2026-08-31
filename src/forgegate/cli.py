@@ -16,8 +16,10 @@ from forgegate.application import (
     CandidateBindEvidenceCommand,
     CandidateCreateCommand,
     CandidateQuery,
+    ProjectProfileQuery,
     ProjectQuery,
     ProjectRegisterCommand,
+    ProjectReviseCommand,
 )
 from forgegate.artifacts import ArtifactBoundaryError, ArtifactError, ArtifactRegistry
 from forgegate.assembly import (
@@ -29,8 +31,10 @@ from forgegate.assembly import (
 )
 from forgegate.attestations import AttestationPublishError, publish_attestation_bundle
 from forgegate.candidates import (
+    CandidateDocument,
     CandidateLifecycleError,
     CandidateStoreError,
+    ProfileBoundReleaseCandidate,
     ReleaseCandidate,
     SQLiteCandidateRepository,
     transition_candidate,
@@ -80,7 +84,7 @@ def doctor() -> None:
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
         "supported_artifact_schemas": sorted(ARTIFACT_SCHEMAS),
-        "phase": "phase8-project-authority-discovery",
+        "phase": "phase9-project-profile-revisions",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 
@@ -203,6 +207,73 @@ def project_show(
     typer.echo(project.model_dump_json(indent=2))
 
 
+@project_app.command("revise")
+def project_revise(
+    database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    project_id: Annotated[str, typer.Argument()],
+    config_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    expected_profile_version: Annotated[int, typer.Option("--expected-profile-version", min=1)],
+    effective_at: Annotated[str, typer.Option("--effective-at")],
+    idempotency_key: Annotated[str, typer.Option("--idempotency-key")],
+) -> None:
+    """Append a complete replacement profile under compare-and-swap authority."""
+    try:
+        config = load_config(config_path)
+        if not isinstance(config, ProjectConfig):
+            raise ValueError("config path must contain forgegate.project.v1")
+        revision = CandidateApplication.for_database(database).revise_project(
+            project_id,
+            ProjectReviseCommand(
+                config=config,
+                expected_profile_version=expected_profile_version,
+                effective_at=datetime.fromisoformat(effective_at.replace("Z", "+00:00")),
+            ),
+            idempotency_key=idempotency_key,
+        )
+    except (CandidateStoreError, ConfigLoadError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(revision.model_dump_json(indent=2))
+
+
+@project_app.command("current")
+def project_current(
+    database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    project_id: Annotated[str, typer.Argument()],
+) -> None:
+    """Read and validate the current immutable project profile."""
+    try:
+        profile = CandidateApplication.for_database(database).get_current_project_profile(
+            project_id
+        )
+    except CandidateStoreError as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(profile.model_dump_json(indent=2))
+
+
+@project_app.command("history")
+def project_history(
+    database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    project_id: Annotated[str, typer.Argument()],
+    after_profile_version: Annotated[int, typer.Option("--after-profile-version", min=0)] = 0,
+    limit: Annotated[int, typer.Option("--limit", min=1, max=200)] = 100,
+) -> None:
+    """List a bounded version-ordered page of one project's immutable profiles."""
+    try:
+        page = CandidateApplication.for_database(database).list_project_profiles(
+            ProjectProfileQuery(
+                project_id=project_id,
+                after_profile_version=after_profile_version,
+                limit=limit,
+            )
+        )
+    except (CandidateStoreError, ValidationError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(page.model_dump_json(indent=2))
+
+
 @project_app.command("list")
 def project_list(
     database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
@@ -265,7 +336,7 @@ def candidate_create(
             release_track=release_track,
             created_at=datetime.fromisoformat(created_at.replace("Z", "+00:00")),
         )
-        candidate = CandidateApplication.preview_candidate(command)
+        candidate: CandidateDocument = CandidateApplication.preview_candidate(command)
         if database is None and idempotency_key is not None:
             raise ValueError("--idempotency-key requires --database")
         if database is not None:
@@ -307,7 +378,7 @@ def candidate_list(
 def candidate_init_store(
     database: Annotated[Path, typer.Argument(dir_okay=False)],
 ) -> None:
-    """Initialize or validate a local SQLite WAL candidate store at schema v5."""
+    """Initialize or validate a local SQLite WAL candidate store at schema v6."""
     try:
         repository = SQLiteCandidateRepository(database)
         repository.initialize()
@@ -321,7 +392,7 @@ def candidate_init_store(
 def candidate_migrate_store(
     database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
 ) -> None:
-    """Explicitly migrate a validated candidate store from schema v1/v2/v3/v4 to v5."""
+    """Explicitly migrate a validated candidate store from schema v1-v5 to v6."""
     try:
         repository = SQLiteCandidateRepository(database)
         repository.migrate()
@@ -345,8 +416,8 @@ def candidate_transition(
     """Preview one legal transition and emit the next candidate plus audit event."""
     try:
         candidate = load_config(candidate_path)
-        if not isinstance(candidate, ReleaseCandidate):
-            raise ValueError("candidate path must contain forgegate.release-candidate.v1")
+        if not isinstance(candidate, (ReleaseCandidate, ProfileBoundReleaseCandidate)):
+            raise ValueError("candidate path must contain a ForgeGate release candidate")
         evaluation = _load_policy_evaluation(evaluation_path)
         result = transition_candidate(
             candidate,

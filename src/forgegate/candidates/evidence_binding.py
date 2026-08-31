@@ -6,7 +6,7 @@ from typing import Literal
 from pydantic import Field, field_validator, model_validator
 
 from forgegate.assembly import EvidenceBundleAssembly
-from forgegate.candidates.models import FINGERPRINT_PATTERN, ReleaseCandidate
+from forgegate.candidates.models import FINGERPRINT_PATTERN, CandidateDocument
 from forgegate.canonical import sha256_fingerprint
 from forgegate.domain.enums import CandidateStatus
 from forgegate.domain.models import StrictModel
@@ -18,7 +18,7 @@ class CandidateEvidenceBinding(StrictModel):
     )
     binding_id: str = Field(pattern=FINGERPRINT_PATTERN)
     bound_at: datetime
-    candidate: ReleaseCandidate
+    candidate: CandidateDocument
     candidate_fingerprint: str = Field(pattern=FINGERPRINT_PATTERN)
     assembly: EvidenceBundleAssembly
     assembly_fingerprint: str = Field(pattern=FINGERPRINT_PATTERN)
@@ -60,7 +60,7 @@ class CandidateEvidenceBinding(StrictModel):
 
 
 def create_candidate_evidence_binding(
-    candidate: ReleaseCandidate,
+    candidate: CandidateDocument,
     assembly: EvidenceBundleAssembly,
     *,
     bound_at: datetime,
@@ -87,7 +87,7 @@ def create_candidate_evidence_binding(
 
 def binding_identity(
     bound_at: datetime,
-    candidate: ReleaseCandidate,
+    candidate: CandidateDocument,
     candidate_fingerprint: str,
     assembly: EvidenceBundleAssembly,
     assembly_fingerprint: str,

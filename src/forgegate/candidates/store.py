@@ -6,6 +6,7 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from itertools import pairwise
 from pathlib import Path
 from typing import cast
 
@@ -22,11 +23,18 @@ from forgegate.candidates.evidence_binding import (
     CandidateEvidenceBinding,
     create_candidate_evidence_binding,
 )
-from forgegate.candidates.lifecycle import CandidateLifecycleError, transition_candidate
+from forgegate.candidates.lifecycle import (
+    CandidateLifecycleError,
+    create_profile_bound_candidate,
+    transition_candidate,
+)
 from forgegate.candidates.models import (
+    CANDIDATE_DOCUMENT_ADAPTER,
     CANDIDATE_ID_PATTERN,
+    CandidateDocument,
     CandidateTransition,
     CandidateTransitionResult,
+    ProfileBoundReleaseCandidate,
     ReleaseCandidate,
     ReleaseCandidatePage,
 )
@@ -35,9 +43,16 @@ from forgegate.domain.enums import CandidateStatus
 from forgegate.domain.models import SLUG_PATTERN, ProjectConfig, canonical_release_track_name
 from forgegate.policy.models import PolicyEvaluation
 from forgegate.projects import (
+    PROJECT_PROFILE_ADAPTER,
+    ProjectProfileDocument,
+    ProjectProfilePage,
+    ProjectProfileRevision,
     RegisteredProject,
     RegisteredProjectPage,
+    create_project_profile_revision,
     create_registered_project,
+    profile_effective_at,
+    profile_id,
 )
 
 STORE_APPLICATION_ID = 0x46474154  # ASCII "FGAT"
@@ -49,8 +64,10 @@ BINDING_STORE_SCHEMA_VERSION = 3
 BINDING_STORE_SCHEMA_NAME = "forgegate.candidate-store.v3"
 AUDIT_STORE_SCHEMA_VERSION = 4
 AUDIT_STORE_SCHEMA_NAME = "forgegate.candidate-store.v4"
-STORE_SCHEMA_VERSION = 5
-STORE_SCHEMA_NAME = "forgegate.candidate-store.v5"
+DISCOVERY_STORE_SCHEMA_VERSION = 5
+DISCOVERY_STORE_SCHEMA_NAME = "forgegate.candidate-store.v5"
+STORE_SCHEMA_VERSION = 6
+STORE_SCHEMA_NAME = "forgegate.candidate-store.v6"
 IDEMPOTENCY_KEY_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
 
 _SCHEMA_V1_STATEMENTS = (
@@ -421,6 +438,167 @@ _SCHEMA_V5_STATEMENTS = (
     "CREATE INDEX candidates_project_candidate ON candidates(project_id, candidate_id)",
 )
 
+_SCHEMA_V6_STATEMENTS = (
+    """
+    CREATE TABLE project_profiles (
+        profile_id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL,
+        profile_version INTEGER NOT NULL CHECK (profile_version >= 1),
+        profile_schema_version TEXT NOT NULL,
+        profile_fingerprint TEXT NOT NULL,
+        profile_json TEXT NOT NULL,
+        effective_at TEXT NOT NULL,
+        UNIQUE (project_id, profile_version),
+        UNIQUE (project_id, profile_version, profile_id),
+        FOREIGN KEY (project_id) REFERENCES projects(project_id) ON DELETE RESTRICT
+    ) STRICT
+    """,
+    """
+    CREATE TABLE project_profile_heads (
+        project_id TEXT PRIMARY KEY,
+        current_profile_version INTEGER NOT NULL CHECK (current_profile_version >= 1),
+        current_profile_id TEXT NOT NULL,
+        FOREIGN KEY (project_id) REFERENCES projects(project_id) ON DELETE RESTRICT,
+        FOREIGN KEY (project_id, current_profile_version, current_profile_id)
+            REFERENCES project_profiles(project_id, profile_version, profile_id)
+            ON DELETE RESTRICT
+    ) STRICT
+    """,
+    """
+    CREATE TABLE project_revision_idempotency_records (
+        idempotency_key TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL,
+        request_fingerprint TEXT NOT NULL,
+        response_schema_version TEXT NOT NULL,
+        response_json TEXT NOT NULL,
+        recorded_at TEXT NOT NULL,
+        FOREIGN KEY (project_id) REFERENCES projects(project_id) ON DELETE RESTRICT
+    ) STRICT
+    """,
+    """
+    CREATE TABLE candidate_profile_bindings (
+        candidate_id TEXT PRIMARY KEY,
+        project_id TEXT NOT NULL,
+        profile_version INTEGER NOT NULL CHECK (profile_version >= 1),
+        profile_id TEXT NOT NULL,
+        FOREIGN KEY (candidate_id) REFERENCES candidates(candidate_id) ON DELETE RESTRICT,
+        FOREIGN KEY (project_id, profile_version, profile_id)
+            REFERENCES project_profiles(project_id, profile_version, profile_id)
+            ON DELETE RESTRICT
+    ) STRICT
+    """,
+    "CREATE INDEX project_profiles_project_version "
+    "ON project_profiles(project_id, profile_version)",
+    """
+    CREATE TRIGGER project_profiles_guard_update
+    BEFORE UPDATE ON project_profiles
+    BEGIN
+        SELECT RAISE(ABORT, 'project profiles are append-only');
+    END
+    """,
+    """
+    CREATE TRIGGER project_profiles_guard_delete
+    BEFORE DELETE ON project_profiles
+    BEGIN
+        SELECT RAISE(ABORT, 'project profiles are append-only');
+    END
+    """,
+    """
+    CREATE TRIGGER project_profile_heads_guard_update
+    BEFORE UPDATE ON project_profile_heads
+    WHEN OLD.project_id IS NOT NEW.project_id
+      OR NEW.current_profile_version != OLD.current_profile_version + 1
+      OR OLD.current_profile_id IS NEW.current_profile_id
+    BEGIN
+        SELECT RAISE(ABORT, 'project profile heads advance by one immutable revision');
+    END
+    """,
+    """
+    CREATE TRIGGER project_profile_heads_guard_delete
+    BEFORE DELETE ON project_profile_heads
+    BEGIN
+        SELECT RAISE(ABORT, 'project profile heads cannot be deleted');
+    END
+    """,
+    """
+    CREATE TRIGGER project_revision_idempotency_records_guard_update
+    BEFORE UPDATE ON project_revision_idempotency_records
+    BEGIN
+        SELECT RAISE(ABORT, 'project revision idempotency records are immutable');
+    END
+    """,
+    """
+    CREATE TRIGGER project_revision_idempotency_records_guard_delete
+    BEFORE DELETE ON project_revision_idempotency_records
+    BEGIN
+        SELECT RAISE(ABORT, 'project revision idempotency records are immutable');
+    END
+    """,
+    """
+    CREATE TRIGGER candidate_profile_bindings_guard_update
+    BEFORE UPDATE ON candidate_profile_bindings
+    BEGIN
+        SELECT RAISE(ABORT, 'candidate profile bindings are immutable');
+    END
+    """,
+    """
+    CREATE TRIGGER candidate_profile_bindings_guard_delete
+    BEFORE DELETE ON candidate_profile_bindings
+    BEGIN
+        SELECT RAISE(ABORT, 'candidate profile bindings are immutable');
+    END
+    """,
+    "ALTER TABLE audit_events RENAME TO audit_events_v5",
+    """
+    CREATE TABLE audit_events (
+        sequence INTEGER PRIMARY KEY CHECK (sequence >= 1),
+        event_id TEXT NOT NULL UNIQUE,
+        event_type TEXT NOT NULL CHECK (
+            event_type IN (
+                'project.registered', 'project.profile-revised',
+                'candidate.created', 'candidate.transitioned',
+                'candidate.evidence-bound', 'candidate.evaluation-recorded',
+                'candidate.attestation-recorded'
+            )
+        ),
+        occurred_at TEXT NOT NULL,
+        project_id TEXT NOT NULL,
+        candidate_id TEXT,
+        subject_schema_version TEXT NOT NULL,
+        subject_id TEXT NOT NULL,
+        subject_fingerprint TEXT NOT NULL,
+        event_json TEXT NOT NULL,
+        FOREIGN KEY (candidate_id) REFERENCES candidates(candidate_id) ON DELETE RESTRICT
+    ) STRICT
+    """,
+    """
+    INSERT INTO audit_events(
+        sequence, event_id, event_type, occurred_at, project_id, candidate_id,
+        subject_schema_version, subject_id, subject_fingerprint, event_json
+    )
+    SELECT sequence, event_id, event_type, occurred_at, project_id, candidate_id,
+           subject_schema_version, subject_id, subject_fingerprint, event_json
+    FROM audit_events_v5
+    """,
+    "DROP TABLE audit_events_v5",
+    "CREATE INDEX audit_events_project_sequence ON audit_events(project_id, sequence)",
+    "CREATE INDEX audit_events_candidate_sequence ON audit_events(candidate_id, sequence)",
+    """
+    CREATE TRIGGER audit_events_guard_update
+    BEFORE UPDATE ON audit_events
+    BEGIN
+        SELECT RAISE(ABORT, 'audit events are append-only');
+    END
+    """,
+    """
+    CREATE TRIGGER audit_events_guard_delete
+    BEFORE DELETE ON audit_events
+    BEGIN
+        SELECT RAISE(ABORT, 'audit events are append-only');
+    END
+    """,
+)
+
 _REQUIRED_OBJECTS_V1 = frozenset(
     {
         ("table", "forgegate_metadata"),
@@ -475,6 +653,24 @@ _REQUIRED_OBJECTS_V4 = _REQUIRED_OBJECTS_V3 | frozenset(
 
 _REQUIRED_OBJECTS_V5 = _REQUIRED_OBJECTS_V4 | frozenset({("index", "candidates_project_candidate")})
 
+_REQUIRED_OBJECTS_V6 = _REQUIRED_OBJECTS_V5 | frozenset(
+    {
+        ("table", "project_profiles"),
+        ("table", "project_profile_heads"),
+        ("table", "project_revision_idempotency_records"),
+        ("table", "candidate_profile_bindings"),
+        ("index", "project_profiles_project_version"),
+        ("trigger", "project_profiles_guard_update"),
+        ("trigger", "project_profiles_guard_delete"),
+        ("trigger", "project_profile_heads_guard_update"),
+        ("trigger", "project_profile_heads_guard_delete"),
+        ("trigger", "project_revision_idempotency_records_guard_update"),
+        ("trigger", "project_revision_idempotency_records_guard_delete"),
+        ("trigger", "candidate_profile_bindings_guard_update"),
+        ("trigger", "candidate_profile_bindings_guard_delete"),
+    }
+)
+
 
 class CandidateStoreError(RuntimeError):
     """Stable failure returned by the local candidate persistence boundary."""
@@ -486,7 +682,7 @@ class CandidateStoreError(RuntimeError):
 
 @dataclass(frozen=True)
 class CandidateHistory:
-    candidate: ReleaseCandidate
+    candidate: CandidateDocument
     transitions: tuple[CandidateTransition, ...]
     evidence_binding: CandidateEvidenceBinding | None
     evidence_binding_required: bool
@@ -509,7 +705,7 @@ class SQLiteCandidateRepository:
         self._failure_injector = _failure_injector
 
     def initialize(self) -> None:
-        """Create schema v5 or validate an existing current ForgeGate store."""
+        """Create schema v6 or validate an existing current ForgeGate store."""
         connection = self._open(require_exists=False)
         try:
             journal_mode = str(connection.execute("PRAGMA journal_mode = WAL").fetchone()[0])
@@ -537,6 +733,7 @@ class SQLiteCandidateRepository:
                     *_SCHEMA_V3_STATEMENTS,
                     *_SCHEMA_V4_STATEMENTS,
                     *_SCHEMA_V5_STATEMENTS,
+                    *_SCHEMA_V6_STATEMENTS,
                 ):
                     connection.execute(statement)
                 connection.executemany(
@@ -557,10 +754,11 @@ class SQLiteCandidateRepository:
                 PREVIOUS_STORE_SCHEMA_VERSION,
                 BINDING_STORE_SCHEMA_VERSION,
                 AUDIT_STORE_SCHEMA_VERSION,
+                DISCOVERY_STORE_SCHEMA_VERSION,
             }:
                 raise CandidateStoreError(
                     "STORE_MIGRATION_REQUIRED",
-                    f"candidate database schema v{user_version} requires explicit migration to v5",
+                    f"candidate database schema v{user_version} requires explicit migration to v6",
                 )
             self._validate_store(connection)
         except sqlite3.Error as exc:
@@ -570,7 +768,7 @@ class SQLiteCandidateRepository:
             connection.close()
 
     def migrate(self) -> None:
-        """Explicitly migrate a validated schema-v1/v2/v3/v4 store to schema v5."""
+        """Explicitly migrate a validated schema-v1/v2/v3/v4/v5 store to schema v6."""
         connection = self._open(require_exists=True)
         try:
             user_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
@@ -582,10 +780,11 @@ class SQLiteCandidateRepository:
                 PREVIOUS_STORE_SCHEMA_VERSION,
                 BINDING_STORE_SCHEMA_VERSION,
                 AUDIT_STORE_SCHEMA_VERSION,
+                DISCOVERY_STORE_SCHEMA_VERSION,
             }:
                 raise CandidateStoreError(
                     "STORE_SCHEMA_UNSUPPORTED",
-                    f"database schema version {user_version} cannot migrate to v5",
+                    f"database schema version {user_version} cannot migrate to v6",
                 )
             self._validate_store_version(connection, user_version)
             connection.execute("BEGIN IMMEDIATE")
@@ -595,22 +794,30 @@ class SQLiteCandidateRepository:
                     *_SCHEMA_V3_STATEMENTS,
                     *_SCHEMA_V4_STATEMENTS,
                     *_SCHEMA_V5_STATEMENTS,
+                    *_SCHEMA_V6_STATEMENTS,
                 ),
                 PREVIOUS_STORE_SCHEMA_VERSION: (
                     *_SCHEMA_V3_STATEMENTS,
                     *_SCHEMA_V4_STATEMENTS,
                     *_SCHEMA_V5_STATEMENTS,
+                    *_SCHEMA_V6_STATEMENTS,
                 ),
                 BINDING_STORE_SCHEMA_VERSION: (
                     *_SCHEMA_V4_STATEMENTS,
                     *_SCHEMA_V5_STATEMENTS,
+                    *_SCHEMA_V6_STATEMENTS,
                 ),
-                AUDIT_STORE_SCHEMA_VERSION: _SCHEMA_V5_STATEMENTS,
+                AUDIT_STORE_SCHEMA_VERSION: (
+                    *_SCHEMA_V5_STATEMENTS,
+                    *_SCHEMA_V6_STATEMENTS,
+                ),
+                DISCOVERY_STORE_SCHEMA_VERSION: _SCHEMA_V6_STATEMENTS,
             }[user_version]
             for statement in migration_statements:
                 connection.execute(statement)
             if user_version < AUDIT_STORE_SCHEMA_VERSION:
                 self._backfill_audit_events(connection)
+            self._backfill_project_profiles(connection)
             connection.execute(
                 "UPDATE forgegate_metadata SET value = ? WHERE key = 'schema_name'",
                 (STORE_SCHEMA_NAME,),
@@ -691,6 +898,17 @@ class SQLiteCandidateRepository:
                         _json_timestamp(registration.registered_at),
                     ),
                 )
+                self._insert_project_profile(connection, registration)
+                connection.execute(
+                    "INSERT INTO project_profile_heads("
+                    "project_id, current_profile_version, current_profile_id"
+                    ") VALUES (?, ?, ?)",
+                    (
+                        registration.project_id,
+                        registration.profile_version,
+                        registration.registration_id,
+                    ),
+                )
                 self._append_subject_audit_event(
                     connection,
                     event_type=AuditEventType.PROJECT_REGISTERED,
@@ -731,6 +949,178 @@ class SQLiteCandidateRepository:
         """Read and validate one immutable project registration."""
         with self._transaction(write=False) as connection:
             return self._load_project(connection, project_id)
+
+    def revise_project(
+        self,
+        project_id: str,
+        config: ProjectConfig,
+        *,
+        expected_profile_version: int,
+        effective_at: datetime,
+        idempotency_key: str,
+    ) -> ProjectProfileRevision:
+        """Append one complete replacement profile under CAS and exact replay."""
+        key = _validated_idempotency_key(idempotency_key)
+        if re.fullmatch(SLUG_PATTERN, project_id) is None:
+            raise CandidateStoreError("STORE_PROJECT_ID_INVALID", "project_id is invalid")
+        if config.project.id != project_id:
+            raise CandidateStoreError(
+                "STORE_PROJECT_ID_MISMATCH",
+                "revised configuration project ID does not match the request project",
+            )
+        if expected_profile_version < 1:
+            raise CandidateStoreError(
+                "STORE_PROJECT_PROFILE_VERSION_INVALID",
+                "expected profile version must be at least one",
+            )
+        timestamp = _normalized_timestamp(effective_at)
+        request_fingerprint = sha256_fingerprint(
+            {
+                "operation": "project.revise",
+                "project_id": project_id,
+                "config": config.model_dump(mode="json", by_alias=True),
+                "expected_profile_version": expected_profile_version,
+                "effective_at": _json_timestamp(timestamp),
+            }
+        )
+        with self._transaction(write=True) as connection:
+            replay_row = connection.execute(
+                "SELECT * FROM project_revision_idempotency_records WHERE idempotency_key = ?",
+                (key,),
+            ).fetchone()
+            if replay_row is not None:
+                if (
+                    replay_row["project_id"],
+                    replay_row["request_fingerprint"],
+                    replay_row["response_schema_version"],
+                ) != (
+                    project_id,
+                    request_fingerprint,
+                    "forgegate.project-profile-revision.v1",
+                ):
+                    raise CandidateStoreError(
+                        "STORE_IDEMPOTENCY_CONFLICT",
+                        "idempotency key was already used for a different request",
+                    )
+                replay = _decode_model(str(replay_row["response_json"]), ProjectProfileRevision)
+                durable = self._load_project_profile(
+                    connection,
+                    project_id,
+                    replay.profile_version,
+                )
+                _require(replay == durable, "project revision replay is not durable")
+                return replay
+
+            current = self._load_current_project_profile(connection, project_id)
+            if current.profile_version != expected_profile_version:
+                raise CandidateStoreError(
+                    "STORE_PROJECT_PROFILE_VERSION_CONFLICT",
+                    f"expected profile version {expected_profile_version}, "
+                    f"found {current.profile_version}",
+                )
+            if timestamp < profile_effective_at(current):
+                raise CandidateStoreError(
+                    "STORE_PROJECT_PROFILE_TIME_REGRESSION",
+                    "profile effective time cannot precede the current profile",
+                )
+            revision = create_project_profile_revision(
+                config,
+                profile_version=current.profile_version + 1,
+                previous_profile_id=profile_id(current),
+                effective_at=timestamp,
+            )
+            revision_json = _model_json(revision)
+            self._insert_project_profile(connection, revision)
+            updated = connection.execute(
+                "UPDATE project_profile_heads SET current_profile_version = ?, "
+                "current_profile_id = ? WHERE project_id = ? "
+                "AND current_profile_version = ?",
+                (
+                    revision.profile_version,
+                    revision.revision_id,
+                    project_id,
+                    expected_profile_version,
+                ),
+            ).rowcount
+            if updated != 1:
+                raise CandidateStoreError(
+                    "STORE_PROJECT_PROFILE_VERSION_CONFLICT",
+                    "project profile changed before the revision committed",
+                )
+            self._append_subject_audit_event(
+                connection,
+                event_type=AuditEventType.PROJECT_PROFILE_REVISED,
+                occurred_at=revision.effective_at,
+                project_id=project_id,
+                candidate_id=None,
+                subject_id=revision.revision_id,
+                subject=revision,
+            )
+            connection.execute(
+                """
+                INSERT INTO project_revision_idempotency_records(
+                    idempotency_key, project_id, request_fingerprint,
+                    response_schema_version, response_json, recorded_at
+                ) VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    key,
+                    project_id,
+                    request_fingerprint,
+                    revision.schema_version,
+                    revision_json,
+                    _json_timestamp(revision.effective_at),
+                ),
+            )
+            self._checkpoint("after_project_revision_insert", connection)
+        return revision
+
+    def get_current_project_profile(self, project_id: str) -> ProjectProfileDocument:
+        """Read the current immutable profile selected by the CAS head."""
+        with self._transaction(write=False) as connection:
+            return self._load_current_project_profile(connection, project_id)
+
+    def project_profiles(
+        self,
+        project_id: str,
+        *,
+        after_profile_version: int = 0,
+        limit: int = 100,
+    ) -> ProjectProfilePage:
+        """Return a bounded version-ordered page of one project's profile chain."""
+        if re.fullmatch(SLUG_PATTERN, project_id) is None:
+            raise CandidateStoreError("STORE_PROJECT_ID_INVALID", "project_id is invalid")
+        if after_profile_version < 0:
+            raise CandidateStoreError(
+                "STORE_PROJECT_PROFILE_CURSOR_INVALID",
+                "after_profile_version cannot be negative",
+            )
+        if not 1 <= limit <= 200:
+            raise CandidateStoreError(
+                "STORE_PROJECT_PROFILE_LIMIT_INVALID",
+                "profile limit must be between 1 and 200",
+            )
+        with self._transaction(write=False) as connection:
+            self._load_project(connection, project_id)
+            rows = list(
+                connection.execute(
+                    "SELECT profile_version FROM project_profiles "
+                    "WHERE project_id = ? AND profile_version > ? "
+                    "ORDER BY profile_version LIMIT ?",
+                    (project_id, after_profile_version, limit + 1),
+                )
+            )
+            profiles = tuple(
+                self._load_project_profile(connection, project_id, int(row["profile_version"]))
+                for row in rows[:limit]
+            )
+            self._validate_project_profile_chain(connection, project_id)
+        return ProjectProfilePage(
+            project_id=project_id,
+            profiles=profiles,
+            next_after_profile_version=(profiles[-1].profile_version if profiles else None),
+            has_more=len(rows) > limit,
+        )
 
     def projects(
         self,
@@ -813,18 +1203,21 @@ class SQLiteCandidateRepository:
         idempotency_key: str,
     ) -> ReleaseCandidate:
         """Persist a low-level candidate without retroactive project authority."""
-        return self._create(
+        stored = self._create(
             candidate,
             idempotency_key=idempotency_key,
             require_registered_project=False,
         )
+        _require(isinstance(stored, ReleaseCandidate), "low-level candidate changed schema")
+        assert isinstance(stored, ReleaseCandidate)
+        return stored
 
     def create_for_registered_project(
         self,
         candidate: ReleaseCandidate,
         *,
         idempotency_key: str,
-    ) -> ReleaseCandidate:
+    ) -> ProfileBoundReleaseCandidate | ReleaseCandidate:
         """Persist a new product-surface candidate under registered project authority."""
         return self._create(
             candidate,
@@ -838,34 +1231,45 @@ class SQLiteCandidateRepository:
         *,
         idempotency_key: str,
         require_registered_project: bool,
-    ) -> ReleaseCandidate:
+    ) -> CandidateDocument:
         key = _validated_idempotency_key(idempotency_key)
         if candidate.status is not CandidateStatus.DRAFT or candidate.revision != 0:
             raise CandidateStoreError(
                 "STORE_CANDIDATE_NOT_DRAFT", "only revision-zero DRAFT candidates can be created"
             )
-        candidate_json = _model_json(candidate)
-        candidate_fingerprint = sha256_fingerprint(candidate.model_dump(mode="json"))
         request_fingerprint = sha256_fingerprint(
             {"operation": "candidate.create", "candidate": candidate.model_dump(mode="json")}
         )
         with self._transaction(write=True) as connection:
-            if require_registered_project:
-                self._require_project_authority(connection, candidate)
             replay = self._candidate_replay(
                 connection,
                 key=key,
-                candidate_id=candidate.candidate_id,
+                candidate_id=(None if require_registered_project else candidate.candidate_id),
                 request_fingerprint=request_fingerprint,
             )
             if replay is not None:
                 return replay
+            durable_candidate: CandidateDocument = candidate
+            if require_registered_project:
+                project_profile = self._require_project_authority(connection, candidate)
+                durable_candidate = create_profile_bound_candidate(
+                    project_id=candidate.project_id,
+                    version=candidate.version,
+                    commit_sha=candidate.commit_sha,
+                    source_branch=candidate.source_branch,
+                    release_track=candidate.release_track,
+                    created_at=candidate.created_at,
+                    project_profile_id=profile_id(project_profile),
+                    project_profile_version=project_profile.profile_version,
+                )
+            candidate_json = _model_json(durable_candidate)
+            candidate_fingerprint = sha256_fingerprint(durable_candidate.model_dump(mode="json"))
             existing_row = connection.execute(
                 "SELECT candidate_id FROM candidates WHERE candidate_id = ?",
-                (candidate.candidate_id,),
+                (durable_candidate.candidate_id,),
             ).fetchone()
             if existing_row is None:
-                timestamp = _json_timestamp(candidate.created_at)
+                timestamp = _json_timestamp(durable_candidate.created_at)
                 connection.execute(
                     """
                     INSERT INTO candidates(
@@ -876,38 +1280,45 @@ class SQLiteCandidateRepository:
                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
-                        candidate.candidate_id,
-                        candidate.project_id,
-                        candidate.version,
-                        candidate.commit_sha,
-                        candidate.source_branch,
-                        candidate.release_track,
+                        durable_candidate.candidate_id,
+                        durable_candidate.project_id,
+                        durable_candidate.version,
+                        durable_candidate.commit_sha,
+                        durable_candidate.source_branch,
+                        durable_candidate.release_track,
                         timestamp,
                         candidate_fingerprint,
                         candidate_json,
-                        candidate.revision,
-                        candidate.status.value,
+                        durable_candidate.revision,
+                        durable_candidate.status.value,
                         timestamp,
                         candidate_fingerprint,
                         candidate_json,
-                        candidate.evaluation_id,
+                        durable_candidate.evaluation_id,
                         1,
                     ),
                 )
-                self._insert_snapshot(connection, candidate, candidate_fingerprint, candidate_json)
+                self._insert_snapshot(
+                    connection,
+                    durable_candidate,
+                    candidate_fingerprint,
+                    candidate_json,
+                )
+                if isinstance(durable_candidate, ProfileBoundReleaseCandidate):
+                    self._insert_candidate_profile_binding(connection, durable_candidate)
                 self._append_subject_audit_event(
                     connection,
                     event_type=AuditEventType.CANDIDATE_CREATED,
-                    occurred_at=candidate.created_at,
-                    project_id=candidate.project_id,
-                    candidate_id=candidate.candidate_id,
-                    subject_id=candidate.candidate_id,
-                    subject=candidate,
+                    occurred_at=durable_candidate.created_at,
+                    project_id=durable_candidate.project_id,
+                    candidate_id=durable_candidate.candidate_id,
+                    subject_id=durable_candidate.candidate_id,
+                    subject=durable_candidate,
                 )
                 self._checkpoint("after_candidate_insert", connection)
             else:
-                existing = self._load_history(connection, candidate.candidate_id).candidate
-                if existing != candidate:
+                existing = self._load_history(connection, durable_candidate.candidate_id).candidate
+                if existing != durable_candidate:
                     raise CandidateStoreError(
                         "STORE_CANDIDATE_CONFLICT",
                         "candidate ID already exists with different content or lifecycle state",
@@ -916,16 +1327,16 @@ class SQLiteCandidateRepository:
                 connection,
                 key=key,
                 operation_kind="candidate.create",
-                candidate_id=candidate.candidate_id,
+                candidate_id=durable_candidate.candidate_id,
                 request_fingerprint=request_fingerprint,
-                response_schema_version=candidate.schema_version,
+                response_schema_version=durable_candidate.schema_version,
                 response_json=candidate_json,
-                recorded_at=_json_timestamp(candidate.created_at),
+                recorded_at=_json_timestamp(durable_candidate.created_at),
             )
             self._checkpoint("after_idempotency_insert", connection)
-        return candidate
+        return durable_candidate
 
-    def get(self, candidate_id: str) -> ReleaseCandidate:
+    def get(self, candidate_id: str) -> CandidateDocument:
         """Load and validate the current candidate plus its complete audit chain."""
         with self._transaction(write=False) as connection:
             return self._load_history(connection, candidate_id).candidate
@@ -1411,7 +1822,8 @@ class SQLiteCandidateRepository:
             PREVIOUS_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V2,
             BINDING_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V3,
             AUDIT_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V4,
-            STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V5,
+            DISCOVERY_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V5,
+            STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V6,
         }.get(expected_version)
         if required_objects is None:
             raise CandidateStoreError(
@@ -1431,6 +1843,7 @@ class SQLiteCandidateRepository:
                     PREVIOUS_STORE_SCHEMA_VERSION: PREVIOUS_STORE_SCHEMA_NAME,
                     BINDING_STORE_SCHEMA_VERSION: BINDING_STORE_SCHEMA_NAME,
                     AUDIT_STORE_SCHEMA_VERSION: AUDIT_STORE_SCHEMA_NAME,
+                    DISCOVERY_STORE_SCHEMA_VERSION: DISCOVERY_STORE_SCHEMA_NAME,
                     STORE_SCHEMA_VERSION: STORE_SCHEMA_NAME,
                 }[expected_version],
                 "schema_version": str(expected_version),
@@ -1473,12 +1886,183 @@ class SQLiteCandidateRepository:
         )
         return project
 
+    def _backfill_project_profiles(self, connection: sqlite3.Connection) -> None:
+        """Project each legacy registration into the v6 immutable profile ledger."""
+        for row in connection.execute("SELECT project_json FROM projects ORDER BY project_id"):
+            registration = _decode_model(str(row["project_json"]), RegisteredProject)
+            existing = connection.execute(
+                "SELECT profile_id FROM project_profiles WHERE project_id = ? "
+                "AND profile_version = 1",
+                (registration.project_id,),
+            ).fetchone()
+            if existing is None:
+                self._insert_project_profile(connection, registration)
+            else:
+                _require(
+                    existing["profile_id"] == registration.registration_id,
+                    "legacy registration conflicts with the profile ledger",
+                )
+            head = connection.execute(
+                "SELECT current_profile_version, current_profile_id "
+                "FROM project_profile_heads WHERE project_id = ?",
+                (registration.project_id,),
+            ).fetchone()
+            if head is None:
+                connection.execute(
+                    "INSERT INTO project_profile_heads("
+                    "project_id, current_profile_version, current_profile_id"
+                    ") VALUES (?, 1, ?)",
+                    (registration.project_id, registration.registration_id),
+                )
+            else:
+                _require(
+                    (int(head["current_profile_version"]), head["current_profile_id"])
+                    == (1, registration.registration_id),
+                    "legacy project has an invalid profile head",
+                )
+
+    @staticmethod
+    def _insert_project_profile(
+        connection: sqlite3.Connection,
+        profile: ProjectProfileDocument,
+    ) -> None:
+        profile_json = _model_json(profile)
+        connection.execute(
+            """
+            INSERT INTO project_profiles(
+                profile_id, project_id, profile_version, profile_schema_version,
+                profile_fingerprint, profile_json, effective_at
+            ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                profile_id(profile),
+                profile.project_id,
+                profile.profile_version,
+                profile.schema_version,
+                sha256_fingerprint(profile.model_dump(mode="json")),
+                profile_json,
+                _json_timestamp(profile_effective_at(profile)),
+            ),
+        )
+
+    def _load_project_profile(
+        self,
+        connection: sqlite3.Connection,
+        project_id: str,
+        profile_version: int,
+    ) -> ProjectProfileDocument:
+        row = connection.execute(
+            "SELECT * FROM project_profiles WHERE project_id = ? AND profile_version = ?",
+            (project_id, profile_version),
+        ).fetchone()
+        if row is None:
+            raise CandidateStoreError(
+                "STORE_PROJECT_PROFILE_NOT_FOUND",
+                f"project profile does not exist: {project_id} v{profile_version}",
+            )
+        profile = _decode_project_profile(str(row["profile_json"]))
+        _require(
+            (
+                row["profile_id"],
+                row["project_id"],
+                int(row["profile_version"]),
+                row["profile_schema_version"],
+                row["profile_fingerprint"],
+                row["effective_at"],
+            )
+            == (
+                profile_id(profile),
+                profile.project_id,
+                profile.profile_version,
+                profile.schema_version,
+                sha256_fingerprint(profile.model_dump(mode="json")),
+                _json_timestamp(profile_effective_at(profile)),
+            ),
+            "project profile metadata does not match its document",
+        )
+        return profile
+
+    def _load_current_project_profile(
+        self,
+        connection: sqlite3.Connection,
+        project_id: str,
+    ) -> ProjectProfileDocument:
+        self._load_project(connection, project_id)
+        head = connection.execute(
+            "SELECT current_profile_version, current_profile_id "
+            "FROM project_profile_heads WHERE project_id = ?",
+            (project_id,),
+        ).fetchone()
+        _require(head is not None, "registered project is missing its profile head")
+        profile = self._load_project_profile(
+            connection,
+            project_id,
+            int(head["current_profile_version"]),
+        )
+        _require(
+            head["current_profile_id"] == profile_id(profile),
+            "project profile head does not match its referenced document",
+        )
+        self._validate_project_profile_chain(connection, project_id)
+        return profile
+
+    def _validate_project_profile_chain(
+        self,
+        connection: sqlite3.Connection,
+        project_id: str,
+    ) -> None:
+        rows = list(
+            connection.execute(
+                "SELECT profile_version FROM project_profiles WHERE project_id = ? "
+                "ORDER BY profile_version",
+                (project_id,),
+            )
+        )
+        _require(bool(rows), "registered project is missing its profile history")
+        profiles = [
+            self._load_project_profile(connection, project_id, int(row["profile_version"]))
+            for row in rows
+        ]
+        _require(
+            [profile.profile_version for profile in profiles] == list(range(1, len(profiles) + 1)),
+            "project profile versions are not contiguous",
+        )
+        registration = self._load_project(connection, project_id)
+        _require(profiles[0] == registration, "initial profile is not the project registration")
+        for previous, current in pairwise(profiles):
+            _require(
+                isinstance(current, ProjectProfileRevision)
+                and current.previous_profile_id == profile_id(previous),
+                "project profile revision chain is broken",
+            )
+            _require(
+                profile_effective_at(current) >= profile_effective_at(previous),
+                "project profile effective time regresses",
+            )
+        head = connection.execute(
+            "SELECT current_profile_version, current_profile_id "
+            "FROM project_profile_heads WHERE project_id = ?",
+            (project_id,),
+        ).fetchone()
+        _require(head is not None, "project profile chain has no current head")
+        latest = profiles[-1]
+        _require(
+            (int(head["current_profile_version"]), head["current_profile_id"])
+            == (latest.profile_version, profile_id(latest)),
+            "project profile head does not identify the latest revision",
+        )
+
     def _require_project_authority(
         self,
         connection: sqlite3.Connection,
         candidate: ReleaseCandidate,
-    ) -> RegisteredProject:
-        project = self._load_project(connection, candidate.project_id)
+    ) -> ProjectProfileDocument:
+        project = self._load_current_project_profile(connection, candidate.project_id)
+        if candidate.created_at < profile_effective_at(project):
+            raise CandidateStoreError(
+                "STORE_PROJECT_PROFILE_TIME_MISMATCH",
+                "candidate creation time cannot precede its governing project profile",
+            )
         canonical_candidate_track = canonical_release_track_name(candidate.release_track)
         if candidate.release_track != canonical_candidate_track:
             raise CandidateStoreError(
@@ -1593,7 +2177,7 @@ class SQLiteCandidateRepository:
         for row in connection.execute(
             "SELECT candidate_id, initial_candidate_json FROM candidates"
         ):
-            candidate = _decode_model(str(row["initial_candidate_json"]), ReleaseCandidate)
+            candidate = _decode_candidate(str(row["initial_candidate_json"]))
             pending.append(
                 (
                     _json_timestamp(candidate.created_at),
@@ -1709,10 +2293,10 @@ class SQLiteCandidateRepository:
             len(transition_rows) == current_revision, "candidate transition chain is incomplete"
         )
 
-        snapshots: list[ReleaseCandidate] = []
+        snapshots: list[CandidateDocument] = []
         fingerprints: list[str] = []
         for expected_revision, row in enumerate(snapshot_rows):
-            candidate = _decode_model(str(row["candidate_json"]), ReleaseCandidate)
+            candidate = _decode_candidate(str(row["candidate_json"]))
             fingerprint = sha256_fingerprint(candidate.model_dump(mode="json"))
             _require(
                 (
@@ -1733,6 +2317,27 @@ class SQLiteCandidateRepository:
             )
             snapshots.append(candidate)
             fingerprints.append(fingerprint)
+
+        initial_profile_identity = (
+            (
+                snapshots[0].project_profile_id,
+                snapshots[0].project_profile_version,
+            )
+            if isinstance(snapshots[0], ProfileBoundReleaseCandidate)
+            else None
+        )
+        _require(
+            all(
+                (
+                    (snapshot.project_profile_id, snapshot.project_profile_version)
+                    if isinstance(snapshot, ProfileBoundReleaseCandidate)
+                    else None
+                )
+                == initial_profile_identity
+                for snapshot in snapshots
+            ),
+            "candidate snapshots do not preserve one profile-binding identity",
+        )
 
         transitions: list[CandidateTransition] = []
         for index, row in enumerate(transition_rows):
@@ -1838,11 +2443,74 @@ class SQLiteCandidateRepository:
                     == sha256_fingerprint(binding.assembly.bundle.model_dump(mode="json")),
                     "candidate evaluation is detached from its evidence binding",
                 )
+        self._validate_candidate_profile_binding(connection, initial)
         return CandidateHistory(
             candidate=current,
             transitions=tuple(transitions),
             evidence_binding=binding,
             evidence_binding_required=binding_required,
+        )
+
+    @staticmethod
+    def _insert_candidate_profile_binding(
+        connection: sqlite3.Connection,
+        candidate: ProfileBoundReleaseCandidate,
+    ) -> None:
+        connection.execute(
+            """
+            INSERT INTO candidate_profile_bindings(
+                candidate_id, project_id, profile_version, profile_id
+            ) VALUES (?, ?, ?, ?)
+            """,
+            (
+                candidate.candidate_id,
+                candidate.project_id,
+                candidate.project_profile_version,
+                candidate.project_profile_id,
+            ),
+        )
+
+    def _validate_candidate_profile_binding(
+        self,
+        connection: sqlite3.Connection,
+        candidate: CandidateDocument,
+    ) -> None:
+        row = connection.execute(
+            "SELECT * FROM candidate_profile_bindings WHERE candidate_id = ?",
+            (candidate.candidate_id,),
+        ).fetchone()
+        if not isinstance(candidate, ProfileBoundReleaseCandidate):
+            _require(row is None, "legacy candidate has an unexpected project profile binding")
+            return
+        _require(row is not None, "profile-bound candidate is missing its durable binding")
+        assert row is not None
+        _require(
+            (
+                row["candidate_id"],
+                row["project_id"],
+                int(row["profile_version"]),
+                row["profile_id"],
+            )
+            == (
+                candidate.candidate_id,
+                candidate.project_id,
+                candidate.project_profile_version,
+                candidate.project_profile_id,
+            ),
+            "candidate profile-binding metadata does not match its document",
+        )
+        profile = self._load_project_profile(
+            connection,
+            candidate.project_id,
+            candidate.project_profile_version,
+        )
+        _require(
+            profile_id(profile) == candidate.project_profile_id,
+            "candidate profile binding references the wrong profile",
+        )
+        _require(
+            candidate.created_at >= profile_effective_at(profile),
+            "candidate predates its bound project profile",
         )
 
     @staticmethod
@@ -1871,7 +2539,7 @@ class SQLiteCandidateRepository:
     @staticmethod
     def _load_evidence_binding(
         connection: sqlite3.Connection,
-        snapshots: list[ReleaseCandidate],
+        snapshots: list[CandidateDocument],
     ) -> CandidateEvidenceBinding | None:
         row = connection.execute(
             "SELECT * FROM candidate_evidence_bindings WHERE candidate_id = ?",
@@ -1907,7 +2575,7 @@ class SQLiteCandidateRepository:
 
     @staticmethod
     def _require_evaluation_matches_candidate(
-        candidate: ReleaseCandidate, evaluation: PolicyEvaluation
+        candidate: CandidateDocument, evaluation: PolicyEvaluation
     ) -> None:
         if candidate.revision != 4 or candidate.evaluation_id is None:
             raise CandidateStoreError(
@@ -1928,7 +2596,7 @@ class SQLiteCandidateRepository:
     def _insert_evaluation(
         self,
         connection: sqlite3.Connection,
-        candidate: ReleaseCandidate,
+        candidate: CandidateDocument,
         evaluation: PolicyEvaluation,
     ) -> None:
         self._require_evaluation_matches_candidate(candidate, evaluation)
@@ -1950,7 +2618,7 @@ class SQLiteCandidateRepository:
         )
 
     def _load_evaluation(
-        self, connection: sqlite3.Connection, candidate: ReleaseCandidate
+        self, connection: sqlite3.Connection, candidate: CandidateDocument
     ) -> PolicyEvaluation | None:
         row = connection.execute(
             "SELECT * FROM candidate_evaluations WHERE candidate_id = ?",
@@ -2023,24 +2691,31 @@ class SQLiteCandidateRepository:
         connection: sqlite3.Connection,
         *,
         key: str,
-        candidate_id: str,
+        candidate_id: str | None,
         request_fingerprint: str,
-    ) -> ReleaseCandidate | None:
+    ) -> CandidateDocument | None:
         row = self._idempotency_row(connection, key)
         if row is None:
             return None
-        self._validate_replay_row(
-            row,
-            operation_kind="candidate.create",
-            candidate_id=candidate_id,
-            request_fingerprint=request_fingerprint,
-            response_schema_version="forgegate.release-candidate.v1",
+        if (
+            row["operation_kind"] != "candidate.create"
+            or row["request_fingerprint"] != request_fingerprint
+            or (candidate_id is not None and row["candidate_id"] != candidate_id)
+        ):
+            raise CandidateStoreError(
+                "STORE_IDEMPOTENCY_CONFLICT",
+                "idempotency key was already used for a different request",
+            )
+        replay = _decode_candidate(str(row["response_json"]))
+        _require(
+            (row["candidate_id"], row["response_schema_version"])
+            == (replay.candidate_id, replay.schema_version),
+            "candidate creation replay metadata does not match its document",
         )
-        replay = _decode_model(str(row["response_json"]), ReleaseCandidate)
-        self._load_history(connection, candidate_id)
+        self._load_history(connection, replay.candidate_id)
         initial_row = connection.execute(
             "SELECT initial_candidate_json FROM candidates WHERE candidate_id = ?",
-            (candidate_id,),
+            (replay.candidate_id,),
         ).fetchone()
         _require(
             initial_row is not None and initial_row[0] == row["response_json"],
@@ -2144,7 +2819,7 @@ class SQLiteCandidateRepository:
     @staticmethod
     def _insert_snapshot(
         connection: sqlite3.Connection,
-        candidate: ReleaseCandidate,
+        candidate: CandidateDocument,
         fingerprint: str,
         candidate_json: str,
     ) -> None:
@@ -2243,6 +2918,26 @@ def _decode_model[ModelT: BaseModel](payload: str, model: type[ModelT]) -> Model
             "STORE_CORRUPT", f"stored {model.__name__} document is invalid"
         ) from exc
     _require(payload == _model_json(decoded), f"stored {model.__name__} JSON is not canonical")
+    return decoded
+
+
+def _decode_candidate(payload: str) -> CandidateDocument:
+    try:
+        decoded = CANDIDATE_DOCUMENT_ADAPTER.validate_json(payload)
+    except (ValidationError, ValueError) as exc:
+        raise CandidateStoreError("STORE_CORRUPT", "stored candidate document is invalid") from exc
+    _require(payload == _model_json(decoded), "stored candidate JSON is not canonical")
+    return decoded
+
+
+def _decode_project_profile(payload: str) -> ProjectProfileDocument:
+    try:
+        decoded = PROJECT_PROFILE_ADAPTER.validate_json(payload)
+    except (ValidationError, ValueError) as exc:
+        raise CandidateStoreError(
+            "STORE_CORRUPT", "stored project profile document is invalid"
+        ) from exc
+    _require(payload == _model_json(decoded), "stored project profile JSON is not canonical")
     return decoded
 
 

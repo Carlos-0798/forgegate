@@ -13,6 +13,7 @@ from forgegate.domain.models import SLUG_PATTERN, StrictModel
 
 class AuditEventType(StrEnum):
     PROJECT_REGISTERED = "project.registered"
+    PROJECT_PROFILE_REVISED = "project.profile-revised"
     CANDIDATE_CREATED = "candidate.created"
     CANDIDATE_TRANSITIONED = "candidate.transitioned"
     EVIDENCE_BOUND = "candidate.evidence-bound"
@@ -41,7 +42,10 @@ class AuditEvent(StrictModel):
 
     @model_validator(mode="after")
     def identity_must_match_content(self) -> AuditEvent:
-        if self.event_type is AuditEventType.PROJECT_REGISTERED:
+        if self.event_type in {
+            AuditEventType.PROJECT_REGISTERED,
+            AuditEventType.PROJECT_PROFILE_REVISED,
+        }:
             if self.candidate_id is not None:
                 raise ValueError("project registration events cannot reference a candidate")
         elif self.candidate_id is None:

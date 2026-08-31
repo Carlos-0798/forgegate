@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from html import escape
 
 from forgegate.attestations.models import ReleaseAttestation
-from forgegate.candidates.models import CandidateTransition, ReleaseCandidate
+from forgegate.candidates.models import CandidateDocument, CandidateTransition
 from forgegate.canonical import sha256_fingerprint
 from forgegate.policy.models import PolicyEvaluation
 
@@ -19,7 +19,7 @@ class AttestationError(ValueError):
 
 
 def create_release_attestation(
-    candidate: ReleaseCandidate,
+    candidate: CandidateDocument,
     transitions: tuple[CandidateTransition, ...],
     *,
     policy_evaluation: PolicyEvaluation | None,

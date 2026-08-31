@@ -25,7 +25,7 @@ changing the nested evidence contract.
 
 `forgegate.candidate-evidence-binding.v1.schema.json` describes the immutable
 companion document that binds one revision-one `COLLECTING` candidate snapshot
-to one complete audited assembly before a new SQLite-v3 candidate may become
+to one complete audited assembly before a new persisted candidate may become
 `READY`.
 
 `forgegate.registered-project.v1.schema.json` describes one immutable local
@@ -36,6 +36,13 @@ query output. `forgegate.registered-project-page.v1.schema.json` and
 `forgegate.release-candidate-page.v1.schema.json` describe bounded project and
 project-scoped candidate discovery. These contracts do not authenticate an
 operator or producer.
+
+`forgegate.project-profile-revision.v1.schema.json` and
+`forgegate.project-profile-page.v1.schema.json` describe append-only complete
+profile replacements and bounded version history. The
+`forgegate.release-candidate.v2.schema.json` contract adds the exact governing
+profile ID/version to candidate identity; v1 remains committed for stateless
+and legacy compatibility.
 
 `forgegate.benchmark.v1.schema.json` is the ForgeGate-owned Benchmark artifact
 contract. `analog-validation.result-export.v1.schema.json` is ForgeGate's

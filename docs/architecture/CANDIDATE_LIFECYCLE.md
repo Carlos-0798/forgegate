@@ -25,6 +25,12 @@ then derives a stable `cand-` identifier from canonical JSON. The resulting
 candidate is frozen by the strict Pydantic model. Transition services construct
 a new candidate instead of mutating the previous instance.
 
+`create_profile_bound_candidate` produces
+`forgegate.release-candidate.v2`. Its identity additionally includes the exact
+governing `project_profile_id` and `project_profile_version`. The same transition
+service accepts v1/v2 documents and preserves the v2 binding across every
+lifecycle revision.
+
 ## Evaluation binding
 
 PASS, FAIL, and REVIEW are release conclusions, so entering them requires a
@@ -58,7 +64,8 @@ Without `--database`, they do not write files or establish an authoritative
 revision. The accepted SQLite checkpoint adds `candidate init-store`, persisted
 `candidate create --database`, atomic `candidate advance`, `candidate show`,
 `candidate history`, and project-scoped `candidate list`. Persisted
-product-surface creation is authorized by the registered project profile and
-one normalized configured track; direct reads of legacy candidates remain
-available. See `SQLITE_CANDIDATE_STORE.md` for transaction, idempotency,
-recovery, and corruption-detection guarantees.
+product-surface creation is authorized by the current registered project
+profile and one normalized configured track, then persisted as candidate v2;
+direct reads of legacy v1 candidates remain available. See
+`PROJECT_PROFILE_REVISIONS.md` and `SQLITE_CANDIDATE_STORE.md` for profile,
+transaction, idempotency, recovery, and corruption-detection guarantees.

@@ -11,13 +11,15 @@ producer, operator, repository, commit, or clock. The API remains loopback-only.
 content-derived registration ID, profile version one, and a caller-supplied
 timezone-aware registration time. Registration is immutable. Exact retries are
 idempotent; a different registration under the same project ID fails closed.
-Project updates, deletion, and policy distribution are deferred. Phase 8 adds
-bounded listing without changing this immutable registration document.
+Project deletion and policy distribution are deferred. Phase 8 adds bounded
+listing without changing this immutable registration document; Phase 9 appends
+separate revision documents rather than updating it.
 
 The registry does not retroactively become evidence. Phase 8 makes it
 authoritative for new application/CLI/REST candidate creation while retaining
-the low-level legacy read/persistence boundary. A candidate's `project_id` is
-retained in audit events, but migration never invents a project profile.
+the low-level legacy read/persistence boundary. Phase 9 candidate v2 additionally
+binds the exact governing profile. A candidate's `project_id` is retained in
+audit events, but migration never invents a candidate/profile association.
 
 ## SQLite v4
 

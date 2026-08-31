@@ -16,7 +16,7 @@ from forgegate.application import (
     CandidateEvaluateCommand,
     ProjectRegisterCommand,
 )
-from forgegate.candidates import CandidateStoreError
+from forgegate.candidates import CandidateStoreError, ProfileBoundReleaseCandidate
 from forgegate.config import load_config
 from forgegate.domain.models import ProjectConfig
 
@@ -101,7 +101,25 @@ def test_candidate_application_create_replay_and_read_contract(
     replay = application.create_candidate(command(), idempotency_key="api:create:001")
     history = application.get_history(created.candidate_id)
 
-    assert preview == created == replay == application.get_candidate(created.candidate_id)
+    assert isinstance(created, ProfileBoundReleaseCandidate)
+    assert created == replay == application.get_candidate(created.candidate_id)
+    assert created.project_profile_version == 1
+    assert preview.candidate_id != created.candidate_id
+    assert (
+        preview.project_id,
+        preview.version,
+        preview.commit_sha,
+        preview.source_branch,
+        preview.release_track,
+        preview.created_at,
+    ) == (
+        created.project_id,
+        created.version,
+        created.commit_sha,
+        created.source_branch,
+        created.release_track,
+        created.created_at,
+    )
     assert history.candidate == created
     assert history.transitions == ()
     assert history.evidence_binding_required is True

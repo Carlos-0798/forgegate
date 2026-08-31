@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Literal
+from datetime import UTC, datetime
+from typing import Annotated, Literal
 
-from pydantic import Field, field_validator, model_validator
+from pydantic import Field, TypeAdapter, field_validator, model_validator
 
 from forgegate.canonical import sha256_fingerprint
 from forgegate.domain.enums import CandidateStatus
@@ -44,8 +44,13 @@ EXPECTED_CANDIDATE_REVISION = {
 }
 
 
-class ReleaseCandidate(StrictModel):
-    schema_version: Literal["forgegate.release-candidate.v1"] = "forgegate.release-candidate.v1"
+class CandidateFields(StrictModel):
+    """Shared immutable identity and lifecycle fields for versioned candidate documents."""
+
+    schema_version: Literal[
+        "forgegate.release-candidate.v1",
+        "forgegate.release-candidate.v2",
+    ]
     candidate_id: str = Field(pattern=CANDIDATE_ID_PATTERN)
     project_id: str = Field(pattern=SLUG_PATTERN)
     version: str = Field(min_length=1, max_length=120)
@@ -67,7 +72,7 @@ class ReleaseCandidate(StrictModel):
         return value
 
     @model_validator(mode="after")
-    def lifecycle_fields_are_consistent(self) -> ReleaseCandidate:
+    def lifecycle_fields_are_consistent(self) -> CandidateFields:
         if self.updated_at < self.created_at:
             raise ValueError("updated_at cannot precede created_at")
         if self.revision != EXPECTED_CANDIDATE_REVISION[self.status]:
@@ -86,6 +91,51 @@ class ReleaseCandidate(StrictModel):
         return self
 
 
+class ReleaseCandidate(CandidateFields):
+    schema_version: Literal["forgegate.release-candidate.v1"] = "forgegate.release-candidate.v1"
+
+
+class ProfileBoundReleaseCandidate(CandidateFields):
+    """Candidate bound to the exact immutable project profile used at creation."""
+
+    schema_version: Literal["forgegate.release-candidate.v2"] = "forgegate.release-candidate.v2"
+    project_profile_id: str = Field(pattern=FINGERPRINT_PATTERN)
+    project_profile_version: int = Field(ge=1)
+
+    @model_validator(mode="after")
+    def profile_bound_identity_must_match(self) -> ProfileBoundReleaseCandidate:
+        expected = (
+            "cand-" + sha256_fingerprint(candidate_identity(self)).removeprefix("sha256:")[:24]
+        )
+        if self.candidate_id != expected:
+            raise ValueError("candidate_id does not match profile-bound candidate content")
+        return self
+
+
+type CandidateDocument = Annotated[
+    ReleaseCandidate | ProfileBoundReleaseCandidate,
+    Field(discriminator="schema_version"),
+]
+CANDIDATE_DOCUMENT_ADAPTER: TypeAdapter[CandidateDocument] = TypeAdapter(CandidateDocument)
+
+
+def candidate_identity(candidate: CandidateDocument) -> dict[str, object]:
+    identity: dict[str, object] = {
+        "project_id": candidate.project_id,
+        "version": candidate.version,
+        "commit_sha": candidate.commit_sha.lower(),
+        "source_branch": candidate.source_branch,
+        "release_track": candidate.release_track,
+        "created_at": candidate.created_at.astimezone(UTC).isoformat().replace("+00:00", "Z"),
+    }
+    if isinstance(candidate, ProfileBoundReleaseCandidate):
+        identity.update(
+            project_profile_id=candidate.project_profile_id,
+            project_profile_version=candidate.project_profile_version,
+        )
+    return identity
+
+
 class ReleaseCandidatePage(StrictModel):
     """Bounded project-scoped page of current candidate snapshots."""
 
@@ -93,7 +143,7 @@ class ReleaseCandidatePage(StrictModel):
         "forgegate.release-candidate-page.v1"
     )
     project_id: str = Field(pattern=SLUG_PATTERN)
-    candidates: tuple[ReleaseCandidate, ...] = Field(max_length=200)
+    candidates: tuple[CandidateDocument, ...] = Field(max_length=200)
     next_after_candidate_id: str | None = Field(default=None, pattern=CANDIDATE_ID_PATTERN)
     has_more: bool
 
@@ -164,7 +214,7 @@ class CandidateTransitionResult(StrictModel):
     schema_version: Literal["forgegate.candidate-transition-result.v1"] = (
         "forgegate.candidate-transition-result.v1"
     )
-    candidate: ReleaseCandidate
+    candidate: CandidateDocument
     transition: CandidateTransition
 
     @model_validator(mode="after")

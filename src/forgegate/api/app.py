@@ -26,21 +26,29 @@ from forgegate.application import (
     CandidateEvaluationResult,
     CandidateHistoryView,
     CandidateQuery,
+    ProjectProfileQuery,
     ProjectQuery,
     ProjectRegisterCommand,
+    ProjectReviseCommand,
 )
 from forgegate.attestations import ReleaseAttestation
 from forgegate.audit import AuditEventPage
 from forgegate.candidates import (
+    CandidateDocument,
     CandidateEvidenceBinding,
     CandidateLifecycleError,
     CandidateStoreError,
-    ReleaseCandidate,
     ReleaseCandidatePage,
 )
 from forgegate.candidates.models import CandidateTransitionResult
 from forgegate.network import is_loopback_host
-from forgegate.projects import RegisteredProject, RegisteredProjectPage
+from forgegate.projects import (
+    ProjectProfileDocument,
+    ProjectProfilePage,
+    ProjectProfileRevision,
+    RegisteredProject,
+    RegisteredProjectPage,
+)
 
 REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
 MAX_REQUEST_BODY_BYTES = 4 * 1024 * 1024
@@ -234,6 +242,55 @@ def create_api_app(
     def get_project_endpoint(project_id: str) -> RegisteredProject:
         return candidate_application.get_project(project_id)
 
+    @app.post(
+        "/v1/projects/{project_id}/revisions",
+        response_model=ProjectProfileRevision,
+        status_code=status.HTTP_201_CREATED,
+        operation_id="reviseProjectProfile",
+        tags=["projects"],
+        responses=ERROR_RESPONSES,
+    )
+    def revise_project_profile_endpoint(
+        project_id: str,
+        command: ProjectReviseCommand,
+        idempotency_key: Annotated[str, Header(alias="Idempotency-Key")],
+    ) -> ProjectProfileRevision:
+        return candidate_application.revise_project(
+            project_id,
+            command,
+            idempotency_key=idempotency_key,
+        )
+
+    @app.get(
+        "/v1/projects/{project_id}/profile",
+        response_model=ProjectProfileDocument,
+        operation_id="getCurrentProjectProfile",
+        tags=["projects"],
+        responses=ERROR_RESPONSES,
+    )
+    def get_current_project_profile_endpoint(project_id: str) -> ProjectProfileDocument:
+        return candidate_application.get_current_project_profile(project_id)
+
+    @app.get(
+        "/v1/projects/{project_id}/revisions",
+        response_model=ProjectProfilePage,
+        operation_id="listProjectProfileRevisions",
+        tags=["projects"],
+        responses=ERROR_RESPONSES,
+    )
+    def list_project_profile_revisions_endpoint(
+        project_id: str,
+        after_profile_version: Annotated[int, Query(ge=0)] = 0,
+        limit: Annotated[int, Query(ge=1, le=200)] = 100,
+    ) -> ProjectProfilePage:
+        return candidate_application.list_project_profiles(
+            ProjectProfileQuery(
+                project_id=project_id,
+                after_profile_version=after_profile_version,
+                limit=limit,
+            )
+        )
+
     @app.get(
         "/v1/projects/{project_id}/candidates",
         response_model=ReleaseCandidatePage,
@@ -278,7 +335,7 @@ def create_api_app(
 
     @app.post(
         "/v1/candidates",
-        response_model=ReleaseCandidate,
+        response_model=CandidateDocument,
         status_code=status.HTTP_201_CREATED,
         operation_id="createCandidate",
         tags=["candidates"],
@@ -287,7 +344,7 @@ def create_api_app(
     def create_candidate_endpoint(
         command: CandidateCreateCommand,
         idempotency_key: Annotated[str, Header(alias="Idempotency-Key")],
-    ) -> ReleaseCandidate:
+    ) -> CandidateDocument:
         return candidate_application.create_candidate(
             command,
             idempotency_key=idempotency_key,
@@ -362,12 +419,12 @@ def create_api_app(
 
     @app.get(
         "/v1/candidates/{candidate_id}",
-        response_model=ReleaseCandidate,
+        response_model=CandidateDocument,
         operation_id="getCandidate",
         tags=["candidates"],
         responses=ERROR_RESPONSES,
     )
-    def get_candidate_endpoint(candidate_id: str) -> ReleaseCandidate:
+    def get_candidate_endpoint(candidate_id: str) -> CandidateDocument:
         return candidate_application.get_candidate(candidate_id)
 
     @app.get(
@@ -434,6 +491,7 @@ def _store_error_status(code: str) -> int:
     if code in {
         "STORE_CANDIDATE_CONFLICT",
         "STORE_PROJECT_CONFLICT",
+        "STORE_PROJECT_PROFILE_VERSION_CONFLICT",
         "STORE_ATTESTATION_CONFLICT",
         "STORE_EVIDENCE_BINDING_CONFLICT",
         "STORE_EVALUATION_CONFLICT",

@@ -205,6 +205,7 @@
       "AuditEventType": {
         "enum": [
           "project.registered",
+          "project.profile-revised",
           "candidate.created",
           "candidate.transitioned",
           "candidate.evidence-bound",
@@ -333,6 +334,23 @@
         "title": "CandidateCreateCommand",
         "type": "object"
       },
+      "CandidateDocument": {
+        "discriminator": {
+          "mapping": {
+            "forgegate.release-candidate.v1": "#/components/schemas/ReleaseCandidate",
+            "forgegate.release-candidate.v2": "#/components/schemas/ProfileBoundReleaseCandidate"
+          },
+          "propertyName": "schema_version"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ReleaseCandidate"
+          },
+          {
+            "$ref": "#/components/schemas/ProfileBoundReleaseCandidate"
+          }
+        ]
+      },
       "CandidateEvaluateCommand": {
         "additionalProperties": false,
         "properties": {
@@ -410,7 +428,7 @@
             "type": "string"
           },
           "candidate": {
-            "$ref": "#/components/schemas/ReleaseCandidate"
+            "$ref": "#/components/schemas/CandidateDocument"
           },
           "candidate_fingerprint": {
             "pattern": "^sha256:[0-9a-f]{64}$",
@@ -439,7 +457,7 @@
         "additionalProperties": false,
         "properties": {
           "candidate": {
-            "$ref": "#/components/schemas/ReleaseCandidate"
+            "$ref": "#/components/schemas/CandidateDocument"
           },
           "evidence_binding": {
             "anyOf": [
@@ -580,7 +598,7 @@
         "additionalProperties": false,
         "properties": {
           "candidate": {
-            "$ref": "#/components/schemas/ReleaseCandidate"
+            "$ref": "#/components/schemas/CandidateDocument"
           },
           "schema_version": {
             "const": "forgegate.candidate-transition-result.v1",
@@ -1044,8 +1062,8 @@
             "type": "string"
           },
           "store_schema": {
-            "const": "forgegate.candidate-store.v5",
-            "default": "forgegate.candidate-store.v5",
+            "const": "forgegate.candidate-store.v6",
+            "default": "forgegate.candidate-store.v6",
             "title": "Store Schema",
             "type": "string"
           }
@@ -1282,6 +1300,118 @@
         "title": "PolicyRule",
         "type": "object"
       },
+      "ProfileBoundReleaseCandidate": {
+        "additionalProperties": false,
+        "description": "Candidate bound to the exact immutable project profile used at creation.",
+        "properties": {
+          "candidate_id": {
+            "pattern": "^cand-[0-9a-f]{24}$",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "commit_sha": {
+            "pattern": "^[0-9a-fA-F]{7,64}$",
+            "title": "Commit Sha",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "evaluated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluated At"
+          },
+          "evaluation_id": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluation Id"
+          },
+          "project_id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "project_profile_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Project Profile Id",
+            "type": "string"
+          },
+          "project_profile_version": {
+            "minimum": 1.0,
+            "title": "Project Profile Version",
+            "type": "integer"
+          },
+          "release_track": {
+            "pattern": "^[a-z][a-z0-9_-]{1,63}$",
+            "title": "Release Track",
+            "type": "string"
+          },
+          "revision": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "forgegate.release-candidate.v2",
+            "default": "forgegate.release-candidate.v2",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_branch": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Source Branch",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CandidateStatus",
+            "default": "DRAFT"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "project_id",
+          "version",
+          "commit_sha",
+          "source_branch",
+          "release_track",
+          "created_at",
+          "updated_at",
+          "project_profile_id",
+          "project_profile_version"
+        ],
+        "title": "ProfileBoundReleaseCandidate",
+        "type": "object"
+      },
       "ProjectConfig": {
         "additionalProperties": false,
         "properties": {
@@ -1364,6 +1494,128 @@
         "title": "ProjectIdentity",
         "type": "object"
       },
+      "ProjectProfileDocument": {
+        "discriminator": {
+          "mapping": {
+            "forgegate.project-profile-revision.v1": "#/components/schemas/ProjectProfileRevision",
+            "forgegate.registered-project.v1": "#/components/schemas/RegisteredProject"
+          },
+          "propertyName": "schema_version"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/RegisteredProject"
+          },
+          {
+            "$ref": "#/components/schemas/ProjectProfileRevision"
+          }
+        ]
+      },
+      "ProjectProfilePage": {
+        "additionalProperties": false,
+        "description": "Bounded version-ordered history for one project's immutable profiles.",
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "next_after_profile_version": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next After Profile Version"
+          },
+          "profiles": {
+            "items": {
+              "$ref": "#/components/schemas/ProjectProfileDocument"
+            },
+            "maxItems": 200,
+            "title": "Profiles",
+            "type": "array"
+          },
+          "project_id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.project-profile-page.v1",
+            "default": "forgegate.project-profile-page.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "project_id",
+          "profiles",
+          "has_more"
+        ],
+        "title": "ProjectProfilePage",
+        "type": "object"
+      },
+      "ProjectProfileRevision": {
+        "additionalProperties": false,
+        "description": "Append-only replacement profile linked to the preceding profile identity.",
+        "properties": {
+          "config": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "config_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Config Fingerprint",
+            "type": "string"
+          },
+          "effective_at": {
+            "format": "date-time",
+            "title": "Effective At",
+            "type": "string"
+          },
+          "previous_profile_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Previous Profile Id",
+            "type": "string"
+          },
+          "profile_version": {
+            "minimum": 2.0,
+            "title": "Profile Version",
+            "type": "integer"
+          },
+          "project_id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "revision_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Revision Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.project-profile-revision.v1",
+            "default": "forgegate.project-profile-revision.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "revision_id",
+          "project_id",
+          "profile_version",
+          "previous_profile_id",
+          "config",
+          "config_fingerprint",
+          "effective_at"
+        ],
+        "title": "ProjectProfileRevision",
+        "type": "object"
+      },
       "ProjectRegisterCommand": {
         "additionalProperties": false,
         "properties": {
@@ -1381,6 +1633,31 @@
           "registered_at"
         ],
         "title": "ProjectRegisterCommand",
+        "type": "object"
+      },
+      "ProjectReviseCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "config": {
+            "$ref": "#/components/schemas/ProjectConfig"
+          },
+          "effective_at": {
+            "format": "date-time",
+            "title": "Effective At",
+            "type": "string"
+          },
+          "expected_profile_version": {
+            "minimum": 1.0,
+            "title": "Expected Profile Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "config",
+          "expected_profile_version",
+          "effective_at"
+        ],
+        "title": "ProjectReviseCommand",
         "type": "object"
       },
       "RegisteredProject": {
@@ -1491,7 +1768,7 @@
             "type": "string"
           },
           "candidate": {
-            "$ref": "#/components/schemas/ReleaseCandidate"
+            "$ref": "#/components/schemas/CandidateDocument"
           },
           "candidate_fingerprint": {
             "pattern": "^sha256:[0-9a-f]{64}$",
@@ -1675,7 +1952,7 @@
         "properties": {
           "candidates": {
             "items": {
-              "$ref": "#/components/schemas/ReleaseCandidate"
+              "$ref": "#/components/schemas/CandidateDocument"
             },
             "maxItems": 200,
             "title": "Candidates",
@@ -1838,7 +2115,7 @@
   "info": {
     "summary": "Local release-assurance project and candidate API",
     "title": "ForgeGate Local API",
-    "version": "0.1.0.dev15"
+    "version": "0.1.0.dev16"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -2040,7 +2317,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReleaseCandidate"
+                  "$ref": "#/components/schemas/CandidateDocument"
                 }
               }
             },
@@ -2142,7 +2419,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ReleaseCandidate"
+                  "$ref": "#/components/schemas/CandidateDocument"
                 }
               }
             },
@@ -3462,6 +3739,352 @@
         "summary": "List Project Candidates Endpoint",
         "tags": [
           "candidates"
+        ]
+      }
+    },
+    "/v1/projects/{project_id}/profile": {
+      "get": {
+        "operationId": "getCurrentProjectProfile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectProfileDocument"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request conflicts with durable state"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request body exceeds local API limit"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Strict request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fail-closed internal error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate store unavailable"
+          }
+        },
+        "summary": "Get Current Project Profile Endpoint",
+        "tags": [
+          "projects"
+        ]
+      }
+    },
+    "/v1/projects/{project_id}/revisions": {
+      "get": {
+        "operationId": "listProjectProfileRevisions",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after_profile_version",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "After Profile Version",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectProfilePage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request conflicts with durable state"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request body exceeds local API limit"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Strict request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fail-closed internal error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate store unavailable"
+          }
+        },
+        "summary": "List Project Profile Revisions Endpoint",
+        "tags": [
+          "projects"
+        ]
+      },
+      "post": {
+        "operationId": "reviseProjectProfile",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProjectReviseCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectProfileRevision"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request conflicts with durable state"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request body exceeds local API limit"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Strict request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fail-closed internal error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate store unavailable"
+          }
+        },
+        "summary": "Revise Project Profile Endpoint",
+        "tags": [
+          "projects"
         ]
       }
     }

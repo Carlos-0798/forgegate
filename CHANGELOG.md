@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.1.0.dev16 — 2026-08-31
+
+- Added append-only project-profile revision and bounded history contracts with
+  full replacement configuration, previous-profile linkage, canonical identity,
+  and explicit effective time.
+- Upgraded the SQLite store to schema v6 with a profile ledger/head,
+  expected-version compare-and-swap, exact revision idempotency, immutable
+  candidate-profile bindings, and profile-revision audit events.
+- Added `forgegate.release-candidate.v2`, binding every new product-surface
+  candidate to the exact governing profile ID/version while retaining v1 for
+  stateless and legacy compatibility.
+- Added application, CLI, and loopback REST surfaces for project revision,
+  current-profile read, and bounded profile history, with committed JSON Schema
+  and OpenAPI updates.
+- Added explicit v1-v5 migration that backfills initial registration profiles
+  but never fabricates a profile binding for legacy candidates.
+- Verified exact replay across later profile changes, stale-version and time
+  rejection, track addition/removal isolation, corruption detection, clean
+  packaging, and installed-wheel operation.
+
 ## 0.1.0.dev15 — 2026-08-31
 
 - Required product-surface candidate creation to resolve an existing immutable

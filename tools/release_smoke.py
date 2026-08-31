@@ -33,6 +33,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/LOCAL_REST_COMMAND_WORKFLOW.md",
     "docs/architecture/PROJECT_REGISTRY_AND_AUDIT_QUERY.md",
     "docs/architecture/PROJECT_AUTHORITY_AND_DISCOVERY.md",
+    "docs/architecture/PROJECT_PROFILE_REVISIONS.md",
     "examples/sample-python-api/artifacts/junit.xml",
     "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
@@ -60,10 +61,12 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_6_LOCAL_REST_COMMAND_WORKFLOW_ACCEPTANCE_REPORT.md",
     "reports/PHASE_7_PROJECT_REGISTRY_AUDIT_QUERY_ACCEPTANCE_REPORT.md",
     "reports/PHASE_8_PROJECT_AUTHORITY_DISCOVERY_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_9_PROJECT_PROFILE_REVISIONS_ACCEPTANCE_REPORT.md",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
     "schemas/forgegate.release-candidate.v1.schema.json",
+    "schemas/forgegate.release-candidate.v2.schema.json",
     "schemas/forgegate.candidate-transition.v1.schema.json",
     "schemas/forgegate.candidate-transition-result.v1.schema.json",
     "schemas/forgegate.release-attestation.v1.schema.json",
@@ -71,6 +74,8 @@ REQUIRED_SDIST_PATHS = (
     "schemas/forgegate.candidate-evidence-binding.v1.schema.json",
     "schemas/forgegate.registered-project.v1.schema.json",
     "schemas/forgegate.registered-project-page.v1.schema.json",
+    "schemas/forgegate.project-profile-revision.v1.schema.json",
+    "schemas/forgegate.project-profile-page.v1.schema.json",
     "schemas/forgegate.release-candidate-page.v1.schema.json",
     "schemas/forgegate.audit-event.v1.schema.json",
     "schemas/forgegate.audit-event-page.v1.schema.json",
@@ -104,6 +109,7 @@ REQUIRED_SDIST_PATHS = (
     "tests/test_api.py",
     "tests/test_project_registry_audit.py",
     "tests/test_project_authority_discovery.py",
+    "tests/test_project_profile_revisions.py",
 )
 
 
@@ -294,6 +300,9 @@ def main() -> int:
             ("/v1/projects", "post"): "registerProject",
             ("/v1/projects", "get"): "listProjects",
             ("/v1/projects/{project_id}", "get"): "getProject",
+            ("/v1/projects/{project_id}/profile", "get"): "getCurrentProjectProfile",
+            ("/v1/projects/{project_id}/revisions", "get"): "listProjectProfileRevisions",
+            ("/v1/projects/{project_id}/revisions", "post"): "reviseProjectProfile",
             ("/v1/projects/{project_id}/candidates", "get"): "listProjectCandidates",
             ("/v1/audit-events", "get"): "queryAuditEvents",
             ("/v1/candidates/{candidate_id}/transitions", "post"): "advanceCandidate",
@@ -377,7 +386,6 @@ def main() -> int:
             cwd=root,
         )
         candidate_store = root / "candidate-store.db"
-        candidate_id = "cand-dab25eb0be1a0107b3996080"
         run(
             [
                 str(python),
@@ -460,6 +468,19 @@ def main() -> int:
             ],
             cwd=root,
         )
+        for project_command in ("current", "history"):
+            run(
+                [
+                    str(python),
+                    "-m",
+                    "forgegate",
+                    "project",
+                    project_command,
+                    str(candidate_store),
+                    "sample-api",
+                ],
+                cwd=root,
+            )
         persisted_create = [
             str(python),
             "-m",
@@ -481,7 +502,12 @@ def main() -> int:
             "--idempotency-key",
             "create:release-smoke-001",
         ]
-        run(persisted_create, cwd=root)
+        persisted_candidate_path = root / "persisted-candidate.json"
+        run_capture(persisted_create, persisted_candidate_path, cwd=root)
+        persisted_candidate = json.loads(persisted_candidate_path.read_text(encoding="utf-8"))
+        candidate_id = str(persisted_candidate["candidate_id"])
+        if persisted_candidate["schema_version"] != "forgegate.release-candidate.v2":
+            raise SystemExit("persisted candidate is not bound to a project profile")
         run(persisted_create, cwd=root)
         run(
             [
