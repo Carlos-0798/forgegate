@@ -365,7 +365,24 @@
             "type": "integer"
           },
           "policy": {
-            "$ref": "#/components/schemas/PolicyConfig"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "policy_material": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyMaterial"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "reason": {
             "anyOf": [
@@ -382,7 +399,6 @@
           }
         },
         "required": [
-          "policy",
           "expected_revision",
           "evaluated_at"
         ],
@@ -393,7 +409,17 @@
         "additionalProperties": false,
         "properties": {
           "evaluation": {
-            "$ref": "#/components/schemas/PolicyEvaluation"
+            "$ref": "#/components/schemas/PolicyEvaluationDocument"
+          },
+          "policy_material": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyMaterial"
+              },
+              {
+                "type": "null"
+              }
+            ]
           },
           "transition": {
             "$ref": "#/components/schemas/CandidateTransitionResult"
@@ -473,6 +499,20 @@
             "title": "Evidence Binding Required",
             "type": "boolean"
           },
+          "policy_material": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyMaterial"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "policy_material_required": {
+            "title": "Policy Material Required",
+            "type": "boolean"
+          },
           "transitions": {
             "items": {
               "$ref": "#/components/schemas/CandidateTransition"
@@ -485,7 +525,9 @@
           "candidate",
           "transitions",
           "evidence_binding_required",
-          "evidence_binding"
+          "evidence_binding",
+          "policy_material_required",
+          "policy_material"
         ],
         "title": "CandidateHistoryView",
         "type": "object"
@@ -1062,8 +1104,8 @@
             "type": "string"
           },
           "store_schema": {
-            "const": "forgegate.candidate-store.v6",
-            "default": "forgegate.candidate-store.v6",
+            "const": "forgegate.candidate-store.v7",
+            "default": "forgegate.candidate-store.v7",
             "title": "Store Schema",
             "type": "string"
           }
@@ -1221,6 +1263,90 @@
         "title": "PolicyEvaluation",
         "type": "object"
       },
+      "PolicyEvaluationDocument": {
+        "discriminator": {
+          "mapping": {
+            "forgegate.policy-evaluation.v1": "#/components/schemas/PolicyEvaluation",
+            "forgegate.policy-evaluation.v2": "#/components/schemas/ProfileAuthorizedPolicyEvaluation"
+          },
+          "propertyName": "schema_version"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/PolicyEvaluation"
+          },
+          {
+            "$ref": "#/components/schemas/ProfileAuthorizedPolicyEvaluation"
+          }
+        ]
+      },
+      "PolicyMaterial": {
+        "additionalProperties": false,
+        "description": "Exact policy bytes authorized by one immutable project profile.",
+        "properties": {
+          "artifact": {
+            "$ref": "#/components/schemas/ArtifactReference"
+          },
+          "content_base64": {
+            "maxLength": 1398104,
+            "minLength": 4,
+            "title": "Content Base64",
+            "type": "string"
+          },
+          "material_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Material Id",
+            "type": "string"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/PolicyConfig"
+          },
+          "policy_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Policy Fingerprint",
+            "type": "string"
+          },
+          "project_id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "project_profile_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Project Profile Id",
+            "type": "string"
+          },
+          "project_profile_version": {
+            "minimum": 1.0,
+            "title": "Project Profile Version",
+            "type": "integer"
+          },
+          "release_track": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Release Track",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.policy-material.v1",
+            "default": "forgegate.policy-material.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "material_id",
+          "project_id",
+          "project_profile_id",
+          "project_profile_version",
+          "release_track",
+          "artifact",
+          "content_base64",
+          "policy",
+          "policy_fingerprint"
+        ],
+        "title": "PolicyMaterial",
+        "type": "object"
+      },
       "PolicyRule": {
         "additionalProperties": false,
         "properties": {
@@ -1298,6 +1424,102 @@
           "expected"
         ],
         "title": "PolicyRule",
+        "type": "object"
+      },
+      "ProfileAuthorizedPolicyEvaluation": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_commit": {
+            "pattern": "^[0-9a-fA-F]{7,64}$",
+            "title": "Candidate Commit",
+            "type": "string"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/Decision"
+          },
+          "evaluated_at": {
+            "format": "date-time",
+            "title": "Evaluated At",
+            "type": "string"
+          },
+          "evaluated_evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evaluated Evidence Ids",
+            "type": "array"
+          },
+          "evaluation_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Evaluation Id",
+            "type": "string"
+          },
+          "evidence_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Evidence Fingerprint",
+            "type": "string"
+          },
+          "policy_artifact_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Policy Artifact Sha256",
+            "type": "string"
+          },
+          "policy_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Policy Fingerprint",
+            "type": "string"
+          },
+          "policy_material_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Policy Material Id",
+            "type": "string"
+          },
+          "policy_name": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Policy Name",
+            "type": "string"
+          },
+          "project_profile_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Project Profile Id",
+            "type": "string"
+          },
+          "project_profile_version": {
+            "minimum": 1.0,
+            "title": "Project Profile Version",
+            "type": "integer"
+          },
+          "rule_results": {
+            "items": {
+              "$ref": "#/components/schemas/RuleEvaluation"
+            },
+            "minItems": 1,
+            "title": "Rule Results",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "forgegate.policy-evaluation.v2",
+            "default": "forgegate.policy-evaluation.v2",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "evaluation_id",
+          "policy_name",
+          "policy_fingerprint",
+          "evidence_fingerprint",
+          "candidate_commit",
+          "evaluated_at",
+          "decision",
+          "rule_results",
+          "evaluated_evidence_ids",
+          "policy_material_id",
+          "policy_artifact_sha256",
+          "project_profile_id",
+          "project_profile_version"
+        ],
+        "title": "ProfileAuthorizedPolicyEvaluation",
         "type": "object"
       },
       "ProfileBoundReleaseCandidate": {
@@ -1807,7 +2029,7 @@
           "policy_evaluation": {
             "anyOf": [
               {
-                "$ref": "#/components/schemas/PolicyEvaluation"
+                "$ref": "#/components/schemas/PolicyEvaluationDocument"
               },
               {
                 "type": "null"
@@ -2115,7 +2337,7 @@
   "info": {
     "summary": "Local release-assurance project and candidate API",
     "title": "ForgeGate Local API",
-    "version": "0.1.0.dev16"
+    "version": "0.1.0.dev17"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -3153,6 +3375,109 @@
           }
         },
         "summary": "Get Candidate History Endpoint",
+        "tags": [
+          "candidates"
+        ]
+      }
+    },
+    "/v1/candidates/{candidate_id}/policy": {
+      "get": {
+        "description": "Return exact profile-authorized policy material retained at evaluation.",
+        "operationId": "getCandidatePolicyMaterial",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PolicyMaterial"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request conflicts with durable state"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request body exceeds local API limit"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Strict request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fail-closed internal error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate store unavailable"
+          }
+        },
+        "summary": "Get Candidate Policy Material Endpoint",
         "tags": [
           "candidates"
         ]

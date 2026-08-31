@@ -24,6 +24,7 @@ The v1 baseline includes:
 - `GET /v1/candidates/{candidate_id}`;
 - `GET /v1/candidates/{candidate_id}/history`;
 - `GET /v1/candidates/{candidate_id}/evidence`;
+- `GET /v1/candidates/{candidate_id}/policy`;
 - `GET /v1/candidates/{candidate_id}/attestation`.
 
 Project registration/revision and candidate creation, advancement, evidence binding, and evaluation require
@@ -39,15 +40,17 @@ Advancement and evaluation also require `expected_revision`. Attestation
 creation is deterministic against an immutable terminal candidate and replays
 the stored document exactly.
 
-No API command accepts an artifact input path or attestation output directory.
-Collection and filesystem publication remain explicit CLI operations.
+No API command accepts an artifact input path, policy input path, or
+attestation output directory. Collection, policy materialization, and
+filesystem publication remain explicit CLI operations. Evaluation accepts a
+complete self-validating policy-material document.
 
 ## Shared application boundary
 
 `CandidateApplication` accepts validated commands and delegates to
 `SQLiteCandidateRepository`. Project registration/revision/current/history,
-project/candidate list, candidate-create, show, history, show-evidence, and
-show-attestation CLI paths use this service, as do the HTTP routes. FastAPI
+project/candidate list, candidate-create, show, history, show-evidence,
+show-policy, and show-attestation CLI paths use this service, as do the HTTP routes. FastAPI
 handlers do not reimplement candidate identity, profile authority, persistence,
 idempotency, binding, or attestation policy.
 
@@ -61,8 +64,9 @@ HTTP route ──┘
 
 The shared service now owns create, advance, bind, evaluate, attest, and read
 commands. Evaluation loads the persisted binding, passes its nested evidence
-bundle to the policy engine, derives the terminal state from the decision, and
-uses one repository transaction for the evaluation plus terminal transition.
+bundle and supplied validated material to the policy engine, derives the
+terminal state from the decision, and uses one repository transaction for the
+material, evaluation, and terminal transition.
 
 ## Validation and error contract
 
@@ -104,7 +108,7 @@ repository, exports OpenAPI again, compares the bytes, and confirms that an
 external bind request fails.
 
 Tests cover API/CLI parity, exact replay/conflict, expected-revision races,
-invalid states, release-track policy mismatch, structured failures,
+invalid states, frozen-profile policy-material mismatch, structured failures,
 correlation IDs, loopback bind/Host handling, declared body size, contract
 paths, and a complete durable candidate workflow. These are local-host
 software results only; they do not exercise AFE runtime code, MSP430 hardware,

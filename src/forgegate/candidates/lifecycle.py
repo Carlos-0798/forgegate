@@ -15,7 +15,7 @@ from forgegate.candidates.models import (
 from forgegate.canonical import sha256_fingerprint
 from forgegate.domain.enums import CandidateStatus
 from forgegate.domain.models import canonical_release_track_name
-from forgegate.policy.models import PolicyEvaluation
+from forgegate.policy.models import PolicyEvaluationDocument
 
 
 class CandidateLifecycleError(ValueError):
@@ -105,7 +105,7 @@ def transition_candidate(
     *,
     occurred_at: datetime,
     reason: str | None = None,
-    evaluation: PolicyEvaluation | None = None,
+    evaluation: PolicyEvaluationDocument | None = None,
 ) -> CandidateTransitionResult:
     timestamp = _normalized_timestamp(occurred_at, field_name="occurred_at")
     if to_status not in ALLOWED_CANDIDATE_TRANSITIONS[candidate.status]:
@@ -190,7 +190,7 @@ def _validated_evaluation_id(
     to_status: CandidateStatus,
     *,
     timestamp: datetime,
-    evaluation: PolicyEvaluation | None,
+    evaluation: PolicyEvaluationDocument | None,
 ) -> str | None:
     if to_status not in TERMINAL_CANDIDATE_STATUSES:
         if evaluation is not None:

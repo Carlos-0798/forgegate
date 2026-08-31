@@ -18,6 +18,7 @@ The command routes are:
 | `POST /v1/candidates/{id}/transitions` | Append one legal state event | `Idempotency-Key` + `expected_revision` |
 | `POST /v1/candidates/{id}/evidence` | Bind one immutable audited assembly | `Idempotency-Key` + state gate |
 | `POST /v1/candidates/{id}/evaluate` | Evaluate binding and append terminal event | `Idempotency-Key` + `expected_revision` |
+| `GET /v1/candidates/{id}/policy` | Read retained exact policy material | Immutable terminal association |
 | `POST /v1/candidates/{id}/attestation` | Persist deterministic attestation | Terminal immutability + exact replay |
 
 All routes retain the existing structured error and request-correlation
@@ -44,12 +45,12 @@ create DRAFT
   -> persist forgegate.release-attestation.v1
 ```
 
-The evaluate request supplies a strict `PolicyConfig`, timestamp, expected
-revision, and idempotency key. It does not supply an evidence bundle. The
-application loads the candidate's immutable binding and evaluates its nested
-bundle. The policy name must equal the candidate release track. The repository
-then verifies the evidence fingerprint and commits the evaluation plus terminal
-transition atomically.
+The evaluate request supplies a strict `forgegate.policy-material.v1`,
+timestamp, expected revision, and idempotency key. It does not supply an
+evidence bundle. The application loads the candidate's immutable binding and
+evaluates its nested bundle. The repository verifies the material against the
+candidate's frozen profile/track/path, verifies the evidence fingerprint, and
+commits the material, v2 evaluation, and terminal transition atomically.
 
 A generic transition request may record an explicit fail-closed `ERROR` without
 a policy result, matching the existing domain contract. PASS, FAIL, and REVIEW
@@ -59,9 +60,9 @@ matching evaluation document.
 ## Filesystem and upstream isolation
 
 The bind route accepts the complete strict assembly document, not a path. The
-API never reopens the assembly's original artifact paths; those bytes were
-validated when the assembly was produced. Collection remains a separate local
-CLI operation.
+evaluate route likewise accepts the complete self-validating policy-material
+document. The API never reopens either document's artifact paths; those bytes
+were validated during separate local CLI assembly/materialization operations.
 
 Attestation creation persists the self-validating JSON document in SQLite but
 does not accept an output directory or publish JSON/Markdown files. Explicit

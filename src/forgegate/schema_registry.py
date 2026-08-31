@@ -14,7 +14,8 @@ from forgegate.candidates.models import (
 from forgegate.collectors.analog_validation import AFE_RESULT_JSON_SCHEMA
 from forgegate.collectors.benchmark import BENCHMARK_JSON_SCHEMA
 from forgegate.domain.models import EvidenceBundle, PolicyConfig, ProjectConfig
-from forgegate.policy.models import PolicyEvaluation
+from forgegate.policy import PolicyMaterial
+from forgegate.policy.models import PolicyEvaluation, ProfileAuthorizedPolicyEvaluation
 from forgegate.projects import (
     ProjectProfilePage,
     ProjectProfileRevision,
@@ -28,6 +29,8 @@ SCHEMAS: dict[str, type[BaseModel]] = {
     "forgegate.evidence-bundle.v1": EvidenceBundle,
     "forgegate.evidence-bundle-assembly.v1": EvidenceBundleAssembly,
     "forgegate.policy-evaluation.v1": PolicyEvaluation,
+    "forgegate.policy-evaluation.v2": ProfileAuthorizedPolicyEvaluation,
+    "forgegate.policy-material.v1": PolicyMaterial,
     "forgegate.release-candidate.v1": ReleaseCandidate,
     "forgegate.release-candidate.v2": ProfileBoundReleaseCandidate,
     "forgegate.release-candidate-page.v1": ReleaseCandidatePage,

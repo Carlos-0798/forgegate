@@ -21,6 +21,8 @@ runner = CliRunner()
 def _downgrade_to_schema_v2(database: Path) -> None:
     with sqlite3.connect(database) as connection:
         connection.execute("PRAGMA foreign_keys = OFF")
+        connection.execute("DROP TRIGGER candidates_policy_material_requirement_guard_update")
+        connection.execute("DROP TABLE candidate_policy_materials")
         connection.execute("DROP TABLE candidate_profile_bindings")
         connection.execute("DROP TABLE project_revision_idempotency_records")
         connection.execute("DROP TABLE project_profile_heads")
@@ -169,6 +171,28 @@ def _assembly_evaluation(repository_root: Path, output: Path) -> Path:
     return output
 
 
+def _materialize_policy(
+    database: Path,
+    candidate_id: str,
+    repository_root: Path,
+    output: Path,
+) -> Path:
+    result = runner.invoke(
+        app,
+        [
+            "candidate",
+            "materialize-policy",
+            str(database),
+            candidate_id,
+            "--project-root",
+            str(repository_root / "examples/sample-python-api"),
+        ],
+    )
+    assert result.exit_code == 0, result.output
+    output.write_text(result.stdout, encoding="utf-8")
+    return output
+
+
 def test_candidate_store_cli_create_advance_show_history_and_replay(
     tmp_path: Path, repository_root: Path
 ) -> None:
@@ -297,51 +321,59 @@ def test_candidate_store_cli_terminal_transition_loads_evaluation(
         )
         assert result.exit_code == 0
 
-    evaluation_path = _assembly_evaluation(repository_root, tmp_path / "assembly-evaluation.json")
+    material_path = _materialize_policy(
+        database,
+        candidate_id,
+        repository_root,
+        tmp_path / "policy-material.json",
+    )
 
     wrong_document = runner.invoke(
         app,
         [
             "candidate",
-            "advance",
+            "evaluate",
             str(database),
             candidate_id,
-            "--to",
-            "PASS",
+            str(repository_root / "examples/sample-python-api/evidence/pass-bundle.json"),
             "--expected-revision",
             "3",
-            "--occurred-at",
+            "--evaluated-at",
             "2026-08-30T21:00:00Z",
             "--idempotency-key",
             "advance:cli-terminal-bad",
-            "--evaluation",
-            str(repository_root / "examples/sample-python-api/evidence/pass-bundle.json"),
         ],
     )
     terminal = runner.invoke(
         app,
         [
             "candidate",
-            "advance",
+            "evaluate",
             str(database),
             candidate_id,
-            "--to",
-            "PASS",
+            str(material_path),
             "--expected-revision",
             "3",
-            "--occurred-at",
+            "--evaluated-at",
             "2026-08-30T21:00:00Z",
             "--idempotency-key",
             "advance:cli-terminal-001",
-            "--evaluation",
-            str(evaluation_path),
         ],
+    )
+    shown_material = runner.invoke(
+        app,
+        ["candidate", "show-policy", str(database), candidate_id],
     )
 
     assert wrong_document.exit_code == 3
-    assert "evaluation path must contain" in wrong_document.output
-    assert terminal.exit_code == 0
-    assert json.loads(terminal.stdout)["candidate"]["status"] == "PASS"
+    assert "policy material path must contain" in wrong_document.output
+    assert terminal.exit_code == shown_material.exit_code == 0
+    terminal_payload = json.loads(terminal.stdout)
+    assert terminal_payload["transition"]["candidate"]["status"] == "PASS"
+    assert terminal_payload["evaluation"]["schema_version"] == "forgegate.policy-evaluation.v2"
+    assert json.loads(shown_material.stdout) == json.loads(
+        material_path.read_text(encoding="utf-8")
+    )
 
     output_root = tmp_path / "attestations"
     attest_command = [

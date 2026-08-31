@@ -34,6 +34,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/PROJECT_REGISTRY_AND_AUDIT_QUERY.md",
     "docs/architecture/PROJECT_AUTHORITY_AND_DISCOVERY.md",
     "docs/architecture/PROJECT_PROFILE_REVISIONS.md",
+    "docs/architecture/POLICY_MATERIALIZATION.md",
     "examples/sample-python-api/artifacts/junit.xml",
     "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
@@ -62,9 +63,12 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_7_PROJECT_REGISTRY_AUDIT_QUERY_ACCEPTANCE_REPORT.md",
     "reports/PHASE_8_PROJECT_AUTHORITY_DISCOVERY_ACCEPTANCE_REPORT.md",
     "reports/PHASE_9_PROJECT_PROFILE_REVISIONS_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_10_POLICY_MATERIALIZATION_ACCEPTANCE_REPORT.md",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
+    "schemas/forgegate.policy-evaluation.v2.schema.json",
+    "schemas/forgegate.policy-material.v1.schema.json",
     "schemas/forgegate.release-candidate.v1.schema.json",
     "schemas/forgegate.release-candidate.v2.schema.json",
     "schemas/forgegate.candidate-transition.v1.schema.json",
@@ -110,6 +114,7 @@ REQUIRED_SDIST_PATHS = (
     "tests/test_project_registry_audit.py",
     "tests/test_project_authority_discovery.py",
     "tests/test_project_profile_revisions.py",
+    "tests/test_policy_materialization.py",
 )
 
 
@@ -308,6 +313,7 @@ def main() -> int:
             ("/v1/candidates/{candidate_id}/transitions", "post"): "advanceCandidate",
             ("/v1/candidates/{candidate_id}/evidence", "post"): "bindCandidateEvidence",
             ("/v1/candidates/{candidate_id}/evaluate", "post"): "evaluateCandidate",
+            ("/v1/candidates/{candidate_id}/policy", "get"): "getCandidatePolicyMaterial",
             ("/v1/candidates/{candidate_id}/attestation", "post"): "attestCandidate",
         }
         for (path, method), operation_id in expected_operations.items():
@@ -496,7 +502,7 @@ def main() -> int:
             "--created-at",
             "2026-08-30T12:00:00Z",
             "--track",
-            "pull_request",
+            "pull-request",
             "--database",
             str(candidate_store),
             "--idempotency-key",
@@ -603,7 +609,6 @@ def main() -> int:
         for revision, status, timestamp in (
             (1, "READY", "2026-08-30T20:32:00Z"),
             (2, "EVALUATING", "2026-08-30T20:33:00Z"),
-            (3, "PASS", "2026-08-30T21:00:00Z"),
         ):
             advance_command = [
                 str(python),
@@ -622,24 +627,60 @@ def main() -> int:
                 "--idempotency-key",
                 f"advance:release-smoke-{status.lower()}",
             ]
-            if status == "PASS":
-                advance_command.extend(
-                    [
-                        "--evaluation",
-                        str(assembly_evaluation),
-                    ]
-                )
             run(advance_command, cwd=root)
+        policy_material = root / "policy-material.json"
+        run_capture(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "candidate",
+                "materialize-policy",
+                str(candidate_store),
+                candidate_id,
+                "--project-root",
+                str(REPOSITORY_ROOT / "examples/sample-python-api"),
+            ],
+            policy_material,
+            cwd=root,
+        )
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "validate-config",
+                str(policy_material),
+            ],
+            cwd=root,
+        )
+        evaluate_candidate = [
+            str(python),
+            "-m",
+            "forgegate",
+            "candidate",
+            "evaluate",
+            str(candidate_store),
+            candidate_id,
+            str(policy_material),
+            "--expected-revision",
+            "3",
+            "--evaluated-at",
+            "2026-08-30T21:00:00Z",
+            "--idempotency-key",
+            "evaluate:release-smoke-pass",
+        ]
+        run(evaluate_candidate, cwd=root)
+        run(evaluate_candidate, cwd=root)
         run(
             [
                 str(python),
                 "-m",
                 "forgegate",
                 "candidate",
-                "import-evaluation",
+                "show-policy",
                 str(candidate_store),
                 candidate_id,
-                str(assembly_evaluation),
             ],
             cwd=root,
         )

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from pydantic import Field, field_validator
+from pydantic import Field, field_validator, model_validator
 
 from forgegate.assembly import EvidenceBundleAssembly
 from forgegate.candidates import CandidateEvidenceBinding, CandidateHistory
@@ -20,7 +20,8 @@ from forgegate.domain.models import (
     ProjectConfig,
     StrictModel,
 )
-from forgegate.policy.models import PolicyEvaluation
+from forgegate.policy import PolicyMaterial
+from forgegate.policy.models import PolicyEvaluationDocument
 
 
 class CandidateCreateCommand(StrictModel):
@@ -89,6 +90,8 @@ class CandidateHistoryView(StrictModel):
     transitions: tuple[CandidateTransition, ...]
     evidence_binding_required: bool
     evidence_binding: CandidateEvidenceBinding | None
+    policy_material_required: bool
+    policy_material: PolicyMaterial | None
 
     @classmethod
     def from_history(cls, history: CandidateHistory) -> CandidateHistoryView:
@@ -97,6 +100,8 @@ class CandidateHistoryView(StrictModel):
             transitions=history.transitions,
             evidence_binding_required=history.evidence_binding_required,
             evidence_binding=history.evidence_binding,
+            policy_material_required=history.policy_material_required,
+            policy_material=history.policy_material,
         )
 
 
@@ -123,7 +128,8 @@ class CandidateBindEvidenceCommand(StrictModel):
 
 
 class CandidateEvaluateCommand(StrictModel):
-    policy: PolicyConfig
+    policy_material: PolicyMaterial | None = None
+    policy: PolicyConfig | None = None
     expected_revision: int = Field(ge=0)
     evaluated_at: datetime
     reason: str | None = Field(default=None, min_length=1, max_length=500)
@@ -132,6 +138,12 @@ class CandidateEvaluateCommand(StrictModel):
     @classmethod
     def evaluated_at_must_include_timezone(cls, value: datetime) -> datetime:
         return _timezone_aware(value, "evaluated_at")
+
+    @model_validator(mode="after")
+    def exactly_one_policy_input(self) -> CandidateEvaluateCommand:
+        if (self.policy_material is None) == (self.policy is None):
+            raise ValueError("provide exactly one of policy_material or legacy policy")
+        return self
 
 
 class CandidateAttestCommand(StrictModel):
@@ -144,8 +156,9 @@ class CandidateAttestCommand(StrictModel):
 
 
 class CandidateEvaluationResult(StrictModel):
-    evaluation: PolicyEvaluation
+    evaluation: PolicyEvaluationDocument
     transition: CandidateTransitionResult
+    policy_material: PolicyMaterial | None = None
 
 
 def _timezone_aware(value: datetime, field_name: str) -> datetime:

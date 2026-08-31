@@ -8,12 +8,12 @@ the original v1 document for legacy/stateless compatibility. The store does not
 contain upstream AFE/MSP430 internals.
 
 `SQLiteCandidateRepository` owns one local database file. Initialization sets a
-ForgeGate application ID, schema version 6, WAL journaling, FULL synchronous
+ForgeGate application ID, schema version 7, WAL journaling, FULL synchronous
 durability, foreign keys, and a bounded busy timeout. A future schema version is
 rejected. An existing schema-v1, schema-v2, schema-v3, or schema-v4 store is
 never changed by `init-store`; the owner must run the explicit, validated
-`migrate-store` operation. Validated schema-v5 stores follow the same explicit
-migration rule.
+`migrate-store` operation. Validated schema-v5 and schema-v6 stores follow the
+same explicit migration rule.
 
 ## Tables and ordering
 
@@ -27,6 +27,8 @@ migration rule.
   fingerprint and response document;
 - `candidate_evaluations` stores the exact terminal policy evaluation and its
   canonical fingerprint;
+- `candidate_policy_materials` stores exact profile-authorized policy bytes and
+  their self-validating material document for a new v7 candidate;
 - `candidate_evidence_bindings` stores the complete self-validating assembly
   binding for a new v3 candidate;
 - `attestations` stores one exact JSON attestation and deterministic Markdown
@@ -44,12 +46,13 @@ migration rule.
   state changes;
 - `forgegate_metadata` identifies the exact storage schema.
 
-Schema v6 retains the v5 `(project_id, candidate_id)` discovery index and adds a
+Schema v7 retains the v5 `(project_id, candidate_id)` discovery index and v6
 version-ordered project-profile index.
 
 Database triggers reject candidate deletion, identity rewriting, non-unit
 current-revision updates, and every update/delete of snapshot, transition, and
-idempotency, evidence-binding, evaluation, and attestation rows. These controls
+idempotency, evidence-binding, policy-material, evaluation, and attestation
+rows. These controls
 protect accidental or direct SQL mutation;
 they are not an authorization boundary against an administrator who can replace
 the database file or rewrite its schema.
@@ -77,10 +80,10 @@ Advancement performs the following operations in one transaction:
 1. verify the idempotency key or recognize an exact replay;
 2. load and validate the entire current snapshot/event chain;
 3. compare the caller's `expected_revision` with the current revision;
-4. enforce the candidate evidence-binding gate, then run the pure lifecycle
-   transition and evaluation-binding checks;
+4. enforce the candidate evidence-binding and policy-material gates, then run
+   the pure lifecycle transition and evaluation-binding checks;
 5. append the next snapshot and transition and, for an evaluated terminal
-   decision, its exact evaluation document;
+   decision, its exact policy material and evaluation document;
 6. update the current pointer with `WHERE current_revision = ?`;
 7. append the immutable idempotency response.
 
@@ -99,12 +102,14 @@ Every read is a consistent SQLite transaction and validates:
 - canonical stored JSON and strict Pydantic document validity;
 - snapshot count and exact revision ordering;
 - transition metadata and before/after fingerprint links;
-- immutable identity and current-pointer agreement with the audit chain.
+- immutable identity and current-pointer agreement with the audit chain;
 - contiguous project-profile versions, previous-profile links, monotonic
   effective times, and agreement between the initial registration, ledger, and
   current head;
 - v2 candidate binding metadata, referenced profile identity/version, and the
-  invariant that every lifecycle snapshot preserves one binding.
+  invariant that every lifecycle snapshot preserves one binding;
+- v7 candidate material-requirement metadata, exact material bytes and hashes,
+  frozen-profile path authority, and v2 evaluation association.
 
 Reopening the database reconstructs authoritative state from durable rows. It
 does not rerun collectors or policy evaluation. Evaluation and attestation
@@ -115,24 +120,33 @@ assembly identities and compare the embedded candidate with revision one.
 Corruption fails closed with a stable store error; this checkpoint does not
 repair, salvage, back up, encrypt, or replicate a damaged database.
 
-## Explicit v1/v2/v3/v4/v5 migration
+## Explicit v1/v2/v3/v4/v5/v6 migration
 
 `candidate migrate-store DATABASE` accepts only a fully valid schema-v1,
-schema-v2, schema-v3, schema-v4, or schema-v5 store. Missing historical layers are added
+schema-v2, schema-v3, schema-v4, schema-v5, or schema-v6 store. Missing
+historical layers are added
 before the v4 project/audit objects. Existing immutable candidate documents are
 then projected into deterministic audit-event order. The v4-to-v5 step adds
 only the project/candidate discovery index and never replays those audit events.
 The v5-to-v6 step projects each existing registered project into profile version
 one and creates its head. It deliberately does not fabricate a profile binding
 for any legacy candidate, evidence, rejected request, or actor identity.
+The v6-to-v7 step adds policy-material persistence and defaults every historical
+candidate's immutable requirement marker to zero. It never invents historical
+policy bytes, hashes, approval, or producer authenticity.
 The operation updates both metadata values and `PRAGMA user_version` in one
-transaction, then revalidates the result. Calling it on v6 is an idempotent
+transaction, then revalidates the result. Calling it on v7 is an idempotent
 validation. Unknown, foreign, or corrupt stores fail closed.
 
 Existing candidates receive an immutable `evidence_binding_required = 0`
 marker. This preserves the historical state without fabricating an assembly
 binding. Every candidate created under v3 sets the marker to one and must bind
 evidence before `READY`.
+
+Historical candidates receive `policy_material_required = 0`. New
+product-surface candidates created under v7 set it to one and cannot complete a
+policy decision without a matching `forgegate.policy-material.v1` and
+`forgegate.policy-evaluation.v2` pair.
 
 A v1 terminal candidate contains only an evaluation reference, not the full
 evaluation document. After migration, `candidate import-evaluation` must be
@@ -144,7 +158,8 @@ stored. Attestation is refused until this backfill is complete.
 
 `candidate init-store`, `migrate-store`, persisted `candidate create
 --database`, `list`, `bind-evidence`, `show-evidence`, `advance`, `show`, `history`,
-`import-evaluation`, `attest`, and `show-attestation` expose this repository.
+`materialize-policy`, `evaluate`, `show-policy`, `import-evaluation`, `attest`,
+and `show-attestation` expose this repository.
 `project list` provides the bounded registered-project discovery path;
 `project revise`, `current`, and `history` expose the versioned profile ledger.
 The original `candidate create`

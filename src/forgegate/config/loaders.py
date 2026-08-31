@@ -13,16 +13,21 @@ from forgegate.candidates.models import (
     ReleaseCandidate,
 )
 from forgegate.domain.models import EvidenceBundle, PolicyConfig, ProjectConfig
-from forgegate.policy.models import PolicyEvaluation
+from forgegate.policy import PolicyMaterial
+from forgegate.policy.models import PolicyEvaluation, ProfileAuthorizedPolicyEvaluation
 from forgegate.projects import ProjectProfileRevision
 
-MAX_CONFIG_BYTES = 1024 * 1024
+# A policy-material envelope can contain one 1 MiB policy twice: exact base64
+# bytes plus its strict parsed document. Match the local REST request boundary.
+MAX_CONFIG_BYTES = 4 * 1024 * 1024
 type SupportedConfig = (
     ProjectConfig
     | PolicyConfig
     | EvidenceBundle
     | EvidenceBundleAssembly
     | PolicyEvaluation
+    | ProfileAuthorizedPolicyEvaluation
+    | PolicyMaterial
     | ReleaseCandidate
     | ProfileBoundReleaseCandidate
     | CandidateTransition
@@ -38,6 +43,8 @@ SCHEMA_MODELS: dict[str, type[SupportedConfig]] = {
     "forgegate.evidence-bundle.v1": EvidenceBundle,
     "forgegate.evidence-bundle-assembly.v1": EvidenceBundleAssembly,
     "forgegate.policy-evaluation.v1": PolicyEvaluation,
+    "forgegate.policy-evaluation.v2": ProfileAuthorizedPolicyEvaluation,
+    "forgegate.policy-material.v1": PolicyMaterial,
     "forgegate.release-candidate.v1": ReleaseCandidate,
     "forgegate.release-candidate.v2": ProfileBoundReleaseCandidate,
     "forgegate.candidate-transition.v1": CandidateTransition,

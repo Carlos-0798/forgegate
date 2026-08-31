@@ -126,11 +126,11 @@
 
 ## Phase 10 — profile-authorized policy materialization
 
-- [ ] Resolve the selected release-track policy from an explicit project root
+- [x] Resolve the selected release-track policy from an explicit project root
   and retain its exact bytes, media type, size, and SHA-256 identity.
-- [ ] Bind evaluation to policy material authorized by the candidate's frozen
+- [x] Bind evaluation to policy material authorized by the candidate's frozen
   profile rather than accepting name equality as sufficient authority.
-- [ ] Preserve path-free REST operation by accepting or referencing a validated
+- [x] Preserve path-free REST operation by accepting or referencing a validated
   policy document, never dereferencing client-controlled server paths.
-- [ ] Define migration and legacy semantics without fabricating historical
+- [x] Define migration and legacy semantics without fabricating historical
   policy bytes or producer authenticity.

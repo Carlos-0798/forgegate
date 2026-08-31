@@ -6,6 +6,7 @@ from typer.testing import CliRunner
 
 from forgegate.cli import app
 from forgegate.config import ConfigLoadError, load_config
+from forgegate.config.loaders import MAX_CONFIG_BYTES
 from forgegate.schema_registry import ARTIFACT_SCHEMAS, SCHEMAS, schema_filename
 
 runner = CliRunner()
@@ -70,7 +71,7 @@ def test_schema_validation_error_is_user_facing(tmp_path: Path) -> None:
 
 def test_loader_rejects_oversized_config(tmp_path: Path) -> None:
     path = tmp_path / "large.yaml"
-    path.write_bytes(b"x" * (1024 * 1024 + 1))
+    path.write_bytes(b"x" * (MAX_CONFIG_BYTES + 1))
     with pytest.raises(ConfigLoadError, match="exceeds"):
         load_config(path)
 
@@ -79,7 +80,7 @@ def test_doctor_reports_phase() -> None:
     result = runner.invoke(app, ["doctor"])
     assert result.exit_code == 0
     report = json.loads(result.stdout)
-    assert report["phase"] == "phase9-project-profile-revisions"
+    assert report["phase"] == "phase10-profile-authorized-policy-material"
     assert report["supported_schemas"] == sorted(SCHEMAS)
     assert report["supported_artifact_schemas"] == sorted(ARTIFACT_SCHEMAS)
 

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Any, Literal
+from datetime import UTC, datetime
+from typing import Annotated, Any, Literal
 
-from pydantic import Field, field_validator
+from pydantic import Field, TypeAdapter, field_validator, model_validator
 
 from forgegate.domain.enums import Aggregation, Decision, Operator
 from forgegate.domain.models import (
@@ -37,8 +37,11 @@ class RuleEvaluation(StrictModel):
         return ensure_json_compatible(value)
 
 
-class PolicyEvaluation(StrictModel):
-    schema_version: Literal["forgegate.policy-evaluation.v1"] = "forgegate.policy-evaluation.v1"
+class PolicyEvaluationFields(StrictModel):
+    schema_version: Literal[
+        "forgegate.policy-evaluation.v1",
+        "forgegate.policy-evaluation.v2",
+    ]
     evaluation_id: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
     policy_name: str = Field(pattern=SLUG_PATTERN)
     policy_fingerprint: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
@@ -55,3 +58,37 @@ class PolicyEvaluation(StrictModel):
         if value.tzinfo is None or value.utcoffset() is None:
             raise ValueError("evaluated_at must include a UTC offset")
         return value
+
+
+class PolicyEvaluation(PolicyEvaluationFields):
+    schema_version: Literal["forgegate.policy-evaluation.v1"] = "forgegate.policy-evaluation.v1"
+
+
+class ProfileAuthorizedPolicyEvaluation(PolicyEvaluationFields):
+    schema_version: Literal["forgegate.policy-evaluation.v2"] = "forgegate.policy-evaluation.v2"
+    policy_material_id: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    policy_artifact_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    project_profile_id: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+    project_profile_version: int = Field(ge=1)
+
+    @model_validator(mode="after")
+    def evaluation_identity_includes_material(self) -> ProfileAuthorizedPolicyEvaluation:
+        identity = {
+            "policy_material_id": self.policy_material_id,
+            "evidence_fingerprint": self.evidence_fingerprint,
+            "evaluated_at": self.evaluated_at.astimezone(UTC).isoformat().replace("+00:00", "Z"),
+        }
+        from forgegate.canonical import sha256_fingerprint
+
+        if self.evaluation_id != sha256_fingerprint(identity):
+            raise ValueError("evaluation_id does not match policy material evaluation inputs")
+        return self
+
+
+type PolicyEvaluationDocument = Annotated[
+    PolicyEvaluation | ProfileAuthorizedPolicyEvaluation,
+    Field(discriminator="schema_version"),
+]
+POLICY_EVALUATION_ADAPTER: TypeAdapter[PolicyEvaluationDocument] = TypeAdapter(
+    PolicyEvaluationDocument
+)

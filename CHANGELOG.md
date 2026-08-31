@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.0.dev17 — 2026-08-31
+
+- Added self-validating `forgegate.policy-material.v1` documents that retain
+  exact profile-authorized policy bytes, media type, size, SHA-256, parsed
+  policy, and content-derived identity.
+- Added `forgegate.policy-evaluation.v2`, binding the decision to the material
+  ID, policy artifact hash, candidate profile ID/version, evidence fingerprint,
+  and explicit evaluation time.
+- Upgraded the SQLite store to schema v7; new profile-bound candidates require
+  policy material for terminal evaluation, while v1-v6 migration preserves
+  historical candidates without invented bytes or authenticity.
+- Added CLI materialization/evaluation/read commands and a path-free REST
+  evaluate/read contract; the API accepts validated material and never opens a
+  client-selected server path.
+- Added adversarial byte/identity, rollback, migration, CLI/API, Schema,
+  OpenAPI, packaging, and clean-install verification for the complete slice.
+
 ## 0.1.0.dev16 — 2026-08-31
 
 - Added append-only project-profile revision and bounded history contracts with

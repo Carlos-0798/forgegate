@@ -16,7 +16,10 @@ from forgegate.candidates.models import (
 from forgegate.canonical import sha256_fingerprint
 from forgegate.domain.enums import Decision
 from forgegate.domain.models import StrictModel
-from forgegate.policy.models import PolicyEvaluation
+from forgegate.policy.models import (
+    PolicyEvaluationDocument,
+    ProfileAuthorizedPolicyEvaluation,
+)
 
 FINGERPRINT_PATTERN = r"^sha256:[0-9a-f]{64}$"
 _DECISION_RANK = {
@@ -38,7 +41,7 @@ class ReleaseAttestation(StrictModel):
     candidate_fingerprint: str = Field(pattern=FINGERPRINT_PATTERN)
     transitions: list[CandidateTransition] = Field(min_length=4, max_length=4)
     transition_chain_fingerprint: str = Field(pattern=FINGERPRINT_PATTERN)
-    policy_evaluation: PolicyEvaluation | None = None
+    policy_evaluation: PolicyEvaluationDocument | None = None
     evaluation_fingerprint: str | None = Field(default=None, pattern=FINGERPRINT_PATTERN)
 
     @field_validator("issued_at")
@@ -148,13 +151,14 @@ class ReleaseAttestation(StrictModel):
             or candidate.updated_at != evaluation.evaluated_at
         ):
             raise ValueError("policy evaluation does not match the terminal candidate")
-        evaluation_identity = {
-            "policy_fingerprint": evaluation.policy_fingerprint,
-            "evidence_fingerprint": evaluation.evidence_fingerprint,
-            "evaluated_at": evaluation.evaluated_at.isoformat(),
-        }
-        if evaluation.evaluation_id != sha256_fingerprint(evaluation_identity):
-            raise ValueError("policy evaluation ID does not match its declared inputs and time")
+        if not isinstance(evaluation, ProfileAuthorizedPolicyEvaluation):
+            evaluation_identity = {
+                "policy_fingerprint": evaluation.policy_fingerprint,
+                "evidence_fingerprint": evaluation.evidence_fingerprint,
+                "evaluated_at": evaluation.evaluated_at.isoformat(),
+            }
+            if evaluation.evaluation_id != sha256_fingerprint(evaluation_identity):
+                raise ValueError("policy evaluation ID does not match its declared inputs and time")
         rule_ids = [result.rule_id for result in evaluation.rule_results]
         if len(rule_ids) != len(set(rule_ids)):
             raise ValueError("policy evaluation rule IDs must be unique")

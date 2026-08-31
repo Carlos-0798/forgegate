@@ -7,7 +7,7 @@ from html import escape
 from forgegate.attestations.models import ReleaseAttestation
 from forgegate.candidates.models import CandidateDocument, CandidateTransition
 from forgegate.canonical import sha256_fingerprint
-from forgegate.policy.models import PolicyEvaluation
+from forgegate.policy.models import PolicyEvaluationDocument
 
 
 class AttestationError(ValueError):
@@ -22,7 +22,7 @@ def create_release_attestation(
     candidate: CandidateDocument,
     transitions: tuple[CandidateTransition, ...],
     *,
-    policy_evaluation: PolicyEvaluation | None,
+    policy_evaluation: PolicyEvaluationDocument | None,
     issued_at: datetime,
     generator_version: str,
 ) -> ReleaseAttestation:

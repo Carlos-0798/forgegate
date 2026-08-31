@@ -1,0 +1,274 @@
+{
+  "$defs": {
+    "Aggregation": {
+      "enum": [
+        "value",
+        "count",
+        "all",
+        "any"
+      ],
+      "title": "Aggregation",
+      "type": "string"
+    },
+    "ArtifactReference": {
+      "additionalProperties": false,
+      "properties": {
+        "media_type": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Media Type",
+          "type": "string"
+        },
+        "path_or_uri": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Path Or Uri",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "path_or_uri",
+        "media_type",
+        "sha256",
+        "size_bytes"
+      ],
+      "title": "ArtifactReference",
+      "type": "object"
+    },
+    "Decision": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "REVIEW",
+        "ERROR"
+      ],
+      "title": "Decision",
+      "type": "string"
+    },
+    "EvidenceTrust": {
+      "description": "How strongly ForgeGate can trust the producer identity.",
+      "enum": [
+        "unsigned_local",
+        "claimed_ci_metadata",
+        "verified_ci_identity",
+        "signed_attestation"
+      ],
+      "title": "EvidenceTrust",
+      "type": "string"
+    },
+    "Operator": {
+      "enum": [
+        "equals",
+        "not_equals",
+        "greater_than",
+        "greater_than_or_equal",
+        "less_than",
+        "less_than_or_equal",
+        "contains",
+        "exists"
+      ],
+      "title": "Operator",
+      "type": "string"
+    },
+    "PolicyConfig": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "pattern": "^[a-z][a-z0-9-]{1,62}$",
+          "title": "Name",
+          "type": "string"
+        },
+        "rules": {
+          "items": {
+            "$ref": "#/$defs/PolicyRule"
+          },
+          "minItems": 1,
+          "title": "Rules",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": "forgegate.policy.v1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "name",
+        "rules"
+      ],
+      "title": "PolicyConfig",
+      "type": "object"
+    },
+    "PolicyRule": {
+      "additionalProperties": false,
+      "properties": {
+        "aggregation": {
+          "$ref": "#/$defs/Aggregation",
+          "default": "value"
+        },
+        "claim": {
+          "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z0-9_-]+)+$",
+          "title": "Claim",
+          "type": "string"
+        },
+        "evidence_kind": {
+          "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z0-9_-]+)+$",
+          "title": "Evidence Kind",
+          "type": "string"
+        },
+        "expected": {
+          "title": "Expected"
+        },
+        "id": {
+          "pattern": "^[a-z][a-z0-9._-]{1,127}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "mandatory": {
+          "default": true,
+          "title": "Mandatory",
+          "type": "boolean"
+        },
+        "maximum_age_seconds": {
+          "anyOf": [
+            {
+              "maximum": 315576000,
+              "minimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Maximum Age Seconds"
+        },
+        "minimum_trust": {
+          "$ref": "#/$defs/EvidenceTrust",
+          "default": "unsigned_local"
+        },
+        "minimum_verification": {
+          "$ref": "#/$defs/VerificationLevel",
+          "default": "declared"
+        },
+        "on_missing": {
+          "$ref": "#/$defs/Decision",
+          "default": "REVIEW"
+        },
+        "operator": {
+          "$ref": "#/$defs/Operator"
+        },
+        "require_presence": {
+          "default": true,
+          "title": "Require Presence",
+          "type": "boolean"
+        },
+        "where": {
+          "additionalProperties": true,
+          "title": "Where",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "claim",
+        "evidence_kind",
+        "operator",
+        "expected"
+      ],
+      "title": "PolicyRule",
+      "type": "object"
+    },
+    "VerificationLevel": {
+      "description": "What kind of engineering observation the evidence represents.",
+      "enum": [
+        "declared",
+        "simulated",
+        "replayed",
+        "host_tested",
+        "target_built",
+        "ci_validated",
+        "system_observed",
+        "physically_verified"
+      ],
+      "title": "VerificationLevel",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Exact policy bytes authorized by one immutable project profile.",
+  "properties": {
+    "artifact": {
+      "$ref": "#/$defs/ArtifactReference"
+    },
+    "content_base64": {
+      "maxLength": 1398104,
+      "minLength": 4,
+      "title": "Content Base64",
+      "type": "string"
+    },
+    "material_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Material Id",
+      "type": "string"
+    },
+    "policy": {
+      "$ref": "#/$defs/PolicyConfig"
+    },
+    "policy_fingerprint": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Policy Fingerprint",
+      "type": "string"
+    },
+    "project_id": {
+      "pattern": "^[a-z][a-z0-9-]{1,62}$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "project_profile_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Project Profile Id",
+      "type": "string"
+    },
+    "project_profile_version": {
+      "minimum": 1,
+      "title": "Project Profile Version",
+      "type": "integer"
+    },
+    "release_track": {
+      "pattern": "^[a-z][a-z0-9-]{1,62}$",
+      "title": "Release Track",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "forgegate.policy-material.v1",
+      "default": "forgegate.policy-material.v1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "material_id",
+    "project_id",
+    "project_profile_id",
+    "project_profile_version",
+    "release_track",
+    "artifact",
+    "content_base64",
+    "policy",
+    "policy_fingerprint"
+  ],
+  "title": "PolicyMaterial",
+  "type": "object"
+}

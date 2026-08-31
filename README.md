@@ -8,7 +8,7 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 9 profile-bound candidates and append-only project revisions implemented;
+**Phase 10 profile-authorized policy materialization implemented;
 not production-ready.**
 
 This private-development checkpoint provides a working Python 3.12 CLI and a
@@ -34,7 +34,10 @@ current immutable project profile -> profile-bound release candidate
                   persisted evidence binding
                               |
                               v
-                   versioned policy evaluation
+       exact profile-authorized policy material
+                              |
+                              v
+                material-bound policy evaluation
                               |
                               v
         immutable transition history + unsigned local attestation
@@ -48,12 +51,12 @@ collector rather than a runtime or hardware dependency.
 
 | Gate | Result | Evidence level |
 |---|---|---|
-| Python tests | 573 passed, 1 skipped because Windows symlink creation was unavailable | Local host test |
-| Branch-aware coverage | 99.05% across 4,799 statements and 1,284 branches | Local host test |
+| Python tests | 585 passed, 1 skipped because Windows symlink creation was unavailable | Local host test |
+| Branch-aware coverage | 98.48% across 5,085 statements and 1,380 branches | Local host test |
 | Static quality gates | Ruff, formatting, and strict mypy passed | Local host test |
 | Contracts | JSON Schema and OpenAPI drift checks passed | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
-| GitHub Actions | Windows, Ubuntu, and macOS completed `verify.py` and `release_smoke.py` | PASS — [Phase 9 run 33436111147](https://github.com/Carlos-0798/forgegate/actions/runs/33436111147) |
+| GitHub Actions | Latest completed remote baseline; Phase 10 run pending private sync | PASS — [Phase 9 run 33436111147](https://github.com/Carlos-0798/forgegate/actions/runs/33436111147) |
 | Hardware/device behavior | Not exercised by ForgeGate | Out of scope |
 
 ## Key design decisions
@@ -67,6 +70,8 @@ collector rather than a runtime or hardware dependency.
   persisted history is append-only.
 - New persisted candidates bind the exact immutable project-profile ID/version
   that authorized creation; later revisions cannot reinterpret them.
+- New terminal decisions retain the exact profile-authorized policy bytes and
+  bind evaluation v2 to their material ID, SHA-256, and frozen profile.
 - Project revisions are complete append-only replacements guarded by expected
   profile version and exact idempotency; legacy candidates remain readable
   without fabricated profile bindings.
@@ -81,7 +86,8 @@ collector rather than a runtime or hardware dependency.
 Implemented and host-verified in this checkpoint:
 
 - strict, versioned project, policy, and evidence-bundle models;
-- fail-closed configuration loading with a 1 MiB input limit;
+- fail-closed configuration loading with a 4 MiB document limit and a separate
+  1 MiB exact policy-material byte limit;
 - explicit evidence trust and verification levels;
 - guards that prevent a mandatory zero-count rule from passing without evidence;
 - CLI commands for environment diagnosis, configuration validation, and schema export;
@@ -172,7 +178,7 @@ Implemented and host-verified in this checkpoint:
   decision, and atomically records the matching terminal transition;
 - durable REST attestation creation without accepting a filesystem output
   path or publishing files;
-- release-track/policy-name matching, loopback Host validation, and a declared
+- frozen-profile/material matching, loopback Host validation, and a declared
   4 MiB request-length guard;
 - complete HTTP create → collect-state → bind → ready → evaluate → attest
   integration with exact replay and conflict tests.
@@ -194,6 +200,12 @@ Implemented and host-verified in this checkpoint:
   candidates;
 - explicit v1/v2/v3/v4/v5-to-v6 migration without replaying existing audit
   events or fabricating profile links for legacy candidates.
+- self-validating policy-material documents retaining exact bytes, media type,
+  size, SHA-256, parsed policy, profile/track authority, and content identity;
+- material-bound policy-evaluation v2 plus SQLite v7 atomic persistence and
+  non-fabricating v1-v6 migration semantics;
+- `candidate materialize-policy`, `evaluate`, and `show-policy`, with path-free
+  REST evaluation and policy-material readback.
 
 
 </details>
@@ -512,10 +524,11 @@ another optional collector.
 
 ## Roadmap
 
-The next core slice will strengthen the relationship between a profile's policy
-path and the exact policy bytes used for evaluation. Authenticated identity must
-still precede any non-loopback deployment. MSP430 compatibility remains gated
-on a separately frozen public result contract. See
+The Phase 10 local CLI/API MVP now binds frozen profile authority to exact
+policy bytes. The next core slice will be selected from portable assurance
+bundling and authenticated identity; identity must still precede any
+non-loopback deployment. MSP430 compatibility remains gated on a separately
+frozen public result contract. See
 [docs/ROADMAP.md](docs/ROADMAP.md) for acceptance-level tasks.
 
 ## License status

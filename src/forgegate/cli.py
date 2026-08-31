@@ -15,6 +15,7 @@ from forgegate.application import (
     CandidateAttestCommand,
     CandidateBindEvidenceCommand,
     CandidateCreateCommand,
+    CandidateEvaluateCommand,
     CandidateQuery,
     ProjectProfileQuery,
     ProjectQuery,
@@ -58,8 +59,12 @@ from forgegate.config import ConfigLoadError, load_config
 from forgegate.domain.enums import CandidateStatus, Decision, EvidenceTrust, VerificationLevel
 from forgegate.domain.models import EvidenceBundle, ExecutionContext, PolicyConfig, ProjectConfig
 from forgegate.network import validated_loopback_host
-from forgegate.policy import evaluate_policy
-from forgegate.policy.models import PolicyEvaluation
+from forgegate.policy import PolicyMaterial, evaluate_policy
+from forgegate.policy.models import (
+    PolicyEvaluation,
+    PolicyEvaluationDocument,
+    ProfileAuthorizedPolicyEvaluation,
+)
 from forgegate.schema_registry import ARTIFACT_SCHEMAS, SCHEMAS, schema_filename
 
 app = typer.Typer(
@@ -84,7 +89,7 @@ def doctor() -> None:
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
         "supported_artifact_schemas": sorted(ARTIFACT_SCHEMAS),
-        "phase": "phase9-project-profile-revisions",
+        "phase": "phase10-profile-authorized-policy-material",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 
@@ -378,7 +383,7 @@ def candidate_list(
 def candidate_init_store(
     database: Annotated[Path, typer.Argument(dir_okay=False)],
 ) -> None:
-    """Initialize or validate a local SQLite WAL candidate store at schema v6."""
+    """Initialize or validate a local SQLite WAL candidate store at schema v7."""
     try:
         repository = SQLiteCandidateRepository(database)
         repository.initialize()
@@ -392,7 +397,7 @@ def candidate_init_store(
 def candidate_migrate_store(
     database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
 ) -> None:
-    """Explicitly migrate a validated candidate store from schema v1-v5 to v6."""
+    """Explicitly migrate a validated candidate store from schema v1-v6 to v7."""
     try:
         repository = SQLiteCandidateRepository(database)
         repository.migrate()
@@ -542,6 +547,87 @@ def candidate_show_evidence(
     typer.echo(binding.model_dump_json(indent=2))
 
 
+@candidate_app.command("materialize-policy")
+def candidate_materialize_policy(
+    database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    candidate_id: Annotated[str, typer.Argument()],
+    project_root: Annotated[
+        Path,
+        typer.Option("--project-root", exists=True, file_okay=False, readable=True),
+    ],
+) -> None:
+    """Resolve exact policy bytes through the candidate's frozen project profile."""
+    try:
+        material = CandidateApplication.for_database(database).materialize_policy(
+            candidate_id,
+            project_root,
+        )
+    except (
+        ArtifactError,
+        CandidateLifecycleError,
+        CandidateStoreError,
+        ValidationError,
+        ValueError,
+    ) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(material.model_dump_json(indent=2))
+
+
+@candidate_app.command("evaluate")
+def candidate_evaluate(
+    database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    candidate_id: Annotated[str, typer.Argument()],
+    policy_material_path: Annotated[
+        Path,
+        typer.Argument(exists=True, dir_okay=False, readable=True),
+    ],
+    expected_revision: Annotated[int, typer.Option("--expected-revision", min=0)],
+    evaluated_at: Annotated[str, typer.Option("--evaluated-at")],
+    idempotency_key: Annotated[str, typer.Option("--idempotency-key")],
+    reason: Annotated[str | None, typer.Option("--reason")] = None,
+) -> None:
+    """Evaluate retained profile-authorized policy material and advance atomically."""
+    try:
+        material = load_config(policy_material_path)
+        if not isinstance(material, PolicyMaterial):
+            raise ValueError("policy material path must contain forgegate.policy-material.v1")
+        result = CandidateApplication.for_database(database).evaluate_candidate(
+            candidate_id,
+            CandidateEvaluateCommand(
+                policy_material=material,
+                expected_revision=expected_revision,
+                evaluated_at=datetime.fromisoformat(evaluated_at.replace("Z", "+00:00")),
+                reason=reason,
+            ),
+            idempotency_key=idempotency_key,
+        )
+    except (
+        CandidateLifecycleError,
+        CandidateStoreError,
+        ConfigLoadError,
+        ValidationError,
+        ValueError,
+    ) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(result.model_dump_json(indent=2))
+
+
+@candidate_app.command("show-policy")
+def candidate_show_policy(
+    database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    candidate_id: Annotated[str, typer.Argument()],
+) -> None:
+    """Read and validate retained profile-authorized policy material."""
+    try:
+        material = CandidateApplication.for_database(database).get_policy_material(candidate_id)
+    except CandidateStoreError as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(material.model_dump_json(indent=2))
+
+
 @candidate_app.command("import-evaluation")
 def candidate_import_evaluation(
     database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
@@ -552,6 +638,8 @@ def candidate_import_evaluation(
     try:
         evaluation = _load_policy_evaluation(evaluation_path)
         assert evaluation is not None
+        if not isinstance(evaluation, PolicyEvaluation):
+            raise ValueError("only legacy forgegate.policy-evaluation.v1 can be backfilled")
         stored = SQLiteCandidateRepository(database).record_evaluation(candidate_id, evaluation)
     except (CandidateStoreError, ConfigLoadError, ValidationError, ValueError) as exc:
         typer.echo(f"ERROR: {exc}", err=True)
@@ -607,12 +695,12 @@ def candidate_show_attestation(
     typer.echo(attestation.model_dump_json(indent=2))
 
 
-def _load_policy_evaluation(path: Path | None) -> PolicyEvaluation | None:
+def _load_policy_evaluation(path: Path | None) -> PolicyEvaluationDocument | None:
     if path is None:
         return None
     evaluation = load_config(path)
-    if not isinstance(evaluation, PolicyEvaluation):
-        raise ValueError("evaluation path must contain forgegate.policy-evaluation.v1")
+    if not isinstance(evaluation, (PolicyEvaluation, ProfileAuthorizedPolicyEvaluation)):
+        raise ValueError("evaluation path must contain a ForgeGate policy evaluation")
     return evaluation
 
 

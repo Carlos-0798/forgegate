@@ -108,5 +108,6 @@ version-one profile; revisions append version two and later documents.
 Discovery is local database navigation, not authorization. Results are current
 validated state, not a signed inventory, remote registry, or compliance export.
 Rejected requests are still not inserted into the durable audit log. Profile
-deletion, organization ownership, authentication, policy-file byte binding,
-retention, signatures, and non-loopback operation remain deferred.
+deletion, organization ownership, authentication, retention, signatures, and
+non-loopback operation remain deferred. Phase 10 implements policy-file byte
+binding as the next separate authority layer.

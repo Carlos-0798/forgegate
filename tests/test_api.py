@@ -121,7 +121,7 @@ def test_health_and_candidate_read_write_contract(tmp_path: Path) -> None:
         "status": "ok",
         "api_version": "v1",
         "forgegate_version": __version__,
-        "store_schema": "forgegate.candidate-store.v6",
+        "store_schema": "forgegate.candidate-store.v7",
     }
     assert health.headers["X-Request-ID"] == request_id
     assert created.status_code == replay.status_code == 201
@@ -131,6 +131,8 @@ def test_health_and_candidate_read_write_contract(tmp_path: Path) -> None:
         "transitions": [],
         "evidence_binding_required": True,
         "evidence_binding": None,
+        "policy_material_required": True,
+        "policy_material": None,
     }
     assert replay.headers["X-Request-ID"].startswith("req-")
 
@@ -293,7 +295,8 @@ def test_api_executes_and_replays_complete_local_candidate_workflow(
     repository_root: Path,
 ) -> None:
     database = tmp_path / "forgegate.db"
-    with TestClient(create_api_app(database), base_url="http://127.0.0.1") as client:
+    api = create_api_app(database)
+    with TestClient(api, base_url="http://127.0.0.1") as client:
         register_sample_project(client)
         created = client.post(
             "/v1/candidates",
@@ -345,11 +348,21 @@ def test_api_executes_and_replays_complete_local_candidate_workflow(
                 "occurred_at": "2026-08-30T20:33:00Z",
             },
         )
-        policy = load_config(
-            repository_root / "examples/sample-python-api/policies/pull-request.yaml"
+        material = api.state.candidate_application.materialize_policy(
+            candidate_id,
+            repository_root / "examples/sample-python-api",
+        )
+        wrong_candidate = client.post(
+            "/v1/candidates",
+            headers={"Idempotency-Key": "api:create:wrong-track"},
+            json=candidate_payload(release_track="production"),
+        ).json()
+        wrong_material = api.state.candidate_application.materialize_policy(
+            wrong_candidate["candidate_id"],
+            repository_root / "examples/sample-python-api",
         )
         evaluation_command = {
-            "policy": policy.model_dump(mode="json"),
+            "policy_material": material.model_dump(mode="json"),
             "expected_revision": 3,
             "evaluated_at": "2026-08-30T21:00:00Z",
             "reason": "evaluate the bound evidence",
@@ -364,7 +377,7 @@ def test_api_executes_and_replays_complete_local_candidate_workflow(
             headers={"Idempotency-Key": "api:evaluate:wrong-track"},
             json={
                 **evaluation_command,
-                "policy": {**evaluation_command["policy"], "name": "production"},
+                "policy_material": wrong_material.model_dump(mode="json"),
             },
         )
         evaluated = client.post(
@@ -391,6 +404,7 @@ def test_api_executes_and_replays_complete_local_candidate_workflow(
         )
 
         evidence_response = client.get(f"/v1/candidates/{candidate_id}/evidence")
+        policy_response = client.get(f"/v1/candidates/{candidate_id}/policy")
         attestation_response = client.get(f"/v1/candidates/{candidate_id}/attestation")
         history_response = client.get(f"/v1/candidates/{candidate_id}/history")
 
@@ -398,7 +412,7 @@ def test_api_executes_and_replays_complete_local_candidate_workflow(
     assert collecting.json() == collecting_replay.json()
     assert binding.status_code == ready.status_code == evaluating.status_code == 200
     assert_error(invalid_evaluation, 422, "CANDIDATE_POLICY_EVALUATION_INVALID")
-    assert_error(mismatched_policy, 422, "CANDIDATE_EVALUATION_POLICY_MISMATCH")
+    assert_error(mismatched_policy, 400, "STORE_POLICY_MATERIAL_MISMATCH")
     assert evaluated.status_code == evaluated_replay.status_code == 200
     assert evaluated.json() == evaluated_replay.json()
     assert evaluated.json()["evaluation"]["decision"] == "PASS"
@@ -406,8 +420,11 @@ def test_api_executes_and_replays_complete_local_candidate_workflow(
     assert_error(attestation_conflict, 409, "STORE_ATTESTATION_CONFLICT")
     assert attestation.json() == attestation_replay.json() == attestation_response.json()
     assert evidence_response.json() == binding.json()
+    assert policy_response.json() == material.model_dump(mode="json")
     assert history_response.json()["candidate"] == evaluated.json()["transition"]["candidate"]
     assert history_response.json()["evidence_binding_required"] is True
+    assert history_response.json()["policy_material_required"] is True
+    assert history_response.json()["policy_material"] == policy_response.json()
 
 
 def test_api_exception_handlers_fail_closed(
@@ -518,6 +535,7 @@ def test_openapi_export_is_deterministic_and_complete(tmp_path: Path) -> None:
         "/v1/candidates/{candidate_id}",
         "/v1/candidates/{candidate_id}/history",
         "/v1/candidates/{candidate_id}/evidence",
+        "/v1/candidates/{candidate_id}/policy",
         "/v1/candidates/{candidate_id}/attestation",
         "/v1/candidates/{candidate_id}/transitions",
         "/v1/candidates/{candidate_id}/evaluate",

@@ -41,7 +41,13 @@ from forgegate.candidates.models import (
 from forgegate.canonical import canonical_json, sha256_fingerprint
 from forgegate.domain.enums import CandidateStatus
 from forgegate.domain.models import SLUG_PATTERN, ProjectConfig, canonical_release_track_name
-from forgegate.policy.models import PolicyEvaluation
+from forgegate.policy import PolicyMaterial
+from forgegate.policy.models import (
+    POLICY_EVALUATION_ADAPTER,
+    PolicyEvaluation,
+    PolicyEvaluationDocument,
+    ProfileAuthorizedPolicyEvaluation,
+)
 from forgegate.projects import (
     PROJECT_PROFILE_ADAPTER,
     ProjectProfileDocument,
@@ -66,8 +72,10 @@ AUDIT_STORE_SCHEMA_VERSION = 4
 AUDIT_STORE_SCHEMA_NAME = "forgegate.candidate-store.v4"
 DISCOVERY_STORE_SCHEMA_VERSION = 5
 DISCOVERY_STORE_SCHEMA_NAME = "forgegate.candidate-store.v5"
-STORE_SCHEMA_VERSION = 6
-STORE_SCHEMA_NAME = "forgegate.candidate-store.v6"
+PROFILE_STORE_SCHEMA_VERSION = 6
+PROFILE_STORE_SCHEMA_NAME = "forgegate.candidate-store.v6"
+STORE_SCHEMA_VERSION = 7
+STORE_SCHEMA_NAME = "forgegate.candidate-store.v7"
 IDEMPOTENCY_KEY_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
 
 _SCHEMA_V1_STATEMENTS = (
@@ -599,6 +607,46 @@ _SCHEMA_V6_STATEMENTS = (
     """,
 )
 
+_SCHEMA_V7_STATEMENTS = (
+    """
+    ALTER TABLE candidates
+    ADD COLUMN policy_material_required INTEGER NOT NULL DEFAULT 0
+        CHECK (policy_material_required IN (0, 1))
+    """,
+    """
+    CREATE TABLE candidate_policy_materials (
+        candidate_id TEXT PRIMARY KEY,
+        material_id TEXT NOT NULL UNIQUE,
+        material_fingerprint TEXT NOT NULL,
+        material_json TEXT NOT NULL,
+        bound_at TEXT NOT NULL,
+        FOREIGN KEY (candidate_id) REFERENCES candidates(candidate_id) ON DELETE RESTRICT
+    ) STRICT
+    """,
+    """
+    CREATE TRIGGER candidates_policy_material_requirement_guard_update
+    BEFORE UPDATE ON candidates
+    WHEN OLD.policy_material_required IS NOT NEW.policy_material_required
+    BEGIN
+        SELECT RAISE(ABORT, 'candidate policy-material requirement is immutable');
+    END
+    """,
+    """
+    CREATE TRIGGER candidate_policy_materials_guard_update
+    BEFORE UPDATE ON candidate_policy_materials
+    BEGIN
+        SELECT RAISE(ABORT, 'candidate policy materials are immutable');
+    END
+    """,
+    """
+    CREATE TRIGGER candidate_policy_materials_guard_delete
+    BEFORE DELETE ON candidate_policy_materials
+    BEGIN
+        SELECT RAISE(ABORT, 'candidate policy materials are immutable');
+    END
+    """,
+)
+
 _REQUIRED_OBJECTS_V1 = frozenset(
     {
         ("table", "forgegate_metadata"),
@@ -671,6 +719,15 @@ _REQUIRED_OBJECTS_V6 = _REQUIRED_OBJECTS_V5 | frozenset(
     }
 )
 
+_REQUIRED_OBJECTS_V7 = _REQUIRED_OBJECTS_V6 | frozenset(
+    {
+        ("table", "candidate_policy_materials"),
+        ("trigger", "candidates_policy_material_requirement_guard_update"),
+        ("trigger", "candidate_policy_materials_guard_update"),
+        ("trigger", "candidate_policy_materials_guard_delete"),
+    }
+)
+
 
 class CandidateStoreError(RuntimeError):
     """Stable failure returned by the local candidate persistence boundary."""
@@ -686,6 +743,8 @@ class CandidateHistory:
     transitions: tuple[CandidateTransition, ...]
     evidence_binding: CandidateEvidenceBinding | None
     evidence_binding_required: bool
+    policy_material: PolicyMaterial | None
+    policy_material_required: bool
 
 
 class SQLiteCandidateRepository:
@@ -705,7 +764,7 @@ class SQLiteCandidateRepository:
         self._failure_injector = _failure_injector
 
     def initialize(self) -> None:
-        """Create schema v6 or validate an existing current ForgeGate store."""
+        """Create schema v7 or validate an existing current ForgeGate store."""
         connection = self._open(require_exists=False)
         try:
             journal_mode = str(connection.execute("PRAGMA journal_mode = WAL").fetchone()[0])
@@ -734,6 +793,7 @@ class SQLiteCandidateRepository:
                     *_SCHEMA_V4_STATEMENTS,
                     *_SCHEMA_V5_STATEMENTS,
                     *_SCHEMA_V6_STATEMENTS,
+                    *_SCHEMA_V7_STATEMENTS,
                 ):
                     connection.execute(statement)
                 connection.executemany(
@@ -755,10 +815,11 @@ class SQLiteCandidateRepository:
                 BINDING_STORE_SCHEMA_VERSION,
                 AUDIT_STORE_SCHEMA_VERSION,
                 DISCOVERY_STORE_SCHEMA_VERSION,
+                PROFILE_STORE_SCHEMA_VERSION,
             }:
                 raise CandidateStoreError(
                     "STORE_MIGRATION_REQUIRED",
-                    f"candidate database schema v{user_version} requires explicit migration to v6",
+                    f"candidate database schema v{user_version} requires explicit migration to v7",
                 )
             self._validate_store(connection)
         except sqlite3.Error as exc:
@@ -768,7 +829,7 @@ class SQLiteCandidateRepository:
             connection.close()
 
     def migrate(self) -> None:
-        """Explicitly migrate a validated schema-v1/v2/v3/v4/v5 store to schema v6."""
+        """Explicitly migrate a validated schema-v1 through v6 store to schema v7."""
         connection = self._open(require_exists=True)
         try:
             user_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
@@ -781,10 +842,11 @@ class SQLiteCandidateRepository:
                 BINDING_STORE_SCHEMA_VERSION,
                 AUDIT_STORE_SCHEMA_VERSION,
                 DISCOVERY_STORE_SCHEMA_VERSION,
+                PROFILE_STORE_SCHEMA_VERSION,
             }:
                 raise CandidateStoreError(
                     "STORE_SCHEMA_UNSUPPORTED",
-                    f"database schema version {user_version} cannot migrate to v6",
+                    f"database schema version {user_version} cannot migrate to v7",
                 )
             self._validate_store_version(connection, user_version)
             connection.execute("BEGIN IMMEDIATE")
@@ -795,23 +857,31 @@ class SQLiteCandidateRepository:
                     *_SCHEMA_V4_STATEMENTS,
                     *_SCHEMA_V5_STATEMENTS,
                     *_SCHEMA_V6_STATEMENTS,
+                    *_SCHEMA_V7_STATEMENTS,
                 ),
                 PREVIOUS_STORE_SCHEMA_VERSION: (
                     *_SCHEMA_V3_STATEMENTS,
                     *_SCHEMA_V4_STATEMENTS,
                     *_SCHEMA_V5_STATEMENTS,
                     *_SCHEMA_V6_STATEMENTS,
+                    *_SCHEMA_V7_STATEMENTS,
                 ),
                 BINDING_STORE_SCHEMA_VERSION: (
                     *_SCHEMA_V4_STATEMENTS,
                     *_SCHEMA_V5_STATEMENTS,
                     *_SCHEMA_V6_STATEMENTS,
+                    *_SCHEMA_V7_STATEMENTS,
                 ),
                 AUDIT_STORE_SCHEMA_VERSION: (
                     *_SCHEMA_V5_STATEMENTS,
                     *_SCHEMA_V6_STATEMENTS,
+                    *_SCHEMA_V7_STATEMENTS,
                 ),
-                DISCOVERY_STORE_SCHEMA_VERSION: _SCHEMA_V6_STATEMENTS,
+                DISCOVERY_STORE_SCHEMA_VERSION: (
+                    *_SCHEMA_V6_STATEMENTS,
+                    *_SCHEMA_V7_STATEMENTS,
+                ),
+                PROFILE_STORE_SCHEMA_VERSION: _SCHEMA_V7_STATEMENTS,
             }[user_version]
             for statement in migration_statements:
                 connection.execute(statement)
@@ -1080,6 +1150,22 @@ class SQLiteCandidateRepository:
         with self._transaction(write=False) as connection:
             return self._load_current_project_profile(connection, project_id)
 
+    def get_project_profile(
+        self,
+        project_id: str,
+        profile_version: int,
+    ) -> ProjectProfileDocument:
+        """Read one exact immutable project profile by version."""
+        if profile_version < 1:
+            raise CandidateStoreError(
+                "STORE_PROJECT_PROFILE_VERSION_INVALID",
+                "project profile version must be at least one",
+            )
+        with self._transaction(write=False) as connection:
+            profile = self._load_project_profile(connection, project_id, profile_version)
+            self._validate_project_profile_chain(connection, project_id)
+            return profile
+
     def project_profiles(
         self,
         project_id: str,
@@ -1276,8 +1362,9 @@ class SQLiteCandidateRepository:
                         candidate_id, project_id, version, commit_sha, source_branch,
                         release_track, created_at, initial_fingerprint, initial_candidate_json,
                         current_revision, current_status, updated_at, current_fingerprint,
-                        current_candidate_json, evaluation_id, evidence_binding_required
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                        current_candidate_json, evaluation_id, evidence_binding_required,
+                        policy_material_required
+                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                     """,
                     (
                         durable_candidate.candidate_id,
@@ -1296,6 +1383,7 @@ class SQLiteCandidateRepository:
                         candidate_json,
                         durable_candidate.evaluation_id,
                         1,
+                        int(require_registered_project),
                     ),
                 )
                 self._insert_snapshot(
@@ -1478,6 +1566,17 @@ class SQLiteCandidateRepository:
                 )
             return history.evidence_binding
 
+    def get_policy_material(self, candidate_id: str) -> PolicyMaterial:
+        """Read and validate the exact policy bytes bound to terminal evaluation."""
+        with self._transaction(write=False) as connection:
+            history = self._load_history(connection, candidate_id)
+            if history.policy_material is None:
+                raise CandidateStoreError(
+                    "STORE_POLICY_MATERIAL_NOT_FOUND",
+                    f"candidate has no policy material: {candidate_id}",
+                )
+            return history.policy_material
+
     def record_evaluation(
         self, candidate_id: str, evaluation: PolicyEvaluation
     ) -> PolicyEvaluation:
@@ -1510,7 +1609,7 @@ class SQLiteCandidateRepository:
             self._checkpoint("after_evaluation_insert", connection)
         return evaluation
 
-    def evaluation(self, candidate_id: str) -> PolicyEvaluation | None:
+    def evaluation(self, candidate_id: str) -> PolicyEvaluationDocument | None:
         """Read and validate the policy evaluation bound to a terminal candidate."""
         with self._transaction(write=False) as connection:
             candidate = self._load_history(connection, candidate_id).candidate
@@ -1601,7 +1700,8 @@ class SQLiteCandidateRepository:
         occurred_at: datetime,
         idempotency_key: str,
         reason: str | None = None,
-        evaluation: PolicyEvaluation | None = None,
+        evaluation: PolicyEvaluationDocument | None = None,
+        policy_material: PolicyMaterial | None = None,
     ) -> CandidateTransitionResult:
         """Atomically append one legal transition using compare-and-swap revision control."""
         if expected_revision < 0:
@@ -1619,6 +1719,9 @@ class SQLiteCandidateRepository:
             "occurred_at": _json_timestamp(timestamp),
             "reason": normalized_reason,
             "evaluation": evaluation.model_dump(mode="json") if evaluation is not None else None,
+            "policy_material": (
+                policy_material.model_dump(mode="json") if policy_material is not None else None
+            ),
         }
         request_fingerprint = sha256_fingerprint(request)
         with self._transaction(write=True) as connection:
@@ -1639,6 +1742,40 @@ class SQLiteCandidateRepository:
                     f"{expected_revision}, current revision is {current.revision}",
                 )
             binding = history.evidence_binding
+            if policy_material is not None and evaluation is None:
+                raise CandidateStoreError(
+                    "STORE_POLICY_MATERIAL_UNEXPECTED",
+                    "policy material can be bound only with a terminal evaluation",
+                )
+            if (
+                evaluation is not None
+                and history.policy_material_required
+                and policy_material is None
+            ):
+                raise CandidateStoreError(
+                    "STORE_POLICY_MATERIAL_REQUIRED",
+                    "terminal evaluation requires profile-authorized policy material",
+                )
+            if policy_material is None and isinstance(
+                evaluation, ProfileAuthorizedPolicyEvaluation
+            ):
+                raise CandidateStoreError(
+                    "STORE_POLICY_MATERIAL_REQUIRED",
+                    "profile-authorized evaluation requires its exact policy material",
+                )
+            if policy_material is not None:
+                if not isinstance(evaluation, ProfileAuthorizedPolicyEvaluation):
+                    raise CandidateStoreError(
+                        "STORE_POLICY_EVALUATION_VERSION_INVALID",
+                        "policy material requires forgegate.policy-evaluation.v2",
+                    )
+                self._require_policy_material_matches_candidate(
+                    connection,
+                    current,
+                    policy_material,
+                    evaluation,
+                    bound_at=timestamp,
+                )
             if to_status is CandidateStatus.READY and history.evidence_binding_required:
                 if binding is None:
                     raise CandidateStoreError(
@@ -1690,6 +1827,14 @@ class SQLiteCandidateRepository:
                 ),
             )
             if evaluation is not None:
+                if policy_material is not None:
+                    self._insert_policy_material(
+                        connection,
+                        candidate_id,
+                        policy_material,
+                        bound_at=timestamp,
+                    )
+                    self._checkpoint("after_policy_material_insert", connection)
                 self._insert_evaluation(connection, result.candidate, evaluation)
             self._append_subject_audit_event(
                 connection,
@@ -1823,7 +1968,8 @@ class SQLiteCandidateRepository:
             BINDING_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V3,
             AUDIT_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V4,
             DISCOVERY_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V5,
-            STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V6,
+            PROFILE_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V6,
+            STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V7,
         }.get(expected_version)
         if required_objects is None:
             raise CandidateStoreError(
@@ -1844,6 +1990,7 @@ class SQLiteCandidateRepository:
                     BINDING_STORE_SCHEMA_VERSION: BINDING_STORE_SCHEMA_NAME,
                     AUDIT_STORE_SCHEMA_VERSION: AUDIT_STORE_SCHEMA_NAME,
                     DISCOVERY_STORE_SCHEMA_VERSION: DISCOVERY_STORE_SCHEMA_NAME,
+                    PROFILE_STORE_SCHEMA_VERSION: PROFILE_STORE_SCHEMA_NAME,
                     STORE_SCHEMA_VERSION: STORE_SCHEMA_NAME,
                 }[expected_version],
                 "schema_version": str(expected_version),
@@ -2219,7 +2366,7 @@ class SQLiteCandidateRepository:
         for row in connection.execute(
             "SELECT candidate_id, evaluation_json FROM candidate_evaluations"
         ):
-            evaluation = _decode_model(str(row["evaluation_json"]), PolicyEvaluation)
+            evaluation = _decode_policy_evaluation(str(row["evaluation_json"]))
             candidate_id = str(row["candidate_id"])
             pending.append(
                 (
@@ -2426,6 +2573,7 @@ class SQLiteCandidateRepository:
         _require(required_value in {0, 1}, "candidate evidence-binding requirement is invalid")
         binding_required = bool(required_value)
         binding = self._load_evidence_binding(connection, snapshots)
+        evaluation: PolicyEvaluationDocument | None = None
         if not binding_required:
             _require(binding is None, "legacy candidate has an unexpected evidence binding")
         if binding_required and current.revision >= 2:
@@ -2443,12 +2591,53 @@ class SQLiteCandidateRepository:
                     == sha256_fingerprint(binding.assembly.bundle.model_dump(mode="json")),
                     "candidate evaluation is detached from its evidence binding",
                 )
+        elif current.evaluation_id is not None:
+            evaluation_row = connection.execute(
+                "SELECT 1 FROM candidate_evaluations WHERE candidate_id = ?",
+                (current.candidate_id,),
+            ).fetchone()
+            if evaluation_row is not None:
+                evaluation = self._load_evaluation(connection, current)
+        policy_required_value = int(candidate_row["policy_material_required"])
+        _require(
+            policy_required_value in {0, 1},
+            "candidate policy-material requirement is invalid",
+        )
+        policy_material_required = bool(policy_required_value)
+        policy_material = self._load_policy_material(connection, initial)
+        if current.revision < 4:
+            _require(
+                policy_material is None,
+                "non-terminal candidate has unexpected policy material",
+            )
+        if policy_material_required and current.revision == 4:
+            _require(
+                policy_material is not None,
+                "terminal candidate is missing required policy material",
+            )
+        if policy_material is not None:
+            _require(
+                isinstance(evaluation, ProfileAuthorizedPolicyEvaluation),
+                "policy material is detached from a v2 policy evaluation",
+            )
+            assert isinstance(evaluation, ProfileAuthorizedPolicyEvaluation)
+            self._require_policy_material_matches_candidate(
+                connection,
+                initial,
+                policy_material,
+                evaluation,
+                bound_at=evaluation.evaluated_at,
+            )
+        elif isinstance(evaluation, ProfileAuthorizedPolicyEvaluation):
+            _require(False, "v2 policy evaluation is missing its exact policy material")
         self._validate_candidate_profile_binding(connection, initial)
         return CandidateHistory(
             candidate=current,
             transitions=tuple(transitions),
             evidence_binding=binding,
             evidence_binding_required=binding_required,
+            policy_material=policy_material,
+            policy_material_required=policy_material_required,
         )
 
     @staticmethod
@@ -2513,6 +2702,136 @@ class SQLiteCandidateRepository:
             "candidate predates its bound project profile",
         )
 
+    def _require_policy_material_matches_candidate(
+        self,
+        connection: sqlite3.Connection,
+        candidate: CandidateDocument,
+        material: PolicyMaterial,
+        evaluation: ProfileAuthorizedPolicyEvaluation,
+        *,
+        bound_at: datetime,
+    ) -> None:
+        if not isinstance(candidate, ProfileBoundReleaseCandidate):
+            raise CandidateStoreError(
+                "STORE_POLICY_PROFILE_REQUIRED",
+                "policy material requires a profile-bound candidate",
+            )
+        expected = (
+            candidate.project_id,
+            candidate.project_profile_id,
+            candidate.project_profile_version,
+            candidate.release_track,
+        )
+        actual = (
+            material.project_id,
+            material.project_profile_id,
+            material.project_profile_version,
+            material.release_track,
+        )
+        if actual != expected:
+            raise CandidateStoreError(
+                "STORE_POLICY_MATERIAL_MISMATCH",
+                "policy material does not match the candidate's frozen profile and track",
+            )
+        profile = self._load_project_profile(
+            connection,
+            candidate.project_id,
+            candidate.project_profile_version,
+        )
+        if profile_id(profile) != candidate.project_profile_id:
+            raise CandidateStoreError(
+                "STORE_POLICY_MATERIAL_MISMATCH",
+                "candidate policy material references the wrong durable profile",
+            )
+        matches = [
+            track
+            for name, track in profile.config.release_tracks.items()
+            if canonical_release_track_name(name) == candidate.release_track
+        ]
+        if len(matches) != 1:
+            raise CandidateStoreError(
+                "STORE_POLICY_AUTHORITY_INVALID",
+                "candidate track does not resolve to one frozen-profile policy",
+            )
+        expected_path = matches[0].policy.replace("\\", "/")
+        if material.artifact.path_or_uri != expected_path:
+            raise CandidateStoreError(
+                "STORE_POLICY_PATH_MISMATCH",
+                "policy material path is not authorized by the frozen profile",
+            )
+        if (
+            evaluation.policy_material_id != material.material_id
+            or evaluation.policy_artifact_sha256 != material.artifact.sha256
+            or evaluation.project_profile_id != material.project_profile_id
+            or evaluation.project_profile_version != material.project_profile_version
+            or evaluation.policy_name != material.policy.name
+            or evaluation.policy_fingerprint != material.policy_fingerprint
+            or evaluation.evaluated_at != bound_at
+        ):
+            raise CandidateStoreError(
+                "STORE_POLICY_EVALUATION_MISMATCH",
+                "v2 policy evaluation is detached from its exact policy material",
+            )
+        durable_row = connection.execute(
+            "SELECT bound_at FROM candidate_policy_materials WHERE candidate_id = ?",
+            (candidate.candidate_id,),
+        ).fetchone()
+        if durable_row is not None:
+            _require(
+                durable_row["bound_at"] == _json_timestamp(bound_at),
+                "policy material binding time does not match terminal evaluation",
+            )
+
+    @staticmethod
+    def _insert_policy_material(
+        connection: sqlite3.Connection,
+        candidate_id: str,
+        material: PolicyMaterial,
+        *,
+        bound_at: datetime,
+    ) -> None:
+        connection.execute(
+            """
+            INSERT INTO candidate_policy_materials(
+                candidate_id, material_id, material_fingerprint, material_json, bound_at
+            ) VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                candidate_id,
+                material.material_id,
+                sha256_fingerprint(material.model_dump(mode="json")),
+                _model_json(material),
+                _json_timestamp(bound_at),
+            ),
+        )
+
+    def _load_policy_material(
+        self,
+        connection: sqlite3.Connection,
+        candidate: CandidateDocument,
+    ) -> PolicyMaterial | None:
+        row = connection.execute(
+            "SELECT * FROM candidate_policy_materials WHERE candidate_id = ?",
+            (candidate.candidate_id,),
+        ).fetchone()
+        if row is None:
+            return None
+        material = _decode_model(str(row["material_json"]), PolicyMaterial)
+        _require(
+            (
+                row["candidate_id"],
+                row["material_id"],
+                row["material_fingerprint"],
+            )
+            == (
+                candidate.candidate_id,
+                material.material_id,
+                sha256_fingerprint(material.model_dump(mode="json")),
+            ),
+            "policy material metadata does not match its document",
+        )
+        return material
+
     @staticmethod
     def _insert_evidence_binding(
         connection: sqlite3.Connection,
@@ -2575,7 +2894,7 @@ class SQLiteCandidateRepository:
 
     @staticmethod
     def _require_evaluation_matches_candidate(
-        candidate: CandidateDocument, evaluation: PolicyEvaluation
+        candidate: CandidateDocument, evaluation: PolicyEvaluationDocument
     ) -> None:
         if candidate.revision != 4 or candidate.evaluation_id is None:
             raise CandidateStoreError(
@@ -2597,7 +2916,7 @@ class SQLiteCandidateRepository:
         self,
         connection: sqlite3.Connection,
         candidate: CandidateDocument,
-        evaluation: PolicyEvaluation,
+        evaluation: PolicyEvaluationDocument,
     ) -> None:
         self._require_evaluation_matches_candidate(candidate, evaluation)
         evaluation_json = _model_json(evaluation)
@@ -2619,7 +2938,7 @@ class SQLiteCandidateRepository:
 
     def _load_evaluation(
         self, connection: sqlite3.Connection, candidate: CandidateDocument
-    ) -> PolicyEvaluation | None:
+    ) -> PolicyEvaluationDocument | None:
         row = connection.execute(
             "SELECT * FROM candidate_evaluations WHERE candidate_id = ?",
             (candidate.candidate_id,),
@@ -2632,7 +2951,7 @@ class SQLiteCandidateRepository:
                 "STORE_EVALUATION_NOT_FOUND",
                 "candidate evaluation document is absent; import it after legacy migration",
             )
-        evaluation = _decode_model(str(row["evaluation_json"]), PolicyEvaluation)
+        evaluation = _decode_policy_evaluation(str(row["evaluation_json"]))
         fingerprint = sha256_fingerprint(evaluation.model_dump(mode="json"))
         _require(
             (
@@ -2656,7 +2975,7 @@ class SQLiteCandidateRepository:
         self,
         row: sqlite3.Row,
         history: CandidateHistory,
-        evaluation: PolicyEvaluation | None,
+        evaluation: PolicyEvaluationDocument | None,
     ) -> ReleaseAttestation:
         attestation = _decode_model(str(row["attestation_json"]), ReleaseAttestation)
         markdown = render_attestation_markdown(attestation)
@@ -2938,6 +3257,17 @@ def _decode_project_profile(payload: str) -> ProjectProfileDocument:
             "STORE_CORRUPT", "stored project profile document is invalid"
         ) from exc
     _require(payload == _model_json(decoded), "stored project profile JSON is not canonical")
+    return decoded
+
+
+def _decode_policy_evaluation(payload: str) -> PolicyEvaluationDocument:
+    try:
+        decoded = POLICY_EVALUATION_ADAPTER.validate_json(payload)
+    except (ValidationError, ValueError) as exc:
+        raise CandidateStoreError(
+            "STORE_CORRUPT", "stored policy evaluation document is invalid"
+        ) from exc
+    _require(payload == _model_json(decoded), "stored policy evaluation JSON is not canonical")
     return decoded
 
 

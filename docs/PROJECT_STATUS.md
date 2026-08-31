@@ -1,8 +1,8 @@
 # Project status
 
 - Date: 2026-08-31
-- Version: 0.1.0.dev16
-- Stage: Phase 9 profile-bound candidate and append-only project-revision slice implemented
+- Version: 0.1.0.dev17
+- Stage: Phase 10 profile-authorized policy-materialization slice implemented
 - Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, and bounded state discovery; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
@@ -54,7 +54,7 @@
   commit, decision, and timestamp;
 - stateless `candidate create` and `candidate transition` CLI previews with
   generic DRAFT/EVALUATING fixtures and structural/evaluation-bound Goldens;
-- SQLite candidate-store schema v6 with ForgeGate application identity, WAL,
+- SQLite candidate-store schema v7 with ForgeGate application identity, WAL,
   FULL synchronous durability, foreign keys, exact-version validation, and
   explicit read/write transactions;
 - append-only canonical candidate snapshots, content-addressed transitions,
@@ -64,7 +64,7 @@
   detection;
 - persisted candidate create/advance/show/history CLI flow while retaining the
   stateless preview commands;
-- explicit, validated SQLite v1/v2/v3/v4/v5-to-v6 migration plus exact legacy
+- explicit, validated SQLite v1/v2/v3/v4/v5/v6-to-v7 migration plus exact legacy
   terminal evaluation and audit backfill where applicable;
 - durable append-only policy-evaluation and release-attestation documents bound
   to the authoritative candidate audit chain;
@@ -134,7 +134,9 @@
   from which the API loads an assembly or artifact;
 - REST evaluation that uses only the candidate's persisted binding and commits
   the resulting terminal transition atomically;
-- release-track/policy-name matching in the candidate lifecycle boundary;
+- legacy/stateless release-track/policy-name matching in the candidate
+  lifecycle boundary, strengthened by exact material authority for new
+  persisted candidates;
 - REST attestation persistence with deterministic replay and no filesystem
   output parameter;
 - loopback HTTP Host enforcement, declared 4 MiB request-length rejection, and
@@ -177,11 +179,24 @@
 - release-track additions/removals applied only to later candidates, historical
   candidate/profile resolution preserved, and legacy v1 candidates retained
   without fabricated binding rows.
+- self-validating `forgegate.policy-material.v1` with exact base64 bytes,
+  root-relative path, media type, byte size, SHA-256, parsed policy,
+  profile/track authority, and content-derived material identity;
+- `forgegate.policy-evaluation.v2` binding the decision to the exact material,
+  evidence fingerprint, frozen profile ID/version, and explicit timestamp;
+- CLI-only materialization through an explicit root-confined project directory,
+  plus `candidate evaluate` and `show-policy` durable paths;
+- path-free REST evaluation accepting a complete validated material document
+  and policy-material readback without server-side client-path dereference;
+- atomic SQLite material/evaluation/transition/audit/idempotency persistence,
+  immutable material rows, rollback fault injection, and corruption checks;
+- explicit v1-v6 migration that assigns no historical material requirement and
+  fabricates no policy bytes, approval, producer identity, or authenticity.
 
 ## Not implemented
 
 Authenticated/non-loopback API deployment, HTTP artifact collection and file
-publication, policy-file byte binding, rejected-request/warning audit ingestion,
+publication, rejected-request/warning audit ingestion,
 audit export/retention,
 external plugins, GitHub integration,
 signatures/key management, database authorization, backup/repair, MSP430
@@ -195,8 +210,8 @@ attestation embedding of assembly receipts, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 573 passed, 1 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 99.05% across 4,799 statements and 1,284 branches
+- pytest: 585 passed, 1 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 98.48% across 5,085 statements and 1,380 branches
 - project-profile revision focus: 5 passed, including migration, corruption,
   REST, and CLI contracts
 - Analog Validation collector focus: 59 passed; 100% across 431 statements and
@@ -207,14 +222,15 @@ attestation embedding of assembly receipts, and hardware access.
   and 138 branches
 - committed JSON Schema and OpenAPI drift checks: PASS
 - project/policy/candidate/transition example documents: VALID
-- eighteen canonical versioned document Schemas plus Benchmark and Analog
+- twenty canonical versioned document Schemas plus Benchmark and Analog
   Validation artifact Schemas: drift-checked and parsed
 - complete sdist manifest and wheel build: PASS
 - repository-external wheel installation and CLI smoke: PASS
 - Git Bash shell-script syntax check: PASS
-- GitHub Actions: Phase 9 implementation run 33436111147 PASS on Windows,
+- latest completed GitHub Actions baseline: Phase 9 run 33436111147 PASS on Windows,
   Ubuntu, and macOS; each platform completed `verify.py` and
-  `release_smoke.py` for commit `61c7726`
+  `release_smoke.py` for commit `61c7726`; Phase 10 remote run pending private
+  synchronization
 - private GitHub synchronization: `main` pushed with noreply commit identity;
   repository visibility, default branch, About, and ten Topics read back
 
@@ -226,5 +242,7 @@ previous REST command slice and
 project-registry baseline and
 `reports/PHASE_8_PROJECT_AUTHORITY_DISCOVERY_ACCEPTANCE_REPORT.md` for the
 previous authority/discovery slice. See
-`reports/PHASE_9_PROJECT_PROFILE_REVISIONS_ACCEPTANCE_REPORT.md` for the current
+`reports/PHASE_9_PROJECT_PROFILE_REVISIONS_ACCEPTANCE_REPORT.md` for the
+previous slice and
+`reports/PHASE_10_POLICY_MATERIALIZATION_ACCEPTANCE_REPORT.md` for the current
 slice.

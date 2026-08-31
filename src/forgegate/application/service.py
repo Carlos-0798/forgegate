@@ -19,12 +19,14 @@ from forgegate.application.models import (
     ProjectRegisterCommand,
     ProjectReviseCommand,
 )
+from forgegate.artifacts import ArtifactRegistry
 from forgegate.attestations import ReleaseAttestation
 from forgegate.audit import AuditEventPage
 from forgegate.candidates import (
     CandidateDocument,
     CandidateEvidenceBinding,
     CandidateLifecycleError,
+    ProfileBoundReleaseCandidate,
     ReleaseCandidate,
     ReleaseCandidatePage,
     SQLiteCandidateRepository,
@@ -32,13 +34,22 @@ from forgegate.candidates import (
 )
 from forgegate.candidates.models import CandidateTransitionResult
 from forgegate.domain.enums import CandidateStatus, Decision
-from forgegate.policy import PolicyEvaluation, evaluate_policy
+from forgegate.domain.models import canonical_release_track_name
+from forgegate.policy import (
+    PolicyEvaluationDocument,
+    PolicyMaterial,
+    create_policy_material,
+    evaluate_policy,
+    evaluate_policy_material,
+)
+from forgegate.policy.materials import MAX_POLICY_BYTES, policy_media_type
 from forgegate.projects import (
     ProjectProfileDocument,
     ProjectProfilePage,
     ProjectProfileRevision,
     RegisteredProject,
     RegisteredProjectPage,
+    profile_id,
 )
 
 DECISION_STATUS = {
@@ -153,7 +164,7 @@ class CandidateApplication:
         command: CandidateAdvanceCommand,
         *,
         idempotency_key: str,
-        evaluation: PolicyEvaluation | None = None,
+        evaluation: PolicyEvaluationDocument | None = None,
     ) -> CandidateTransitionResult:
         return self.repository.advance(
             candidate_id,
@@ -188,11 +199,20 @@ class CandidateApplication:
     ) -> CandidateEvaluationResult:
         binding = self.repository.get_evidence_binding(candidate_id)
         try:
-            evaluation = evaluate_policy(
-                command.policy,
-                binding.assembly.bundle,
-                evaluated_at=command.evaluated_at,
-            )
+            evaluation: PolicyEvaluationDocument
+            if command.policy_material is not None:
+                evaluation = evaluate_policy_material(
+                    command.policy_material,
+                    binding.assembly.bundle,
+                    evaluated_at=command.evaluated_at,
+                )
+            else:
+                assert command.policy is not None
+                evaluation = evaluate_policy(
+                    command.policy,
+                    binding.assembly.bundle,
+                    evaluated_at=command.evaluated_at,
+                )
         except ValueError as exc:
             raise CandidateLifecycleError(
                 "CANDIDATE_POLICY_EVALUATION_INVALID",
@@ -206,8 +226,60 @@ class CandidateApplication:
             idempotency_key=idempotency_key,
             reason=command.reason,
             evaluation=evaluation,
+            policy_material=command.policy_material,
         )
-        return CandidateEvaluationResult(evaluation=evaluation, transition=transition)
+        return CandidateEvaluationResult(
+            evaluation=evaluation,
+            transition=transition,
+            policy_material=command.policy_material,
+        )
+
+    def materialize_policy(self, candidate_id: str, project_root: Path) -> PolicyMaterial:
+        """Read only the policy path authorized by the candidate's frozen profile."""
+        candidate = self.repository.get(candidate_id)
+        if not isinstance(candidate, ProfileBoundReleaseCandidate):
+            raise CandidateLifecycleError(
+                "CANDIDATE_POLICY_PROFILE_REQUIRED",
+                "legacy candidate has no frozen project profile for policy materialization",
+            )
+        profile = self.repository.get_project_profile(
+            candidate.project_id,
+            candidate.project_profile_version,
+        )
+        if profile_id(profile) != candidate.project_profile_id:
+            raise CandidateLifecycleError(
+                "CANDIDATE_POLICY_PROFILE_MISMATCH",
+                "candidate profile identity does not match the durable profile",
+            )
+        matches = [
+            (name, track)
+            for name, track in profile.config.release_tracks.items()
+            if canonical_release_track_name(name) == candidate.release_track
+        ]
+        if len(matches) != 1:
+            raise CandidateLifecycleError(
+                "CANDIDATE_POLICY_AUTHORITY_INVALID",
+                "candidate release track does not resolve to exactly one profile policy",
+            )
+        _, track = matches[0]
+        registered = ArtifactRegistry(project_root, max_bytes=MAX_POLICY_BYTES).register(
+            track.policy,
+            media_type=policy_media_type(track.policy),
+        )
+        try:
+            return create_policy_material(
+                project_id=candidate.project_id,
+                project_profile_id=candidate.project_profile_id,
+                project_profile_version=candidate.project_profile_version,
+                release_track=candidate.release_track,
+                artifact=registered.reference,
+                content=registered.content,
+            )
+        except ValueError as exc:
+            raise CandidateLifecycleError(
+                "CANDIDATE_POLICY_MATERIAL_INVALID",
+                str(exc),
+            ) from exc
 
     def attest_candidate(
         self,
@@ -225,6 +297,9 @@ class CandidateApplication:
 
     def get_evidence(self, candidate_id: str) -> CandidateEvidenceBinding:
         return self.repository.get_evidence_binding(candidate_id)
+
+    def get_policy_material(self, candidate_id: str) -> PolicyMaterial:
+        return self.repository.get_policy_material(candidate_id)
 
     def get_attestation(self, candidate_id: str) -> ReleaseAttestation:
         return self.repository.get_attestation(candidate_id)

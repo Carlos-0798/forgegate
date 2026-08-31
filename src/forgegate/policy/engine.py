@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 from collections.abc import Mapping, Sequence
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Any
 
 from forgegate.canonical import canonical_json, sha256_fingerprint
@@ -14,7 +14,12 @@ from forgegate.domain.enums import (
     VerificationLevel,
 )
 from forgegate.domain.models import EvidenceBundle, EvidenceRecord, PolicyConfig, PolicyRule
-from forgegate.policy.models import PolicyEvaluation, RuleEvaluation
+from forgegate.policy.materials import PolicyMaterial
+from forgegate.policy.models import (
+    PolicyEvaluation,
+    ProfileAuthorizedPolicyEvaluation,
+    RuleEvaluation,
+)
 
 TRUST_RANK = {
     EvidenceTrust.UNSIGNED_LOCAL: 0,
@@ -84,6 +89,36 @@ def evaluate_policy(
         decision=decision,
         rule_results=results,
         evaluated_evidence_ids=evaluated_evidence_ids,
+    )
+
+
+def evaluate_policy_material(
+    material: PolicyMaterial,
+    bundle: EvidenceBundle,
+    *,
+    evaluated_at: datetime,
+) -> ProfileAuthorizedPolicyEvaluation:
+    """Evaluate exact profile-authorized policy bytes and bind them into identity."""
+    legacy = evaluate_policy(material.policy, bundle, evaluated_at=evaluated_at)
+    evaluation_input = {
+        "policy_material_id": material.material_id,
+        "evidence_fingerprint": legacy.evidence_fingerprint,
+        "evaluated_at": evaluated_at.astimezone(UTC).isoformat().replace("+00:00", "Z"),
+    }
+    return ProfileAuthorizedPolicyEvaluation(
+        evaluation_id=sha256_fingerprint(evaluation_input),
+        policy_name=legacy.policy_name,
+        policy_fingerprint=legacy.policy_fingerprint,
+        evidence_fingerprint=legacy.evidence_fingerprint,
+        candidate_commit=legacy.candidate_commit,
+        evaluated_at=legacy.evaluated_at,
+        decision=legacy.decision,
+        rule_results=legacy.rule_results,
+        evaluated_evidence_ids=legacy.evaluated_evidence_ids,
+        policy_material_id=material.material_id,
+        policy_artifact_sha256=material.artifact.sha256,
+        project_profile_id=material.project_profile_id,
+        project_profile_version=material.project_profile_version,
     )
 
 

@@ -92,10 +92,14 @@ The POST body contains the complete config, expected version, and effective
 time; `Idempotency-Key` remains mandatory. The API does not load config or policy
 files from client-supplied server paths.
 
+## Phase 10 continuation
+
+Phase 10 now resolves the configured path through an explicit project root,
+retains the exact policy bytes, and requires a material-bound v2 evaluation for
+new product candidates. See `POLICY_MATERIALIZATION.md`.
+
 ## Residual boundary
 
-The profile currently authorizes a configured policy path/name, not the exact
-policy-file bytes later evaluated. Binding those bytes is deferred to Phase 10.
 Profile deletion, rollback, branching/merging, organization ownership,
 authentication, signatures, retention, rejected-request auditing, and
 non-loopback deployment are not implemented.

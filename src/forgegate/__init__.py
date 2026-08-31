@@ -1,3 +1,3 @@
 """ForgeGate release assurance contracts."""
 
-__version__ = "0.1.0.dev16"
+__version__ = "0.1.0.dev17"

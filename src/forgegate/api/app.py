@@ -42,6 +42,7 @@ from forgegate.candidates import (
 )
 from forgegate.candidates.models import CandidateTransitionResult
 from forgegate.network import is_loopback_host
+from forgegate.policy import PolicyMaterial
 from forgegate.projects import (
     ProjectProfileDocument,
     ProjectProfilePage,
@@ -446,6 +447,17 @@ def create_api_app(
     )
     def get_candidate_evidence_endpoint(candidate_id: str) -> CandidateEvidenceBinding:
         return candidate_application.get_evidence(candidate_id)
+
+    @app.get(
+        "/v1/candidates/{candidate_id}/policy",
+        response_model=PolicyMaterial,
+        operation_id="getCandidatePolicyMaterial",
+        tags=["candidates"],
+        responses=ERROR_RESPONSES,
+    )
+    def get_candidate_policy_material_endpoint(candidate_id: str) -> PolicyMaterial:
+        """Return exact profile-authorized policy material retained at evaluation."""
+        return candidate_application.get_policy_material(candidate_id)
 
     @app.get(
         "/v1/candidates/{candidate_id}/attestation",

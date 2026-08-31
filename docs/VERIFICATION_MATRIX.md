@@ -11,7 +11,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — eighteen document plus two artifact schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — twenty document plus two artifact schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Analog Validation result Schema mirror | committed upstream-consumer contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
@@ -99,10 +99,14 @@
 | Profile-bound candidate v2 | store/application/CLI/REST/lifecycle tests | PASS — exact profile ID/version retained across transitions |
 | Track revision isolation | addition/removal and historical-read tests | PASS — only later candidates use the revised profile |
 | Legacy candidate profile semantics | v5 migration and corruption tests | PASS — v1 remains readable with no fabricated binding |
+| Exact policy material | byte/hash/model/adversarial tests | PASS — local host, exact profile-authorized bytes retained |
+| Material-bound evaluation v2 | application/store/CLI/REST integration | PASS — material/profile/evidence/time bound atomically |
+| SQLite v1-v6-to-v7 migration | migration and legacy semantics | PASS — no historical policy material fabricated |
+| Path-free REST policy workflow | strict material request + retained readback | PASS — no client-selected server policy path |
 | HTTP artifact loading/file publication | no loader/output path; nested metadata is not dereferenced | OUT OF SCOPE |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
 
-See `reports/PHASE_9_PROJECT_PROFILE_REVISIONS_ACCEPTANCE_REPORT.md` for the
-current exact test and coverage result. Earlier acceptance reports remain
+See `reports/PHASE_10_POLICY_MATERIALIZATION_ACCEPTANCE_REPORT.md` for the
+current exact local test and coverage result. Earlier acceptance reports remain
 historical records.

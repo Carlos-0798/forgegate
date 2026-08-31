@@ -19,7 +19,7 @@ The current slice has no authenticated producer and runs no plugin code.
 |---|---|
 | Unknown or ambiguous schema | Exact version dispatch and extra-field rejection |
 | Unsafe YAML tags | `yaml.safe_load` |
-| Oversized configuration | 1 MiB pre-parse limit |
+| Oversized configuration | 4 MiB pre-parse document limit; policy content remains capped at 1 MiB |
 | Parent or absolute output paths | Relative-path validation |
 | Missing scan represented as zero findings | Mandatory `require_presence` invariant |
 | Evidence reused for another commit | Per-record candidate commit equality |
@@ -199,7 +199,7 @@ The current slice has no authenticated producer and runs no plugin code.
 | Concurrent HTTP writers silently overwrite a candidate | Every transition/evaluation supplies `expected_revision`; SQLite performs transactional compare-and-swap |
 | Retried transition, binding, or evaluation duplicates state | Caller idempotency key plus canonical request fingerprint and stored exact response |
 | HTTP policy evaluates evidence different from the persisted binding | Application loads the immutable binding and passes its nested bundle directly to the policy engine |
-| Weaker unrelated policy is used for a release track | Terminal lifecycle requires `evaluation.policy_name == candidate.release_track` |
+| Weaker unrelated policy is used for a release track | Phase 10 additionally requires exact material authorized by the candidate's frozen profile; name equality remains a legacy/stateless check |
 | Evaluation result and terminal state diverge | Application derives the target state from the policy decision and stores both in one repository transaction |
 | API reads or publishes arbitrary local paths | No loader/output path is accepted; nested assembly path metadata is not dereferenced, and file publication remains CLI-only |
 | Attestation request races mutable candidate state | Store accepts only a terminal immutable revision-four candidate and exact deterministic replay |
@@ -248,7 +248,21 @@ The current slice has no authenticated producer and runs no plugin code.
 | Track removal alters historical candidate meaning | Candidate v2 identity and immutable binding row retain the exact profile ID/version used at creation |
 | Migration invents a historical candidate/profile link | v5-to-v6 migration backfills version-one registrations only; legacy v1 candidates have no binding row |
 | Binding metadata is deleted or detached | Every candidate read validates snapshot identity, binding row, referenced profile, and chronology; corruption fails closed |
-| Profile path is mistaken for exact policy authority | Documentation identifies absent policy-byte binding as a Phase 10 residual risk |
+| Profile path is mistaken for exact policy authority | Phase 10 materializes and retains exact root-confined bytes before terminal evaluation |
+
+## Addressed in the Phase 10 profile-authorized policy-material slice
+
+| Threat | Current control |
+|---|---|
+| Policy name equality substitutes for frozen-profile authority | New product candidates require material project/profile/version/track fields to equal the immutable candidate binding |
+| Profile authorizes one path but another file is evaluated | Store resolves the exact frozen track and requires the retained normalized artifact path to equal its configured policy path |
+| Policy bytes change without changing parsed semantics | Material identity includes exact base64 bytes, size, media type, and artifact SHA-256; semantically equal byte variants have different IDs |
+| Embedded policy differs from retained bytes | Validation reparses exact UTF-8 YAML/JSON with duplicate-key rejection and compares the strict model plus fingerprint |
+| Evaluation is detached from its material | Evaluation v2 identity and store checks bind material ID, artifact SHA-256, profile ID/version, evidence fingerprint, and time |
+| Partial terminal write retains material without a decision | Material, evaluation, transition, audit events, pointer, and idempotency response share one rollback boundary |
+| HTTP caller selects a server filesystem path | REST accepts a complete validated material document and exposes no materialization/path-dereference route |
+| Migration invents historical policy bytes | v1-v6 candidates receive `policy_material_required = 0`; no material row or authenticity claim is synthesized |
+| Policy hash is mistaken for approval or producer identity | Contract and output documentation state unsigned-local byte association only |
 
 ## Deferred risks
 
@@ -261,5 +275,6 @@ The current slice has no authenticated producer and runs no plugin code.
   management;
 - database authorization, API authentication, audit retention, backup, repair,
   encryption at rest, and administrator-resistant tamper evidence.
+- portable attestation bundling of the complete retained policy material;
 - an exact streaming request-body limiter for unknown-length/chunked HTTP
   bodies; the current 4 MiB gate covers declared `Content-Length` only.
