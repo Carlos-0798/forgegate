@@ -71,9 +71,16 @@
 | `COLLECTING -> READY` evidence gate | missing/time/legacy migration tests | PASS — local host |
 | Bound terminal evaluation | nested-bundle fingerprint mismatch tests | PASS — local host |
 | Installed binding workflow | clean-wheel assembly/bind/READY/terminal/attest smoke | PASS — local host |
+| Shared CLI/API application service | parity and integration tests | PASS — candidate create/read paths |
+| Local REST health and candidate API | FastAPI TestClient + durable SQLite flow | PASS — local host |
+| HTTP idempotency and error mapping | replay/conflict/404/422/500/503 tests | PASS — local host |
+| Request correlation and error sanitization | generated/supplied/invalid IDs + injected exception | PASS — local host |
+| Loopback-only API bind | IPv4/IPv6/localhost allowlist + external-address rejection | PASS — local host |
+| OpenAPI 3.1 contract | committed byte comparison + installed-wheel export | PASS — drift-checked |
+| Authenticated/non-loopback API | identity, authorization, transport controls | NOT IMPLEMENTED |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
 
-See `reports/PHASE_4_CANDIDATE_EVIDENCE_BINDING_ACCEPTANCE_REPORT.md` for
+See `reports/PHASE_5_LOCAL_REST_API_BASELINE_ACCEPTANCE_REPORT.md` for
 the current exact test and coverage result. Earlier acceptance reports remain
 historical records.

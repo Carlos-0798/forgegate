@@ -66,3 +66,19 @@
   documentation, and clean-install smoke.
 - [x] Bind an accepted assembly to the persisted candidate workflow; keep this
   separate from signature or producer-authentication work.
+
+## Phase 5 — local REST API baseline
+
+- [x] Introduce a shared candidate application service used by CLI and HTTP.
+- [x] Add versioned health, idempotent candidate-create, and candidate,
+  history, evidence-binding, and attestation read endpoints.
+- [x] Add strict HTTP validation, structured errors, correlation IDs, and
+  sanitized unexpected failures.
+- [x] Restrict the server to loopback addresses and document the unauthenticated
+  local-only boundary.
+- [x] Commit and drift-check OpenAPI 3.1; verify API/CLI parity and clean-wheel
+  export behavior.
+- [ ] Add lifecycle, evidence-binding, evaluation, and attestation HTTP writes
+  only after their authorization and concurrency contracts are frozen.
+- [ ] Add authenticated operator/producer identity before considering any
+  non-loopback deployment.

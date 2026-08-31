@@ -176,6 +176,21 @@ The current slice has no authenticated producer and runs no plugin code.
 | Migration invents assurance that did not exist | Legacy v1/v2 candidates retain an immutable no-binding-required marker; no binding is fabricated |
 | Binding hash is mistaken for authenticated provenance | Explicit unsigned-local boundary; no producer, operator, CI, clock, or commit authentication claim |
 
+## Addressed in the Phase 5 local REST API baseline
+
+| Threat | Current control |
+|---|---|
+| Unauthenticated service is exposed to another host | `serve` accepts only `localhost`, IPv4 loopback, or IPv6 loopback addresses |
+| CLI and HTTP apply different candidate rules | Shared `CandidateApplication` delegates both transports to the same domain and repository methods |
+| Retried HTTP create duplicates a candidate | Required `Idempotency-Key` reaches the existing durable request-fingerprint and exact-replay control |
+| Unknown or weakly typed JSON reaches the domain | Strict Pydantic request model rejects unknown fields and invalid types before the application service |
+| Internal exception details leak through HTTP | Catch-all handler returns a fixed fail-closed message and correlation ID without exception text |
+| Error response shape changes by failure source | Structured `ApiErrorResponse` covers request, domain, store, and unexpected failures |
+| Requests cannot be correlated during local diagnosis | Valid caller `X-Request-ID` is echoed; otherwise a safe unpredictable identifier is generated |
+| Malicious correlation value reaches logs or headers | Eight-to-128-character allowlist rejects spaces, control characters, and unsafe punctuation |
+| OpenAPI silently diverges from the implementation | Deterministic export, committed byte-for-byte drift gate, and installed-wheel comparison |
+| Local transport is mistaken for authenticated authority | Documentation explicitly states no identity, authorization, TLS, or non-loopback deployment claim |
+
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;

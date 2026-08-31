@@ -4,20 +4,23 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "forgegate"
-version = "0.1.0.dev11"
+version = "0.1.0.dev12"
 description = "Evidence-aware release assurance contracts and tooling"
 readme = "README.md"
 requires-python = ">=3.12"
 authors = [{ name = "Carlos" }]
 dependencies = [
+  "fastapi>=0.141,<1",
   "pydantic>=2.10,<3",
   "PyYAML>=6.0.2,<7",
   "typer>=0.15,<1",
+  "uvicorn>=0.52,<1",
 ]
 
 [project.optional-dependencies]
 dev = [
   "build>=1.2,<2",
+  "httpx2>=2.12,<3",
   "mypy>=1.14,<2",
   "pytest>=8.3,<9",
   "pytest-cov>=6,<7",

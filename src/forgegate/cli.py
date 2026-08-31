@@ -1,3 +1,4 @@
+import ipaddress
 import json
 import platform
 from datetime import datetime
@@ -8,6 +9,7 @@ import typer
 from pydantic import ValidationError
 
 from forgegate import __version__
+from forgegate.application import CandidateApplication, CandidateCreateCommand
 from forgegate.artifacts import ArtifactBoundaryError, ArtifactError, ArtifactRegistry
 from forgegate.assembly import (
     CollectionResultLoader,
@@ -22,7 +24,6 @@ from forgegate.candidates import (
     CandidateStoreError,
     ReleaseCandidate,
     SQLiteCandidateRepository,
-    create_candidate,
     transition_candidate,
 )
 from forgegate.collectors import (
@@ -65,7 +66,7 @@ def doctor() -> None:
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
         "supported_artifact_schemas": sorted(ARTIFACT_SCHEMAS),
-        "phase": "phase4-candidate-evidence-binding",
+        "phase": "phase5-local-rest-api-baseline",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 
@@ -101,6 +102,54 @@ def export_schemas(
         typer.echo(str(target))
 
 
+@app.command("export-openapi")
+def export_openapi(
+    output_file: Annotated[Path, typer.Argument(dir_okay=False)],
+) -> None:
+    """Export the deterministic local REST API OpenAPI contract."""
+    from forgegate.api import create_api_app
+
+    if not output_file.parent.is_dir():
+        typer.echo(f"ERROR: output parent does not exist: {output_file.parent}", err=True)
+        raise typer.Exit(code=3)
+    payload = (
+        json.dumps(
+            create_api_app(Path("forgegate-openapi-contract.db")).openapi(),
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n"
+    )
+    output_file.write_text(payload, encoding="utf-8")
+    typer.echo(str(output_file))
+
+
+@app.command("serve")
+def serve(
+    database: Annotated[Path, typer.Option("--database", dir_okay=False)],
+    host: Annotated[str, typer.Option("--host")] = "127.0.0.1",
+    port: Annotated[int, typer.Option("--port", min=1, max=65535)] = 8000,
+) -> None:
+    """Serve the local REST API on an explicitly loopback-only address."""
+    import uvicorn
+
+    from forgegate.api import create_api_app
+
+    try:
+        bind_host = _validated_loopback_host(host)
+        application = CandidateApplication.for_database(database)
+        application.initialize()
+    except (CandidateStoreError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    uvicorn.run(
+        create_api_app(database, application=application),
+        host=bind_host,
+        port=port,
+        log_level="info",
+    )
+
+
 @candidate_app.command("create")
 def candidate_create(
     project_id: Annotated[str, typer.Option("--project")],
@@ -114,7 +163,7 @@ def candidate_create(
 ) -> None:
     """Create a deterministic DRAFT preview or persist it in an initialized store."""
     try:
-        candidate = create_candidate(
+        command = CandidateCreateCommand(
             project_id=project_id,
             version=version,
             commit_sha=commit,
@@ -122,13 +171,15 @@ def candidate_create(
             release_track=release_track,
             created_at=datetime.fromisoformat(created_at.replace("Z", "+00:00")),
         )
+        candidate = CandidateApplication.preview_candidate(command)
         if database is None and idempotency_key is not None:
             raise ValueError("--idempotency-key requires --database")
         if database is not None:
             if idempotency_key is None:
                 raise ValueError("--database requires --idempotency-key")
-            candidate = SQLiteCandidateRepository(database).create(
-                candidate, idempotency_key=idempotency_key
+            candidate = CandidateApplication.for_database(database).create_candidate(
+                command,
+                idempotency_key=idempotency_key,
             )
     except (CandidateLifecycleError, CandidateStoreError, ValidationError, ValueError) as exc:
         typer.echo(f"ERROR: {exc}", err=True)
@@ -239,7 +290,7 @@ def candidate_show(
 ) -> None:
     """Read and validate the current persisted candidate plus its audit chain."""
     try:
-        candidate = SQLiteCandidateRepository(database).get(candidate_id)
+        candidate = CandidateApplication.for_database(database).get_candidate(candidate_id)
     except CandidateStoreError as exc:
         typer.echo(f"ERROR: {exc}", err=True)
         raise typer.Exit(code=3) from exc
@@ -253,19 +304,12 @@ def candidate_history(
 ) -> None:
     """Read the current candidate and its ordered append-only transition events."""
     try:
-        history = SQLiteCandidateRepository(database).history(candidate_id)
+        history = CandidateApplication.for_database(database).get_history(candidate_id)
     except CandidateStoreError as exc:
         typer.echo(f"ERROR: {exc}", err=True)
         raise typer.Exit(code=3) from exc
     payload = {
-        "candidate": history.candidate.model_dump(mode="json"),
-        "transitions": [event.model_dump(mode="json") for event in history.transitions],
-        "evidence_binding_required": history.evidence_binding_required,
-        "evidence_binding": (
-            history.evidence_binding.model_dump(mode="json")
-            if history.evidence_binding is not None
-            else None
-        ),
+        **history.model_dump(mode="json"),
     }
     typer.echo(json.dumps(payload, indent=2, sort_keys=True))
 
@@ -300,7 +344,7 @@ def candidate_show_evidence(
 ) -> None:
     """Read and validate a candidate's durable evidence binding."""
     try:
-        binding = SQLiteCandidateRepository(database).get_evidence_binding(candidate_id)
+        binding = CandidateApplication.for_database(database).get_evidence(candidate_id)
     except CandidateStoreError as exc:
         typer.echo(f"ERROR: {exc}", err=True)
         raise typer.Exit(code=3) from exc
@@ -365,11 +409,24 @@ def candidate_show_attestation(
 ) -> None:
     """Read and validate the durable self-contained release attestation."""
     try:
-        attestation = SQLiteCandidateRepository(database).get_attestation(candidate_id)
+        attestation = CandidateApplication.for_database(database).get_attestation(candidate_id)
     except CandidateStoreError as exc:
         typer.echo(f"ERROR: {exc}", err=True)
         raise typer.Exit(code=3) from exc
     typer.echo(attestation.model_dump_json(indent=2))
+
+
+def _validated_loopback_host(host: str) -> str:
+    normalized = host.strip().lower()
+    if normalized == "localhost":
+        return normalized
+    try:
+        address = ipaddress.ip_address(normalized)
+    except ValueError as exc:
+        raise ValueError("--host must be localhost or a loopback IP address") from exc
+    if not address.is_loopback:
+        raise ValueError("--host must be localhost or a loopback IP address")
+    return normalized
 
 
 def _load_policy_evaluation(path: Path | None) -> PolicyEvaluation | None:

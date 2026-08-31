@@ -1,0 +1,1633 @@
+{
+  "components": {
+    "schemas": {
+      "Aggregation": {
+        "enum": [
+          "value",
+          "count",
+          "all",
+          "any"
+        ],
+        "title": "Aggregation",
+        "type": "string"
+      },
+      "ApiError": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "pattern": "^[A-Z][A-Z0-9_]{2,127}$",
+            "title": "Code",
+            "type": "string"
+          },
+          "message": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "request_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$",
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message",
+          "request_id"
+        ],
+        "title": "ApiError",
+        "type": "object"
+      },
+      "ApiErrorResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "error": {
+            "$ref": "#/components/schemas/ApiError"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "ApiErrorResponse",
+        "type": "object"
+      },
+      "ArtifactReference": {
+        "additionalProperties": false,
+        "properties": {
+          "media_type": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Media Type",
+            "type": "string"
+          },
+          "path_or_uri": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Path Or Uri",
+            "type": "string"
+          },
+          "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Sha256",
+            "type": "string"
+          },
+          "size_bytes": {
+            "minimum": 0.0,
+            "title": "Size Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path_or_uri",
+          "media_type",
+          "sha256",
+          "size_bytes"
+        ],
+        "title": "ArtifactReference",
+        "type": "object"
+      },
+      "CandidateCreateCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "commit_sha": {
+            "pattern": "^[0-9a-fA-F]{7,64}$",
+            "title": "Commit Sha",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "project_id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "release_track": {
+            "default": "pull-request",
+            "pattern": "^[a-z][a-z0-9_-]{1,63}$",
+            "title": "Release Track",
+            "type": "string"
+          },
+          "source_branch": {
+            "default": "main",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Source Branch",
+            "type": "string"
+          },
+          "version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "project_id",
+          "version",
+          "commit_sha",
+          "created_at"
+        ],
+        "title": "CandidateCreateCommand",
+        "type": "object"
+      },
+      "CandidateEvidenceBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "assembly": {
+            "$ref": "#/components/schemas/EvidenceBundleAssembly"
+          },
+          "assembly_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Assembly Fingerprint",
+            "type": "string"
+          },
+          "binding_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Binding Id",
+            "type": "string"
+          },
+          "bound_at": {
+            "format": "date-time",
+            "title": "Bound At",
+            "type": "string"
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/ReleaseCandidate"
+          },
+          "candidate_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Candidate Fingerprint",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.candidate-evidence-binding.v1",
+            "default": "forgegate.candidate-evidence-binding.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "binding_id",
+          "bound_at",
+          "candidate",
+          "candidate_fingerprint",
+          "assembly",
+          "assembly_fingerprint"
+        ],
+        "title": "CandidateEvidenceBinding",
+        "type": "object"
+      },
+      "CandidateHistoryView": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate": {
+            "$ref": "#/components/schemas/ReleaseCandidate"
+          },
+          "evidence_binding": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CandidateEvidenceBinding"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evidence_binding_required": {
+            "title": "Evidence Binding Required",
+            "type": "boolean"
+          },
+          "transitions": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateTransition"
+            },
+            "title": "Transitions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "candidate",
+          "transitions",
+          "evidence_binding_required",
+          "evidence_binding"
+        ],
+        "title": "CandidateHistoryView",
+        "type": "object"
+      },
+      "CandidateStatus": {
+        "enum": [
+          "DRAFT",
+          "COLLECTING",
+          "READY",
+          "EVALUATING",
+          "PASS",
+          "FAIL",
+          "REVIEW",
+          "ERROR"
+        ],
+        "title": "CandidateStatus",
+        "type": "string"
+      },
+      "CandidateTransition": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_id": {
+            "pattern": "^cand-[0-9a-f]{24}$",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "evaluation_id": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluation Id"
+          },
+          "from_revision": {
+            "minimum": 0.0,
+            "title": "From Revision",
+            "type": "integer"
+          },
+          "from_status": {
+            "$ref": "#/components/schemas/CandidateStatus"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "prior_candidate_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Prior Candidate Fingerprint",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "result_candidate_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Result Candidate Fingerprint",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.candidate-transition.v1",
+            "default": "forgegate.candidate-transition.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "to_revision": {
+            "minimum": 1.0,
+            "title": "To Revision",
+            "type": "integer"
+          },
+          "to_status": {
+            "$ref": "#/components/schemas/CandidateStatus"
+          },
+          "transition_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Transition Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "transition_id",
+          "candidate_id",
+          "from_status",
+          "to_status",
+          "from_revision",
+          "to_revision",
+          "prior_candidate_fingerprint",
+          "result_candidate_fingerprint",
+          "occurred_at"
+        ],
+        "title": "CandidateTransition",
+        "type": "object"
+      },
+      "CollectionIssue": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "pattern": "^[A-Z][A-Z0-9_]{2,127}$",
+            "title": "Code",
+            "type": "string"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "maxLength": 512,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "message": {
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/IssueSeverity"
+          }
+        },
+        "required": [
+          "code",
+          "severity",
+          "message"
+        ],
+        "title": "CollectionIssue",
+        "type": "object"
+      },
+      "CollectionReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "artifacts": {
+            "items": {
+              "$ref": "#/components/schemas/ArtifactReference"
+            },
+            "minItems": 1,
+            "title": "Artifacts",
+            "type": "array"
+          },
+          "collector_name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Collector Name",
+            "type": "string"
+          },
+          "collector_version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Collector Version",
+            "type": "string"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "result_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Result Fingerprint",
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/ArtifactReference"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/CollectionIssue"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "source",
+          "collector_name",
+          "collector_version",
+          "result_fingerprint",
+          "artifacts",
+          "evidence_ids"
+        ],
+        "title": "CollectionReceipt",
+        "type": "object"
+      },
+      "Decision": {
+        "enum": [
+          "PASS",
+          "FAIL",
+          "REVIEW",
+          "ERROR"
+        ],
+        "title": "Decision",
+        "type": "string"
+      },
+      "EvidenceBundle": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_commit": {
+            "pattern": "^[0-9a-fA-F]{7,64}$",
+            "title": "Candidate Commit",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRecord"
+            },
+            "minItems": 1,
+            "title": "Evidence",
+            "type": "array"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "producer": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Producer",
+            "type": "string"
+          },
+          "producer_version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Producer Version",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.evidence-bundle.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "producer",
+          "producer_version",
+          "candidate_commit",
+          "generated_at",
+          "evidence"
+        ],
+        "title": "EvidenceBundle",
+        "type": "object"
+      },
+      "EvidenceBundleAssembly": {
+        "additionalProperties": false,
+        "properties": {
+          "assembly_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Assembly Id",
+            "type": "string"
+          },
+          "bundle": {
+            "$ref": "#/components/schemas/EvidenceBundle"
+          },
+          "collections": {
+            "items": {
+              "$ref": "#/components/schemas/CollectionReceipt"
+            },
+            "minItems": 1,
+            "title": "Collections",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "forgegate.evidence-bundle-assembly.v1",
+            "default": "forgegate.evidence-bundle-assembly.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "warning_disposition": {
+            "enum": [
+              "none",
+              "retained"
+            ],
+            "title": "Warning Disposition",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assembly_id",
+          "warning_disposition",
+          "bundle",
+          "collections"
+        ],
+        "title": "EvidenceBundleAssembly",
+        "type": "object"
+      },
+      "EvidenceRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact": {
+            "$ref": "#/components/schemas/ArtifactReference"
+          },
+          "collected_at": {
+            "format": "date-time",
+            "title": "Collected At",
+            "type": "string"
+          },
+          "evidence_id": {
+            "pattern": "^[a-z][a-z0-9._-]{1,127}$",
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "execution_context": {
+            "$ref": "#/components/schemas/ExecutionContext"
+          },
+          "kind": {
+            "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z0-9_-]+)+$",
+            "title": "Kind",
+            "type": "string"
+          },
+          "scope": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Scope",
+            "type": "string"
+          },
+          "source_tool": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Source Tool",
+            "type": "string"
+          },
+          "source_version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Source Version",
+            "type": "string"
+          },
+          "status": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Status",
+            "type": "string"
+          },
+          "tags": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "object"
+          },
+          "trust": {
+            "$ref": "#/components/schemas/EvidenceTrust"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "value": {
+            "title": "Value"
+          },
+          "verification_level": {
+            "$ref": "#/components/schemas/VerificationLevel"
+          }
+        },
+        "required": [
+          "evidence_id",
+          "kind",
+          "scope",
+          "value",
+          "status",
+          "source_tool",
+          "source_version",
+          "execution_context",
+          "artifact",
+          "collected_at",
+          "trust",
+          "verification_level"
+        ],
+        "title": "EvidenceRecord",
+        "type": "object"
+      },
+      "EvidenceTrust": {
+        "description": "How strongly ForgeGate can trust the producer identity.",
+        "enum": [
+          "unsigned_local",
+          "claimed_ci_metadata",
+          "verified_ci_identity",
+          "signed_attestation"
+        ],
+        "title": "EvidenceTrust",
+        "type": "string"
+      },
+      "ExecutionContext": {
+        "additionalProperties": false,
+        "properties": {
+          "architecture": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Architecture"
+          },
+          "ci_provider": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci Provider"
+          },
+          "ci_run_id": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci Run Id"
+          },
+          "commit_sha": {
+            "pattern": "^[0-9a-fA-F]{7,64}$",
+            "title": "Commit Sha",
+            "type": "string"
+          },
+          "operating_system": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operating System"
+          },
+          "runtime": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runtime"
+          },
+          "tags": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "object"
+          }
+        },
+        "required": [
+          "commit_sha"
+        ],
+        "title": "ExecutionContext",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "api_version": {
+            "const": "v1",
+            "default": "v1",
+            "title": "Api Version",
+            "type": "string"
+          },
+          "forgegate_version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Forgegate Version",
+            "type": "string"
+          },
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          },
+          "store_schema": {
+            "const": "forgegate.candidate-store.v3",
+            "default": "forgegate.candidate-store.v3",
+            "title": "Store Schema",
+            "type": "string"
+          }
+        },
+        "required": [
+          "forgegate_version"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "IssueSeverity": {
+        "enum": [
+          "WARNING",
+          "REJECTION"
+        ],
+        "title": "IssueSeverity",
+        "type": "string"
+      },
+      "Operator": {
+        "enum": [
+          "equals",
+          "not_equals",
+          "greater_than",
+          "greater_than_or_equal",
+          "less_than",
+          "less_than_or_equal",
+          "contains",
+          "exists"
+        ],
+        "title": "Operator",
+        "type": "string"
+      },
+      "PolicyEvaluation": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_commit": {
+            "pattern": "^[0-9a-fA-F]{7,64}$",
+            "title": "Candidate Commit",
+            "type": "string"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/Decision"
+          },
+          "evaluated_at": {
+            "format": "date-time",
+            "title": "Evaluated At",
+            "type": "string"
+          },
+          "evaluated_evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evaluated Evidence Ids",
+            "type": "array"
+          },
+          "evaluation_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Evaluation Id",
+            "type": "string"
+          },
+          "evidence_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Evidence Fingerprint",
+            "type": "string"
+          },
+          "policy_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Policy Fingerprint",
+            "type": "string"
+          },
+          "policy_name": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Policy Name",
+            "type": "string"
+          },
+          "rule_results": {
+            "items": {
+              "$ref": "#/components/schemas/RuleEvaluation"
+            },
+            "minItems": 1,
+            "title": "Rule Results",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "forgegate.policy-evaluation.v1",
+            "default": "forgegate.policy-evaluation.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "evaluation_id",
+          "policy_name",
+          "policy_fingerprint",
+          "evidence_fingerprint",
+          "candidate_commit",
+          "evaluated_at",
+          "decision",
+          "rule_results",
+          "evaluated_evidence_ids"
+        ],
+        "title": "PolicyEvaluation",
+        "type": "object"
+      },
+      "ReleaseAttestation": {
+        "additionalProperties": false,
+        "properties": {
+          "assurance": {
+            "const": "unsigned_local",
+            "default": "unsigned_local",
+            "title": "Assurance",
+            "type": "string"
+          },
+          "attestation_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Attestation Id",
+            "type": "string"
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/ReleaseCandidate"
+          },
+          "candidate_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Candidate Fingerprint",
+            "type": "string"
+          },
+          "evaluation_fingerprint": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluation Fingerprint"
+          },
+          "generator": {
+            "const": "forgegate",
+            "default": "forgegate",
+            "title": "Generator",
+            "type": "string"
+          },
+          "generator_version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Generator Version",
+            "type": "string"
+          },
+          "issued_at": {
+            "format": "date-time",
+            "title": "Issued At",
+            "type": "string"
+          },
+          "policy_evaluation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyEvaluation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "schema_version": {
+            "const": "forgegate.release-attestation.v1",
+            "default": "forgegate.release-attestation.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "transition_chain_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Transition Chain Fingerprint",
+            "type": "string"
+          },
+          "transitions": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateTransition"
+            },
+            "maxItems": 4,
+            "minItems": 4,
+            "title": "Transitions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "attestation_id",
+          "generator_version",
+          "issued_at",
+          "candidate",
+          "candidate_fingerprint",
+          "transitions",
+          "transition_chain_fingerprint"
+        ],
+        "title": "ReleaseAttestation",
+        "type": "object"
+      },
+      "ReleaseCandidate": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_id": {
+            "pattern": "^cand-[0-9a-f]{24}$",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "commit_sha": {
+            "pattern": "^[0-9a-fA-F]{7,64}$",
+            "title": "Commit Sha",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "evaluated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluated At"
+          },
+          "evaluation_id": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluation Id"
+          },
+          "project_id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "release_track": {
+            "pattern": "^[a-z][a-z0-9_-]{1,63}$",
+            "title": "Release Track",
+            "type": "string"
+          },
+          "revision": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "forgegate.release-candidate.v1",
+            "default": "forgegate.release-candidate.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_branch": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Source Branch",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CandidateStatus",
+            "default": "DRAFT"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "project_id",
+          "version",
+          "commit_sha",
+          "source_branch",
+          "release_track",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ReleaseCandidate",
+        "type": "object"
+      },
+      "RuleEvaluation": {
+        "additionalProperties": false,
+        "properties": {
+          "actual": {
+            "title": "Actual"
+          },
+          "aggregation": {
+            "$ref": "#/components/schemas/Aggregation"
+          },
+          "claim": {
+            "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z0-9_-]+)+$",
+            "title": "Claim",
+            "type": "string"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/Decision"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "evidence_kind": {
+            "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z0-9_-]+)+$",
+            "title": "Evidence Kind",
+            "type": "string"
+          },
+          "expected": {
+            "title": "Expected"
+          },
+          "explanation": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Explanation",
+            "type": "string"
+          },
+          "mandatory": {
+            "title": "Mandatory",
+            "type": "boolean"
+          },
+          "operator": {
+            "$ref": "#/components/schemas/Operator"
+          },
+          "reason_code": {
+            "pattern": "^[A-Z][A-Z0-9_]{1,127}$",
+            "title": "Reason Code",
+            "type": "string"
+          },
+          "remediation_hint": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remediation Hint"
+          },
+          "rule_id": {
+            "pattern": "^[a-z][a-z0-9._-]{1,127}$",
+            "title": "Rule Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rule_id",
+          "claim",
+          "decision",
+          "mandatory",
+          "evidence_kind",
+          "aggregation",
+          "operator",
+          "expected",
+          "actual",
+          "evidence_ids",
+          "reason_code",
+          "explanation"
+        ],
+        "title": "RuleEvaluation",
+        "type": "object"
+      },
+      "VerificationLevel": {
+        "description": "What kind of engineering observation the evidence represents.",
+        "enum": [
+          "declared",
+          "simulated",
+          "replayed",
+          "host_tested",
+          "target_built",
+          "ci_validated",
+          "system_observed",
+          "physically_verified"
+        ],
+        "title": "VerificationLevel",
+        "type": "string"
+      }
+    }
+  },
+  "info": {
+    "summary": "Local release-assurance candidate API",
+    "title": "ForgeGate Local API",
+    "version": "0.1.0.dev12"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/healthz": {
+      "get": {
+        "operationId": "getHealth",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "system"
+        ]
+      }
+    },
+    "/v1/candidates": {
+      "post": {
+        "operationId": "createCandidate",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateCreateCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseCandidate"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request conflicts with durable state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Strict request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fail-closed internal error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate store unavailable"
+          }
+        },
+        "summary": "Create Candidate Endpoint",
+        "tags": [
+          "candidates"
+        ]
+      }
+    },
+    "/v1/candidates/{candidate_id}": {
+      "get": {
+        "operationId": "getCandidate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseCandidate"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request conflicts with durable state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Strict request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fail-closed internal error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate store unavailable"
+          }
+        },
+        "summary": "Get Candidate Endpoint",
+        "tags": [
+          "candidates"
+        ]
+      }
+    },
+    "/v1/candidates/{candidate_id}/attestation": {
+      "get": {
+        "operationId": "getCandidateAttestation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseAttestation"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request conflicts with durable state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Strict request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fail-closed internal error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate store unavailable"
+          }
+        },
+        "summary": "Get Candidate Attestation Endpoint",
+        "tags": [
+          "candidates"
+        ]
+      }
+    },
+    "/v1/candidates/{candidate_id}/evidence": {
+      "get": {
+        "operationId": "getCandidateEvidence",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateEvidenceBinding"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request conflicts with durable state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Strict request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fail-closed internal error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate store unavailable"
+          }
+        },
+        "summary": "Get Candidate Evidence Endpoint",
+        "tags": [
+          "candidates"
+        ]
+      }
+    },
+    "/v1/candidates/{candidate_id}/history": {
+      "get": {
+        "operationId": "getCandidateHistory",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateHistoryView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request conflicts with durable state"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Strict request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fail-closed internal error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate store unavailable"
+          }
+        },
+        "summary": "Get Candidate History Endpoint",
+        "tags": [
+          "candidates"
+        ]
+      }
+    }
+  }
+}

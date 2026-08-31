@@ -5,6 +5,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+from forgegate.api import create_api_app
 from forgegate.schema_registry import ARTIFACT_SCHEMAS, SCHEMAS, schema_filename
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -35,6 +36,23 @@ def verify_committed_schemas() -> None:
         if path.read_text(encoding="utf-8") != expected:
             raise SystemExit(f"schema drift: {path}")
     print("\nCommitted JSON Schemas: PASS", flush=True)
+
+
+def verify_committed_openapi() -> None:
+    expected = (
+        json.dumps(
+            create_api_app(Path("forgegate-openapi-contract.db")).openapi(),
+            indent=2,
+            sort_keys=True,
+        )
+        + "\n"
+    )
+    path = REPOSITORY_ROOT / "schemas/forgegate.openapi.v1.json"
+    if not path.is_file():
+        raise SystemExit(f"missing committed OpenAPI contract: {path}")
+    if path.read_text(encoding="utf-8") != expected:
+        raise SystemExit(f"OpenAPI drift: {path}; run `python -m forgegate export-openapi {path}`")
+    print("\nCommitted OpenAPI contract: PASS", flush=True)
 
 
 def main() -> int:
@@ -119,6 +137,7 @@ def main() -> int:
     for command in commands:
         run(command)
     verify_committed_schemas()
+    verify_committed_openapi()
     print("\nForgeGate development verification: PASS", flush=True)
     return 0
 

@@ -6,7 +6,7 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 4 persisted candidate-evidence binding implemented; not production-ready.**
+**Phase 5 local REST API baseline implemented; not production-ready.**
 
 Implemented and host-verified in this checkpoint:
 
@@ -85,10 +85,20 @@ Implemented and host-verified in this checkpoint:
   `READY`;
 - terminal evaluation enforcement against the bound assembly's nested
   evidence-bundle fingerprint, with non-fabricating v1/v2 migration semantics.
+- a shared candidate application-service boundary used by both CLI and HTTP;
+- a versioned FastAPI surface for health, idempotent candidate creation, and
+  candidate/history/evidence/attestation reads;
+- strict request models, structured error envelopes, caller-supplied or
+  generated request correlation IDs, and sanitized unexpected failures;
+- `serve` with mandatory loopback-only binding plus deterministic
+  `export-openapi` and a committed OpenAPI 3.1 drift gate;
+- API/CLI candidate-creation parity, durable SQLite readback integration, and
+  installed-wheel OpenAPI smoke verification.
 
 Not implemented yet:
 
-- REST API, plugin execution, GitHub integration, database authorization,
+- authenticated or non-loopback API deployment, HTTP lifecycle/evaluation
+  writes, plugin execution, GitHub integration, database authorization,
   backup/repair, or signed provenance/key management;
 - MSP430 compatibility collector;
 - authenticated provenance, signatures, or trusted producer/CI identity;
@@ -109,6 +119,27 @@ the package retains compatible version ranges for downstream users.
 
 See `docs/PROJECT_STATUS.md`, `docs/ROADMAP.md`, and
 `docs/VERIFICATION_MATRIX.md` before making capability claims.
+
+Start the local API against an existing or new local candidate database:
+
+```powershell
+.\.venv\Scripts\python.exe -m forgegate serve `
+  --database work/forgegate.db `
+  --host 127.0.0.1 --port 8000
+```
+
+The server accepts only `localhost` or a loopback IP. Its current write surface
+is limited to `POST /v1/candidates`, which requires `Idempotency-Key`; the
+remaining v1 candidate endpoints are reads. OpenAPI is available at
+`/openapi.json`, and the committed copy can be regenerated with:
+
+```powershell
+.\.venv\Scripts\python.exe -m forgegate export-openapi `
+  schemas/forgegate.openapi.v1.json
+```
+
+This API has no authentication or authorization and is not approved for LAN,
+internet, shared-host, or production deployment.
 
 Preview the first collection path without making a release decision:
 
@@ -314,9 +345,11 @@ measurements. The Studio integration consumes only its frozen public JSON
 artifact; it neither imports Studio code nor converts current `BENCH_*` labels
 into physical verification. Assembly only revalidates local artifacts and
 joins existing evidence; persisted binding connects that local assembly to the
-candidate lifecycle but does not authenticate it. SHA-256 is not producer
-authentication. The MSP430 controller may later expose a separate versioned
-artifact for another optional collector.
+candidate lifecycle but does not authenticate it. The REST API is a loopback
+transport over the same application service and SQLite adapter; it adds no
+user, producer, or machine identity. SHA-256 is not producer authentication.
+The MSP430 controller may later expose a separate versioned artifact for
+another optional collector.
 
 ## License status
 

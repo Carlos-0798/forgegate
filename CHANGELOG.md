@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.0.dev12 — 2026-08-31
+
+- Added a FastAPI-based, versioned local REST API with health, idempotent
+  candidate creation, candidate/history, evidence-binding, and attestation
+  read endpoints.
+- Introduced a shared `CandidateApplication` service so HTTP and CLI candidate
+  creation and reads use the same domain and SQLite paths.
+- Added structured fail-closed error envelopes, request correlation IDs,
+  loopback-only serving, strict request models, and sanitized unexpected-error
+  responses.
+- Committed and drift-checked the OpenAPI 3.1 contract, added API/CLI parity and
+  durable evidence/attestation integration tests, and extended clean-wheel
+  release smoke coverage.
+
 ## 0.1.0.dev11 — 2026-08-31
 
 - Added self-validating `forgegate.candidate-evidence-binding.v1` documents

@@ -1,9 +1,9 @@
 # Project status
 
 - Date: 2026-08-31
-- Version: 0.1.0.dev11
-- Stage: Phase 4 persisted candidate-evidence binding implemented
-- Product maturity: local CLI MVP with software-peer collection, audited aggregation, and durable lifecycle binding; not production-ready
+- Version: 0.1.0.dev12
+- Stage: Phase 5 local REST API baseline implemented
+- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, and durable lifecycle binding; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
 - Remote/publication status: local only; no remote repository created
@@ -113,11 +113,24 @@
   historical binding;
 - committed binding Schema, Golden, migration/corruption/adversarial tests,
   architecture/threat documentation, and clean-wheel end-to-end binding smoke.
+- shared `CandidateApplication` service for CLI and REST candidate creation and
+  candidate/history/evidence/attestation reads;
+- local FastAPI v1 health, idempotent candidate-create, and persisted read
+  endpoints with strict request models;
+- structured request/domain/store/internal error envelopes, stable status-code
+  mapping, safe request correlation IDs, and exception-detail sanitization;
+- loopback-only `serve` command supporting localhost, IPv4 loopback, and IPv6
+  loopback while rejecting external and wildcard binds;
+- deterministic `export-openapi`, committed OpenAPI 3.1 bytes, verification
+  drift gate, and clean-wheel comparison;
+- API/CLI creation parity plus full durable evidence-binding, terminal
+  attestation, and history readback integration coverage.
 
 ## Not implemented
 
-REST API, external plugins, GitHub integration, signatures/key management,
-database authorization, backup/repair, MSP430 collector, Studio Phase 5
+Authenticated/non-loopback API deployment, HTTP lifecycle/evaluation writes,
+external plugins, GitHub integration, signatures/key management, database
+authorization, backup/repair, MSP430 collector, Studio Phase 5
 human-readable report ingestion, authenticated provenance/signatures, portable
 attestation embedding of assembly receipts, and hardware access.
 
@@ -127,15 +140,17 @@ attestation embedding of assembly receipts, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 523 passed, 1 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 100% across 3,799 statements and 1,088 branches
+- pytest: 550 passed, 1 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 100% across 4,007 statements and 1,106 branches
+- local API/application focus: 27 passed; 100% across 173 statements and 12
+  branches
 - Analog Validation collector focus: 59 passed; 100% across 431 statements and
   106 branches
 - evidence-assembly focus: 20 passed; 100% across 218 statements and 70
   branches
 - candidate evidence-binding/store focus: 71 passed; 100% across 526 statements
   and 138 branches
-- committed JSON Schema drift check: PASS
+- committed JSON Schema and OpenAPI drift checks: PASS
 - project/policy/candidate/transition example documents: VALID
 - ten canonical versioned document Schemas plus Benchmark and Analog
   Validation artifact Schemas: drift-checked and parsed
@@ -147,5 +162,5 @@ attestation embedding of assembly receipts, and hardware access.
 
 See `reports/PHASE_0_ENVIRONMENT_AUDIT.md` for the prerequisite audit and exact
 human-intervention boundary. See
-`reports/PHASE_4_CANDIDATE_EVIDENCE_BINDING_ACCEPTANCE_REPORT.md` for the
+`reports/PHASE_5_LOCAL_REST_API_BASELINE_ACCEPTANCE_REPORT.md` for the
 current slice.

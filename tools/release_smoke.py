@@ -28,6 +28,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/ANALOG_VALIDATION_COLLECTOR.md",
     "docs/architecture/EVIDENCE_BUNDLE_ASSEMBLY.md",
     "docs/architecture/CANDIDATE_EVIDENCE_BINDING.md",
+    "docs/architecture/LOCAL_REST_API.md",
     "examples/sample-python-api/artifacts/junit.xml",
     "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
@@ -51,6 +52,7 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_3_ANALOG_VALIDATION_COMPATIBILITY_ACCEPTANCE_REPORT.md",
     "reports/PHASE_4_EVIDENCE_BUNDLE_ASSEMBLY_ACCEPTANCE_REPORT.md",
     "reports/PHASE_4_CANDIDATE_EVIDENCE_BINDING_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_5_LOCAL_REST_API_BASELINE_ACCEPTANCE_REPORT.md",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
@@ -60,6 +62,7 @@ REQUIRED_SDIST_PATHS = (
     "schemas/forgegate.release-attestation.v1.schema.json",
     "schemas/forgegate.evidence-bundle-assembly.v1.schema.json",
     "schemas/forgegate.candidate-evidence-binding.v1.schema.json",
+    "schemas/forgegate.openapi.v1.json",
     "schemas/forgegate.benchmark.v1.schema.json",
     "schemas/analog-validation.result-export.v1.schema.json",
     "tests/test_models.py",
@@ -85,6 +88,8 @@ REQUIRED_SDIST_PATHS = (
     "tests/test_analog_validation_collector.py",
     "tests/test_evidence_assembly.py",
     "tests/test_candidate_evidence_binding.py",
+    "tests/test_application.py",
+    "tests/test_api.py",
 )
 
 
@@ -244,6 +249,36 @@ def main() -> int:
             ],
             assembly_path,
             cwd=root,
+        )
+        exported_openapi = root / "forgegate.openapi.v1.json"
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "export-openapi",
+                str(exported_openapi),
+            ],
+            cwd=root,
+        )
+        if (
+            exported_openapi.read_bytes()
+            != (REPOSITORY_ROOT / "schemas/forgegate.openapi.v1.json").read_bytes()
+        ):
+            raise SystemExit("installed wheel OpenAPI contract differs from committed contract")
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "serve",
+                "--database",
+                str(root / "api-rejected.db"),
+                "--host",
+                "0.0.0.0",
+            ],
+            cwd=root,
+            expected_returncode=3,
         )
         run(
             [

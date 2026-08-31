@@ -11,6 +11,13 @@ committed JSON Schemas with:
 Schema export is deterministic for a fixed ForgeGate version. Review and commit
 model changes and regenerated schemas together.
 
+`forgegate.openapi.v1.json` is the deterministic OpenAPI 3.1 description of
+the local REST surface. Regenerate it with `forgegate export-openapi
+schemas/forgegate.openapi.v1.json`. `tools/verify.py` compares the committed
+bytes with the current FastAPI application, and clean-wheel smoke verifies that
+an installed package exports the same contract. It is an interface description,
+not an authentication or deployment guarantee.
+
 `forgegate.evidence-bundle-assembly.v1.schema.json` describes the audited
 envelope around a candidate-bound evidence bundle and its collection receipts.
 It is accepted by configuration validation and policy evaluation without
