@@ -1,0 +1,16 @@
+schema_version: forgegate.policy.v1
+name: pull-request
+rules:
+  - id: tests-pass
+    claim: tests.required-pass
+    evidence_kind: test.summary
+    aggregation: value
+    operator: equals
+    expected: 0
+    where:
+      field: failed
+    mandatory: true
+    require_presence: true
+    on_missing: REVIEW
+    minimum_trust: claimed_ci_metadata
+    minimum_verification: ci_validated

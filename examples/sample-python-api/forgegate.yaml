@@ -1,0 +1,26 @@
+schema_version: forgegate.project.v1
+project:
+  id: sample-api
+  name: Sample Python API
+  repository: https://example.invalid/sample-api
+  default_branch: main
+
+release_tracks:
+  pull_request:
+    policy: policies/pull-request.yaml
+  production:
+    policy: policies/production.yaml
+
+collectors:
+  - type: junit
+    path: artifacts/junit.xml
+  - type: coverage_xml
+    path: artifacts/coverage.xml
+  - type: sarif
+    path: artifacts/security.sarif
+  - type: benchmark_json
+    path: artifacts/benchmark.json
+
+outputs:
+  json: build/forgegate/attestation.json
+  markdown: build/forgegate/summary.md

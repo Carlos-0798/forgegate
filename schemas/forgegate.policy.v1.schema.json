@@ -1,0 +1,158 @@
+{
+  "$defs": {
+    "Aggregation": {
+      "enum": [
+        "value",
+        "count",
+        "all",
+        "any"
+      ],
+      "title": "Aggregation",
+      "type": "string"
+    },
+    "Decision": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "REVIEW",
+        "ERROR"
+      ],
+      "title": "Decision",
+      "type": "string"
+    },
+    "EvidenceTrust": {
+      "description": "How strongly ForgeGate can trust the producer identity.",
+      "enum": [
+        "unsigned_local",
+        "claimed_ci_metadata",
+        "verified_ci_identity",
+        "signed_attestation"
+      ],
+      "title": "EvidenceTrust",
+      "type": "string"
+    },
+    "Operator": {
+      "enum": [
+        "equals",
+        "not_equals",
+        "greater_than",
+        "greater_than_or_equal",
+        "less_than",
+        "less_than_or_equal",
+        "contains",
+        "exists"
+      ],
+      "title": "Operator",
+      "type": "string"
+    },
+    "PolicyRule": {
+      "additionalProperties": false,
+      "properties": {
+        "aggregation": {
+          "$ref": "#/$defs/Aggregation",
+          "default": "value"
+        },
+        "claim": {
+          "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z0-9_-]+)+$",
+          "title": "Claim",
+          "type": "string"
+        },
+        "evidence_kind": {
+          "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z0-9_-]+)+$",
+          "title": "Evidence Kind",
+          "type": "string"
+        },
+        "expected": {
+          "title": "Expected"
+        },
+        "id": {
+          "pattern": "^[a-z][a-z0-9._-]{1,127}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "mandatory": {
+          "default": true,
+          "title": "Mandatory",
+          "type": "boolean"
+        },
+        "minimum_trust": {
+          "$ref": "#/$defs/EvidenceTrust",
+          "default": "unsigned_local"
+        },
+        "minimum_verification": {
+          "$ref": "#/$defs/VerificationLevel",
+          "default": "declared"
+        },
+        "on_missing": {
+          "$ref": "#/$defs/Decision",
+          "default": "REVIEW"
+        },
+        "operator": {
+          "$ref": "#/$defs/Operator"
+        },
+        "require_presence": {
+          "default": true,
+          "title": "Require Presence",
+          "type": "boolean"
+        },
+        "where": {
+          "additionalProperties": true,
+          "title": "Where",
+          "type": "object"
+        }
+      },
+      "required": [
+        "id",
+        "claim",
+        "evidence_kind",
+        "operator",
+        "expected"
+      ],
+      "title": "PolicyRule",
+      "type": "object"
+    },
+    "VerificationLevel": {
+      "description": "What kind of engineering observation the evidence represents.",
+      "enum": [
+        "declared",
+        "simulated",
+        "replayed",
+        "host_tested",
+        "target_built",
+        "ci_validated",
+        "system_observed",
+        "physically_verified"
+      ],
+      "title": "VerificationLevel",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "name": {
+      "pattern": "^[a-z][a-z0-9-]{1,62}$",
+      "title": "Name",
+      "type": "string"
+    },
+    "rules": {
+      "items": {
+        "$ref": "#/$defs/PolicyRule"
+      },
+      "minItems": 1,
+      "title": "Rules",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "forgegate.policy.v1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "schema_version",
+    "name",
+    "rules"
+  ],
+  "title": "PolicyConfig",
+  "type": "object"
+}

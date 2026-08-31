@@ -1,0 +1,43 @@
+schema_version: forgegate.policy.v1
+name: production
+rules:
+  - id: tests-pass
+    claim: tests.required-pass
+    evidence_kind: test.summary
+    aggregation: value
+    operator: equals
+    expected: 0
+    where:
+      field: failed
+    mandatory: true
+    require_presence: true
+    on_missing: REVIEW
+    minimum_trust: claimed_ci_metadata
+    minimum_verification: ci_validated
+  - id: coverage-floor
+    claim: coverage.line-at-least
+    evidence_kind: coverage.line
+    aggregation: value
+    operator: greater_than_or_equal
+    expected: 90
+    where:
+      field: percent
+    mandatory: true
+    require_presence: true
+    on_missing: REVIEW
+    minimum_trust: claimed_ci_metadata
+    minimum_verification: ci_validated
+
+  - id: no-critical-findings
+    claim: security.no-critical
+    evidence_kind: security.finding
+    aggregation: count
+    operator: equals
+    expected: 0
+    where:
+      severity: critical
+    mandatory: true
+    require_presence: true
+    on_missing: REVIEW
+    minimum_trust: claimed_ci_metadata
+    minimum_verification: ci_validated
