@@ -31,8 +31,8 @@
 - [x] Emit versioned per-rule machine results and CI exit codes 0/1/2/3.
 - [x] Add release-candidate lifecycle and legal state transitions.
 - [x] Add transactional SQLite persistence and concurrency controls.
-- [ ] Generate deterministic JSON and Markdown attestations.
-- [ ] Complete the local CLI MVP around persisted candidates.
+- [x] Generate deterministic JSON and Markdown attestations.
+- [x] Complete the local CLI MVP around persisted candidates.
 
 ## Later compatibility work
 

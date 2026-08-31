@@ -1,9 +1,9 @@
 # Project status
 
 - Date: 2026-08-31
-- Version: 0.1.0.dev7
-- Stage: Phase 2 transactional SQLite candidate-store slice complete
-- Product maturity: pre-MVP
+- Version: 0.1.0.dev8
+- Stage: Phase 2 deterministic attestation and local CLI MVP complete
+- Product maturity: local CLI MVP; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
 - Remote/publication status: local only; no remote repository created
@@ -53,7 +53,7 @@
   commit, decision, and timestamp;
 - stateless `candidate create` and `candidate transition` CLI previews with
   generic DRAFT/EVALUATING fixtures and structural/evaluation-bound Goldens;
-- SQLite candidate-store schema v1 with ForgeGate application identity, WAL,
+- SQLite candidate-store schema v2 with ForgeGate application identity, WAL,
   FULL synchronous durability, foreign keys, exact-version validation, and
   explicit read/write transactions;
 - append-only canonical candidate snapshots, content-addressed transitions,
@@ -62,24 +62,37 @@
   writer contention, restart recovery, rollback fault injection, and corruption
   detection;
 - persisted candidate create/advance/show/history CLI flow while retaining the
-  stateless preview commands.
+  stateless preview commands;
+- explicit, validated SQLite v1-to-v2 migration plus exact legacy terminal
+  evaluation backfill;
+- durable append-only policy-evaluation and release-attestation documents bound
+  to the authoritative candidate audit chain;
+- self-validating `forgegate.release-attestation.v1` with candidate,
+  transitions, policy evaluation, content fingerprints, and unsigned-local
+  assurance disclosure;
+- deterministic JSON and Markdown rendering with committed Goldens;
+- atomic directory publication, exact output replay, conflict rejection,
+  symlink/unsafe-target defenses, and stable filesystem errors;
+- persisted `candidate migrate-store`, `import-evaluation`, `attest`, and
+  `show-attestation` CLI paths.
 
 ## Not implemented
 
-Attestations, API, external plugins, GitHub integration, database authorization,
-backup/repair, AFE collector, MSP430 collector, and hardware access.
+REST API, external plugins, GitHub integration, signatures/key management,
+database authorization, backup/repair, AFE collector, MSP430 collector, and
+hardware access.
 
 ## Accepted local checkpoint
 
 - PowerShell environment bootstrap: PASS
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
-- mypy strict: PASS across 26 package and verification-tool source files
-- pytest: 398 passed, 1 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 100% across 2,562 statements and 762 branches
+- mypy strict: PASS across package and verification-tool source files
+- pytest: 427 passed, 1 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 100% across 2,944 statements and 856 branches
 - committed JSON Schema drift check: PASS
 - project/policy/candidate/transition example documents: VALID
-- seven canonical versioned document Schemas plus one Benchmark artifact Schema:
+- eight canonical versioned document Schemas plus one Benchmark artifact Schema:
   drift-checked and parsed
 - complete sdist manifest and wheel build: PASS
 - repository-external wheel installation and CLI smoke: PASS
@@ -89,5 +102,4 @@ backup/repair, AFE collector, MSP430 collector, and hardware access.
 
 See `reports/PHASE_0_ENVIRONMENT_AUDIT.md` for the prerequisite audit and exact
 human-intervention boundary. See
-`reports/PHASE_2_SQLITE_CANDIDATE_STORE_ACCEPTANCE_REPORT.md` for the current
-slice.
+`reports/PHASE_2_ATTESTATION_ACCEPTANCE_REPORT.md` for the current slice.

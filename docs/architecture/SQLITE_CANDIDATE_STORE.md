@@ -8,9 +8,10 @@ transition-result document schemas and does not store upstream AFE/MSP430
 internals.
 
 `SQLiteCandidateRepository` owns one local database file. Initialization sets a
-ForgeGate application ID, schema version 1, WAL journaling, FULL synchronous
+ForgeGate application ID, schema version 2, WAL journaling, FULL synchronous
 durability, foreign keys, and a bounded busy timeout. A future schema version is
-rejected; this checkpoint intentionally has no implicit migration path.
+rejected. An existing schema-v1 store is never changed by `init-store`; the
+owner must run the explicit, validated `migrate-store` operation.
 
 ## Tables and ordering
 
@@ -22,11 +23,15 @@ rejected; this checkpoint intentionally has no implicit migration path.
   adjacent revisions;
 - `idempotency_records` binds one caller key to the canonical request
   fingerprint and response document;
+- `candidate_evaluations` stores the exact terminal policy evaluation and its
+  canonical fingerprint;
+- `attestations` stores one exact JSON attestation and deterministic Markdown
+  rendering per candidate;
 - `forgegate_metadata` identifies the exact storage schema.
 
 Database triggers reject candidate deletion, identity rewriting, non-unit
 current-revision updates, and every update/delete of snapshot, transition, and
-idempotency rows. These controls protect accidental or direct SQL mutation;
+idempotency, evaluation, and attestation rows. These controls protect accidental or direct SQL mutation;
 they are not an authorization boundary against an administrator who can replace
 the database file or rewrite its schema.
 
@@ -39,7 +44,8 @@ the following operations in one transaction:
 2. load and validate the entire current snapshot/event chain;
 3. compare the caller's `expected_revision` with the current revision;
 4. run the pure lifecycle transition and evaluation-binding checks;
-5. append the next snapshot and transition;
+5. append the next snapshot and transition and, for an evaluated terminal
+   decision, its exact evaluation document;
 6. update the current pointer with `WHERE current_revision = ?`;
 7. append the immutable idempotency response.
 
@@ -61,16 +67,38 @@ Every read is a consistent SQLite transaction and validates:
 - immutable identity and current-pointer agreement with the audit chain.
 
 Reopening the database reconstructs authoritative state from durable rows. It
-does not rerun collectors or policy evaluation. Corruption fails closed with a
-stable store error; this checkpoint does not repair, salvage, back up, encrypt,
-or replicate a damaged database.
+does not rerun collectors or policy evaluation. Evaluation and attestation
+loads also verify stored metadata, canonical documents, rendered Markdown, and
+association with the current candidate and complete transition chain.
+Corruption fails closed with a stable store error; this checkpoint does not
+repair, salvage, back up, encrypt, or replicate a damaged database.
+
+## Explicit v1 migration
+
+`candidate migrate-store DATABASE` accepts only a fully valid schema-v1 store.
+It adds the two v2 tables and append-only triggers in one transaction, updates
+both metadata values and `PRAGMA user_version`, and then revalidates the result.
+Calling it on v2 is an idempotent validation. Unknown, foreign, or corrupt
+stores fail closed.
+
+A v1 terminal candidate contains only an evaluation reference, not the full
+evaluation document. After migration, `candidate import-evaluation` must be
+given the exact original `forgegate.policy-evaluation.v1` document. Candidate
+ID, commit, decision, timestamp, and evaluation ID must agree before it is
+stored. Attestation is refused until this backfill is complete.
 
 ## CLI boundary
 
-`candidate init-store`, persisted `candidate create --database`, `candidate
-advance`, `candidate show`, and `candidate history` expose this repository.
-The original `candidate create` without `--database` and `candidate transition`
-remain deterministic, stateless preview paths.
+`candidate init-store`, `migrate-store`, persisted `candidate create
+--database`, `advance`, `show`, `history`, `import-evaluation`, `attest`, and
+`show-attestation` expose this repository. The original `candidate create`
+without `--database` and `candidate transition` remain deterministic, stateless
+preview paths.
+
+The attestation database insert commits before filesystem publication. Those
+two resources are not one distributed transaction. If publication fails, the
+durable attestation remains authoritative and an exact rerun safely publishes
+or verifies the same content-addressed bundle; conflicting bytes fail closed.
 
 The database proves local transaction ordering and content consistency. It does
 not prove producer identity, operator authorization, trusted time, CI identity,

@@ -1,0 +1,497 @@
+{
+  "$defs": {
+    "Aggregation": {
+      "enum": [
+        "value",
+        "count",
+        "all",
+        "any"
+      ],
+      "title": "Aggregation",
+      "type": "string"
+    },
+    "CandidateStatus": {
+      "enum": [
+        "DRAFT",
+        "COLLECTING",
+        "READY",
+        "EVALUATING",
+        "PASS",
+        "FAIL",
+        "REVIEW",
+        "ERROR"
+      ],
+      "title": "CandidateStatus",
+      "type": "string"
+    },
+    "CandidateTransition": {
+      "additionalProperties": false,
+      "properties": {
+        "candidate_id": {
+          "pattern": "^cand-[0-9a-f]{24}$",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "evaluation_id": {
+          "anyOf": [
+            {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evaluation Id"
+        },
+        "from_revision": {
+          "minimum": 0,
+          "title": "From Revision",
+          "type": "integer"
+        },
+        "from_status": {
+          "$ref": "#/$defs/CandidateStatus"
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string"
+        },
+        "prior_candidate_fingerprint": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Prior Candidate Fingerprint",
+          "type": "string"
+        },
+        "reason": {
+          "anyOf": [
+            {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Reason"
+        },
+        "result_candidate_fingerprint": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Result Candidate Fingerprint",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "forgegate.candidate-transition.v1",
+          "default": "forgegate.candidate-transition.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "to_revision": {
+          "minimum": 1,
+          "title": "To Revision",
+          "type": "integer"
+        },
+        "to_status": {
+          "$ref": "#/$defs/CandidateStatus"
+        },
+        "transition_id": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Transition Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "transition_id",
+        "candidate_id",
+        "from_status",
+        "to_status",
+        "from_revision",
+        "to_revision",
+        "prior_candidate_fingerprint",
+        "result_candidate_fingerprint",
+        "occurred_at"
+      ],
+      "title": "CandidateTransition",
+      "type": "object"
+    },
+    "Decision": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "REVIEW",
+        "ERROR"
+      ],
+      "title": "Decision",
+      "type": "string"
+    },
+    "Operator": {
+      "enum": [
+        "equals",
+        "not_equals",
+        "greater_than",
+        "greater_than_or_equal",
+        "less_than",
+        "less_than_or_equal",
+        "contains",
+        "exists"
+      ],
+      "title": "Operator",
+      "type": "string"
+    },
+    "PolicyEvaluation": {
+      "additionalProperties": false,
+      "properties": {
+        "candidate_commit": {
+          "pattern": "^[0-9a-fA-F]{7,64}$",
+          "title": "Candidate Commit",
+          "type": "string"
+        },
+        "decision": {
+          "$ref": "#/$defs/Decision"
+        },
+        "evaluated_at": {
+          "format": "date-time",
+          "title": "Evaluated At",
+          "type": "string"
+        },
+        "evaluated_evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evaluated Evidence Ids",
+          "type": "array"
+        },
+        "evaluation_id": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Evaluation Id",
+          "type": "string"
+        },
+        "evidence_fingerprint": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Evidence Fingerprint",
+          "type": "string"
+        },
+        "policy_fingerprint": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Policy Fingerprint",
+          "type": "string"
+        },
+        "policy_name": {
+          "pattern": "^[a-z][a-z0-9-]{1,62}$",
+          "title": "Policy Name",
+          "type": "string"
+        },
+        "rule_results": {
+          "items": {
+            "$ref": "#/$defs/RuleEvaluation"
+          },
+          "minItems": 1,
+          "title": "Rule Results",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": "forgegate.policy-evaluation.v1",
+          "default": "forgegate.policy-evaluation.v1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "evaluation_id",
+        "policy_name",
+        "policy_fingerprint",
+        "evidence_fingerprint",
+        "candidate_commit",
+        "evaluated_at",
+        "decision",
+        "rule_results",
+        "evaluated_evidence_ids"
+      ],
+      "title": "PolicyEvaluation",
+      "type": "object"
+    },
+    "ReleaseCandidate": {
+      "additionalProperties": false,
+      "properties": {
+        "candidate_id": {
+          "pattern": "^cand-[0-9a-f]{24}$",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "commit_sha": {
+          "pattern": "^[0-9a-fA-F]{7,64}$",
+          "title": "Commit Sha",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "evaluated_at": {
+          "anyOf": [
+            {
+              "format": "date-time",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evaluated At"
+        },
+        "evaluation_id": {
+          "anyOf": [
+            {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Evaluation Id"
+        },
+        "project_id": {
+          "pattern": "^[a-z][a-z0-9-]{1,62}$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "release_track": {
+          "pattern": "^[a-z][a-z0-9_-]{1,63}$",
+          "title": "Release Track",
+          "type": "string"
+        },
+        "revision": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Revision",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "forgegate.release-candidate.v1",
+          "default": "forgegate.release-candidate.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_branch": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Source Branch",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/CandidateStatus",
+          "default": "DRAFT"
+        },
+        "updated_at": {
+          "format": "date-time",
+          "title": "Updated At",
+          "type": "string"
+        },
+        "version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "project_id",
+        "version",
+        "commit_sha",
+        "source_branch",
+        "release_track",
+        "created_at",
+        "updated_at"
+      ],
+      "title": "ReleaseCandidate",
+      "type": "object"
+    },
+    "RuleEvaluation": {
+      "additionalProperties": false,
+      "properties": {
+        "actual": {
+          "title": "Actual"
+        },
+        "aggregation": {
+          "$ref": "#/$defs/Aggregation"
+        },
+        "claim": {
+          "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z0-9_-]+)+$",
+          "title": "Claim",
+          "type": "string"
+        },
+        "decision": {
+          "$ref": "#/$defs/Decision"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "evidence_kind": {
+          "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z0-9_-]+)+$",
+          "title": "Evidence Kind",
+          "type": "string"
+        },
+        "expected": {
+          "title": "Expected"
+        },
+        "explanation": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Explanation",
+          "type": "string"
+        },
+        "mandatory": {
+          "title": "Mandatory",
+          "type": "boolean"
+        },
+        "operator": {
+          "$ref": "#/$defs/Operator"
+        },
+        "reason_code": {
+          "pattern": "^[A-Z][A-Z0-9_]{1,127}$",
+          "title": "Reason Code",
+          "type": "string"
+        },
+        "remediation_hint": {
+          "anyOf": [
+            {
+              "maxLength": 2048,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Remediation Hint"
+        },
+        "rule_id": {
+          "pattern": "^[a-z][a-z0-9._-]{1,127}$",
+          "title": "Rule Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rule_id",
+        "claim",
+        "decision",
+        "mandatory",
+        "evidence_kind",
+        "aggregation",
+        "operator",
+        "expected",
+        "actual",
+        "evidence_ids",
+        "reason_code",
+        "explanation"
+      ],
+      "title": "RuleEvaluation",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "assurance": {
+      "const": "unsigned_local",
+      "default": "unsigned_local",
+      "title": "Assurance",
+      "type": "string"
+    },
+    "attestation_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Attestation Id",
+      "type": "string"
+    },
+    "candidate": {
+      "$ref": "#/$defs/ReleaseCandidate"
+    },
+    "candidate_fingerprint": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Candidate Fingerprint",
+      "type": "string"
+    },
+    "evaluation_fingerprint": {
+      "anyOf": [
+        {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Evaluation Fingerprint"
+    },
+    "generator": {
+      "const": "forgegate",
+      "default": "forgegate",
+      "title": "Generator",
+      "type": "string"
+    },
+    "generator_version": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Generator Version",
+      "type": "string"
+    },
+    "issued_at": {
+      "format": "date-time",
+      "title": "Issued At",
+      "type": "string"
+    },
+    "policy_evaluation": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PolicyEvaluation"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "schema_version": {
+      "const": "forgegate.release-attestation.v1",
+      "default": "forgegate.release-attestation.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "transition_chain_fingerprint": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Transition Chain Fingerprint",
+      "type": "string"
+    },
+    "transitions": {
+      "items": {
+        "$ref": "#/$defs/CandidateTransition"
+      },
+      "maxItems": 4,
+      "minItems": 4,
+      "title": "Transitions",
+      "type": "array"
+    }
+  },
+  "required": [
+    "attestation_id",
+    "generator_version",
+    "issued_at",
+    "candidate",
+    "candidate_fingerprint",
+    "transitions",
+    "transition_chain_fingerprint"
+  ],
+  "title": "ReleaseAttestation",
+  "type": "object"
+}

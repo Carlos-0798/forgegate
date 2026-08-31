@@ -17,7 +17,13 @@ from forgegate.candidates import (
     create_candidate,
     transition_candidate,
 )
-from forgegate.candidates.store import STORE_APPLICATION_ID, STORE_SCHEMA_VERSION
+from forgegate.candidates.store import (
+    LEGACY_STORE_SCHEMA_NAME,
+    LEGACY_STORE_SCHEMA_VERSION,
+    STORE_APPLICATION_ID,
+    STORE_SCHEMA_VERSION,
+)
+from forgegate.canonical import sha256_fingerprint
 from forgegate.domain.enums import Aggregation, CandidateStatus, Decision, Operator
 from forgegate.policy.models import PolicyEvaluation, RuleEvaluation
 
@@ -39,11 +45,19 @@ def draft(**updates: Any) -> ReleaseCandidate:
 
 
 def evaluation(decision: Decision, evaluated_at: datetime) -> PolicyEvaluation:
+    policy_fingerprint = "sha256:" + "2" * 64
+    evidence_fingerprint = "sha256:" + "3" * 64
     return PolicyEvaluation(
-        evaluation_id="sha256:" + "1" * 64,
+        evaluation_id=sha256_fingerprint(
+            {
+                "policy_fingerprint": policy_fingerprint,
+                "evidence_fingerprint": evidence_fingerprint,
+                "evaluated_at": evaluated_at.isoformat(),
+            }
+        ),
         policy_name="pull-request",
-        policy_fingerprint="sha256:" + "2" * 64,
-        evidence_fingerprint="sha256:" + "3" * 64,
+        policy_fingerprint=policy_fingerprint,
+        evidence_fingerprint=evidence_fingerprint,
         candidate_commit=COMMIT,
         evaluated_at=evaluated_at,
         decision=decision,
@@ -68,6 +82,7 @@ def evaluation(decision: Decision, evaluated_at: datetime) -> PolicyEvaluation:
 
 
 def initialized_repository(tmp_path: Path) -> SQLiteCandidateRepository:
+    tmp_path.mkdir(parents=True, exist_ok=True)
     repository = SQLiteCandidateRepository(tmp_path / "forgegate.db")
     repository.initialize()
     return repository
@@ -92,6 +107,40 @@ def advance_to_evaluating(repository: SQLiteCandidateRepository) -> ReleaseCandi
             idempotency_key=f"advance:sample-{index:03d}",
         ).candidate
     return candidate
+
+
+def advance_to_pass(
+    repository: SQLiteCandidateRepository,
+) -> tuple[ReleaseCandidate, PolicyEvaluation]:
+    candidate = advance_to_evaluating(repository)
+    evaluated_at = CREATED + timedelta(minutes=4)
+    policy_result = evaluation(Decision.PASS, evaluated_at)
+    result = repository.advance(
+        candidate.candidate_id,
+        CandidateStatus.PASS,
+        expected_revision=3,
+        occurred_at=evaluated_at,
+        idempotency_key="advance:terminal-01",
+        reason="policy passed",
+        evaluation=policy_result,
+    )
+    return result.candidate, policy_result
+
+
+def _downgrade_to_schema_v1(database: Path) -> None:
+    """Turn a current fixture into an exact legacy schema without its new documents."""
+    with sqlite3.connect(database) as connection:
+        connection.execute("DROP TABLE attestations")
+        connection.execute("DROP TABLE candidate_evaluations")
+        connection.execute(
+            "UPDATE forgegate_metadata SET value = ? WHERE key = 'schema_name'",
+            (LEGACY_STORE_SCHEMA_NAME,),
+        )
+        connection.execute(
+            "UPDATE forgegate_metadata SET value = ? WHERE key = 'schema_version'",
+            (str(LEGACY_STORE_SCHEMA_VERSION),),
+        )
+        connection.execute(f"PRAGMA user_version = {LEGACY_STORE_SCHEMA_VERSION}")
 
 
 def _rewrite_with_trigger_restored(
@@ -292,6 +341,194 @@ def test_terminal_evaluation_is_durably_bound(tmp_path: Path) -> None:
     assert result.candidate.status is CandidateStatus.PASS
     assert history.candidate.evaluation_id == policy_result.evaluation_id
     assert history.transitions[-1].evaluation_id == policy_result.evaluation_id
+    assert repository.evaluation(candidate.candidate_id) == policy_result
+
+
+def test_schema_v1_requires_explicit_migration_and_evaluation_backfill(
+    tmp_path: Path,
+) -> None:
+    repository = initialized_repository(tmp_path)
+    candidate, policy_result = advance_to_pass(repository)
+    _downgrade_to_schema_v1(repository.database_path)
+
+    legacy = SQLiteCandidateRepository(repository.database_path)
+    with pytest.raises(CandidateStoreError, match="STORE_MIGRATION_REQUIRED"):
+        legacy.initialize()
+
+    legacy.migrate()
+    legacy.migrate()
+    assert legacy.get(candidate.candidate_id) == candidate
+    with pytest.raises(CandidateStoreError, match="STORE_EVALUATION_NOT_FOUND"):
+        legacy.evaluation(candidate.candidate_id)
+
+    assert legacy.record_evaluation(candidate.candidate_id, policy_result) == policy_result
+    assert legacy.record_evaluation(candidate.candidate_id, policy_result) == policy_result
+    assert legacy.evaluation(candidate.candidate_id) == policy_result
+
+    conflicting = policy_result.model_copy(update={"policy_name": "different-policy"})
+    with pytest.raises(CandidateStoreError, match="STORE_EVALUATION_CONFLICT"):
+        legacy.record_evaluation(candidate.candidate_id, conflicting)
+
+
+def test_migration_rejects_invalid_legacy_and_unknown_schemas(tmp_path: Path) -> None:
+    invalid_legacy = initialized_repository(tmp_path / "legacy")
+    _downgrade_to_schema_v1(invalid_legacy.database_path)
+    with sqlite3.connect(invalid_legacy.database_path) as connection:
+        connection.execute("DROP TRIGGER candidate_snapshots_guard_update")
+    with pytest.raises(CandidateStoreError, match="STORE_CORRUPT"):
+        invalid_legacy.migrate()
+
+    future_root = tmp_path / "future"
+    future_root.mkdir()
+    future = initialized_repository(future_root)
+    with sqlite3.connect(future.database_path) as connection:
+        connection.execute(f"PRAGMA user_version = {STORE_SCHEMA_VERSION + 1}")
+    with pytest.raises(CandidateStoreError, match="STORE_SCHEMA_UNSUPPORTED"):
+        future.migrate()
+
+
+def test_evaluation_backfill_rejects_nonterminal_or_mismatched_inputs(tmp_path: Path) -> None:
+    repository = initialized_repository(tmp_path)
+    candidate = create_in(repository)
+    assert repository.evaluation(candidate.candidate_id) is None
+    with pytest.raises(CandidateStoreError, match="STORE_EVALUATION_UNEXPECTED"):
+        repository.record_evaluation(
+            candidate.candidate_id,
+            evaluation(Decision.PASS, CREATED + timedelta(minutes=4)),
+        )
+
+    terminal, policy_result = advance_to_pass(initialized_repository(tmp_path / "mismatch"))
+    mismatch_repository = SQLiteCandidateRepository(tmp_path / "mismatch" / "forgegate.db")
+    mismatched = policy_result.model_copy(update={"candidate_commit": "b" * 40})
+    with pytest.raises(CandidateStoreError, match="STORE_EVALUATION_MISMATCH"):
+        mismatch_repository.record_evaluation(terminal.candidate_id, mismatched)
+
+
+def test_attestation_is_durable_replayable_and_content_bound(tmp_path: Path) -> None:
+    repository = initialized_repository(tmp_path)
+    candidate, policy_result = advance_to_pass(repository)
+    issued_at = candidate.updated_at + timedelta(minutes=1)
+
+    first = repository.attest(
+        candidate.candidate_id,
+        issued_at=issued_at,
+        generator_version="0.1.0.dev8",
+    )
+    replay = repository.attest(
+        candidate.candidate_id,
+        issued_at=issued_at,
+        generator_version="0.1.0.dev8",
+    )
+    reopened = SQLiteCandidateRepository(repository.database_path)
+
+    assert first == replay == reopened.get_attestation(candidate.candidate_id)
+    assert first.policy_evaluation == policy_result
+    with sqlite3.connect(repository.database_path) as connection:
+        row = connection.execute(
+            "SELECT attestation_json, markdown_text FROM attestations"
+        ).fetchone()
+    assert row is not None
+    assert row[0] == json.dumps(json.loads(row[0]), sort_keys=True, separators=(",", ":"))
+    assert "unsigned local ForgeGate record" in row[1]
+
+    with pytest.raises(CandidateStoreError, match="STORE_ATTESTATION_CONFLICT"):
+        repository.attest(
+            candidate.candidate_id,
+            issued_at=issued_at + timedelta(seconds=1),
+            generator_version="0.1.0.dev8",
+        )
+
+
+def test_attestation_rejects_nonterminal_and_reports_missing_record(tmp_path: Path) -> None:
+    repository = initialized_repository(tmp_path)
+    candidate = create_in(repository)
+    with pytest.raises(CandidateStoreError, match="STORE_ATTESTATION_NOT_FOUND"):
+        repository.get_attestation(candidate.candidate_id)
+    with pytest.raises(CandidateStoreError, match="STORE_ATTESTATION_INVALID"):
+        repository.attest(
+            candidate.candidate_id,
+            issued_at=CREATED + timedelta(minutes=1),
+            generator_version="0.1.0.dev8",
+        )
+
+
+def test_evaluation_and_attestation_failure_injection_rolls_back(tmp_path: Path) -> None:
+    healthy = initialized_repository(tmp_path)
+    evaluating = advance_to_evaluating(healthy)
+    policy_result = evaluation(Decision.PASS, CREATED + timedelta(minutes=4))
+
+    def fail_evaluation(name: str, _connection: sqlite3.Connection) -> None:
+        if name == "after_transition_append":
+            raise RuntimeError("injected terminal failure")
+
+    failing_terminal = SQLiteCandidateRepository(
+        healthy.database_path, _failure_injector=fail_evaluation
+    )
+    with pytest.raises(RuntimeError, match="injected terminal failure"):
+        failing_terminal.advance(
+            evaluating.candidate_id,
+            CandidateStatus.PASS,
+            expected_revision=3,
+            occurred_at=CREATED + timedelta(minutes=4),
+            idempotency_key="advance:terminal-rollback",
+            evaluation=policy_result,
+        )
+    assert healthy.get(evaluating.candidate_id) == evaluating
+    assert healthy.evaluation(evaluating.candidate_id) is None
+
+    terminal = healthy.advance(
+        evaluating.candidate_id,
+        CandidateStatus.PASS,
+        expected_revision=3,
+        occurred_at=CREATED + timedelta(minutes=4),
+        idempotency_key="advance:terminal-recovered",
+        evaluation=policy_result,
+    ).candidate
+
+    def fail_attestation(name: str, _connection: sqlite3.Connection) -> None:
+        if name == "after_attestation_insert":
+            raise RuntimeError("injected attestation failure")
+
+    failing_attestation = SQLiteCandidateRepository(
+        healthy.database_path, _failure_injector=fail_attestation
+    )
+    with pytest.raises(RuntimeError, match="injected attestation failure"):
+        failing_attestation.attest(
+            terminal.candidate_id,
+            issued_at=terminal.updated_at + timedelta(minutes=1),
+            generator_version="0.1.0.dev8",
+        )
+    with pytest.raises(CandidateStoreError, match="STORE_ATTESTATION_NOT_FOUND"):
+        healthy.get_attestation(terminal.candidate_id)
+
+
+def test_corrupt_evaluation_and_attestation_documents_are_rejected(tmp_path: Path) -> None:
+    repository = initialized_repository(tmp_path)
+    candidate, _ = advance_to_pass(repository)
+    repository.attest(
+        candidate.candidate_id,
+        issued_at=candidate.updated_at + timedelta(minutes=1),
+        generator_version="0.1.0.dev8",
+    )
+    _rewrite_with_trigger_restored(
+        repository.database_path,
+        "attestations_guard_update",
+        "UPDATE attestations SET markdown_text = 'detached'",
+    )
+    with pytest.raises(CandidateStoreError, match="STORE_CORRUPT"):
+        repository.get_attestation(candidate.candidate_id)
+
+    evaluation_root = tmp_path / "evaluation-corrupt"
+    evaluation_root.mkdir()
+    evaluation_repository = initialized_repository(evaluation_root)
+    evaluation_candidate, _ = advance_to_pass(evaluation_repository)
+    _rewrite_with_trigger_restored(
+        evaluation_repository.database_path,
+        "candidate_evaluations_guard_update",
+        "UPDATE candidate_evaluations SET evaluation_json = '{}'",
+    )
+    with pytest.raises(CandidateStoreError, match="STORE_CORRUPT"):
+        evaluation_repository.evaluation(evaluation_candidate.candidate_id)
 
 
 @pytest.mark.parametrize("checkpoint", ["after_candidate_insert", "after_idempotency_insert"])
@@ -415,6 +652,30 @@ def test_database_triggers_enforce_append_only_records(tmp_path: Path, statement
         connection.execute(statement)
 
 
+@pytest.mark.parametrize(
+    "statement",
+    [
+        "UPDATE candidate_evaluations SET recorded_at = '2026-08-31T00:00:00Z'",
+        "DELETE FROM candidate_evaluations",
+        "UPDATE attestations SET issued_at = '2026-08-31T00:00:00Z'",
+        "DELETE FROM attestations",
+    ],
+)
+def test_v2_database_triggers_enforce_append_only_records(tmp_path: Path, statement: str) -> None:
+    repository = initialized_repository(tmp_path)
+    candidate, _ = advance_to_pass(repository)
+    repository.attest(
+        candidate.candidate_id,
+        issued_at=candidate.updated_at + timedelta(minutes=1),
+        generator_version="0.1.0.dev8",
+    )
+    with (
+        sqlite3.connect(repository.database_path) as connection,
+        pytest.raises(sqlite3.IntegrityError),
+    ):
+        connection.execute(statement)
+
+
 def test_repository_path_and_initialization_errors(tmp_path: Path) -> None:
     missing = SQLiteCandidateRepository(tmp_path / "missing.db")
     with pytest.raises(CandidateStoreError, match="STORE_NOT_INITIALIZED"):
@@ -441,6 +702,13 @@ def test_foreign_and_future_databases_are_rejected(tmp_path: Path) -> None:
         connection.execute("PRAGMA application_id = 1234")
     with pytest.raises(CandidateStoreError, match="STORE_NOT_FORGEGATE"):
         SQLiteCandidateRepository(foreign_id).initialize()
+
+    foreign_current_root = tmp_path / "foreign-current"
+    foreign_current = initialized_repository(foreign_current_root)
+    with sqlite3.connect(foreign_current.database_path) as connection:
+        connection.execute("PRAGMA application_id = 1234")
+    with pytest.raises(CandidateStoreError, match="STORE_NOT_FORGEGATE"):
+        foreign_current.initialize()
 
     repository = SQLiteCandidateRepository(tmp_path / "future.db")
     repository.initialize()
@@ -608,7 +876,7 @@ def test_schema_creation_sqlite_failure_is_rolled_back(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     database = tmp_path / "schema-failure.db"
-    monkeypatch.setattr(candidate_store_module, "_SCHEMA_STATEMENTS", ("INVALID SQL",))
+    monkeypatch.setattr(candidate_store_module, "_SCHEMA_V1_STATEMENTS", ("INVALID SQL",))
     with pytest.raises(CandidateStoreError, match="STORE_DATABASE_ERROR"):
         SQLiteCandidateRepository(database).initialize()
     with sqlite3.connect(database) as connection:
@@ -616,6 +884,29 @@ def test_schema_creation_sqlite_failure_is_rolled_back(
         assert (
             connection.execute(
                 "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%'"
+            ).fetchall()
+            == []
+        )
+
+
+def test_schema_migration_sqlite_failure_is_rolled_back(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repository = initialized_repository(tmp_path)
+    _downgrade_to_schema_v1(repository.database_path)
+    monkeypatch.setattr(
+        candidate_store_module,
+        "_SCHEMA_V2_STATEMENTS",
+        (candidate_store_module._SCHEMA_V2_STATEMENTS[0], "INVALID SQL"),
+    )
+    with pytest.raises(CandidateStoreError, match="STORE_DATABASE_ERROR"):
+        repository.migrate()
+    with sqlite3.connect(repository.database_path) as connection:
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == 1
+        assert (
+            connection.execute(
+                "SELECT name FROM sqlite_master WHERE type = 'table' "
+                "AND name IN ('candidate_evaluations', 'attestations')"
             ).fetchall()
             == []
         )

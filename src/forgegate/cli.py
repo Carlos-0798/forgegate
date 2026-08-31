@@ -9,6 +9,7 @@ from pydantic import ValidationError
 
 from forgegate import __version__
 from forgegate.artifacts import ArtifactBoundaryError, ArtifactRegistry
+from forgegate.attestations import AttestationPublishError, publish_attestation_bundle
 from forgegate.candidates import (
     CandidateLifecycleError,
     CandidateStoreError,
@@ -54,7 +55,7 @@ def doctor() -> None:
         "python": platform.python_version(),
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
-        "phase": "phase2-sqlite-candidate-store",
+        "phase": "phase2-deterministic-attestations",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 
@@ -124,7 +125,7 @@ def candidate_create(
 def candidate_init_store(
     database: Annotated[Path, typer.Argument(dir_okay=False)],
 ) -> None:
-    """Initialize or validate a local SQLite WAL candidate store."""
+    """Initialize or validate a local SQLite WAL candidate store at schema v2."""
     try:
         repository = SQLiteCandidateRepository(database)
         repository.initialize()
@@ -132,6 +133,20 @@ def candidate_init_store(
         typer.echo(f"ERROR: {exc}", err=True)
         raise typer.Exit(code=3) from exc
     typer.echo(f"INITIALIZED {repository.database_path}")
+
+
+@candidate_app.command("migrate-store")
+def candidate_migrate_store(
+    database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+) -> None:
+    """Explicitly migrate a validated candidate store from schema v1 to v2."""
+    try:
+        repository = SQLiteCandidateRepository(database)
+        repository.migrate()
+    except CandidateStoreError as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(f"MIGRATED {repository.database_path}")
 
 
 @candidate_app.command("transition")
@@ -232,6 +247,71 @@ def candidate_history(
         "transitions": [event.model_dump(mode="json") for event in history.transitions],
     }
     typer.echo(json.dumps(payload, indent=2, sort_keys=True))
+
+
+@candidate_app.command("import-evaluation")
+def candidate_import_evaluation(
+    database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    candidate_id: Annotated[str, typer.Argument()],
+    evaluation_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+) -> None:
+    """Backfill the exact evaluation document for a migrated terminal candidate."""
+    try:
+        evaluation = _load_policy_evaluation(evaluation_path)
+        assert evaluation is not None
+        stored = SQLiteCandidateRepository(database).record_evaluation(candidate_id, evaluation)
+    except (CandidateStoreError, ConfigLoadError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(stored.model_dump_json(indent=2))
+
+
+@candidate_app.command("attest")
+def candidate_attest(
+    database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    candidate_id: Annotated[str, typer.Argument()],
+    issued_at: Annotated[str, typer.Option("--issued-at")],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+) -> None:
+    """Persist and atomically publish deterministic JSON/Markdown attestation files."""
+    try:
+        repository = SQLiteCandidateRepository(database)
+        attestation = repository.attest(
+            candidate_id,
+            issued_at=datetime.fromisoformat(issued_at.replace("Z", "+00:00")),
+            generator_version=__version__,
+        )
+        published = publish_attestation_bundle(attestation, output_root)
+    except (
+        AttestationPublishError,
+        CandidateStoreError,
+        ValidationError,
+        ValueError,
+    ) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    payload = {
+        "attestation": attestation.model_dump(mode="json"),
+        "bundle_directory": str(published.directory),
+        "json_path": str(published.json_path),
+        "markdown_path": str(published.markdown_path),
+        "output_replayed": published.replayed,
+    }
+    typer.echo(json.dumps(payload, indent=2, sort_keys=True))
+
+
+@candidate_app.command("show-attestation")
+def candidate_show_attestation(
+    database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    candidate_id: Annotated[str, typer.Argument()],
+) -> None:
+    """Read and validate the durable self-contained release attestation."""
+    try:
+        attestation = SQLiteCandidateRepository(database).get_attestation(candidate_id)
+    except CandidateStoreError as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(attestation.model_dump_json(indent=2))
 
 
 def _load_policy_evaluation(path: Path | None) -> PolicyEvaluation | None:

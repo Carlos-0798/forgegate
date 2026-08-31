@@ -1,3 +1,5 @@
+from typing import TYPE_CHECKING, Any
+
 from forgegate.candidates.lifecycle import (
     CandidateLifecycleError,
     create_candidate,
@@ -8,11 +10,13 @@ from forgegate.candidates.models import (
     CandidateTransitionResult,
     ReleaseCandidate,
 )
-from forgegate.candidates.store import (
-    CandidateHistory,
-    CandidateStoreError,
-    SQLiteCandidateRepository,
-)
+
+if TYPE_CHECKING:
+    from forgegate.candidates.store import (
+        CandidateHistory,
+        CandidateStoreError,
+        SQLiteCandidateRepository,
+    )
 
 __all__ = [
     "CandidateHistory",
@@ -25,3 +29,12 @@ __all__ = [
     "create_candidate",
     "transition_candidate",
 ]
+
+
+def __getattr__(name: str) -> Any:
+    """Load the SQLite adapter lazily so domain models remain dependency-free."""
+    if name in {"CandidateHistory", "CandidateStoreError", "SQLiteCandidateRepository"}:
+        from forgegate.candidates import store
+
+        return getattr(store, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

@@ -79,7 +79,7 @@ def test_doctor_reports_phase() -> None:
     result = runner.invoke(app, ["doctor"])
     assert result.exit_code == 0
     report = json.loads(result.stdout)
-    assert report["phase"] == "phase2-sqlite-candidate-store"
+    assert report["phase"] == "phase2-deterministic-attestations"
     assert report["supported_schemas"] == sorted(SCHEMAS)
 
 

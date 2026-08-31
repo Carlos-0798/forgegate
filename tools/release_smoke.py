@@ -23,6 +23,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/POLICY_ENGINE.md",
     "docs/architecture/CANDIDATE_LIFECYCLE.md",
     "docs/architecture/SQLITE_CANDIDATE_STORE.md",
+    "docs/architecture/ATTESTATIONS.md",
     "examples/sample-python-api/artifacts/junit.xml",
     "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
@@ -41,12 +42,14 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_2_POLICY_ENGINE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_2_CANDIDATE_LIFECYCLE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_2_SQLITE_CANDIDATE_STORE_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_2_ATTESTATION_ACCEPTANCE_REPORT.md",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
     "schemas/forgegate.release-candidate.v1.schema.json",
     "schemas/forgegate.candidate-transition.v1.schema.json",
     "schemas/forgegate.candidate-transition-result.v1.schema.json",
+    "schemas/forgegate.release-attestation.v1.schema.json",
     "schemas/forgegate.benchmark.v1.schema.json",
     "tests/test_models.py",
     "tests/golden/junit_summary.json",
@@ -57,11 +60,14 @@ REQUIRED_SDIST_PATHS = (
     "tests/golden/policy_fail.json",
     "tests/golden/candidate_collecting_transition.json",
     "tests/golden/candidate_pass_transition.json",
+    "tests/golden/release_attestation_pass.json",
+    "tests/golden/release_attestation_pass.md",
     "tests/golden/sarif_summary.json",
     "tools/verify.py",
     "tests/test_candidate_lifecycle.py",
     "tests/test_candidate_store.py",
     "tests/test_candidate_store_cli.py",
+    "tests/test_attestations.py",
 )
 
 
@@ -178,6 +184,17 @@ def main() -> int:
             ],
             cwd=root,
         )
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "candidate",
+                "migrate-store",
+                str(candidate_store),
+            ],
+            cwd=root,
+        )
         persisted_create = [
             str(python),
             "-m",
@@ -230,6 +247,77 @@ def main() -> int:
         ]
         run(persisted_advance, cwd=root)
         run(persisted_advance, cwd=root)
+        for revision, status, timestamp in (
+            (1, "READY", "2026-08-30T12:02:00Z"),
+            (2, "EVALUATING", "2026-08-30T12:03:00Z"),
+            (3, "PASS", "2026-08-30T21:00:00Z"),
+        ):
+            advance_command = [
+                str(python),
+                "-m",
+                "forgegate",
+                "candidate",
+                "advance",
+                str(candidate_store),
+                candidate_id,
+                "--to",
+                status,
+                "--expected-revision",
+                str(revision),
+                "--occurred-at",
+                timestamp,
+                "--idempotency-key",
+                f"advance:release-smoke-{status.lower()}",
+            ]
+            if status == "PASS":
+                advance_command.extend(
+                    [
+                        "--evaluation",
+                        str(REPOSITORY_ROOT / "tests/golden/policy_pass.json"),
+                    ]
+                )
+            run(advance_command, cwd=root)
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "candidate",
+                "import-evaluation",
+                str(candidate_store),
+                candidate_id,
+                str(REPOSITORY_ROOT / "tests/golden/policy_pass.json"),
+            ],
+            cwd=root,
+        )
+        attestation_output = root / "attestations"
+        attest = [
+            str(python),
+            "-m",
+            "forgegate",
+            "candidate",
+            "attest",
+            str(candidate_store),
+            candidate_id,
+            "--issued-at",
+            "2026-08-30T22:00:00Z",
+            "--output-root",
+            str(attestation_output),
+        ]
+        run(attest, cwd=root)
+        run(attest, cwd=root)
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "candidate",
+                "show-attestation",
+                str(candidate_store),
+                candidate_id,
+            ],
+            cwd=root,
+        )
         run(
             [
                 str(python),

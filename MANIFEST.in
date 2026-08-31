@@ -8,5 +8,5 @@ recursive-include examples *.yaml *.xml *.info *.sarif *.json
 recursive-include requirements *.txt
 recursive-include reports *.md
 recursive-include schemas *.json *.md
-recursive-include tests *.py *.json
+recursive-include tests *.py *.json *.md
 recursive-include tools *.py *.ps1 *.sh

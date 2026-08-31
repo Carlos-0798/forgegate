@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.0.dev8 — 2026-08-31
+
+- Added a self-validating `forgegate.release-attestation.v1` document containing
+  the terminal candidate, complete transition chain, policy evaluation, and
+  content fingerprints.
+- Added deterministic JSON and Markdown rendering plus atomic, conflict-safe
+  local bundle publication with exact replay semantics.
+- Upgraded the SQLite candidate store to schema v2 with durable append-only
+  evaluation and attestation documents, explicit v1 migration, and legacy
+  evaluation backfill.
+- Completed the local persisted CLI flow with store migration, evaluation
+  import, attestation generation, and attestation readback commands.
+- Added committed Goldens, adversarial filesystem/database tests, schema drift
+  coverage, architecture/threat-model updates, and installed-wheel smoke.
+
 ## 0.1.0.dev7 — 2026-08-31
 
 - Added the versioned local SQLite candidate store with WAL, FULL synchronous

@@ -1,0 +1,116 @@
+{
+  "assurance": "unsigned_local",
+  "attestation_id": "sha256:11ed4fb82e75cfa055dde1894dda0e069fe0a5e2a9409a6407990fe24fcb7fa3",
+  "candidate": {
+    "candidate_id": "cand-dab25eb0be1a0107b3996080",
+    "commit_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "created_at": "2026-08-30T12:00:00Z",
+    "evaluated_at": "2026-08-30T21:00:00Z",
+    "evaluation_id": "sha256:bea1da21514953043911d4001967d0107e687086acc09957e56e056ef3d682b8",
+    "project_id": "sample-api",
+    "release_track": "pull-request",
+    "revision": 4,
+    "schema_version": "forgegate.release-candidate.v1",
+    "source_branch": "main",
+    "status": "PASS",
+    "updated_at": "2026-08-30T21:00:00Z",
+    "version": "1.2.0"
+  },
+  "candidate_fingerprint": "sha256:a30c5d60b52ac16696723750f2dfbc7392ff2a8000e6ff0d45d674fb393242cf",
+  "evaluation_fingerprint": "sha256:8fde8215df96164ad8a5426f046a4bceb7fd0c2016e3d91f0d7b8ad1e3408c78",
+  "generator": "forgegate",
+  "generator_version": "0.1.0.dev8",
+  "issued_at": "2026-08-31T01:00:00Z",
+  "policy_evaluation": {
+    "candidate_commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "decision": "PASS",
+    "evaluated_at": "2026-08-30T21:00:00Z",
+    "evaluated_evidence_ids": [
+      "evidence-01"
+    ],
+    "evaluation_id": "sha256:bea1da21514953043911d4001967d0107e687086acc09957e56e056ef3d682b8",
+    "evidence_fingerprint": "sha256:3333333333333333333333333333333333333333333333333333333333333333",
+    "policy_fingerprint": "sha256:2222222222222222222222222222222222222222222222222222222222222222",
+    "policy_name": "pull-request",
+    "rule_results": [
+      {
+        "actual": 0,
+        "aggregation": "value",
+        "claim": "tests.required-pass",
+        "decision": "PASS",
+        "evidence_ids": [
+          "evidence-01"
+        ],
+        "evidence_kind": "test.summary",
+        "expected": 0,
+        "explanation": "deterministic attestation fixture",
+        "mandatory": true,
+        "operator": "equals",
+        "reason_code": "RULE_RESULT",
+        "remediation_hint": null,
+        "rule_id": "rule-01"
+      }
+    ],
+    "schema_version": "forgegate.policy-evaluation.v1"
+  },
+  "schema_version": "forgegate.release-attestation.v1",
+  "transition_chain_fingerprint": "sha256:5f5ba7998fe2c4e5d52c76b9c4c6e164906c5747e546dccf2596417f23d1ce93",
+  "transitions": [
+    {
+      "candidate_id": "cand-dab25eb0be1a0107b3996080",
+      "evaluation_id": null,
+      "from_revision": 0,
+      "from_status": "DRAFT",
+      "occurred_at": "2026-08-30T12:01:00Z",
+      "prior_candidate_fingerprint": "sha256:db837ca175d63c3dcb46fc91e1cb9ab4493b032443756e82f4bf44f14196da93",
+      "reason": null,
+      "result_candidate_fingerprint": "sha256:f9301eaba34ebc5c964eeb73711d9a9883f75cfc1ff98314aad57cfc2858c1be",
+      "schema_version": "forgegate.candidate-transition.v1",
+      "to_revision": 1,
+      "to_status": "COLLECTING",
+      "transition_id": "sha256:cdb66d8cc66e6e79937f693b332cbe140b0a6d6227b249a33233773958794bd2"
+    },
+    {
+      "candidate_id": "cand-dab25eb0be1a0107b3996080",
+      "evaluation_id": null,
+      "from_revision": 1,
+      "from_status": "COLLECTING",
+      "occurred_at": "2026-08-30T12:02:00Z",
+      "prior_candidate_fingerprint": "sha256:f9301eaba34ebc5c964eeb73711d9a9883f75cfc1ff98314aad57cfc2858c1be",
+      "reason": null,
+      "result_candidate_fingerprint": "sha256:18682d6edc50b4ae48d3705555a557993e10089234106a03614d4d17b3d3cdce",
+      "schema_version": "forgegate.candidate-transition.v1",
+      "to_revision": 2,
+      "to_status": "READY",
+      "transition_id": "sha256:69d70fcb96d6eb2b6c958055192348e281c004d2b80b7698f7bcbe1d688247af"
+    },
+    {
+      "candidate_id": "cand-dab25eb0be1a0107b3996080",
+      "evaluation_id": null,
+      "from_revision": 2,
+      "from_status": "READY",
+      "occurred_at": "2026-08-30T12:03:00Z",
+      "prior_candidate_fingerprint": "sha256:18682d6edc50b4ae48d3705555a557993e10089234106a03614d4d17b3d3cdce",
+      "reason": null,
+      "result_candidate_fingerprint": "sha256:3f299726f5c2416787857bc8db45ecab3bd8bb41e2ebc9142ca4cc445e96ebef",
+      "schema_version": "forgegate.candidate-transition.v1",
+      "to_revision": 3,
+      "to_status": "EVALUATING",
+      "transition_id": "sha256:ab3b07ac4eb7fe28d84a9d7b855ebbc717cd324f3c7fd1886d2481ecd3c1b02d"
+    },
+    {
+      "candidate_id": "cand-dab25eb0be1a0107b3996080",
+      "evaluation_id": "sha256:bea1da21514953043911d4001967d0107e687086acc09957e56e056ef3d682b8",
+      "from_revision": 3,
+      "from_status": "EVALUATING",
+      "occurred_at": "2026-08-30T21:00:00Z",
+      "prior_candidate_fingerprint": "sha256:3f299726f5c2416787857bc8db45ecab3bd8bb41e2ebc9142ca4cc445e96ebef",
+      "reason": "policy completed",
+      "result_candidate_fingerprint": "sha256:a30c5d60b52ac16696723750f2dfbc7392ff2a8000e6ff0d45d674fb393242cf",
+      "schema_version": "forgegate.candidate-transition.v1",
+      "to_revision": 4,
+      "to_status": "PASS",
+      "transition_id": "sha256:3a398c5d4aee8273c404650da1c56b460c679e8d7ac029c9647c89e6386534d9"
+    }
+  ]
+}

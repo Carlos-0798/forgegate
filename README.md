@@ -6,7 +6,7 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 2 transactional SQLite candidate-store slice accepted; still pre-MVP.**
+**Phase 2 deterministic attestation and local CLI MVP accepted; not production-ready.**
 
 Implemented and host-verified in this checkpoint:
 
@@ -43,18 +43,26 @@ Implemented and host-verified in this checkpoint:
 - mandatory policy-evaluation binding for PASS/FAIL/REVIEW terminal states;
 - stateless `candidate create` and `candidate transition` CLI previews with
   committed structural and evaluation-bound Golden outputs;
-- a local SQLite v1 candidate store with WAL, FULL synchronous durability,
+- a local SQLite v2 candidate store with WAL, FULL synchronous durability,
   foreign keys, exact application/schema identity, and explicit transactions;
 - canonical append-only candidate snapshots and transition events with an
   optimistic current-revision pointer and immutable idempotency responses;
 - exact retry replay, conflicting-key rejection, stale-write protection,
   restart recovery, bounded writer contention, and audit-chain validation;
-- persisted `candidate create`, `advance`, `show`, and `history` CLI paths.
+- persisted `candidate create`, `advance`, `show`, and `history` CLI paths;
+- explicit validated v1-to-v2 migration and legacy evaluation backfill;
+- durable append-only policy evaluations and release attestations;
+- self-validating `forgegate.release-attestation.v1` records containing the
+  terminal candidate, transition chain, evaluation, and content fingerprints;
+- deterministic JSON/Markdown rendering, atomic content-addressed publication,
+  exact replay, and conflict rejection;
+- persisted `candidate migrate-store`, `import-evaluation`, `attest`, and
+  `show-attestation` CLI paths.
 
 Not implemented yet:
 
-- attestations, REST API, plugin execution, GitHub integration, database
-  authorization, backup/repair, or signed provenance;
+- REST API, plugin execution, GitHub integration, database authorization,
+  backup/repair, or signed provenance/key management;
 - AFE or MSP430 compatibility collectors;
 - any AFE/MSP430 runtime integration or hardware operation;
 - any production deployment or public release.
@@ -147,6 +155,37 @@ Every persisted write requires a caller-owned idempotency key. Exact retries
 return the original response; reuse for different normalized input and stale
 revisions fail closed. The database establishes local transaction ordering, not
 producer authenticity or operator authorization.
+
+After reaching PASS, FAIL, REVIEW, or ERROR, persist and publish a deterministic
+attestation bundle:
+
+```powershell
+.\.venv\Scripts\python.exe -m forgegate candidate attest `
+  work/forgegate.db cand-dab25eb0be1a0107b3996080 `
+  --issued-at 2026-08-30T22:00:00Z `
+  --output-root work/attestations
+
+.\.venv\Scripts\python.exe -m forgegate candidate show-attestation `
+  work/forgegate.db cand-dab25eb0be1a0107b3996080
+```
+
+The bundle contains `attestation.json` and `attestation.md` beneath a directory
+named from the attestation SHA-256. An exact rerun verifies and reuses those
+bytes; ForgeGate does not overwrite a conflicting target. Database persistence
+commits before filesystem publication, so an output failure is recovered by
+rerunning the same command.
+
+For a schema-v1 database created by 0.1.0.dev7, migration is explicit:
+
+```powershell
+.\.venv\Scripts\python.exe -m forgegate candidate migrate-store work/forgegate.db
+```
+
+If that database already contains a terminal candidate, it references but does
+not contain its original policy evaluation. Import the exact original document
+with `candidate import-evaluation` before attesting. ForgeGate verifies the
+evaluation ID, commit, decision, and timestamp; it does not reconstruct or
+invent missing evidence.
 
 Coverage artifacts use the same provenance options:
 

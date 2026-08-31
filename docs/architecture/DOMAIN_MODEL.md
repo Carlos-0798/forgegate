@@ -10,15 +10,15 @@ Project -> ReleaseTrack -> Policy -> PolicyRule
 
 PolicyRule + matching valid evidence -> RuleEvaluation -> PolicyEvaluation
                                                         -> ReleaseCandidate terminal
-                                                        -> future Attestation
+                                                        -> ReleaseAttestation
 ```
 
 Phase 0 established `ProjectConfig`, `PolicyConfig`, and `EvidenceBundle`.
 Phase 2 now adds immutable evaluation results, `ReleaseCandidate`,
 `CandidateTransition`, and `CandidateTransitionResult`. The SQLite candidate
-store durably appends candidate snapshots, transition events, and idempotency
-records while maintaining one compare-and-swap current pointer. Attestation
-remains deferred.
+store durably appends candidate snapshots, transition events, evaluations,
+attestations, and idempotency records while maintaining one compare-and-swap
+current pointer.
 
 ## Invariants already enforced
 
@@ -55,8 +55,8 @@ remains deferred.
 
 ## Persistence invariants now enforced
 
-- schema version and ForgeGate application identity are exact and never
-  auto-migrated;
+- schema version and ForgeGate application identity are exact; v1-to-v2
+  migration is explicit and validated rather than automatic;
 - WAL, FULL synchronous durability, foreign keys, and explicit transactions are
   checked on every repository operation;
 - snapshots, transitions, and idempotency records are append-only;
@@ -64,3 +64,19 @@ remains deferred.
 - exact idempotency replays return the original response while conflicting key
   reuse fails closed;
 - every load verifies the complete canonical snapshot/fingerprint/event chain.
+
+## Attestation invariants now enforced
+
+- only a terminal revision-four candidate can be attested;
+- the complete four-event transition chain must link adjacent candidate
+  fingerprints and end at the embedded terminal candidate;
+- PASS/FAIL/REVIEW embeds the exact policy evaluation; ERROR may omit one only
+  when the candidate itself has no evaluation reference;
+- evaluation ID, commit, decision, timestamp, mandatory rule precedence,
+  unique rule IDs, and evidence references are recomputed and checked;
+- candidate, transition-chain, and evaluation fingerprints bind the embedded
+  documents, while `attestation_id` binds all remaining attestation content;
+- deterministic JSON and Markdown are alternate renderings of the same strict
+  document;
+- `unsigned_local` explicitly disclaims producer identity, authorization,
+  trusted time, and cryptographic signature assurance.

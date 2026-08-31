@@ -11,6 +11,11 @@ from typing import cast
 
 from pydantic import BaseModel, ValidationError
 
+from forgegate.attestations import (
+    ReleaseAttestation,
+    create_release_attestation,
+    render_attestation_markdown,
+)
 from forgegate.candidates.lifecycle import CandidateLifecycleError, transition_candidate
 from forgegate.candidates.models import (
     CandidateTransition,
@@ -22,11 +27,13 @@ from forgegate.domain.enums import CandidateStatus
 from forgegate.policy.models import PolicyEvaluation
 
 STORE_APPLICATION_ID = 0x46474154  # ASCII "FGAT"
-STORE_SCHEMA_VERSION = 1
-STORE_SCHEMA_NAME = "forgegate.candidate-store.v1"
+LEGACY_STORE_SCHEMA_VERSION = 1
+LEGACY_STORE_SCHEMA_NAME = "forgegate.candidate-store.v1"
+STORE_SCHEMA_VERSION = 2
+STORE_SCHEMA_NAME = "forgegate.candidate-store.v2"
 IDEMPOTENCY_KEY_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
 
-_SCHEMA_STATEMENTS = (
+_SCHEMA_V1_STATEMENTS = (
     """
     CREATE TABLE forgegate_metadata (
         key TEXT PRIMARY KEY,
@@ -165,7 +172,58 @@ _SCHEMA_STATEMENTS = (
     """,
 )
 
-_REQUIRED_OBJECTS = frozenset(
+_SCHEMA_V2_STATEMENTS = (
+    """
+    CREATE TABLE candidate_evaluations (
+        candidate_id TEXT PRIMARY KEY,
+        evaluation_id TEXT NOT NULL,
+        evaluation_fingerprint TEXT NOT NULL,
+        evaluation_json TEXT NOT NULL,
+        recorded_at TEXT NOT NULL,
+        FOREIGN KEY (candidate_id) REFERENCES candidates(candidate_id) ON DELETE RESTRICT
+    ) STRICT
+    """,
+    """
+    CREATE TABLE attestations (
+        candidate_id TEXT PRIMARY KEY,
+        attestation_id TEXT NOT NULL UNIQUE,
+        attestation_json TEXT NOT NULL,
+        markdown_text TEXT NOT NULL,
+        issued_at TEXT NOT NULL,
+        FOREIGN KEY (candidate_id) REFERENCES candidates(candidate_id) ON DELETE RESTRICT
+    ) STRICT
+    """,
+    """
+    CREATE TRIGGER candidate_evaluations_guard_update
+    BEFORE UPDATE ON candidate_evaluations
+    BEGIN
+        SELECT RAISE(ABORT, 'candidate evaluations are immutable');
+    END
+    """,
+    """
+    CREATE TRIGGER candidate_evaluations_guard_delete
+    BEFORE DELETE ON candidate_evaluations
+    BEGIN
+        SELECT RAISE(ABORT, 'candidate evaluations are immutable');
+    END
+    """,
+    """
+    CREATE TRIGGER attestations_guard_update
+    BEFORE UPDATE ON attestations
+    BEGIN
+        SELECT RAISE(ABORT, 'attestations are immutable');
+    END
+    """,
+    """
+    CREATE TRIGGER attestations_guard_delete
+    BEFORE DELETE ON attestations
+    BEGIN
+        SELECT RAISE(ABORT, 'attestations are immutable');
+    END
+    """,
+)
+
+_REQUIRED_OBJECTS_V1 = frozenset(
     {
         ("table", "forgegate_metadata"),
         ("table", "candidates"),
@@ -180,6 +238,17 @@ _REQUIRED_OBJECTS = frozenset(
         ("trigger", "candidate_transitions_guard_delete"),
         ("trigger", "idempotency_records_guard_update"),
         ("trigger", "idempotency_records_guard_delete"),
+    }
+)
+
+_REQUIRED_OBJECTS_V2 = _REQUIRED_OBJECTS_V1 | frozenset(
+    {
+        ("table", "candidate_evaluations"),
+        ("table", "attestations"),
+        ("trigger", "candidate_evaluations_guard_update"),
+        ("trigger", "candidate_evaluations_guard_delete"),
+        ("trigger", "attestations_guard_update"),
+        ("trigger", "attestations_guard_delete"),
     }
 )
 
@@ -215,7 +284,7 @@ class SQLiteCandidateRepository:
         self._failure_injector = _failure_injector
 
     def initialize(self) -> None:
-        """Create schema v1 or validate an existing ForgeGate candidate store."""
+        """Create schema v2 or validate an existing current ForgeGate store."""
         connection = self._open(require_exists=False)
         try:
             journal_mode = str(connection.execute("PRAGMA journal_mode = WAL").fetchone()[0])
@@ -237,7 +306,7 @@ class SQLiteCandidateRepository:
                     )
                 connection.execute("BEGIN IMMEDIATE")
                 connection.execute(f"PRAGMA application_id = {STORE_APPLICATION_ID}")
-                for statement in _SCHEMA_STATEMENTS:
+                for statement in (*_SCHEMA_V1_STATEMENTS, *_SCHEMA_V2_STATEMENTS):
                     connection.execute(statement)
                 connection.executemany(
                     "INSERT INTO forgegate_metadata(key, value) VALUES (?, ?)",
@@ -248,6 +317,49 @@ class SQLiteCandidateRepository:
                 )
                 connection.execute(f"PRAGMA user_version = {STORE_SCHEMA_VERSION}")
                 connection.commit()
+            elif application_id != STORE_APPLICATION_ID:
+                raise CandidateStoreError(
+                    "STORE_NOT_FORGEGATE", "database application ID is not ForgeGate"
+                )
+            elif user_version == LEGACY_STORE_SCHEMA_VERSION:
+                raise CandidateStoreError(
+                    "STORE_MIGRATION_REQUIRED",
+                    "candidate database schema v1 requires explicit migration to v2",
+                )
+            self._validate_store(connection)
+        except sqlite3.Error as exc:
+            connection.rollback()
+            raise _translated_sqlite_error(exc) from exc
+        finally:
+            connection.close()
+
+    def migrate(self) -> None:
+        """Explicitly migrate a validated schema-v1 store to schema v2."""
+        connection = self._open(require_exists=True)
+        try:
+            user_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
+            if user_version == STORE_SCHEMA_VERSION:
+                self._validate_store(connection)
+                return
+            if user_version != LEGACY_STORE_SCHEMA_VERSION:
+                raise CandidateStoreError(
+                    "STORE_SCHEMA_UNSUPPORTED",
+                    f"database schema version {user_version} cannot migrate to v2",
+                )
+            self._validate_store_version(connection, LEGACY_STORE_SCHEMA_VERSION)
+            connection.execute("BEGIN IMMEDIATE")
+            for statement in _SCHEMA_V2_STATEMENTS:
+                connection.execute(statement)
+            connection.execute(
+                "UPDATE forgegate_metadata SET value = ? WHERE key = 'schema_name'",
+                (STORE_SCHEMA_NAME,),
+            )
+            connection.execute(
+                "UPDATE forgegate_metadata SET value = ? WHERE key = 'schema_version'",
+                (str(STORE_SCHEMA_VERSION),),
+            )
+            connection.execute(f"PRAGMA user_version = {STORE_SCHEMA_VERSION}")
+            connection.commit()
             self._validate_store(connection)
         except sqlite3.Error as exc:
             connection.rollback()
@@ -346,6 +458,102 @@ class SQLiteCandidateRepository:
         with self._transaction(write=False) as connection:
             return self._load_history(connection, candidate_id)
 
+    def record_evaluation(
+        self, candidate_id: str, evaluation: PolicyEvaluation
+    ) -> PolicyEvaluation:
+        """Backfill an exact terminal evaluation after an explicit v1-to-v2 migration."""
+        with self._transaction(write=True) as connection:
+            candidate = self._load_history(connection, candidate_id).candidate
+            self._require_evaluation_matches_candidate(candidate, evaluation)
+            existing = connection.execute(
+                "SELECT evaluation_json FROM candidate_evaluations WHERE candidate_id = ?",
+                (candidate_id,),
+            ).fetchone()
+            evaluation_json = _model_json(evaluation)
+            if existing is not None:
+                if existing[0] != evaluation_json:
+                    raise CandidateStoreError(
+                        "STORE_EVALUATION_CONFLICT",
+                        "candidate already has a different durable policy evaluation",
+                    )
+                return cast(PolicyEvaluation, self._load_evaluation(connection, candidate))
+            self._insert_evaluation(connection, candidate, evaluation)
+            self._checkpoint("after_evaluation_insert", connection)
+        return evaluation
+
+    def evaluation(self, candidate_id: str) -> PolicyEvaluation | None:
+        """Read and validate the policy evaluation bound to a terminal candidate."""
+        with self._transaction(write=False) as connection:
+            candidate = self._load_history(connection, candidate_id).candidate
+            return self._load_evaluation(connection, candidate)
+
+    def attest(
+        self,
+        candidate_id: str,
+        *,
+        issued_at: datetime,
+        generator_version: str,
+    ) -> ReleaseAttestation:
+        """Create or exactly replay one durable self-contained attestation per candidate."""
+        with self._transaction(write=True) as connection:
+            history = self._load_history(connection, candidate_id)
+            evaluation = self._load_evaluation(connection, history.candidate)
+            try:
+                attestation = create_release_attestation(
+                    history.candidate,
+                    history.transitions,
+                    policy_evaluation=evaluation,
+                    issued_at=issued_at,
+                    generator_version=generator_version,
+                )
+            except (ValidationError, ValueError) as exc:
+                raise CandidateStoreError(
+                    "STORE_ATTESTATION_INVALID", f"cannot attest candidate: {exc}"
+                ) from exc
+            attestation_json = _model_json(attestation)
+            markdown = render_attestation_markdown(attestation)
+            existing = connection.execute(
+                "SELECT * FROM attestations WHERE candidate_id = ?", (candidate_id,)
+            ).fetchone()
+            if existing is not None:
+                stored = self._decode_attestation_row(existing, history, evaluation)
+                if stored != attestation:
+                    raise CandidateStoreError(
+                        "STORE_ATTESTATION_CONFLICT",
+                        "candidate already has a different durable attestation",
+                    )
+                return stored
+            connection.execute(
+                """
+                INSERT INTO attestations(
+                    candidate_id, attestation_id, attestation_json, markdown_text, issued_at
+                ) VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    candidate_id,
+                    attestation.attestation_id,
+                    attestation_json,
+                    markdown,
+                    _json_timestamp(attestation.issued_at),
+                ),
+            )
+            self._checkpoint("after_attestation_insert", connection)
+        return attestation
+
+    def get_attestation(self, candidate_id: str) -> ReleaseAttestation:
+        """Read and validate the candidate's durable attestation and all associations."""
+        with self._transaction(write=False) as connection:
+            history = self._load_history(connection, candidate_id)
+            evaluation = self._load_evaluation(connection, history.candidate)
+            row = connection.execute(
+                "SELECT * FROM attestations WHERE candidate_id = ?", (candidate_id,)
+            ).fetchone()
+            if row is None:
+                raise CandidateStoreError(
+                    "STORE_ATTESTATION_NOT_FOUND", f"candidate has no attestation: {candidate_id}"
+                )
+            return self._decode_attestation_row(row, history, evaluation)
+
     def advance(
         self,
         candidate_id: str,
@@ -421,6 +629,8 @@ class SQLiteCandidateRepository:
                     transition_json,
                 ),
             )
+            if evaluation is not None:
+                self._insert_evaluation(connection, result.candidate, evaluation)
             self._checkpoint("after_transition_append", connection)
             updated = connection.execute(
                 """
@@ -503,13 +713,18 @@ class SQLiteCandidateRepository:
         return connection
 
     def _validate_store(self, connection: sqlite3.Connection) -> None:
+        self._validate_store_version(connection, STORE_SCHEMA_VERSION)
+
+    def _validate_store_version(
+        self, connection: sqlite3.Connection, expected_version: int
+    ) -> None:
         application_id = int(connection.execute("PRAGMA application_id").fetchone()[0])
         user_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
         journal_mode = str(connection.execute("PRAGMA journal_mode").fetchone()[0])
         foreign_keys = int(connection.execute("PRAGMA foreign_keys").fetchone()[0])
         synchronous = int(connection.execute("PRAGMA synchronous").fetchone()[0])
         _require(application_id == STORE_APPLICATION_ID, "database application ID is not ForgeGate")
-        if user_version != STORE_SCHEMA_VERSION:
+        if user_version != expected_version:
             raise CandidateStoreError(
                 "STORE_SCHEMA_UNSUPPORTED",
                 f"database schema version {user_version} is not supported",
@@ -523,7 +738,12 @@ class SQLiteCandidateRepository:
                 "SELECT type, name FROM sqlite_master WHERE type IN ('table', 'trigger')"
             )
         }
-        _require(objects >= _REQUIRED_OBJECTS, "candidate database schema objects are missing")
+        required_objects = (
+            _REQUIRED_OBJECTS_V1
+            if expected_version == LEGACY_STORE_SCHEMA_VERSION
+            else _REQUIRED_OBJECTS_V2
+        )
+        _require(objects >= required_objects, "candidate database schema objects are missing")
         metadata = {
             str(row[0]): str(row[1])
             for row in connection.execute("SELECT key, value FROM forgegate_metadata")
@@ -531,8 +751,12 @@ class SQLiteCandidateRepository:
         _require(
             metadata
             == {
-                "schema_name": STORE_SCHEMA_NAME,
-                "schema_version": str(STORE_SCHEMA_VERSION),
+                "schema_name": (
+                    LEGACY_STORE_SCHEMA_NAME
+                    if expected_version == LEGACY_STORE_SCHEMA_VERSION
+                    else STORE_SCHEMA_NAME
+                ),
+                "schema_version": str(expected_version),
             },
             "candidate database metadata is invalid",
         )
@@ -676,6 +900,119 @@ class SQLiteCandidateRepository:
             "candidate current pointer or immutable identity is corrupt",
         )
         return CandidateHistory(candidate=current, transitions=tuple(transitions))
+
+    @staticmethod
+    def _require_evaluation_matches_candidate(
+        candidate: ReleaseCandidate, evaluation: PolicyEvaluation
+    ) -> None:
+        if candidate.revision != 4 or candidate.evaluation_id is None:
+            raise CandidateStoreError(
+                "STORE_EVALUATION_UNEXPECTED",
+                "candidate does not have a terminal policy-evaluation reference",
+            )
+        if (
+            candidate.evaluation_id != evaluation.evaluation_id
+            or candidate.commit_sha.lower() != evaluation.candidate_commit.lower()
+            or candidate.status.value != evaluation.decision.value
+            or candidate.updated_at != evaluation.evaluated_at
+        ):
+            raise CandidateStoreError(
+                "STORE_EVALUATION_MISMATCH",
+                "policy evaluation does not match candidate ID, commit, decision, and time",
+            )
+
+    def _insert_evaluation(
+        self,
+        connection: sqlite3.Connection,
+        candidate: ReleaseCandidate,
+        evaluation: PolicyEvaluation,
+    ) -> None:
+        self._require_evaluation_matches_candidate(candidate, evaluation)
+        evaluation_json = _model_json(evaluation)
+        connection.execute(
+            """
+            INSERT INTO candidate_evaluations(
+                candidate_id, evaluation_id, evaluation_fingerprint,
+                evaluation_json, recorded_at
+            ) VALUES (?, ?, ?, ?, ?)
+            """,
+            (
+                candidate.candidate_id,
+                evaluation.evaluation_id,
+                sha256_fingerprint(evaluation.model_dump(mode="json")),
+                evaluation_json,
+                _json_timestamp(evaluation.evaluated_at),
+            ),
+        )
+
+    def _load_evaluation(
+        self, connection: sqlite3.Connection, candidate: ReleaseCandidate
+    ) -> PolicyEvaluation | None:
+        row = connection.execute(
+            "SELECT * FROM candidate_evaluations WHERE candidate_id = ?",
+            (candidate.candidate_id,),
+        ).fetchone()
+        if candidate.evaluation_id is None:
+            _require(row is None, "candidate has an unexpected durable policy evaluation")
+            return None
+        if row is None:
+            raise CandidateStoreError(
+                "STORE_EVALUATION_NOT_FOUND",
+                "candidate evaluation document is absent; import it after legacy migration",
+            )
+        evaluation = _decode_model(str(row["evaluation_json"]), PolicyEvaluation)
+        fingerprint = sha256_fingerprint(evaluation.model_dump(mode="json"))
+        _require(
+            (
+                row["candidate_id"],
+                row["evaluation_id"],
+                row["evaluation_fingerprint"],
+                row["recorded_at"],
+            )
+            == (
+                candidate.candidate_id,
+                evaluation.evaluation_id,
+                fingerprint,
+                _json_timestamp(evaluation.evaluated_at),
+            ),
+            "candidate evaluation metadata does not match its document",
+        )
+        self._require_evaluation_matches_candidate(candidate, evaluation)
+        return evaluation
+
+    def _decode_attestation_row(
+        self,
+        row: sqlite3.Row,
+        history: CandidateHistory,
+        evaluation: PolicyEvaluation | None,
+    ) -> ReleaseAttestation:
+        attestation = _decode_model(str(row["attestation_json"]), ReleaseAttestation)
+        markdown = render_attestation_markdown(attestation)
+        _require(
+            (
+                row["candidate_id"],
+                row["attestation_id"],
+                row["markdown_text"],
+                row["issued_at"],
+            )
+            == (
+                history.candidate.candidate_id,
+                attestation.attestation_id,
+                markdown,
+                _json_timestamp(attestation.issued_at),
+            ),
+            "stored attestation metadata or Markdown rendering is corrupt",
+        )
+        _require(
+            (
+                attestation.candidate,
+                tuple(attestation.transitions),
+                attestation.policy_evaluation,
+            )
+            == (history.candidate, history.transitions, evaluation),
+            "stored attestation is detached from durable candidate inputs",
+        )
+        return attestation
 
     def _candidate_replay(
         self,

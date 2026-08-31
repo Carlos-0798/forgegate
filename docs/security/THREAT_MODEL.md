@@ -4,7 +4,7 @@
 
 - versioned project and policy definitions;
 - evidence/artifact integrity metadata;
-- release decisions and future attestations;
+- release decisions and local unsigned attestations;
 - developer workstation paths and CI metadata.
 
 ## Trust boundaries
@@ -120,13 +120,28 @@ The current slice has no authenticated producer and runs no plugin code.
 | Foreign-key or canonical JSON corruption is ignored | Every read validates foreign keys, strict models, canonical JSON, and fingerprints |
 | Writer contention silently loses work | Bounded busy timeout and stable `STORE_BUSY` failure; no automatic unsafe retry |
 
+## Addressed in the Phase 2 attestation slice
+
+| Threat | Current control |
+|---|---|
+| Attestation embeds a different candidate or partial history | Require the terminal candidate and exactly four linked transition events; recompute all candidate/event associations |
+| Evaluation is detached or internally inconsistent | Recompute evaluation identity, fingerprint, mandatory decision precedence, unique rule IDs, and evidence-reference union |
+| Attestation content changes under the same ID | Recompute a SHA-256 identity over every field except schema version and the ID itself |
+| Human-readable summary diverges from machine record | Render Markdown deterministically from the validated JSON model and revalidate stored bytes on read |
+| Existing output is silently overwritten | Content-addressed directory, create-only staging files, atomic rename, exact-replay verification, and conflict failure |
+| Symlink or irregular output target redirects publication | Reject symlink roots/targets and require exactly two safe regular files for replay |
+| Mid-publication failure is mistaken for data loss | Store attestation transaction first; exact rerun publishes the same durable document or reports a conflict |
+| Local record is mistaken for signed authority | Required `assurance: unsigned_local` plus explicit JSON/Markdown documentation boundary |
+| Legacy migration fabricates a missing evaluation | Explicit v1-to-v2 migration leaves it absent; exact matching evaluation import is required before attestation |
+
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;
 - stronger filesystem race resistance than the current open-handle metadata
   stability check;
 - malicious plugins and subprocess isolation;
-- CI identity verification, secret redaction, signing, revocation, and key
+- CI identity verification, secret redaction, signing, revocation, trusted
+  timestamping, and key
   management;
 - database authorization, API authentication, audit retention, backup, repair,
   encryption at rest, and administrator-resistant tamper evidence.

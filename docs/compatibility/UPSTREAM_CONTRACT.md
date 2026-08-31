@@ -22,8 +22,9 @@ Initial mapping proposal:
 | future physical bench result | `physically_verified` | instrument/context/calibration references |
 
 The exact Studio export schema must be frozen in the Studio repository first.
-ForgeGate will implement a collector against that public artifact after its
-generic MVP path works.
+ForgeGate's generic local CLI MVP is now accepted; freezing that public Studio
+artifact and implementing an optional collector is the next compatibility
+stage.
 
 ## MSP430 Equipment Health & Safety Controller — later hardware peer
 

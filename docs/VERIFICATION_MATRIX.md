@@ -11,7 +11,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — seven versioned document schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — eight versioned document schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
 | Ruff | full repository | PASS |
@@ -52,10 +52,15 @@
 | Idempotent writes | exact replay/conflicting-key tests | PASS — local host |
 | Append-only audit history | trigger and corruption tests | PASS — local host |
 | Persisted candidate CLI | clean-process create/advance/show/history smoke | PASS — local host |
-| JSON/Markdown attestations | deterministic golden output | NOT IMPLEMENTED |
+| SQLite v1 migration | explicit migration/backfill/rollback tests | PASS — local host |
+| Durable evaluation binding | restart/corruption/append-only tests | PASS — local host |
+| JSON/Markdown attestations | deterministic Golden byte comparison | PASS — local host |
+| Attestation self-consistency | adversarial model/chain/evaluation tests | PASS — local host |
+| Attestation output publication | atomic publish/replay/conflict/fault tests | PASS — local host |
+| Installed attestation CLI | clean-wheel terminal flow and exact replay | PASS — local host |
 | AFE report compatibility | frozen public artifact contract | PLANNED |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
 
-See `reports/PHASE_2_CANDIDATE_LIFECYCLE_ACCEPTANCE_REPORT.md` for the current exact
-test and coverage result. Earlier acceptance reports remain historical records.
+See `reports/PHASE_2_ATTESTATION_ACCEPTANCE_REPORT.md` for the current exact test
+and coverage result. Earlier acceptance reports remain historical records.
