@@ -70,6 +70,13 @@ def test_unknown_project_field_is_rejected() -> None:
         ProjectConfig.model_validate(payload)
 
 
+def test_invalid_release_track_name_is_rejected() -> None:
+    payload = valid_project()
+    payload["release_tracks"] = {"Production Track": {"policy": "policies/production.yaml"}}
+    with pytest.raises(ValidationError, match="invalid release track"):
+        ProjectConfig.model_validate(payload)
+
+
 @pytest.mark.parametrize(
     "path",
     ["../outside.xml", "/absolute/file.xml", "C:/absolute/file.xml", "C:\\absolute\\file.xml"],
@@ -107,6 +114,21 @@ def test_policy_rule_ids_are_unique() -> None:
                 "schema_version": "forgegate.policy.v1",
                 "name": "production",
                 "rules": [rule, rule],
+            }
+        )
+
+
+def test_evidence_ids_are_unique() -> None:
+    record = valid_evidence_record()
+    with pytest.raises(ValidationError, match="evidence IDs must be unique"):
+        EvidenceBundle.model_validate(
+            {
+                "schema_version": "forgegate.evidence-bundle.v1",
+                "producer": "sample-ci",
+                "producer_version": "1.0.0",
+                "candidate_commit": "a" * 40,
+                "generated_at": datetime(2026, 8, 30, 20, 1, tzinfo=UTC),
+                "evidence": [record, record],
             }
         )
 
@@ -154,6 +176,20 @@ def test_naive_evidence_timestamp_is_rejected() -> None:
                 "candidate_commit": "a" * 40,
                 "generated_at": datetime(2026, 8, 30, 20, 1, tzinfo=UTC),
                 "evidence": [record],
+            }
+        )
+
+
+def test_naive_bundle_timestamp_is_rejected() -> None:
+    with pytest.raises(ValidationError, match="generated_at must include a UTC offset"):
+        EvidenceBundle.model_validate(
+            {
+                "schema_version": "forgegate.evidence-bundle.v1",
+                "producer": "sample-ci",
+                "producer_version": "1.0.0",
+                "candidate_commit": "a" * 40,
+                "generated_at": datetime(2026, 8, 30, 20, 1),
+                "evidence": [valid_evidence_record()],
             }
         )
 

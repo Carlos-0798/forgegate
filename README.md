@@ -29,14 +29,14 @@ Not implemented yet:
 ## Local development
 
 ```powershell
-py -3.12 -m venv .venv
-.\.venv\Scripts\python.exe -m pip install -e ".[dev]"
-.\.venv\Scripts\forgegate.exe doctor
-.\.venv\Scripts\forgegate.exe validate-config examples\sample-python-api\forgegate.yaml
-.\.venv\Scripts\forgegate.exe validate-config examples\sample-python-api\policies\production.yaml
-.\.venv\Scripts\forgegate.exe export-schemas schemas
-.\.venv\Scripts\python.exe -m pytest --cov=forgegate --cov-branch
+.\tools\setup_environment.ps1
+.\.venv\Scripts\python.exe tools\verify.py
+.\.venv\Scripts\python.exe tools\release_smoke.py
 ```
+
+On Linux/macOS, run `./tools/setup_environment.sh`. The checked direct
+dependency constraints keep local and CI quality-gate versions aligned while
+the package retains compatible version ranges for downstream users.
 
 See `docs/PROJECT_STATUS.md`, `docs/ROADMAP.md`, and
 `docs/VERIFICATION_MATRIX.md` before making capability claims.

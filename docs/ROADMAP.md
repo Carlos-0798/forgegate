@@ -9,6 +9,8 @@
 - [x] Threat model and CI definition
 - [x] Optional AFE/MSP compatibility boundary
 - [x] Complete local verification and freeze the checkpoint
+- [x] Reproducible setup, 100% package coverage, schema drift gate, complete
+  source distribution, and clean-install release smoke
 
 ## Phase 1 — first vertical slice
 

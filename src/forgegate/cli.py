@@ -1,6 +1,5 @@
 import json
 import platform
-import sys
 from pathlib import Path
 from typing import Annotated
 
@@ -54,12 +53,3 @@ def export_schemas(
         payload = json.dumps(model.model_json_schema(), indent=2, sort_keys=True) + "\n"
         target.write_text(payload, encoding="utf-8")
         typer.echo(str(target))
-
-
-def main() -> int:
-    app()
-    return 0
-
-
-if __name__ == "__main__":
-    sys.exit(main())

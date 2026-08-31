@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=75", "wheel"]
+requires = ["setuptools==84.0.0", "wheel==0.48.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -38,11 +38,12 @@ testpaths = ["tests"]
 [tool.coverage.run]
 branch = true
 source = ["forgegate"]
+omit = ["src/forgegate/__main__.py"]
 
 [tool.coverage.report]
 show_missing = true
 skip_covered = false
-fail_under = 90
+fail_under = 95
 
 [tool.ruff]
 line-length = 100

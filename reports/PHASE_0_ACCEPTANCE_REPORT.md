@@ -1,5 +1,10 @@
 # ForgeGate Phase 0 acceptance report
 
+> Historical note: this report records the initial Phase 0 baseline. The current
+> prerequisite/environment result is in `PHASE_0_ENVIRONMENT_AUDIT.md`; later
+> hardening increased test coverage and changed future build artifacts without
+> rewriting this initial evidence record.
+
 - Date: 2026-08-30 (America/New_York)
 - Version: 0.1.0.dev0
 - Environment: Windows 11, Python 3.12.10

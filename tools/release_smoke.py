@@ -1,0 +1,108 @@
+from __future__ import annotations
+
+import hashlib
+import os
+import subprocess
+import sys
+import tarfile
+import tempfile
+import venv
+from pathlib import Path
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+REQUIRED_SDIST_PATHS = (
+    "AGENTS.md",
+    "CHANGELOG.md",
+    "SECURITY.md",
+    "docs/PROJECT_STATUS.md",
+    "docs/architecture/DOMAIN_MODEL.md",
+    "examples/sample-python-api/forgegate.yaml",
+    "requirements/dev-constraints.txt",
+    "schemas/forgegate.project.v1.schema.json",
+    "tests/test_models.py",
+    "tools/verify.py",
+)
+
+
+def run(command: list[str], *, cwd: Path = REPOSITORY_ROOT) -> None:
+    print(f"\n> {' '.join(command)}", flush=True)
+    completed = subprocess.run(command, cwd=cwd, check=False)
+    if completed.returncode != 0:
+        raise SystemExit(completed.returncode)
+
+
+def clean_python(environment: Path) -> Path:
+    if os.name == "nt":
+        return environment / "Scripts" / "python.exe"
+    return environment / "bin" / "python"
+
+
+def sha256(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as artifact:
+        for chunk in iter(lambda: artifact.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def verify_sdist(sdist: Path) -> None:
+    with tarfile.open(sdist, "r:gz") as archive:
+        members = {member.name for member in archive.getmembers() if member.isfile()}
+    missing = [
+        required
+        for required in REQUIRED_SDIST_PATHS
+        if not any(member.endswith(f"/{required}") for member in members)
+    ]
+    if missing:
+        raise SystemExit("sdist is missing required paths: " + ", ".join(missing))
+    print("\nSource distribution manifest: PASS", flush=True)
+
+
+def main() -> int:
+    with tempfile.TemporaryDirectory(prefix="forgegate-release-") as temporary:
+        root = Path(temporary)
+        dist = root / "dist"
+        run([sys.executable, "-m", "build", "--outdir", str(dist)])
+
+        wheels = list(dist.glob("*.whl"))
+        sdists = list(dist.glob("*.tar.gz"))
+        if len(wheels) != 1 or len(sdists) != 1:
+            raise SystemExit("release build must produce exactly one wheel and one sdist")
+        wheel = wheels[0]
+        sdist = sdists[0]
+        verify_sdist(sdist)
+
+        environment = root / "clean-environment"
+        venv.EnvBuilder(with_pip=True, clear=False).create(environment)
+        python = clean_python(environment)
+        run(
+            [
+                str(python),
+                "-m",
+                "pip",
+                "install",
+                "--disable-pip-version-check",
+                str(wheel),
+            ],
+            cwd=root,
+        )
+        run([str(python), "-m", "forgegate", "doctor"], cwd=root)
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "validate-config",
+                str(REPOSITORY_ROOT / "examples/sample-python-api/forgegate.yaml"),
+            ],
+            cwd=root,
+        )
+
+        print(f"\nwheel sha256={sha256(wheel)}", flush=True)
+        print(f"sdist sha256={sha256(sdist)}", flush=True)
+        print("ForgeGate release smoke: PASS", flush=True)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

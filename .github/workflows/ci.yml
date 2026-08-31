@@ -4,20 +4,35 @@ on:
   push:
   pull_request:
 
+permissions:
+  contents: read
+
+concurrency:
+  group: forgegate-ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-latest]
         python-version: ["3.12"]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
         with:
           python-version: ${{ matrix.python-version }}
-      - run: python -m pip install -e ".[dev]"
-      - run: python -m ruff check .
-      - run: python -m mypy src
-      - run: python -m pytest --cov=forgegate --cov-branch
+          cache: pip
+          cache-dependency-path: |
+            pyproject.toml
+            requirements/dev-constraints.txt
+      - run: >-
+          python -m pip install --disable-pip-version-check
+          -c requirements/dev-constraints.txt -e ".[dev]"
+      - run: python tools/verify.py
+      - run: python tools/release_smoke.py
