@@ -51,9 +51,12 @@ already recorded audit events.
 - committed OpenAPI drift check: PASS
 - source distribution, wheel, clean installation, and installed CLI smoke: PASS
 
-These are software results. Cross-platform GitHub Actions evidence is recorded
-after the final private push. No physical device, upstream runtime,
-authenticated producer, TLS, authorization, or public deployment was tested.
+Cross-platform GitHub Actions run
+[33411154421](https://github.com/Carlos-0798/forgegate/actions/runs/33411154421)
+completed `verify.py` and `release_smoke.py` successfully on Windows, Ubuntu,
+and macOS for implementation commit `6c99d9708b37f0ea4aef52a427e98fda63179d2b`.
+These are software results. No physical device, upstream runtime, authenticated
+producer, TLS, authorization, or public deployment was tested.
 
 ## Residual and human-intervention boundary
 
