@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="sample-api" tests="4" failures="1" errors="0" skipped="1" time="0.42">
+  <testcase classname="tests.test_health" name="test_health_ok" time="0.10" />
+  <testcase classname="tests.test_users" name="test_duplicate_user" time="0.20">
+    <failure message="expected conflict response">assert 500 == 409</failure>
+  </testcase>
+  <testcase classname="tests.test_optional" name="test_external_service" time="0.00">
+    <skipped message="service unavailable" />
+  </testcase>
+  <testcase classname="tests.test_version" name="test_version" time="0.12" />
+</testsuite>

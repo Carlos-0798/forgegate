@@ -6,7 +6,7 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 0 contract baseline — not an MVP.**
+**Phase 1 JUnit evidence slice — still pre-MVP.**
 
 Implemented and host-verified in this checkpoint:
 
@@ -17,12 +17,18 @@ Implemented and host-verified in this checkpoint:
 - CLI commands for environment diagnosis, configuration validation, and schema export;
 - generic sample configuration with no AFE or MSP430 dependency;
 - documented optional compatibility boundaries for Analog Validation Studio and
-  the MSP430 Equipment Health & Safety Controller.
+  the MSP430 Equipment Health & Safety Controller;
+- a root-confined artifact registry that captures exact bytes, size, media type,
+  and SHA-256 identity;
+- a bounded JUnit collector that emits normalized `test.summary` evidence plus
+  explicit warnings or rejections;
+- a `collect-junit` CLI preview with deterministic golden-output coverage.
 
 Not implemented yet:
 
-- artifact collectors, policy evaluation, persistence, attestations, REST API,
-  plugin execution, GitHub integration, or signed provenance;
+- policy evaluation, persistence, attestations, REST API, plugin execution,
+  GitHub integration, or signed provenance;
+- coverage, SARIF, benchmark, AFE, or MSP430 collectors;
 - any AFE/MSP430 runtime integration or hardware operation;
 - any production deployment or public release.
 
@@ -40,6 +46,20 @@ the package retains compatible version ranges for downstream users.
 
 See `docs/PROJECT_STATUS.md`, `docs/ROADMAP.md`, and
 `docs/VERIFICATION_MATRIX.md` before making capability claims.
+
+Preview the first collection path without making a release decision:
+
+```powershell
+.\.venv\Scripts\python.exe -m forgegate collect-junit artifacts/junit.xml `
+  --root examples/sample-python-api `
+  --commit aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa `
+  --collected-at 2026-08-30T20:30:00Z `
+  --source-tool pytest --source-version 8.4.2 `
+  --trust claimed_ci_metadata --verification-level ci_validated
+```
+
+The command's `COMPLETE` status means collection completed; the evidence's
+`passed` or `failed` status describes the tests. Neither is a release decision.
 
 ## Product boundary
 

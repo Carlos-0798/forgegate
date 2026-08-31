@@ -14,11 +14,11 @@
 
 ## Phase 1 — first vertical slice
 
-1. Add immutable artifact registry and byte-level SHA-256 verification.
-2. Implement one adversarially tested JUnit collector.
-3. Normalize a test summary into evidence without making a release decision.
-4. Add golden fixtures and audit warnings/rejections.
-5. Add coverage, SARIF, and benchmark collectors only after the JUnit slice
+- [x] Add immutable artifact registry and byte-level SHA-256 verification.
+- [x] Implement one adversarially tested JUnit collector.
+- [x] Normalize a test summary into evidence without making a release decision.
+- [x] Add golden fixtures and audit warnings/rejections.
+- [ ] Add coverage, SARIF, and benchmark collectors only after the JUnit slice
    closes its acceptance gate.
 
 ## Phase 2 — deterministic policy and CLI MVP

@@ -1,8 +1,8 @@
 # Project status
 
 - Date: 2026-08-30
-- Version: 0.1.0.dev0
-- Stage: Phase 0 contract baseline
+- Version: 0.1.0.dev1
+- Stage: Phase 1 JUnit evidence slice
 - Product maturity: pre-MVP
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
@@ -18,11 +18,17 @@
 - architecture, evidence, security, compatibility, roadmap, and verification
   documentation;
 - Windows/Linux CI definition.
+- immutable-in-session artifact registration with explicit root, size, regular
+  file, stable-read, and SHA-256 checks;
+- bounded JUnit XML collection into one normalized `test.summary` record;
+- explicit collection warnings and rejections with stable codes;
+- `collect-junit` CLI preview and committed golden output.
 
 ## Not implemented
 
-Collectors, evaluation, persistence, attestations, API, external plugins,
-GitHub integration, AFE collector, MSP430 collector, and hardware access.
+Policy evaluation, persistence, attestations, API, external plugins, GitHub
+integration, non-JUnit collectors, AFE collector, MSP430 collector, and hardware
+access.
 
 ## Accepted local checkpoint
 
@@ -30,7 +36,7 @@ GitHub integration, AFE collector, MSP430 collector, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification tools
-- pytest: 32 passed
+- pytest: 88 passed, 1 skipped (Windows symlink creation unavailable)
 - branch-aware coverage: 100%
 - committed JSON Schema drift check: PASS
 - three example project/policy documents: VALID
@@ -42,4 +48,5 @@ GitHub integration, AFE collector, MSP430 collector, and hardware access.
   repository exists
 
 See `reports/PHASE_0_ENVIRONMENT_AUDIT.md` for the prerequisite audit and exact
-human-intervention boundary.
+human-intervention boundary. See
+`reports/PHASE_1_JUNIT_SLICE_ACCEPTANCE_REPORT.md` for the current slice.

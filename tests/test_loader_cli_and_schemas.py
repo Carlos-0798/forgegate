@@ -75,7 +75,7 @@ def test_doctor_reports_phase() -> None:
     result = runner.invoke(app, ["doctor"])
     assert result.exit_code == 0
     report = json.loads(result.stdout)
-    assert report["phase"] == "phase0-contract-baseline"
+    assert report["phase"] == "phase1-junit-evidence-slice"
     assert report["supported_schemas"] == sorted(SCHEMAS)
 
 
@@ -92,6 +92,74 @@ def test_invalid_config_cli_uses_error_exit_code(tmp_path: Path) -> None:
     result = runner.invoke(app, ["validate-config", str(path)])
     assert result.exit_code == 3
     assert "unsupported schema_version" in result.output
+
+
+def test_collect_junit_cli_vertical_slice(repository_root: Path) -> None:
+    root = repository_root / "examples/sample-python-api"
+    result = runner.invoke(
+        app,
+        [
+            "collect-junit",
+            "artifacts/junit.xml",
+            "--root",
+            str(root),
+            "--commit",
+            "a" * 40,
+            "--collected-at",
+            "2026-08-30T20:30:00Z",
+            "--source-tool",
+            "pytest",
+            "--source-version",
+            "8.4.2",
+            "--trust",
+            "claimed_ci_metadata",
+            "--verification-level",
+            "ci_validated",
+        ],
+    )
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["status"] == "COMPLETE"
+    assert payload["evidence"][0]["kind"] == "test.summary"
+    assert payload["evidence"][0]["value"]["failures"] == 1
+
+
+def test_collect_junit_cli_rejects_invalid_timestamp(repository_root: Path) -> None:
+    root = repository_root / "examples/sample-python-api"
+    result = runner.invoke(
+        app,
+        [
+            "collect-junit",
+            "artifacts/junit.xml",
+            "--root",
+            str(root),
+            "--commit",
+            "a" * 40,
+            "--collected-at",
+            "not-a-timestamp",
+        ],
+    )
+    assert result.exit_code == 3
+    assert "Invalid isoformat string" in result.output
+
+
+def test_collect_junit_cli_returns_rejected_exit_code(tmp_path: Path) -> None:
+    (tmp_path / "junit.xml").write_text("<testsuite>", encoding="utf-8")
+    result = runner.invoke(
+        app,
+        [
+            "collect-junit",
+            "junit.xml",
+            "--root",
+            str(tmp_path),
+            "--commit",
+            "a" * 40,
+            "--collected-at",
+            "2026-08-30T20:30:00Z",
+        ],
+    )
+    assert result.exit_code == 3
+    assert json.loads(result.stdout)["status"] == "REJECTED"
 
 
 def test_schema_export_cli(tmp_path: Path) -> None:

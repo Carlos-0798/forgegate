@@ -1,17 +1,23 @@
 import json
 import platform
+from datetime import datetime
 from pathlib import Path
 from typing import Annotated
 
 import typer
+from pydantic import ValidationError
 
 from forgegate import __version__
+from forgegate.artifacts import ArtifactBoundaryError, ArtifactRegistry
+from forgegate.collectors import CollectionStatus, JUnitCollectionRequest, JUnitCollector
 from forgegate.config import ConfigLoadError, load_config
+from forgegate.domain.enums import EvidenceTrust, VerificationLevel
+from forgegate.domain.models import ExecutionContext
 from forgegate.schema_registry import SCHEMAS, schema_filename
 
 app = typer.Typer(
     name="forgegate",
-    help="ForgeGate Phase 0 contract and configuration tools.",
+    help="ForgeGate evidence collection and release-assurance tools.",
     no_args_is_help=True,
 )
 
@@ -24,7 +30,7 @@ def doctor() -> None:
         "python": platform.python_version(),
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
-        "phase": "phase0-contract-baseline",
+        "phase": "phase1-junit-evidence-slice",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 
@@ -53,3 +59,38 @@ def export_schemas(
         payload = json.dumps(model.model_json_schema(), indent=2, sort_keys=True) + "\n"
         target.write_text(payload, encoding="utf-8")
         typer.echo(str(target))
+
+
+@app.command("collect-junit")
+def collect_junit(
+    source_path: Annotated[str, typer.Argument(help="Artifact path relative to --root")],
+    commit: Annotated[str, typer.Option("--commit")],
+    collected_at: Annotated[str, typer.Option("--collected-at")],
+    root: Annotated[Path, typer.Option("--root", file_okay=False, resolve_path=True)] = Path("."),
+    source_tool: Annotated[str, typer.Option("--source-tool")] = "junit",
+    source_version: Annotated[str, typer.Option("--source-version")] = "unknown",
+    trust: Annotated[EvidenceTrust, typer.Option("--trust")] = EvidenceTrust.UNSIGNED_LOCAL,
+    verification_level: Annotated[
+        VerificationLevel, typer.Option("--verification-level")
+    ] = VerificationLevel.DECLARED,
+) -> None:
+    """Collect one JUnit artifact into normalized evidence without policy evaluation."""
+    try:
+        registry = ArtifactRegistry(root)
+        request = JUnitCollectionRequest(
+            source_path=source_path,
+            source_tool=source_tool,
+            source_version=source_version,
+            execution_context=ExecutionContext(commit_sha=commit),
+            collected_at=datetime.fromisoformat(collected_at.replace("Z", "+00:00")),
+            trust=trust,
+            verification_level=verification_level,
+        )
+    except (ArtifactBoundaryError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+
+    result = JUnitCollector(registry).collect(request)
+    typer.echo(result.model_dump_json(indent=2))
+    if result.status is CollectionStatus.REJECTED:
+        raise typer.Exit(code=3)

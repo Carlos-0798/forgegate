@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.1.0.dev1 — 2026-08-30
+
+- Added a root-confined, size-bounded artifact registry with exact-byte SHA-256
+  registration and change detection.
+- Added the versioned JUnit v1 collector and normalized `test.summary` evidence.
+- Added bounded XML parsing, forbidden declaration checks, declared-count audit
+  warnings, fail-closed rejections, and deterministic golden output.
+- Added the `collect-junit` preview command while keeping policy decisions out of
+  the collector.
+
 ## 0.1.0.dev0 — 2026-08-30
 
 - Established the domain-neutral Phase 0 repository scaffold.

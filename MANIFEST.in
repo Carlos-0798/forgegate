@@ -4,8 +4,9 @@ include AGENTS.md
 include CHANGELOG.md
 include SECURITY.md
 recursive-include docs *.md
-recursive-include examples *.yaml
+recursive-include examples *.yaml *.xml
 recursive-include requirements *.txt
+recursive-include reports *.md
 recursive-include schemas *.json *.md
-recursive-include tests *.py
+recursive-include tests *.py *.json
 recursive-include tools *.py *.ps1 *.sh

@@ -18,13 +18,17 @@
 | Source distribution contents | manifest assertion | PASS |
 | Clean release installation | temporary sdist/wheel/venv smoke | PASS |
 | Windows/Linux/macOS CI | GitHub Actions | DEFINED; NOT RUN, no remote |
-| JUnit collection | adversarial fixtures | NOT IMPLEMENTED |
+| Artifact root and byte identity | unit/adversarial tests | PASS — local host |
+| Stable artifact read/change rejection | simulated metadata cases | PASS — local host |
+| Actual Windows symlink escape | privileged symlink fixture | NOT RUN — host disallowed symlink creation |
+| JUnit collection | adversarial fixtures + golden output | PASS — local host |
+| Bounded/forbidden JUnit XML | unit/adversarial tests | PASS — local host |
+| Collection audit warnings/rejections | unit + CLI tests | PASS — local host |
 | Policy evaluation | unit/property/integration tests | NOT IMPLEMENTED |
 | AFE report compatibility | frozen public artifact contract | PLANNED |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
 
-Current local result: 32 passed with 100% branch-aware package coverage on
-Python 3.12.10/Windows. See `reports/PHASE_0_ENVIRONMENT_AUDIT.md`. The earlier
-`reports/PHASE_0_ACCEPTANCE_REPORT.md` remains the historical initial-baseline
-record.
+See `reports/PHASE_1_JUNIT_SLICE_ACCEPTANCE_REPORT.md` for the current exact
+test and coverage result. `reports/PHASE_0_ACCEPTANCE_REPORT.md` remains the
+historical initial-baseline record.
