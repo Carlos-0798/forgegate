@@ -4,9 +4,67 @@ ForgeGate is a local-first, evidence-aware release assurance platform under
 active development. It is intended to normalize engineering evidence, evaluate
 versioned release policies, and generate auditable release decisions.
 
+[![CI](https://github.com/Carlos-0798/forgegate/actions/workflows/ci.yml/badge.svg)](https://github.com/Carlos-0798/forgegate/actions/workflows/ci.yml)
+
 ## Current status
 
 **Phase 6 local REST command workflow implemented; not production-ready.**
+
+This private-development checkpoint provides a working Python 3.12 CLI and a
+loopback-only REST API. Its strongest ForgeGate-owned evidence is local host
+testing; it contains no physical-device verification or production-deployment
+claim.
+
+## Architecture and workflow
+
+```text
+JUnit / coverage / SARIF / benchmark / optional Studio artifact
+                              |
+                              v
+                  bounded evidence collectors
+                              |
+                              v
+             audited, commit-bound evidence assembly
+                              |
+                              v
+ release candidate -> persisted binding -> versioned policy evaluation
+                              |
+                              v
+        immutable transition history + unsigned local attestation
+```
+
+The core remains domain-neutral. Analog Validation Studio is consumed only
+through a frozen JSON contract, while MSP430 support remains a planned optional
+collector rather than a runtime or hardware dependency.
+
+## Verified results
+
+| Gate | Result | Evidence level |
+|---|---|---|
+| Python tests | 557 passed, 1 skipped because Windows symlink creation was unavailable | Local host test |
+| Branch-aware coverage | 100% across 4,106 statements and 1,120 branches | Local host test |
+| Static quality gates | Ruff, formatting, and strict mypy passed | Local host test |
+| Contracts | JSON Schema and OpenAPI drift checks passed | Local host test |
+| Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
+| GitHub Actions | Windows/Linux/macOS matrix defined | Not run before the initial private push |
+| Hardware/device behavior | Not exercised by ForgeGate | Out of scope |
+
+## Key design decisions
+
+- Evidence collection, policy evaluation, candidate transitions, and
+  attestation are separate operations so a successful collector cannot silently
+  become a release decision.
+- SHA-256 identities establish byte integrity and association, not producer or
+  operator authenticity.
+- Candidate writes use caller-owned idempotency keys and optimistic revisions;
+  persisted history is append-only.
+- The REST API shares its application service with the CLI, accepts no local
+  artifact-loader or output-directory path, and is restricted to loopback.
+- Upstream AFE or future MSP430 results retain their original evidence level;
+  ForgeGate does not relabel software or replay evidence as physical proof.
+
+<details>
+<summary>Detailed implemented capabilities</summary>
 
 Implemented and host-verified in this checkpoint:
 
@@ -105,18 +163,10 @@ Implemented and host-verified in this checkpoint:
 - complete HTTP create → collect-state → bind → ready → evaluate → attest
   integration with exact replay and conflict tests.
 
-Not implemented yet:
 
-- authenticated or non-loopback API deployment, HTTP artifact collection or
-  filesystem publication, project/audit APIs, plugin execution, GitHub
-  integration, database authorization, backup/repair, or signed
-  provenance/key management;
-- MSP430 compatibility collector;
-- authenticated provenance, signatures, or trusted producer/CI identity;
-- any AFE/MSP430 runtime integration or hardware operation;
-- any production deployment or public release.
+</details>
 
-## Local development
+## Quick start
 
 ```powershell
 .\tools\setup_environment.ps1
@@ -354,7 +404,30 @@ the verification level from `evidence_source`; there is intentionally no
 verification-level override. A valid upstream `PASS` remains observed evidence
 until a separate ForgeGate policy evaluates it.
 
-## Product boundary
+## Repository layout
+
+| Path | Purpose |
+|---|---|
+| `src/forgegate/` | Domain models, collectors, policy engine, persistence, CLI, and REST API |
+| `tests/` | Unit, adversarial, integration, Golden, and contract-drift tests |
+| `schemas/` | Committed JSON Schema and OpenAPI contracts |
+| `examples/` | Generic reproducible project, policies, evidence, and artifacts |
+| `docs/` | Architecture, security, compatibility, status, roadmap, and verification records |
+| `reports/` | Phase acceptance and environment-audit reports |
+| `tools/` | Environment setup, full verification, and clean-install release smoke |
+
+## Known limitations and product boundary
+
+Not implemented yet:
+
+- authenticated or non-loopback API deployment;
+- HTTP artifact collection or filesystem publication;
+- project/audit APIs, plugin execution, or product-level GitHub integration;
+- database authorization, backup/repair, signatures, or trusted producer/CI
+  identity;
+- MSP430 compatibility collection, AFE/MSP430 runtime integration, or any
+  hardware operation;
+- production deployment or public release.
 
 ForgeGate does not run builds or tests, control devices, or perform analog
 measurements. The Studio integration consumes only its frozen public JSON
@@ -366,6 +439,13 @@ transport over the same application service and SQLite adapter; it adds no
 user, producer, or machine identity. SHA-256 is not producer authentication.
 The MSP430 controller may later expose a separate versioned artifact for
 another optional collector.
+
+## Roadmap
+
+The next core slice is a durable project registry and read-only audit-event
+query contract. Authenticated identity must precede any non-loopback deployment.
+MSP430 compatibility remains gated on a separately frozen public result
+contract. See [docs/ROADMAP.md](docs/ROADMAP.md) for acceptance-level tasks.
 
 ## License status
 

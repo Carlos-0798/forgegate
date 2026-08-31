@@ -37,3 +37,20 @@ Before changing implementation or claims, read `README.md`,
   make resume/LinkedIn claims without explicit owner approval.
 - ForgeGate development does not authorize opening serial ports, flashing a
   board, sending device commands, changing FRAM, or controlling external loads.
+
+## Repository privacy and presentation
+
+- Keep the GitHub repository private unless the owner explicitly authorizes a
+  visibility change. A push does not authorize a public release, License,
+  GitHub Release, or LinkedIn publication.
+- Use the repository-configured `Carlos-0798` identity and the account-specific
+  GitHub noreply address for every author and committer record. Never record a
+  personal email address in commits, documentation, screenshots, logs, or
+  reports.
+- Do not commit machine-specific absolute paths, credentials, generated local
+  databases, build outputs, or private artifacts.
+- Prefer Conventional Commit prefixes such as `feat:`, `fix:`, `test:`, and
+  `docs:` for new commits.
+- Keep README, status, roadmap, verification evidence, and known limitations
+  aligned at meaningful checkpoints. CI claims must describe only the commands
+  that the workflow actually executed.
