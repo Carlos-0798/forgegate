@@ -6,7 +6,7 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 1 JUnit evidence slice — still pre-MVP.**
+**Phase 1 standard collectors — JUnit and coverage accepted; still pre-MVP.**
 
 Implemented and host-verified in this checkpoint:
 
@@ -22,13 +22,16 @@ Implemented and host-verified in this checkpoint:
   and SHA-256 identity;
 - a bounded JUnit collector that emits normalized `test.summary` evidence plus
   explicit warnings or rejections;
-- a `collect-junit` CLI preview with deterministic golden-output coverage.
+- bounded Cobertura/coverage.py XML and LCOV collectors that emit line and
+  branch coverage for repository, package, and module scopes;
+- `collect-junit`, `collect-coverage-xml`, and `collect-lcov` CLI previews with
+  deterministic golden-output coverage.
 
 Not implemented yet:
 
 - policy evaluation, persistence, attestations, REST API, plugin execution,
   GitHub integration, or signed provenance;
-- coverage, SARIF, benchmark, AFE, or MSP430 collectors;
+- SARIF, benchmark, AFE, or MSP430 collectors;
 - any AFE/MSP430 runtime integration or hardware operation;
 - any production deployment or public release.
 
@@ -60,6 +63,23 @@ Preview the first collection path without making a release decision:
 
 The command's `COMPLETE` status means collection completed; the evidence's
 `passed` or `failed` status describes the tests. Neither is a release decision.
+
+Coverage artifacts use the same provenance options:
+
+```powershell
+.\.venv\Scripts\python.exe -m forgegate collect-coverage-xml `
+  artifacts/coverage.xml --root examples/sample-python-api `
+  --commit bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb `
+  --collected-at 2026-08-30T22:00:00Z
+
+.\.venv\Scripts\python.exe -m forgegate collect-lcov `
+  artifacts/coverage.info --root examples/sample-python-api `
+  --commit bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb `
+  --collected-at 2026-08-30T22:00:00Z
+```
+
+Coverage percentages are facts. ForgeGate does not decide whether they meet a
+release threshold until the future policy engine evaluates them.
 
 ## Product boundary
 

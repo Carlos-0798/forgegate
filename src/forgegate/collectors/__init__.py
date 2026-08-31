@@ -4,13 +4,21 @@ from forgegate.collectors.base import (
     CollectionStatus,
     IssueSeverity,
 )
+from forgegate.collectors.coverage import (
+    CoverageCollectionRequest,
+    CoverageXmlCollector,
+    LcovCollector,
+)
 from forgegate.collectors.junit import JUnitCollectionRequest, JUnitCollector
 
 __all__ = [
     "CollectionIssue",
     "CollectionResult",
     "CollectionStatus",
+    "CoverageCollectionRequest",
+    "CoverageXmlCollector",
     "IssueSeverity",
     "JUnitCollectionRequest",
     "JUnitCollector",
+    "LcovCollector",
 ]

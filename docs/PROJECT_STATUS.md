@@ -1,8 +1,8 @@
 # Project status
 
 - Date: 2026-08-30
-- Version: 0.1.0.dev1
-- Stage: Phase 1 JUnit evidence slice
+- Version: 0.1.0.dev2
+- Stage: Phase 1 standard collectors — JUnit and coverage
 - Product maturity: pre-MVP
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
@@ -17,18 +17,23 @@
 - generic sample project and policies;
 - architecture, evidence, security, compatibility, roadmap, and verification
   documentation;
-- Windows/Linux CI definition.
+- Windows/Linux/macOS CI definition;
 - immutable-in-session artifact registration with explicit root, size, regular
   file, stable-read, and SHA-256 checks;
 - bounded JUnit XML collection into one normalized `test.summary` record;
 - explicit collection warnings and rejections with stable codes;
-- `collect-junit` CLI preview and committed golden output.
+- `collect-junit` CLI preview and committed golden output;
+- Cobertura/coverage.py XML collection with observed-count precedence and
+  repository/package/module scopes;
+- LCOV collection with strict record state, count validation, module scopes,
+  and explicit disclosure when only branch summaries are present;
+- `collect-coverage-xml` and `collect-lcov` CLI previews and golden outputs.
 
 ## Not implemented
 
-Policy evaluation, persistence, attestations, API, external plugins, GitHub
-integration, non-JUnit collectors, AFE collector, MSP430 collector, and hardware
-access.
+SARIF and benchmark collectors, policy evaluation, persistence, attestations,
+API, external plugins, GitHub integration, AFE collector, MSP430 collector, and
+hardware access.
 
 ## Accepted local checkpoint
 
@@ -36,7 +41,7 @@ access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification tools
-- pytest: 88 passed, 1 skipped (Windows symlink creation unavailable)
+- pytest: 164 passed, 1 skipped (Windows symlink creation unavailable)
 - branch-aware coverage: 100%
 - committed JSON Schema drift check: PASS
 - three example project/policy documents: VALID
@@ -49,4 +54,4 @@ access.
 
 See `reports/PHASE_0_ENVIRONMENT_AUDIT.md` for the prerequisite audit and exact
 human-intervention boundary. See
-`reports/PHASE_1_JUNIT_SLICE_ACCEPTANCE_REPORT.md` for the current slice.
+`reports/PHASE_1_COVERAGE_SLICE_ACCEPTANCE_REPORT.md` for the current slice.

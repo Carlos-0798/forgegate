@@ -38,6 +38,18 @@ The current slice has no authenticated producer and runs no plugin code.
 | Pathological XML shape | Element-count and tree-depth limits |
 | Ambiguous JUnit outcomes/counts | Fail-closed rejection or explicit mismatch warning |
 
+## Addressed in the Phase 1 coverage slice
+
+| Threat | Current control |
+|---|---|
+| Malformed or entity-bearing coverage XML | Strict parse plus DOCTYPE/ENTITY rejection |
+| Pathological coverage XML | 250,000-element and depth-64 default limits |
+| Misleading declared coverage rates | Derive from countable lines/branches and audit mismatches |
+| Ambiguous line/package/module ownership | Reject mixed scoped/unscoped line data |
+| Duplicate or inconsistent LCOV records | Strict source-record state and duplicate/count checks |
+| Oversized LCOV record set | 500,000-line default limit plus artifact byte limit |
+| Missing branch detail hidden as observation | Explicit summary-only warning or unavailable warning |
+
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;

@@ -1,0 +1,69 @@
+{
+  "collector_name": "coverage_xml",
+  "collector_version": "forgegate-coverage-xml.v1",
+  "status": "COMPLETE",
+  "artifact": {
+    "path_or_uri": "artifacts/coverage.xml",
+    "media_type": "application/cobertura+xml",
+    "sha256": "8fce854aaa236dd4def681a1df4f7f31c233785fa7bea57c9a0ebe8db34f0a84",
+    "size_bytes": 658
+  },
+  "evidence": [
+    {
+      "evidence_id": "coverage-line-8fce854aaa23-e2885f2bbe",
+      "kind": "coverage.line",
+      "scope": "repository",
+      "value": {"covered": 2, "total": 3, "percent": 66.666667},
+      "unit": "percent",
+      "status": "observed",
+      "tags": {"collector": "forgegate-coverage-xml.v1", "scope_type": "repository"}
+    },
+    {
+      "evidence_id": "coverage-branch-8fce854aaa23-e2885f2bbe",
+      "kind": "coverage.branch",
+      "scope": "repository",
+      "value": {"covered": 1, "total": 2, "percent": 50.0},
+      "unit": "percent",
+      "status": "observed",
+      "tags": {"collector": "forgegate-coverage-xml.v1", "scope_type": "repository"}
+    },
+    {
+      "evidence_id": "coverage-line-8fce854aaa23-1b4cd40476",
+      "kind": "coverage.line",
+      "scope": "package:sample.api",
+      "value": {"covered": 2, "total": 3, "percent": 66.666667},
+      "unit": "percent",
+      "status": "observed",
+      "tags": {"collector": "forgegate-coverage-xml.v1", "scope_type": "package"}
+    },
+    {
+      "evidence_id": "coverage-branch-8fce854aaa23-1b4cd40476",
+      "kind": "coverage.branch",
+      "scope": "package:sample.api",
+      "value": {"covered": 1, "total": 2, "percent": 50.0},
+      "unit": "percent",
+      "status": "observed",
+      "tags": {"collector": "forgegate-coverage-xml.v1", "scope_type": "package"}
+    },
+    {
+      "evidence_id": "coverage-line-8fce854aaa23-ea5f0224ef",
+      "kind": "coverage.line",
+      "scope": "module:src/sample/api.py",
+      "value": {"covered": 2, "total": 3, "percent": 66.666667},
+      "unit": "percent",
+      "status": "observed",
+      "tags": {"collector": "forgegate-coverage-xml.v1", "scope_type": "module"}
+    },
+    {
+      "evidence_id": "coverage-branch-8fce854aaa23-ea5f0224ef",
+      "kind": "coverage.branch",
+      "scope": "module:src/sample/api.py",
+      "value": {"covered": 1, "total": 2, "percent": 50.0},
+      "unit": "percent",
+      "status": "observed",
+      "tags": {"collector": "forgegate-coverage-xml.v1", "scope_type": "module"}
+    }
+  ],
+  "warnings": [],
+  "rejected_records": []
+}

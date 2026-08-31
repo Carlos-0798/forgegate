@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.1.0.dev2 — 2026-08-30
+
+- Added strict Cobertura/coverage.py XML and LCOV v1 collectors.
+- Normalized repository, package, and module line/branch coverage into
+  provenance-bound evidence without applying release thresholds.
+- Added bounded parsing, declared-versus-observed audit warnings, LCOV state and
+  summary validation, summary-only branch disclosure, golden outputs, and CLI
+  collection commands.
+- Extended clean-install release smoke coverage to exercise both installed
+  coverage collectors.
+
 ## 0.1.0.dev1 — 2026-08-30
 
 - Added a root-confined, size-bounded artifact registry with exact-byte SHA-256

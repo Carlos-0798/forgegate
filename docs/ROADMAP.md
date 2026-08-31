@@ -18,8 +18,10 @@
 - [x] Implement one adversarially tested JUnit collector.
 - [x] Normalize a test summary into evidence without making a release decision.
 - [x] Add golden fixtures and audit warnings/rejections.
-- [ ] Add coverage, SARIF, and benchmark collectors only after the JUnit slice
-   closes its acceptance gate.
+- [x] Add Cobertura/coverage.py XML with repository/package/module scopes.
+- [x] Add LCOV with strict record validation and module scopes.
+- [ ] Add SARIF 2.1.0 collector.
+- [ ] Add generic benchmark JSON collector.
 
 ## Phase 2 — deterministic policy and CLI MVP
 

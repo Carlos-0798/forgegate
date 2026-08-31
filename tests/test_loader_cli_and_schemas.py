@@ -75,7 +75,7 @@ def test_doctor_reports_phase() -> None:
     result = runner.invoke(app, ["doctor"])
     assert result.exit_code == 0
     report = json.loads(result.stdout)
-    assert report["phase"] == "phase1-junit-evidence-slice"
+    assert report["phase"] == "phase1-standard-collectors"
     assert report["supported_schemas"] == sorted(SCHEMAS)
 
 
@@ -160,6 +160,87 @@ def test_collect_junit_cli_returns_rejected_exit_code(tmp_path: Path) -> None:
     )
     assert result.exit_code == 3
     assert json.loads(result.stdout)["status"] == "REJECTED"
+
+
+@pytest.mark.parametrize(
+    ("command", "artifact", "tool"),
+    [
+        ("collect-coverage-xml", "artifacts/coverage.xml", "coverage.py"),
+        ("collect-lcov", "artifacts/coverage.info", "lcov"),
+    ],
+)
+def test_collect_coverage_cli_vertical_slices(
+    repository_root: Path,
+    command: str,
+    artifact: str,
+    tool: str,
+) -> None:
+    root = repository_root / "examples/sample-python-api"
+    result = runner.invoke(
+        app,
+        [
+            command,
+            artifact,
+            "--root",
+            str(root),
+            "--commit",
+            "b" * 40,
+            "--collected-at",
+            "2026-08-30T22:00:00Z",
+            "--source-tool",
+            tool,
+            "--source-version",
+            "7.10.0",
+            "--trust",
+            "claimed_ci_metadata",
+            "--verification-level",
+            "ci_validated",
+        ],
+    )
+    assert result.exit_code == 0
+    payload = json.loads(result.stdout)
+    assert payload["status"] == "COMPLETE"
+    assert [record["kind"] for record in payload["evidence"][:2]] == [
+        "coverage.line",
+        "coverage.branch",
+    ]
+
+
+def test_collect_coverage_cli_rejects_invalid_inputs(repository_root: Path, tmp_path: Path) -> None:
+    root = repository_root / "examples/sample-python-api"
+    invalid_timestamp = runner.invoke(
+        app,
+        [
+            "collect-coverage-xml",
+            "artifacts/coverage.xml",
+            "--root",
+            str(root),
+            "--commit",
+            "b" * 40,
+            "--collected-at",
+            "not-a-timestamp",
+        ],
+    )
+    assert invalid_timestamp.exit_code == 3
+    assert "Invalid isoformat string" in invalid_timestamp.output
+
+    invalid_lcov = tmp_path / "invalid.info"
+    invalid_lcov.write_text("SF:a.py\n", encoding="utf-8")
+    rejected = runner.invoke(
+        app,
+        [
+            "collect-lcov",
+            "invalid.info",
+            "--root",
+            str(tmp_path),
+            "--commit",
+            "b" * 40,
+            "--collected-at",
+            "2026-08-30T22:00:00Z",
+        ],
+    )
+    assert rejected.exit_code == 3
+    assert json.loads(rejected.stdout)["status"] == "REJECTED"
 
 
 def test_schema_export_cli(tmp_path: Path) -> None:

@@ -1,0 +1,51 @@
+{
+  "collector_name": "lcov",
+  "collector_version": "forgegate-lcov.v1",
+  "status": "COMPLETE",
+  "artifact": {
+    "path_or_uri": "artifacts/coverage.info",
+    "media_type": "text/x-lcov",
+    "sha256": "cfb053d4ef6fced25319c84ee1dda6989984bbc43fcb1ffefdec3161381569b6",
+    "size_bytes": 125
+  },
+  "evidence": [
+    {
+      "evidence_id": "coverage-line-cfb053d4ef6f-e2885f2bbe",
+      "kind": "coverage.line",
+      "scope": "repository",
+      "value": {"covered": 2, "total": 3, "percent": 66.666667},
+      "unit": "percent",
+      "status": "observed",
+      "tags": {"collector": "forgegate-lcov.v1", "scope_type": "repository"}
+    },
+    {
+      "evidence_id": "coverage-branch-cfb053d4ef6f-e2885f2bbe",
+      "kind": "coverage.branch",
+      "scope": "repository",
+      "value": {"covered": 1, "total": 2, "percent": 50.0},
+      "unit": "percent",
+      "status": "observed",
+      "tags": {"collector": "forgegate-lcov.v1", "scope_type": "repository"}
+    },
+    {
+      "evidence_id": "coverage-line-cfb053d4ef6f-ea5f0224ef",
+      "kind": "coverage.line",
+      "scope": "module:src/sample/api.py",
+      "value": {"covered": 2, "total": 3, "percent": 66.666667},
+      "unit": "percent",
+      "status": "observed",
+      "tags": {"collector": "forgegate-lcov.v1", "scope_type": "module"}
+    },
+    {
+      "evidence_id": "coverage-branch-cfb053d4ef6f-ea5f0224ef",
+      "kind": "coverage.branch",
+      "scope": "module:src/sample/api.py",
+      "value": {"covered": 1, "total": 2, "percent": 50.0},
+      "unit": "percent",
+      "status": "observed",
+      "tags": {"collector": "forgegate-lcov.v1", "scope_type": "module"}
+    }
+  ],
+  "warnings": [],
+  "rejected_records": []
+}
