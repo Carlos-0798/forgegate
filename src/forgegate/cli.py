@@ -15,6 +15,8 @@ from forgegate.application import (
     CandidateAttestCommand,
     CandidateBindEvidenceCommand,
     CandidateCreateCommand,
+    CandidateQuery,
+    ProjectQuery,
     ProjectRegisterCommand,
 )
 from forgegate.artifacts import ArtifactBoundaryError, ArtifactError, ArtifactRegistry
@@ -78,7 +80,7 @@ def doctor() -> None:
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
         "supported_artifact_schemas": sorted(ARTIFACT_SCHEMAS),
-        "phase": "phase7-project-registry-audit-query",
+        "phase": "phase8-project-authority-discovery",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 
@@ -201,6 +203,23 @@ def project_show(
     typer.echo(project.model_dump_json(indent=2))
 
 
+@project_app.command("list")
+def project_list(
+    database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    after_project_id: Annotated[str | None, typer.Option("--after-project")] = None,
+    limit: Annotated[int, typer.Option("--limit", min=1, max=200)] = 100,
+) -> None:
+    """List a bounded lexicographic page of registered projects."""
+    try:
+        page = CandidateApplication.for_database(database).list_projects(
+            ProjectQuery(after_project_id=after_project_id, limit=limit)
+        )
+    except (CandidateStoreError, ValidationError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(page.model_dump_json(indent=2))
+
+
 @audit_app.command("events")
 def audit_events(
     database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
@@ -236,7 +255,7 @@ def candidate_create(
     database: Annotated[Path | None, typer.Option("--database", dir_okay=False)] = None,
     idempotency_key: Annotated[str | None, typer.Option("--idempotency-key")] = None,
 ) -> None:
-    """Create a deterministic DRAFT preview or persist it in an initialized store."""
+    """Preview a DRAFT or persist it under registered project/track authority."""
     try:
         command = CandidateCreateCommand(
             project_id=project_id,
@@ -262,11 +281,33 @@ def candidate_create(
     typer.echo(candidate.model_dump_json(indent=2))
 
 
+@candidate_app.command("list")
+def candidate_list(
+    database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    project_id: Annotated[str, typer.Option("--project")],
+    after_candidate_id: Annotated[str | None, typer.Option("--after-candidate")] = None,
+    limit: Annotated[int, typer.Option("--limit", min=1, max=200)] = 100,
+) -> None:
+    """List a bounded page of current candidates for one registered project."""
+    try:
+        page = CandidateApplication.for_database(database).list_candidates(
+            CandidateQuery(
+                project_id=project_id,
+                after_candidate_id=after_candidate_id,
+                limit=limit,
+            )
+        )
+    except (CandidateStoreError, ValidationError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(page.model_dump_json(indent=2))
+
+
 @candidate_app.command("init-store")
 def candidate_init_store(
     database: Annotated[Path, typer.Argument(dir_okay=False)],
 ) -> None:
-    """Initialize or validate a local SQLite WAL candidate store at schema v4."""
+    """Initialize or validate a local SQLite WAL candidate store at schema v5."""
     try:
         repository = SQLiteCandidateRepository(database)
         repository.initialize()
@@ -280,7 +321,7 @@ def candidate_init_store(
 def candidate_migrate_store(
     database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
 ) -> None:
-    """Explicitly migrate a validated candidate store from schema v1/v2/v3 to v4."""
+    """Explicitly migrate a validated candidate store from schema v1/v2/v3/v4 to v5."""
     try:
         repository = SQLiteCandidateRepository(database)
         repository.migrate()

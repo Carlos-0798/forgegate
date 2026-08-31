@@ -8,11 +8,11 @@ transition-result document schemas and does not store upstream AFE/MSP430
 internals.
 
 `SQLiteCandidateRepository` owns one local database file. Initialization sets a
-ForgeGate application ID, schema version 4, WAL journaling, FULL synchronous
+ForgeGate application ID, schema version 5, WAL journaling, FULL synchronous
 durability, foreign keys, and a bounded busy timeout. A future schema version is
-rejected. An existing schema-v1, schema-v2, or schema-v3 store is never changed by
-`init-store`; the owner must run the explicit, validated `migrate-store`
-operation.
+rejected. An existing schema-v1, schema-v2, schema-v3, or schema-v4 store is
+never changed by `init-store`; the owner must run the explicit, validated
+`migrate-store` operation.
 
 ## Tables and ordering
 
@@ -37,6 +37,9 @@ operation.
   state changes;
 - `forgegate_metadata` identifies the exact storage schema.
 
+Schema v5 also indexes `(project_id, candidate_id)` so project-scoped candidate
+discovery has a bounded, deterministic access path.
+
 Database triggers reject candidate deletion, identity rewriting, non-unit
 current-revision updates, and every update/delete of snapshot, transition, and
 idempotency, evidence-binding, evaluation, and attestation rows. These controls
@@ -47,6 +50,13 @@ the database file or rewrite its schema.
 ## Transaction contract
 
 Candidate creation, evidence binding, and advancement use `BEGIN IMMEDIATE`.
+Product-surface creation first resolves the immutable project row and requires
+exactly one configured release-track key to normalize to the candidate's
+canonical hyphen track. A missing project, missing track, ambiguous normalized
+keys, or noncanonical new identity fails before any candidate or audit row is
+written. The low-level legacy creation method remains only for compatibility
+tests and earlier persisted stores.
+
 Advancement performs the following operations in one transaction:
 
 1. verify the idempotency key or recognize an exact replay;
@@ -85,16 +95,17 @@ assembly identities and compare the embedded candidate with revision one.
 Corruption fails closed with a stable store error; this checkpoint does not
 repair, salvage, back up, encrypt, or replicate a damaged database.
 
-## Explicit v1/v2/v3 migration
+## Explicit v1/v2/v3/v4 migration
 
 `candidate migrate-store DATABASE` accepts only a fully valid schema-v1,
-schema-v2, or schema-v3 store. Missing historical layers are added before the
-v4 project/audit objects. Existing immutable candidate documents are then
-projected into deterministic audit-event order. No project profile, evidence,
-rejected request, or actor identity is fabricated. The operation updates both
-metadata values and `PRAGMA user_version` in one transaction, then revalidates
-the result. Calling it on v4 is an idempotent validation. Unknown, foreign, or
-corrupt stores fail closed.
+schema-v2, schema-v3, or schema-v4 store. Missing historical layers are added
+before the v4 project/audit objects. Existing immutable candidate documents are
+then projected into deterministic audit-event order. The v4-to-v5 step adds
+only the project/candidate discovery index and never replays those audit events.
+No project profile, evidence, rejected request, or actor identity is fabricated.
+The operation updates both metadata values and `PRAGMA user_version` in one
+transaction, then revalidates the result. Calling it on v5 is an idempotent
+validation. Unknown, foreign, or corrupt stores fail closed.
 
 Existing candidates receive an immutable `evidence_binding_required = 0`
 marker. This preserves the historical state without fabricating an assembly
@@ -110,8 +121,9 @@ stored. Attestation is refused until this backfill is complete.
 ## CLI boundary
 
 `candidate init-store`, `migrate-store`, persisted `candidate create
---database`, `bind-evidence`, `show-evidence`, `advance`, `show`, `history`,
+--database`, `list`, `bind-evidence`, `show-evidence`, `advance`, `show`, `history`,
 `import-evaluation`, `attest`, and `show-attestation` expose this repository.
+`project list` provides the bounded registered-project discovery path.
 The original `candidate create`
 without `--database` and `candidate transition` remain deterministic, stateless
 preview paths.

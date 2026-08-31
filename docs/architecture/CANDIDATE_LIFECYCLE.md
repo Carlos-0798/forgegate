@@ -19,7 +19,8 @@ Every transition increments the exact lifecycle revision by one. Equal event
 timestamps are permitted because revision supplies ordering; a timestamp older
 than the candidate's current `updated_at` is rejected.
 
-`create_candidate` normalizes identity fields and the explicit creation time,
+`create_candidate` normalizes identity fields, canonicalizes release-track
+underscores to hyphens, and normalizes the explicit creation time,
 then derives a stable `cand-` identifier from canonical JSON. The resulting
 candidate is frozen by the strict Pydantic model. Transition services construct
 a new candidate instead of mutating the previous instance.
@@ -56,5 +57,8 @@ candidate and transition agree.
 Without `--database`, they do not write files or establish an authoritative
 revision. The accepted SQLite checkpoint adds `candidate init-store`, persisted
 `candidate create --database`, atomic `candidate advance`, `candidate show`,
-and `candidate history`. See `SQLITE_CANDIDATE_STORE.md` for transaction,
-idempotency, recovery, and corruption-detection guarantees.
+`candidate history`, and project-scoped `candidate list`. Persisted
+product-surface creation is authorized by the registered project profile and
+one normalized configured track; direct reads of legacy candidates remain
+available. See `SQLITE_CANDIDATE_STORE.md` for transaction, idempotency,
+recovery, and corruption-detection guarantees.

@@ -32,6 +32,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/LOCAL_REST_API.md",
     "docs/architecture/LOCAL_REST_COMMAND_WORKFLOW.md",
     "docs/architecture/PROJECT_REGISTRY_AND_AUDIT_QUERY.md",
+    "docs/architecture/PROJECT_AUTHORITY_AND_DISCOVERY.md",
     "examples/sample-python-api/artifacts/junit.xml",
     "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
@@ -58,6 +59,7 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_5_LOCAL_REST_API_BASELINE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_6_LOCAL_REST_COMMAND_WORKFLOW_ACCEPTANCE_REPORT.md",
     "reports/PHASE_7_PROJECT_REGISTRY_AUDIT_QUERY_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_8_PROJECT_AUTHORITY_DISCOVERY_ACCEPTANCE_REPORT.md",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
@@ -68,6 +70,8 @@ REQUIRED_SDIST_PATHS = (
     "schemas/forgegate.evidence-bundle-assembly.v1.schema.json",
     "schemas/forgegate.candidate-evidence-binding.v1.schema.json",
     "schemas/forgegate.registered-project.v1.schema.json",
+    "schemas/forgegate.registered-project-page.v1.schema.json",
+    "schemas/forgegate.release-candidate-page.v1.schema.json",
     "schemas/forgegate.audit-event.v1.schema.json",
     "schemas/forgegate.audit-event-page.v1.schema.json",
     "schemas/forgegate.openapi.v1.json",
@@ -99,6 +103,7 @@ REQUIRED_SDIST_PATHS = (
     "tests/test_application.py",
     "tests/test_api.py",
     "tests/test_project_registry_audit.py",
+    "tests/test_project_authority_discovery.py",
 )
 
 
@@ -178,6 +183,15 @@ def main() -> int:
                 "install",
                 "--disable-pip-version-check",
                 str(wheel),
+            ],
+            cwd=root,
+        )
+        run(
+            [
+                str(python),
+                "-c",
+                "from importlib.metadata import version; import forgegate; "
+                "assert version('forgegate') == forgegate.__version__",
             ],
             cwd=root,
         )
@@ -278,7 +292,9 @@ def main() -> int:
         openapi = json.loads(exported_openapi.read_text(encoding="utf-8"))
         expected_operations = {
             ("/v1/projects", "post"): "registerProject",
+            ("/v1/projects", "get"): "listProjects",
             ("/v1/projects/{project_id}", "get"): "getProject",
+            ("/v1/projects/{project_id}/candidates", "get"): "listProjectCandidates",
             ("/v1/audit-events", "get"): "queryAuditEvents",
             ("/v1/candidates/{candidate_id}/transitions", "post"): "advanceCandidate",
             ("/v1/candidates/{candidate_id}/evidence", "post"): "bindCandidateEvidence",
@@ -384,6 +400,26 @@ def main() -> int:
             ],
             cwd=root,
         )
+        unauthorized_create = [
+            str(python),
+            "-m",
+            "forgegate",
+            "candidate",
+            "create",
+            "--project",
+            "sample-api",
+            "--version",
+            "1.2.0",
+            "--commit",
+            "a" * 40,
+            "--created-at",
+            "2026-08-30T12:00:00Z",
+            "--database",
+            str(candidate_store),
+            "--idempotency-key",
+            "create:release-smoke-unregistered",
+        ]
+        run(unauthorized_create, cwd=root, expected_returncode=3)
         project_register = [
             str(python),
             "-m",
@@ -399,6 +435,19 @@ def main() -> int:
         ]
         run(project_register, cwd=root)
         run(project_register, cwd=root)
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "project",
+                "list",
+                str(candidate_store),
+                "--limit",
+                "1",
+            ],
+            cwd=root,
+        )
         run(
             [
                 str(python),
@@ -425,6 +474,8 @@ def main() -> int:
             "a" * 40,
             "--created-at",
             "2026-08-30T12:00:00Z",
+            "--track",
+            "pull_request",
             "--database",
             str(candidate_store),
             "--idempotency-key",
@@ -432,6 +483,21 @@ def main() -> int:
         ]
         run(persisted_create, cwd=root)
         run(persisted_create, cwd=root)
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "candidate",
+                "list",
+                str(candidate_store),
+                "--project",
+                "sample-api",
+                "--limit",
+                "1",
+            ],
+            cwd=root,
+        )
         run(
             [
                 str(python),

@@ -24,15 +24,21 @@ from forgegate.candidates.evidence_binding import (
 )
 from forgegate.candidates.lifecycle import CandidateLifecycleError, transition_candidate
 from forgegate.candidates.models import (
+    CANDIDATE_ID_PATTERN,
     CandidateTransition,
     CandidateTransitionResult,
     ReleaseCandidate,
+    ReleaseCandidatePage,
 )
 from forgegate.canonical import canonical_json, sha256_fingerprint
 from forgegate.domain.enums import CandidateStatus
-from forgegate.domain.models import ProjectConfig
+from forgegate.domain.models import SLUG_PATTERN, ProjectConfig, canonical_release_track_name
 from forgegate.policy.models import PolicyEvaluation
-from forgegate.projects import RegisteredProject, create_registered_project
+from forgegate.projects import (
+    RegisteredProject,
+    RegisteredProjectPage,
+    create_registered_project,
+)
 
 STORE_APPLICATION_ID = 0x46474154  # ASCII "FGAT"
 LEGACY_STORE_SCHEMA_VERSION = 1
@@ -41,8 +47,10 @@ PREVIOUS_STORE_SCHEMA_VERSION = 2
 PREVIOUS_STORE_SCHEMA_NAME = "forgegate.candidate-store.v2"
 BINDING_STORE_SCHEMA_VERSION = 3
 BINDING_STORE_SCHEMA_NAME = "forgegate.candidate-store.v3"
-STORE_SCHEMA_VERSION = 4
-STORE_SCHEMA_NAME = "forgegate.candidate-store.v4"
+AUDIT_STORE_SCHEMA_VERSION = 4
+AUDIT_STORE_SCHEMA_NAME = "forgegate.candidate-store.v4"
+STORE_SCHEMA_VERSION = 5
+STORE_SCHEMA_NAME = "forgegate.candidate-store.v5"
 IDEMPOTENCY_KEY_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
 
 _SCHEMA_V1_STATEMENTS = (
@@ -409,6 +417,10 @@ _SCHEMA_V4_STATEMENTS = (
     """,
 )
 
+_SCHEMA_V5_STATEMENTS = (
+    "CREATE INDEX candidates_project_candidate ON candidates(project_id, candidate_id)",
+)
+
 _REQUIRED_OBJECTS_V1 = frozenset(
     {
         ("table", "forgegate_metadata"),
@@ -461,6 +473,8 @@ _REQUIRED_OBJECTS_V4 = _REQUIRED_OBJECTS_V3 | frozenset(
     }
 )
 
+_REQUIRED_OBJECTS_V5 = _REQUIRED_OBJECTS_V4 | frozenset({("index", "candidates_project_candidate")})
+
 
 class CandidateStoreError(RuntimeError):
     """Stable failure returned by the local candidate persistence boundary."""
@@ -495,7 +509,7 @@ class SQLiteCandidateRepository:
         self._failure_injector = _failure_injector
 
     def initialize(self) -> None:
-        """Create schema v4 or validate an existing current ForgeGate store."""
+        """Create schema v5 or validate an existing current ForgeGate store."""
         connection = self._open(require_exists=False)
         try:
             journal_mode = str(connection.execute("PRAGMA journal_mode = WAL").fetchone()[0])
@@ -522,6 +536,7 @@ class SQLiteCandidateRepository:
                     *_SCHEMA_V2_STATEMENTS,
                     *_SCHEMA_V3_STATEMENTS,
                     *_SCHEMA_V4_STATEMENTS,
+                    *_SCHEMA_V5_STATEMENTS,
                 ):
                     connection.execute(statement)
                 connection.executemany(
@@ -541,10 +556,11 @@ class SQLiteCandidateRepository:
                 LEGACY_STORE_SCHEMA_VERSION,
                 PREVIOUS_STORE_SCHEMA_VERSION,
                 BINDING_STORE_SCHEMA_VERSION,
+                AUDIT_STORE_SCHEMA_VERSION,
             }:
                 raise CandidateStoreError(
                     "STORE_MIGRATION_REQUIRED",
-                    f"candidate database schema v{user_version} requires explicit migration to v4",
+                    f"candidate database schema v{user_version} requires explicit migration to v5",
                 )
             self._validate_store(connection)
         except sqlite3.Error as exc:
@@ -554,7 +570,7 @@ class SQLiteCandidateRepository:
             connection.close()
 
     def migrate(self) -> None:
-        """Explicitly migrate a validated schema-v1/v2/v3 store to schema v4."""
+        """Explicitly migrate a validated schema-v1/v2/v3/v4 store to schema v5."""
         connection = self._open(require_exists=True)
         try:
             user_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
@@ -565,10 +581,11 @@ class SQLiteCandidateRepository:
                 LEGACY_STORE_SCHEMA_VERSION,
                 PREVIOUS_STORE_SCHEMA_VERSION,
                 BINDING_STORE_SCHEMA_VERSION,
+                AUDIT_STORE_SCHEMA_VERSION,
             }:
                 raise CandidateStoreError(
                     "STORE_SCHEMA_UNSUPPORTED",
-                    f"database schema version {user_version} cannot migrate to v4",
+                    f"database schema version {user_version} cannot migrate to v5",
                 )
             self._validate_store_version(connection, user_version)
             connection.execute("BEGIN IMMEDIATE")
@@ -577,16 +594,23 @@ class SQLiteCandidateRepository:
                     *_SCHEMA_V2_STATEMENTS,
                     *_SCHEMA_V3_STATEMENTS,
                     *_SCHEMA_V4_STATEMENTS,
+                    *_SCHEMA_V5_STATEMENTS,
                 ),
                 PREVIOUS_STORE_SCHEMA_VERSION: (
                     *_SCHEMA_V3_STATEMENTS,
                     *_SCHEMA_V4_STATEMENTS,
+                    *_SCHEMA_V5_STATEMENTS,
                 ),
-                BINDING_STORE_SCHEMA_VERSION: _SCHEMA_V4_STATEMENTS,
+                BINDING_STORE_SCHEMA_VERSION: (
+                    *_SCHEMA_V4_STATEMENTS,
+                    *_SCHEMA_V5_STATEMENTS,
+                ),
+                AUDIT_STORE_SCHEMA_VERSION: _SCHEMA_V5_STATEMENTS,
             }[user_version]
             for statement in migration_statements:
                 connection.execute(statement)
-            self._backfill_audit_events(connection)
+            if user_version < AUDIT_STORE_SCHEMA_VERSION:
+                self._backfill_audit_events(connection)
             connection.execute(
                 "UPDATE forgegate_metadata SET value = ? WHERE key = 'schema_name'",
                 (STORE_SCHEMA_NAME,),
@@ -708,6 +732,40 @@ class SQLiteCandidateRepository:
         with self._transaction(write=False) as connection:
             return self._load_project(connection, project_id)
 
+    def projects(
+        self,
+        *,
+        after_project_id: str | None = None,
+        limit: int = 100,
+    ) -> RegisteredProjectPage:
+        """Return a bounded lexicographic page of immutable project registrations."""
+        if after_project_id is not None and re.fullmatch(SLUG_PATTERN, after_project_id) is None:
+            raise CandidateStoreError(
+                "STORE_PROJECT_CURSOR_INVALID",
+                "after_project_id must be a valid project ID",
+            )
+        if not 1 <= limit <= 200:
+            raise CandidateStoreError(
+                "STORE_PROJECT_LIMIT_INVALID", "project limit must be between 1 and 200"
+            )
+        cursor = after_project_id or ""
+        with self._transaction(write=False) as connection:
+            rows = list(
+                connection.execute(
+                    "SELECT project_id FROM projects WHERE project_id > ? "
+                    "ORDER BY project_id LIMIT ?",
+                    (cursor, limit + 1),
+                )
+            )
+            projects = tuple(
+                self._load_project(connection, str(row["project_id"])) for row in rows[:limit]
+            )
+        return RegisteredProjectPage(
+            projects=projects,
+            next_after_project_id=projects[-1].project_id if projects else None,
+            has_more=len(rows) > limit,
+        )
+
     def audit_events(
         self,
         *,
@@ -754,7 +812,33 @@ class SQLiteCandidateRepository:
         *,
         idempotency_key: str,
     ) -> ReleaseCandidate:
-        """Persist a DRAFT candidate exactly once and return the durable snapshot."""
+        """Persist a low-level candidate without retroactive project authority."""
+        return self._create(
+            candidate,
+            idempotency_key=idempotency_key,
+            require_registered_project=False,
+        )
+
+    def create_for_registered_project(
+        self,
+        candidate: ReleaseCandidate,
+        *,
+        idempotency_key: str,
+    ) -> ReleaseCandidate:
+        """Persist a new product-surface candidate under registered project authority."""
+        return self._create(
+            candidate,
+            idempotency_key=idempotency_key,
+            require_registered_project=True,
+        )
+
+    def _create(
+        self,
+        candidate: ReleaseCandidate,
+        *,
+        idempotency_key: str,
+        require_registered_project: bool,
+    ) -> ReleaseCandidate:
         key = _validated_idempotency_key(idempotency_key)
         if candidate.status is not CandidateStatus.DRAFT or candidate.revision != 0:
             raise CandidateStoreError(
@@ -766,6 +850,8 @@ class SQLiteCandidateRepository:
             {"operation": "candidate.create", "candidate": candidate.model_dump(mode="json")}
         )
         with self._transaction(write=True) as connection:
+            if require_registered_project:
+                self._require_project_authority(connection, candidate)
             replay = self._candidate_replay(
                 connection,
                 key=key,
@@ -843,6 +929,50 @@ class SQLiteCandidateRepository:
         """Load and validate the current candidate plus its complete audit chain."""
         with self._transaction(write=False) as connection:
             return self._load_history(connection, candidate_id).candidate
+
+    def candidates(
+        self,
+        project_id: str,
+        *,
+        after_candidate_id: str | None = None,
+        limit: int = 100,
+    ) -> ReleaseCandidatePage:
+        """Return a bounded project-scoped page of current candidate snapshots."""
+        if re.fullmatch(SLUG_PATTERN, project_id) is None:
+            raise CandidateStoreError("STORE_PROJECT_ID_INVALID", "project_id is invalid")
+        if (
+            after_candidate_id is not None
+            and re.fullmatch(CANDIDATE_ID_PATTERN, after_candidate_id) is None
+        ):
+            raise CandidateStoreError(
+                "STORE_CANDIDATE_CURSOR_INVALID",
+                "after_candidate_id must be a valid candidate ID",
+            )
+        if not 1 <= limit <= 200:
+            raise CandidateStoreError(
+                "STORE_CANDIDATE_LIMIT_INVALID", "candidate limit must be between 1 and 200"
+            )
+        cursor = after_candidate_id or ""
+        with self._transaction(write=False) as connection:
+            self._load_project(connection, project_id)
+            rows = list(
+                connection.execute(
+                    "SELECT candidate_id FROM candidates "
+                    "WHERE project_id = ? AND candidate_id > ? "
+                    "ORDER BY candidate_id LIMIT ?",
+                    (project_id, cursor, limit + 1),
+                )
+            )
+            candidates = tuple(
+                self._load_history(connection, str(row["candidate_id"])).candidate
+                for row in rows[:limit]
+            )
+        return ReleaseCandidatePage(
+            project_id=project_id,
+            candidates=candidates,
+            next_after_candidate_id=(candidates[-1].candidate_id if candidates else None),
+            has_more=len(rows) > limit,
+        )
 
     def history(self, candidate_id: str) -> CandidateHistory:
         """Load the current candidate and all ordered append-only transitions."""
@@ -1273,14 +1403,15 @@ class SQLiteCandidateRepository:
         objects = {
             (str(row[0]), str(row[1]))
             for row in connection.execute(
-                "SELECT type, name FROM sqlite_master WHERE type IN ('table', 'trigger')"
+                "SELECT type, name FROM sqlite_master WHERE type IN ('table', 'trigger', 'index')"
             )
         }
         required_objects = {
             LEGACY_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V1,
             PREVIOUS_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V2,
             BINDING_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V3,
-            STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V4,
+            AUDIT_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V4,
+            STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V5,
         }.get(expected_version)
         if required_objects is None:
             raise CandidateStoreError(
@@ -1299,6 +1430,7 @@ class SQLiteCandidateRepository:
                     LEGACY_STORE_SCHEMA_VERSION: LEGACY_STORE_SCHEMA_NAME,
                     PREVIOUS_STORE_SCHEMA_VERSION: PREVIOUS_STORE_SCHEMA_NAME,
                     BINDING_STORE_SCHEMA_VERSION: BINDING_STORE_SCHEMA_NAME,
+                    AUDIT_STORE_SCHEMA_VERSION: AUDIT_STORE_SCHEMA_NAME,
                     STORE_SCHEMA_VERSION: STORE_SCHEMA_NAME,
                 }[expected_version],
                 "schema_version": str(expected_version),
@@ -1339,6 +1471,36 @@ class SQLiteCandidateRepository:
             ),
             "project metadata does not match its registration document",
         )
+        return project
+
+    def _require_project_authority(
+        self,
+        connection: sqlite3.Connection,
+        candidate: ReleaseCandidate,
+    ) -> RegisteredProject:
+        project = self._load_project(connection, candidate.project_id)
+        canonical_candidate_track = canonical_release_track_name(candidate.release_track)
+        if candidate.release_track != canonical_candidate_track:
+            raise CandidateStoreError(
+                "STORE_RELEASE_TRACK_NONCANONICAL",
+                "new candidate release tracks must use hyphens instead of underscores",
+            )
+        matches = [
+            track_name
+            for track_name in project.config.release_tracks
+            if canonical_release_track_name(track_name) == canonical_candidate_track
+        ]
+        if not matches:
+            raise CandidateStoreError(
+                "STORE_RELEASE_TRACK_NOT_FOUND",
+                f"release track is not configured for project {candidate.project_id}: "
+                f"{candidate.release_track}",
+            )
+        if len(matches) != 1:
+            raise CandidateStoreError(
+                "STORE_RELEASE_TRACK_AMBIGUOUS",
+                f"project {candidate.project_id} has ambiguous normalized release tracks",
+            )
         return project
 
     @staticmethod

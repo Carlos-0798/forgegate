@@ -11,7 +11,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — thirteen document plus two artifact schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — fifteen document plus two artifact schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Analog Validation result Schema mirror | committed upstream-consumer contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
@@ -84,16 +84,20 @@
 | Release-track policy identity | mismatch rejection before terminal commit | PASS — local host |
 | REST attestation persistence | deterministic create/replay/conflict | PASS — database only |
 | HTTP Host and declared body length | loopback allowlist + 4 MiB Content-Length gate | PASS — local host |
-| Immutable project registration | model/store/idempotency/conflict tests | PASS — local host, SQLite v4 |
+| Immutable project registration | model/store/idempotency/conflict tests | PASS — introduced in SQLite v4, retained in v5 |
 | Project CLI and REST readback | shared application + installed-wheel smoke | PASS — local host |
 | Transactional state-change audit | create/bind/transition/evaluate/attest tests | PASS — local host |
 | Audit cursor pagination and filters | bounded/empty/multi-page/adversarial tests | PASS — local host |
-| SQLite v1/v2/v3-to-v4 migration | complete-chain audit projection tests | PASS — no project/identity fabrication |
-| Project/audit contract drift | three JSON Schemas + OpenAPI | PASS — byte checked |
+| SQLite v1/v2/v3/v4-to-v5 migration | complete-chain audit projection and v4 index-only tests | PASS — no project/identity fabrication or duplicate audit |
+| Project/audit contract drift | five JSON Schemas + OpenAPI | PASS — byte checked |
+| Registered-project candidate authority | application/CLI/API/store tests | PASS — unregistered project and missing track fail closed |
+| Release-track normalization | underscore compatibility plus ambiguity tests | PASS — new candidate/policy identity is canonical hyphen form |
+| Project/candidate discovery | bounded page model, stable cursor, CLI/API, installed-wheel smoke | PASS — candidates are project-scoped |
+| Project-profile revision mutation | architecture contract only | NOT IMPLEMENTED — append-only/CAS semantics defined for Phase 9 |
 | HTTP artifact loading/file publication | no loader/output path; nested metadata is not dereferenced | OUT OF SCOPE |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
 
-See `reports/PHASE_6_LOCAL_REST_COMMAND_WORKFLOW_ACCEPTANCE_REPORT.md` for
-the current exact test and coverage result. Earlier acceptance reports remain
+See `reports/PHASE_8_PROJECT_AUTHORITY_DISCOVERY_ACCEPTANCE_REPORT.md` for the
+current exact test and coverage result. Earlier acceptance reports remain
 historical records.

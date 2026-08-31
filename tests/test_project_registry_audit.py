@@ -300,6 +300,7 @@ def test_v3_migration_backfills_complete_audit_chain(
 
     with sqlite3.connect(repository.database_path) as connection:
         connection.execute("PRAGMA foreign_keys = OFF")
+        connection.execute("DROP INDEX candidates_project_candidate")
         connection.execute("DROP TABLE audit_events")
         connection.execute("DROP TABLE project_idempotency_records")
         connection.execute("DROP TABLE projects")
@@ -344,6 +345,18 @@ def test_project_and_audit_api_contract(tmp_path: Path, repository_root: Path) -
         create_api_app(tmp_path / "forgegate.db"), base_url="http://127.0.0.1"
     ) as client:
         missing_key = client.post("/v1/projects", json=payload)
+        unauthorized_candidate = client.post(
+            "/v1/candidates",
+            headers={"Idempotency-Key": "candidate:api:unregistered"},
+            json={
+                "project_id": "sample-api",
+                "version": "1.2.0",
+                "commit_sha": "a" * 40,
+                "source_branch": "main",
+                "release_track": "pull-request",
+                "created_at": "2026-08-31T15:00:00Z",
+            },
+        )
         created = client.post(
             "/v1/projects",
             headers={"Idempotency-Key": "project:api:001"},
@@ -355,7 +368,25 @@ def test_project_and_audit_api_contract(tmp_path: Path, repository_root: Path) -
             json=payload,
         )
         shown = client.get("/v1/projects/sample-api")
+        projects = client.get("/v1/projects", params={"limit": 1})
+        candidate = client.post(
+            "/v1/candidates",
+            headers={"Idempotency-Key": "candidate:api:authorized"},
+            json={
+                "project_id": "sample-api",
+                "version": "1.2.0",
+                "commit_sha": "a" * 40,
+                "source_branch": "main",
+                "release_track": "pull_request",
+                "created_at": "2026-08-31T15:00:00Z",
+            },
+        )
+        candidates = client.get(
+            "/v1/projects/sample-api/candidates",
+            params={"limit": 1},
+        )
         missing = client.get("/v1/projects/missing-project")
+        missing_candidates = client.get("/v1/projects/missing-project/candidates")
         audit = client.get("/v1/audit-events", params={"project_id": "sample-api", "limit": 1})
         bad_limit = client.get("/v1/audit-events", params={"limit": 0})
         bad_candidate = client.get("/v1/audit-events", params={"candidate_id": "bad"})
@@ -366,9 +397,16 @@ def test_project_and_audit_api_contract(tmp_path: Path, repository_root: Path) -
         )
 
     assert missing_key.status_code == 422
+    assert unauthorized_candidate.status_code == 404
     assert created.status_code == replay.status_code == 201
     assert created.json() == replay.json() == shown.json()
+    assert projects.status_code == candidates.status_code == 200
+    assert candidate.status_code == 201
+    assert projects.json()["projects"] == [created.json()]
+    assert candidates.json()["candidates"] == [candidate.json()]
+    assert candidate.json()["release_track"] == "pull-request"
     assert missing.status_code == 404
+    assert missing_candidates.status_code == 404
     assert audit.status_code == 200
     assert audit.json()["events"][0]["event_type"] == "project.registered"
     assert bad_limit.status_code == bad_candidate.status_code == 422
@@ -380,6 +418,26 @@ def test_project_and_audit_cli_contract(tmp_path: Path, repository_root: Path) -
     config_path = repository_root / "examples/sample-python-api/forgegate.yaml"
     candidate_path = repository_root / "examples/sample-python-api/candidates/draft.json"
     assert runner.invoke(app, ["candidate", "init-store", str(database)]).exit_code == 0
+
+    unauthorized = runner.invoke(
+        app,
+        [
+            "candidate",
+            "create",
+            "--project",
+            "sample-api",
+            "--version",
+            "1.2.0",
+            "--commit",
+            "a" * 40,
+            "--created-at",
+            "2026-08-31T15:00:00Z",
+            "--database",
+            str(database),
+            "--idempotency-key",
+            "candidate:cli:unregistered",
+        ],
+    )
 
     register = runner.invoke(
         app,
@@ -395,6 +453,40 @@ def test_project_and_audit_cli_contract(tmp_path: Path, repository_root: Path) -
         ],
     )
     show = runner.invoke(app, ["project", "show", str(database), "sample-api"])
+    projects = runner.invoke(app, ["project", "list", str(database), "--limit", "1"])
+    candidate = runner.invoke(
+        app,
+        [
+            "candidate",
+            "create",
+            "--project",
+            "sample-api",
+            "--version",
+            "1.2.0",
+            "--commit",
+            "a" * 40,
+            "--created-at",
+            "2026-08-31T15:00:00Z",
+            "--track",
+            "pull_request",
+            "--database",
+            str(database),
+            "--idempotency-key",
+            "candidate:cli:authorized",
+        ],
+    )
+    candidates = runner.invoke(
+        app,
+        ["candidate", "list", str(database), "--project", "sample-api", "--limit", "1"],
+    )
+    invalid_projects = runner.invoke(
+        app,
+        ["project", "list", str(database), "--after-project", "INVALID"],
+    )
+    missing_project_candidates = runner.invoke(
+        app,
+        ["candidate", "list", str(database), "--project", "missing-project"],
+    )
     audit = runner.invoke(
         app,
         ["audit", "events", str(database), "--project", "sample-api", "--limit", "1"],
@@ -418,8 +510,16 @@ def test_project_and_audit_cli_contract(tmp_path: Path, repository_root: Path) -
         ["audit", "events", str(database), "--project", "INVALID"],
     )
 
-    assert register.exit_code == show.exit_code == audit.exit_code == 0
+    assert unauthorized.exit_code == 3 and "STORE_PROJECT_NOT_FOUND" in unauthorized.output
+    assert register.exit_code == show.exit_code == projects.exit_code == 0
+    assert candidate.exit_code == candidates.exit_code == audit.exit_code == 0
     assert json.loads(register.stdout) == json.loads(show.stdout)
+    assert json.loads(projects.stdout)["projects"] == [json.loads(register.stdout)]
+    assert json.loads(candidates.stdout)["candidates"] == [json.loads(candidate.stdout)]
+    assert json.loads(candidate.stdout)["release_track"] == "pull-request"
+    assert invalid_projects.exit_code == 3 and "validation error" in invalid_projects.output
+    assert missing_project_candidates.exit_code == 3
+    assert "STORE_PROJECT_NOT_FOUND" in missing_project_candidates.output
     assert json.loads(audit.stdout)["events"][0]["event_type"] == "project.registered"
     assert wrong_type.exit_code == 3 and "forgegate.project.v1" in wrong_type.output
     assert missing.exit_code == 3 and "STORE_PROJECT_NOT_FOUND" in missing.output

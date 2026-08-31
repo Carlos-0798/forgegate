@@ -1,9 +1,9 @@
 # Project status
 
 - Date: 2026-08-31
-- Version: 0.1.0.dev14
-- Stage: Phase 7 project registry and audit-query slice implemented
-- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, project registration, and state-change audit queries; not production-ready
+- Version: 0.1.0.dev15
+- Stage: Phase 8 project authority and bounded-discovery slice implemented
+- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, authoritative project registration, and bounded state discovery; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
 - Remote/publication status: synchronized to private `Carlos-0798/forgegate`;
@@ -54,7 +54,7 @@
   commit, decision, and timestamp;
 - stateless `candidate create` and `candidate transition` CLI previews with
   generic DRAFT/EVALUATING fixtures and structural/evaluation-bound Goldens;
-- SQLite candidate-store schema v3 with ForgeGate application identity, WAL,
+- SQLite candidate-store schema v5 with ForgeGate application identity, WAL,
   FULL synchronous durability, foreign keys, exact-version validation, and
   explicit read/write transactions;
 - append-only canonical candidate snapshots, content-addressed transitions,
@@ -64,8 +64,8 @@
   detection;
 - persisted candidate create/advance/show/history CLI flow while retaining the
   stateless preview commands;
-- explicit, validated SQLite v1/v2-to-v3 migration plus exact legacy terminal
-  evaluation backfill;
+- explicit, validated SQLite v1/v2/v3/v4-to-v5 migration plus exact legacy
+  terminal evaluation and audit backfill where applicable;
 - durable append-only policy-evaluation and release-attestation documents bound
   to the authoritative candidate audit chain;
 - self-validating `forgegate.release-attestation.v1` with candidate,
@@ -152,12 +152,22 @@
   project, and candidate through shared application, CLI, and REST paths;
 - committed project/audit Schemas, expanded OpenAPI, corruption/trigger/
   pagination/adversarial tests, and clean-wheel smoke coverage.
+- application/CLI/REST candidate creation authorized by an existing immutable
+  project profile and exactly one normalized configured release track;
+- canonical hyphen candidate/policy track identity with documented compatibility
+  for existing underscore project keys and fail-closed ambiguity rejection;
+- bounded `forgegate.registered-project-page.v1` and
+  `forgegate.release-candidate-page.v1` discovery contracts through CLI/API;
+- SQLite v5 composite project/candidate index and explicit v4 migration without
+  duplicate audit projection;
+- documented append-only, compare-and-swap project-profile revision semantics,
+  intentionally preceding any mutation implementation.
 
 ## Not implemented
 
 Authenticated/non-loopback API deployment, HTTP artifact collection and file
-publication, project profile updates/listing, project-authoritative candidate
-creation, rejected-request/warning audit ingestion, audit export/retention,
+publication, project profile revisions and candidate profile-version binding,
+rejected-request/warning audit ingestion, audit export/retention,
 external plugins, GitHub integration,
 signatures/key management, database authorization, backup/repair, MSP430
 collector, Studio Phase 5
@@ -170,8 +180,8 @@ attestation embedding of assembly receipts, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 563 passed, 1 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 100% across 4,385 statements and 1,180 branches
+- pytest: 568 passed, 1 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 100% across 4,501 statements and 1,214 branches
 - local API/application/network focus: 34 passed; 100% across 282 statements
   and 28 branches
 - Analog Validation collector focus: 59 passed; 100% across 431 statements and
@@ -182,13 +192,13 @@ attestation embedding of assembly receipts, and hardware access.
   and 138 branches
 - committed JSON Schema and OpenAPI drift checks: PASS
 - project/policy/candidate/transition example documents: VALID
-- thirteen canonical versioned document Schemas plus Benchmark and Analog
+- fifteen canonical versioned document Schemas plus Benchmark and Analog
   Validation artifact Schemas: drift-checked and parsed
 - complete sdist manifest and wheel build: PASS
 - repository-external wheel installation and CLI smoke: PASS
 - Git Bash shell-script syntax check: PASS
-- GitHub Actions: Phase 7 implementation PASS on Windows, Ubuntu, and macOS in
-  [run 33406259713](https://github.com/Carlos-0798/forgegate/actions/runs/33406259713)
+- GitHub Actions: prior Phase 7 checkpoint PASS on Windows, Ubuntu, and macOS;
+  Phase 8 final private-push CI is pending
 - private GitHub synchronization: `main` pushed with noreply commit identity;
   repository visibility, default branch, About, and ten Topics read back
 
@@ -197,4 +207,6 @@ human-intervention boundary. See
 `reports/PHASE_6_LOCAL_REST_COMMAND_WORKFLOW_ACCEPTANCE_REPORT.md` for the
 previous REST command slice and
 `reports/PHASE_7_PROJECT_REGISTRY_AUDIT_QUERY_ACCEPTANCE_REPORT.md` for the
+project-registry baseline and
+`reports/PHASE_8_PROJECT_AUTHORITY_DISCOVERY_ACCEPTANCE_REPORT.md` for the
 current slice.

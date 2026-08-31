@@ -105,8 +105,21 @@
 
 ## Phase 8 — project authority and discovery
 
-- [ ] Require new product-surface candidate creation to reference a registered
+- [x] Require new product-surface candidate creation to reference a registered
   project and configured release track while preserving legacy database reads.
-- [ ] Add bounded project and project-scoped candidate listing contracts.
-- [ ] Define explicit project-profile revision/update semantics before allowing
+- [x] Add bounded project and project-scoped candidate listing contracts.
+- [x] Define explicit project-profile revision/update semantics before allowing
   mutable configuration.
+
+## Phase 9 — profile-bound candidates and append-only revisions
+
+- [ ] Add a candidate contract that binds the exact registered project profile
+  identity and version used at creation.
+- [ ] Add an append-only project-profile revision document with previous-profile
+  linkage and content-derived identity.
+- [ ] Persist revisions under expected-version compare-and-swap and exact
+  idempotency without rewriting historical profiles.
+- [ ] Apply track additions/removals only to later candidates while preserving
+  historical candidate/profile resolution.
+- [ ] Expose revision history and current-profile reads through bounded CLI/API
+  contracts before considering any mutation convenience surface.

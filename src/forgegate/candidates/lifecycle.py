@@ -11,6 +11,7 @@ from forgegate.candidates.models import (
 )
 from forgegate.canonical import sha256_fingerprint
 from forgegate.domain.enums import CandidateStatus
+from forgegate.domain.models import canonical_release_track_name
 from forgegate.policy.models import PolicyEvaluation
 
 
@@ -37,7 +38,7 @@ def create_candidate(
         "version": version.strip(),
         "commit_sha": commit_sha.lower(),
         "source_branch": source_branch.strip(),
-        "release_track": release_track.strip(),
+        "release_track": canonical_release_track_name(release_track),
         "created_at": _json_timestamp(timestamp),
     }
     candidate_id = "cand-" + sha256_fingerprint(identity).removeprefix("sha256:")[:24]

@@ -13,6 +13,8 @@ from forgegate.application.models import (
     CandidateEvaluateCommand,
     CandidateEvaluationResult,
     CandidateHistoryView,
+    CandidateQuery,
+    ProjectQuery,
     ProjectRegisterCommand,
 )
 from forgegate.attestations import ReleaseAttestation
@@ -21,13 +23,14 @@ from forgegate.candidates import (
     CandidateEvidenceBinding,
     CandidateLifecycleError,
     ReleaseCandidate,
+    ReleaseCandidatePage,
     SQLiteCandidateRepository,
     create_candidate,
 )
 from forgegate.candidates.models import CandidateTransitionResult
 from forgegate.domain.enums import CandidateStatus, Decision
 from forgegate.policy import PolicyEvaluation, evaluate_policy
-from forgegate.projects import RegisteredProject
+from forgegate.projects import RegisteredProject, RegisteredProjectPage
 
 DECISION_STATUS = {
     Decision.PASS: CandidateStatus.PASS,
@@ -63,6 +66,12 @@ class CandidateApplication:
     def get_project(self, project_id: str) -> RegisteredProject:
         return self.repository.get_project(project_id)
 
+    def list_projects(self, query: ProjectQuery) -> RegisteredProjectPage:
+        return self.repository.projects(
+            after_project_id=query.after_project_id,
+            limit=query.limit,
+        )
+
     def query_audit_events(self, query: AuditEventQuery) -> AuditEventPage:
         return self.repository.audit_events(
             after_sequence=query.after_sequence,
@@ -89,10 +98,20 @@ class CandidateApplication:
         idempotency_key: str,
     ) -> ReleaseCandidate:
         candidate = self.preview_candidate(command)
-        return self.repository.create(candidate, idempotency_key=idempotency_key)
+        return self.repository.create_for_registered_project(
+            candidate,
+            idempotency_key=idempotency_key,
+        )
 
     def get_candidate(self, candidate_id: str) -> ReleaseCandidate:
         return self.repository.get(candidate_id)
+
+    def list_candidates(self, query: CandidateQuery) -> ReleaseCandidatePage:
+        return self.repository.candidates(
+            query.project_id,
+            after_candidate_id=query.after_candidate_id,
+            limit=query.limit,
+        )
 
     def advance_candidate(
         self,

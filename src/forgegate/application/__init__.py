@@ -7,6 +7,8 @@ from forgegate.application.models import (
     CandidateEvaluateCommand,
     CandidateEvaluationResult,
     CandidateHistoryView,
+    CandidateQuery,
+    ProjectQuery,
     ProjectRegisterCommand,
 )
 from forgegate.application.service import CandidateApplication
@@ -21,5 +23,7 @@ __all__ = [
     "CandidateEvaluateCommand",
     "CandidateEvaluationResult",
     "CandidateHistoryView",
+    "CandidateQuery",
+    "ProjectQuery",
     "ProjectRegisterCommand",
 ]

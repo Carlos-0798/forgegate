@@ -221,6 +221,20 @@ The current slice has no authenticated producer and runs no plugin code.
 | Audit hash is mistaken for an authenticated log | Documentation states local integrity/ordering only; no signature, trusted clock, retention, or administrator-resistant guarantee |
 | Rejected input is assumed to be durably audited | Contract explicitly limits v4 events to successful state changes; rejected-request ingestion is deferred |
 
+## Addressed in the Phase 8 project authority and discovery slice
+
+| Threat | Current control |
+|---|---|
+| Candidate is created for an unknown project | Product-surface application, CLI, and API creation resolve the immutable project row inside the write transaction |
+| Candidate uses a release track absent from the project profile | Exactly one configured track key must normalize to the requested canonical hyphen identity |
+| Underscore compatibility creates two apparent authorities | Profiles containing ambiguous underscore/hyphen keys that normalize to the same track fail closed |
+| Authority check races candidate persistence | Project and track validation share the same `BEGIN IMMEDIATE` transaction as candidate and audit insertion |
+| Discovery crosses project boundaries | Candidate listing requires a registered project and filters by exact project ID before cursor pagination |
+| Unbounded list request exhausts local resources | Strict page contracts enforce a one-to-200 limit and exclusive stable slug cursors |
+| Legacy candidate becomes unreadable after the authority gate | Existing direct candidate/history reads remain available; only new product-surface writes require registration |
+| Project configuration is mistaken for operator authorization | Documentation explicitly separates profile authority from absent caller identity/authentication |
+| Mutable profile silently changes historical candidate meaning | No mutation surface exists; append-only revision and exact candidate-profile binding are deferred to Phase 9 |
+
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;

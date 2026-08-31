@@ -12,7 +12,9 @@ The command routes are:
 
 | Route | Durable effect | Concurrency/replay control |
 |---|---|---|
-| `POST /v1/candidates` | Create deterministic DRAFT | `Idempotency-Key` |
+| `GET /v1/projects` | None; bounded discovery | Exclusive project cursor |
+| `GET /v1/projects/{id}/candidates` | None; bounded project-scoped discovery | Exclusive candidate cursor |
+| `POST /v1/candidates` | Create authorized deterministic DRAFT | `Idempotency-Key` + registered project/track |
 | `POST /v1/candidates/{id}/transitions` | Append one legal state event | `Idempotency-Key` + `expected_revision` |
 | `POST /v1/candidates/{id}/evidence` | Bind one immutable audited assembly | `Idempotency-Key` + state gate |
 | `POST /v1/candidates/{id}/evaluate` | Evaluate binding and append terminal event | `Idempotency-Key` + `expected_revision` |
@@ -21,6 +23,12 @@ The command routes are:
 All routes retain the existing structured error and request-correlation
 contract. Stable store conflicts map to HTTP 409; lifecycle and strict request
 failures map to 422 or the existing fail-closed store status.
+
+New product-surface creation requires an immutable registered project and
+exactly one project configuration key that normalizes to the requested
+canonical hyphen release track. Existing underscore keys remain compatible;
+ambiguous underscore/hyphen duplicates reject. This project configuration
+check does not authenticate the HTTP caller.
 
 ## State and evidence flow
 

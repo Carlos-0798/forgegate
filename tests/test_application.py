@@ -14,9 +14,11 @@ from forgegate.application import (
     CandidateBindEvidenceCommand,
     CandidateCreateCommand,
     CandidateEvaluateCommand,
+    ProjectRegisterCommand,
 )
 from forgegate.candidates import CandidateStoreError
 from forgegate.config import load_config
+from forgegate.domain.models import ProjectConfig
 
 
 def command(**updates: Any) -> CandidateCreateCommand:
@@ -79,9 +81,20 @@ def test_candidate_write_commands_require_offset_times(repository_root: Path) ->
             model.model_validate(values)
 
 
-def test_candidate_application_create_replay_and_read_contract(tmp_path: Path) -> None:
+def test_candidate_application_create_replay_and_read_contract(
+    tmp_path: Path, repository_root: Path
+) -> None:
     application = CandidateApplication.for_database(tmp_path / "forgegate.db")
     application.initialize()
+    project = load_config(repository_root / "examples/sample-python-api/forgegate.yaml")
+    assert isinstance(project, ProjectConfig)
+    application.register_project(
+        ProjectRegisterCommand(
+            config=project,
+            registered_at=datetime(2026, 8, 30, 11, 59, tzinfo=UTC),
+        ),
+        idempotency_key="project:application:001",
+    )
 
     preview = application.preview_candidate(command())
     created = application.create_candidate(command(), idempotency_key="api:create:001")

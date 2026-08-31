@@ -25,6 +25,8 @@ from forgegate.application import (
     CandidateEvaluateCommand,
     CandidateEvaluationResult,
     CandidateHistoryView,
+    CandidateQuery,
+    ProjectQuery,
     ProjectRegisterCommand,
 )
 from forgegate.attestations import ReleaseAttestation
@@ -34,10 +36,11 @@ from forgegate.candidates import (
     CandidateLifecycleError,
     CandidateStoreError,
     ReleaseCandidate,
+    ReleaseCandidatePage,
 )
 from forgegate.candidates.models import CandidateTransitionResult
 from forgegate.network import is_loopback_host
-from forgegate.projects import RegisteredProject
+from forgegate.projects import RegisteredProject, RegisteredProjectPage
 
 REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
 MAX_REQUEST_BODY_BYTES = 4 * 1024 * 1024
@@ -207,6 +210,21 @@ def create_api_app(
         )
 
     @app.get(
+        "/v1/projects",
+        response_model=RegisteredProjectPage,
+        operation_id="listProjects",
+        tags=["projects"],
+        responses=ERROR_RESPONSES,
+    )
+    def list_projects_endpoint(
+        after_project_id: str | None = None,
+        limit: Annotated[int, Query(ge=1, le=200)] = 100,
+    ) -> RegisteredProjectPage:
+        return candidate_application.list_projects(
+            ProjectQuery(after_project_id=after_project_id, limit=limit)
+        )
+
+    @app.get(
         "/v1/projects/{project_id}",
         response_model=RegisteredProject,
         operation_id="getProject",
@@ -215,6 +233,26 @@ def create_api_app(
     )
     def get_project_endpoint(project_id: str) -> RegisteredProject:
         return candidate_application.get_project(project_id)
+
+    @app.get(
+        "/v1/projects/{project_id}/candidates",
+        response_model=ReleaseCandidatePage,
+        operation_id="listProjectCandidates",
+        tags=["candidates"],
+        responses=ERROR_RESPONSES,
+    )
+    def list_project_candidates_endpoint(
+        project_id: str,
+        after_candidate_id: str | None = None,
+        limit: Annotated[int, Query(ge=1, le=200)] = 100,
+    ) -> ReleaseCandidatePage:
+        return candidate_application.list_candidates(
+            CandidateQuery(
+                project_id=project_id,
+                after_candidate_id=after_candidate_id,
+                limit=limit,
+            )
+        )
 
     @app.get(
         "/v1/audit-events",

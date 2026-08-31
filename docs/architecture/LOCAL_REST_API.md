@@ -10,6 +10,8 @@ therefore deliberately restricted to the local loopback interface.
 The v1 baseline includes:
 
 - `GET /healthz`;
+- `GET /v1/projects`;
+- `GET /v1/projects/{project_id}/candidates`;
 - `POST /v1/candidates`;
 - `POST /v1/candidates/{candidate_id}/transitions`;
 - `POST /v1/candidates/{candidate_id}/evidence`;
@@ -22,6 +24,10 @@ The v1 baseline includes:
 
 Candidate creation, advancement, evidence binding, and evaluation require
 `Idempotency-Key` and use the same durable idempotency records as the CLI/store.
+Creation also requires the project to be registered and the requested track to
+match exactly one normalized project configuration key. The two list routes use
+strict one-to-200 limits and exclusive stable string cursors; candidate listing
+requires the project to exist and never crosses project scope.
 Advancement and evaluation also require `expected_revision`. Attestation
 creation is deterministic against an immutable terminal candidate and replays
 the stored document exactly.
@@ -32,7 +38,7 @@ Collection and filesystem publication remain explicit CLI operations.
 ## Shared application boundary
 
 `CandidateApplication` accepts validated commands and delegates to
-`SQLiteCandidateRepository`. The candidate-create, show, history,
+`SQLiteCandidateRepository`. The project/candidate list, candidate-create, show, history,
 show-evidence, and show-attestation CLI paths use this service, as do the HTTP
 routes. FastAPI handlers do not reimplement candidate identity, persistence,
 idempotency, binding, or attestation policy.

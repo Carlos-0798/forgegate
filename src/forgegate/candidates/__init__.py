@@ -13,6 +13,7 @@ from forgegate.candidates.models import (
     CandidateTransition,
     CandidateTransitionResult,
     ReleaseCandidate,
+    ReleaseCandidatePage,
 )
 
 if TYPE_CHECKING:
@@ -30,6 +31,7 @@ __all__ = [
     "CandidateTransition",
     "CandidateTransitionResult",
     "ReleaseCandidate",
+    "ReleaseCandidatePage",
     "SQLiteCandidateRepository",
     "create_candidate",
     "create_candidate_evidence_binding",

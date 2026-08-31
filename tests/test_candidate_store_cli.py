@@ -107,6 +107,23 @@ def _create_command(
     return command
 
 
+def _register_project(database: Path, repository_root: Path) -> None:
+    result = runner.invoke(
+        app,
+        [
+            "project",
+            "register",
+            str(database),
+            str(repository_root / "examples/sample-python-api/forgegate.yaml"),
+            "--registered-at",
+            "2026-08-30T11:59:00Z",
+            "--idempotency-key",
+            "project:cli-setup-001",
+        ],
+    )
+    assert result.exit_code == 0, result.output
+
+
 def _bind_evidence(
     database: Path,
     candidate_id: str,
@@ -146,9 +163,12 @@ def _assembly_evaluation(repository_root: Path, output: Path) -> Path:
     return output
 
 
-def test_candidate_store_cli_create_advance_show_history_and_replay(tmp_path: Path) -> None:
+def test_candidate_store_cli_create_advance_show_history_and_replay(
+    tmp_path: Path, repository_root: Path
+) -> None:
     database = tmp_path / "forgegate.db"
     initialized = runner.invoke(app, ["candidate", "init-store", str(database)])
+    _register_project(database, repository_root)
     created = runner.invoke(app, _create_command(database))
     replay = runner.invoke(app, _create_command(database))
 
@@ -217,6 +237,7 @@ def test_candidate_store_cli_terminal_transition_loads_evaluation(
 ) -> None:
     database = tmp_path / "forgegate.db"
     runner.invoke(app, ["candidate", "init-store", str(database)])
+    _register_project(database, repository_root)
     created = runner.invoke(app, _create_command(database, created_at="2026-08-30T12:00:00Z"))
     candidate_id = json.loads(created.stdout)["candidate_id"]
     for revision, (status, timestamp) in enumerate((("COLLECTING", "2026-08-30T12:01:00Z"),)):
@@ -349,6 +370,7 @@ def test_candidate_store_cli_migrates_v2_and_backfills_terminal_evaluation(
 ) -> None:
     database = tmp_path / "forgegate.db"
     runner.invoke(app, ["candidate", "init-store", str(database)])
+    _register_project(database, repository_root)
     created = runner.invoke(app, _create_command(database, created_at="2026-08-30T12:00:00Z"))
     candidate_id = json.loads(created.stdout)["candidate_id"]
     evaluation_path = _assembly_evaluation(repository_root, tmp_path / "migration-evaluation.json")
@@ -480,6 +502,7 @@ def test_candidate_store_cli_error_contracts(tmp_path: Path, repository_root: Pa
     missing_store = runner.invoke(app, _create_command(database))
     runner.invoke(app, ["candidate", "init-store", str(database)])
     missing_key = runner.invoke(app, _create_command(database, include_key=False))
+    _register_project(database, repository_root)
     created = runner.invoke(app, _create_command(database))
     candidate_id = json.loads(created.stdout)["candidate_id"]
     wrong_binding_document = runner.invoke(

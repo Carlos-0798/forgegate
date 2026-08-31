@@ -32,7 +32,10 @@ to one complete audited assembly before a new SQLite-v3 candidate may become
 project-profile registration. `forgegate.audit-event.v1.schema.json` describes
 content-bound metadata for one successful durable state change, while
 `forgegate.audit-event-page.v1.schema.json` describes bounded stable-cursor
-query output. These contracts do not authenticate an operator or producer.
+query output. `forgegate.registered-project-page.v1.schema.json` and
+`forgegate.release-candidate-page.v1.schema.json` describe bounded project and
+project-scoped candidate discovery. These contracts do not authenticate an
+operator or producer.
 
 `forgegate.benchmark.v1.schema.json` is the ForgeGate-owned Benchmark artifact
 contract. `analog-validation.result-export.v1.schema.json` is ForgeGate's

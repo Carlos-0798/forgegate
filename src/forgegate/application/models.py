@@ -7,6 +7,7 @@ from pydantic import Field, field_validator
 from forgegate.assembly import EvidenceBundleAssembly
 from forgegate.candidates import CandidateEvidenceBinding, CandidateHistory
 from forgegate.candidates.models import (
+    CANDIDATE_ID_PATTERN,
     CandidateTransition,
     CandidateTransitionResult,
     ReleaseCandidate,
@@ -46,6 +47,17 @@ class ProjectRegisterCommand(StrictModel):
     @classmethod
     def registered_at_must_include_timezone(cls, value: datetime) -> datetime:
         return _timezone_aware(value, "registered_at")
+
+
+class ProjectQuery(StrictModel):
+    after_project_id: str | None = Field(default=None, pattern=SLUG_PATTERN)
+    limit: int = Field(default=100, ge=1, le=200)
+
+
+class CandidateQuery(StrictModel):
+    project_id: str = Field(pattern=SLUG_PATTERN)
+    after_candidate_id: str | None = Field(default=None, pattern=CANDIDATE_ID_PATTERN)
+    limit: int = Field(default=100, ge=1, le=200)
 
 
 class AuditEventQuery(StrictModel):
@@ -134,5 +146,7 @@ __all__ = [
     "CandidateEvaluateCommand",
     "CandidateEvaluationResult",
     "CandidateHistoryView",
+    "CandidateQuery",
+    "ProjectQuery",
     "ProjectRegisterCommand",
 ]

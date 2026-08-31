@@ -1,5 +1,20 @@
 # Changelog
 
+## 0.1.0.dev15 — 2026-08-31
+
+- Required product-surface candidate creation to resolve an existing immutable
+  project registration and exactly one configured release track.
+- Canonicalized new candidate and policy track identities to hyphen form while
+  preserving underscore-key compatibility and rejecting ambiguous profiles.
+- Added strict, bounded project and project-scoped candidate page contracts
+  through the shared application, CLI, REST, Schema, and OpenAPI surfaces.
+- Upgraded the SQLite store to schema v5 with a project/candidate discovery
+  index and an explicit v4-to-v5 migration that does not replay audit events.
+- Added clean-install verification that distribution metadata and the runtime
+  ForgeGate version remain identical.
+- Defined future append-only project-profile revision and candidate-profile
+  binding semantics without exposing a premature mutation surface.
+
 ## 0.1.0.dev14 — 2026-08-31
 
 - Added immutable, idempotent `forgegate.registered-project.v1` persistence and

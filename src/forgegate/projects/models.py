@@ -48,6 +48,29 @@ class RegisteredProject(StrictModel):
         return self
 
 
+class RegisteredProjectPage(StrictModel):
+    """Bounded lexicographic page of immutable registered projects."""
+
+    schema_version: Literal["forgegate.registered-project-page.v1"] = (
+        "forgegate.registered-project-page.v1"
+    )
+    projects: tuple[RegisteredProject, ...] = Field(max_length=200)
+    next_after_project_id: str | None = Field(default=None, pattern=SLUG_PATTERN)
+    has_more: bool
+
+    @model_validator(mode="after")
+    def cursor_must_match_ordered_projects(self) -> RegisteredProjectPage:
+        project_ids = [project.project_id for project in self.projects]
+        if project_ids != sorted(set(project_ids)):
+            raise ValueError("registered projects must have unique increasing project IDs")
+        expected_cursor = project_ids[-1] if project_ids else None
+        if self.next_after_project_id != expected_cursor:
+            raise ValueError("next_after_project_id must identify the final returned project")
+        if not project_ids and self.has_more:
+            raise ValueError("an empty project page cannot report more results")
+        return self
+
+
 def create_registered_project(
     config: ProjectConfig,
     *,

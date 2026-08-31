@@ -25,6 +25,12 @@ SHA256_PATTERN = r"^[0-9a-f]{64}$"
 TRACK_PATTERN = re.compile(r"^[a-z][a-z0-9_-]{1,63}$")
 
 
+def canonical_release_track_name(value: str) -> str:
+    """Map supported project-key spelling to the candidate/policy identity form."""
+
+    return value.strip().replace("_", "-")
+
+
 class StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, str_strip_whitespace=True)
 

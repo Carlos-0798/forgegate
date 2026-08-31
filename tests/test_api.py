@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -26,6 +27,7 @@ from forgegate.candidates import (
 )
 from forgegate.cli import app as cli_app
 from forgegate.config import load_config
+from forgegate.domain.models import ProjectConfig
 from forgegate.network import is_loopback_host
 
 runner = CliRunner()
@@ -44,6 +46,47 @@ def candidate_payload(**updates: Any) -> dict[str, Any]:
     return values
 
 
+def project_registration_payload() -> dict[str, Any]:
+    return {
+        "config": {
+            "schema_version": "forgegate.project.v1",
+            "project": {
+                "id": "sample-api",
+                "name": "Sample API",
+                "repository": "https://example.invalid/sample-api",
+                "default_branch": "main",
+            },
+            "release_tracks": {
+                "pull_request": {"policy": "policies/pull-request.yaml"},
+                "production": {"policy": "policies/production.yaml"},
+            },
+            "collectors": [{"type": "junit", "path": "artifacts/junit.xml"}],
+            "outputs": {
+                "json": "build/forgegate/attestation.json",
+                "markdown": "build/forgegate/summary.md",
+            },
+        },
+        "registered_at": "2026-08-30T11:59:00Z",
+    }
+
+
+def register_sample_project(client: TestClient, *, key: str = "project:api:setup") -> None:
+    response = client.post(
+        "/v1/projects",
+        headers={"Idempotency-Key": key},
+        json=project_registration_payload(),
+    )
+    assert response.status_code == 201, response.json()
+
+
+def register_sample_project_in_repository(repository: SQLiteCandidateRepository) -> None:
+    repository.register_project(
+        ProjectConfig.model_validate(project_registration_payload()["config"]),
+        registered_at=datetime(2026, 8, 30, 11, 59, tzinfo=UTC),
+        idempotency_key="project:repository:setup",
+    )
+
+
 def assert_error(response: Any, status_code: int, code: str) -> dict[str, Any]:
     assert response.status_code == status_code
     payload = ApiErrorResponse.model_validate(response.json())
@@ -58,6 +101,7 @@ def test_health_and_candidate_read_write_contract(tmp_path: Path) -> None:
         create_api_app(tmp_path / "forgegate.db"), base_url="http://127.0.0.1"
     ) as client:
         health = client.get("/healthz", headers={"X-Request-ID": request_id})
+        register_sample_project(client)
         created = client.post(
             "/v1/candidates",
             headers={"Idempotency-Key": "api:create:001", "X-Request-ID": request_id},
@@ -77,7 +121,7 @@ def test_health_and_candidate_read_write_contract(tmp_path: Path) -> None:
         "status": "ok",
         "api_version": "v1",
         "forgegate_version": __version__,
-        "store_schema": "forgegate.candidate-store.v4",
+        "store_schema": "forgegate.candidate-store.v5",
     }
     assert health.headers["X-Request-ID"] == request_id
     assert created.status_code == replay.status_code == 201
@@ -150,6 +194,7 @@ def test_api_maps_conflict_and_missing_resources(tmp_path: Path) -> None:
     with TestClient(
         create_api_app(tmp_path / "forgegate.db"), base_url="http://127.0.0.1"
     ) as client:
+        register_sample_project(client)
         created = client.post(
             "/v1/candidates",
             headers={"Idempotency-Key": "api:create:conflict"},
@@ -181,6 +226,7 @@ def test_api_command_endpoints_fail_closed_on_state_and_concurrency(
     with TestClient(
         create_api_app(tmp_path / "forgegate.db"), base_url="http://127.0.0.1"
     ) as client:
+        register_sample_project(client)
         created = client.post(
             "/v1/candidates",
             headers={"Idempotency-Key": "api:create:guarded"},
@@ -248,6 +294,7 @@ def test_api_executes_and_replays_complete_local_candidate_workflow(
 ) -> None:
     database = tmp_path / "forgegate.db"
     with TestClient(create_api_app(database), base_url="http://127.0.0.1") as client:
+        register_sample_project(client)
         created = client.post(
             "/v1/candidates",
             headers={"Idempotency-Key": "api:create:durable"},
@@ -463,6 +510,7 @@ def test_openapi_export_is_deterministic_and_complete(tmp_path: Path) -> None:
         "/healthz",
         "/v1/projects",
         "/v1/projects/{project_id}",
+        "/v1/projects/{project_id}/candidates",
         "/v1/audit-events",
         "/v1/candidates",
         "/v1/candidates/{candidate_id}",
@@ -473,6 +521,11 @@ def test_openapi_export_is_deterministic_and_complete(tmp_path: Path) -> None:
         "/v1/candidates/{candidate_id}/evaluate",
     }
     assert schema["paths"]["/v1/candidates"]["post"]["operationId"] == "createCandidate"
+    assert schema["paths"]["/v1/projects"]["get"]["operationId"] == "listProjects"
+    assert (
+        schema["paths"]["/v1/projects/{project_id}/candidates"]["get"]["operationId"]
+        == "listProjectCandidates"
+    )
     assert (
         schema["paths"]["/v1/candidates/{candidate_id}/evaluate"]["post"]["operationId"]
         == "evaluateCandidate"
@@ -553,8 +606,11 @@ def test_serve_cli_accepts_only_loopback_hosts(
 def test_cli_and_api_candidate_creation_share_the_same_contract(tmp_path: Path) -> None:
     api_database = tmp_path / "api.db"
     cli_database = tmp_path / "cli.db"
-    SQLiteCandidateRepository(cli_database).initialize()
+    cli_repository = SQLiteCandidateRepository(cli_database)
+    cli_repository.initialize()
+    register_sample_project_in_repository(cli_repository)
     with TestClient(create_api_app(api_database), base_url="http://127.0.0.1") as client:
+        register_sample_project(client)
         api_created = client.post(
             "/v1/candidates",
             headers={"Idempotency-Key": "parity:create:001"},

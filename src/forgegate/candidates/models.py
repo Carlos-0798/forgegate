@@ -86,6 +86,32 @@ class ReleaseCandidate(StrictModel):
         return self
 
 
+class ReleaseCandidatePage(StrictModel):
+    """Bounded project-scoped page of current candidate snapshots."""
+
+    schema_version: Literal["forgegate.release-candidate-page.v1"] = (
+        "forgegate.release-candidate-page.v1"
+    )
+    project_id: str = Field(pattern=SLUG_PATTERN)
+    candidates: tuple[ReleaseCandidate, ...] = Field(max_length=200)
+    next_after_candidate_id: str | None = Field(default=None, pattern=CANDIDATE_ID_PATTERN)
+    has_more: bool
+
+    @model_validator(mode="after")
+    def cursor_and_scope_must_match_candidates(self) -> ReleaseCandidatePage:
+        candidate_ids = [candidate.candidate_id for candidate in self.candidates]
+        if candidate_ids != sorted(set(candidate_ids)):
+            raise ValueError("candidates must have unique increasing candidate IDs")
+        if any(candidate.project_id != self.project_id for candidate in self.candidates):
+            raise ValueError("candidate page contains a candidate from another project")
+        expected_cursor = candidate_ids[-1] if candidate_ids else None
+        if self.next_after_candidate_id != expected_cursor:
+            raise ValueError("next_after_candidate_id must identify the final returned candidate")
+        if not candidate_ids and self.has_more:
+            raise ValueError("an empty candidate page cannot report more results")
+        return self
+
+
 class CandidateTransition(StrictModel):
     schema_version: Literal["forgegate.candidate-transition.v1"] = (
         "forgegate.candidate-transition.v1"
