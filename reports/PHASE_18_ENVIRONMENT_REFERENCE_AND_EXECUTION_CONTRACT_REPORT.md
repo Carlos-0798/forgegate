@@ -121,7 +121,12 @@ created.
 | Sample plugin install/discover/uninstall | PASS, always `NOT_LOADED` |
 | Clean installed core after plugin removal | PASS |
 | Release smoke | PASS |
-| Windows/Linux/macOS private CI | NOT RUN for this documentation revision |
+| Windows/Linux/macOS private CI | PASS — run 33566424223 for `3682361d9d3881ece12352048d2a5a19920bbae2` |
+
+The dependent generic GitHub Action fixture job also passed in the same run.
+CI proves the existing verification and release-smoke commands executed on the
+three hosted operating systems; it does not prove plugin execution, sandboxing,
+hardware behavior, or production readiness.
 
 ## Human-intervention boundary
 
