@@ -8,8 +8,8 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 17 import-free Plugin SDK discovery foundation implemented;
-not production-ready.**
+**Phase 18 external-plugin execution security contract designed; Phase 17
+import-free discovery implemented; not production-ready.**
 
 This private-development checkpoint provides a working Python 3.12 CLI and an
 Ed25519-authenticated, project-authorized, loopback-only REST API. Its strongest
@@ -692,7 +692,8 @@ Not implemented yet:
 - non-loopback or TLS-protected API deployment;
 - HTTP artifact collection or filesystem publication;
 - complete rejected-request ingestion, security/audit export and retention,
-  plugin execution/sandboxing/run audit, or custom GitHub Checks/PR annotations/API integration;
+  plugin execution implementation/sandbox enforcement/run audit, or custom
+  GitHub Checks/PR annotations/API integration;
 - database-file authorization, backup/repair, managed or hardware-backed key
   custody, managed online revocation, durable/distributed session authority,
   trusted timestamps, or CI workload identity federation;
@@ -722,6 +723,13 @@ workload identity, source-artifact authentication, or GitHub API authority.
 Phase 17 adds only bounded import-free plugin metadata discovery; compatibility
 does not authenticate a publisher, load a callable, grant permissions, isolate
 a subprocess, or create durable plugin-run audit evidence.
+Phase 18 defines the required out-of-process protocol, deny-by-default grants,
+enforceable sandbox tiers, resource limits, failure mapping, and append-only run
+audit, but implements none of those runtime controls and still loads no plugin
+code. See
+[`docs/architecture/PLUGIN_EXECUTION_SECURITY_CONTRACT.md`](docs/architecture/PLUGIN_EXECUTION_SECURITY_CONTRACT.md)
+and the exact upstream review in
+[`docs/research/OPEN_SOURCE_REFERENCE_REVIEW.md`](docs/research/OPEN_SOURCE_REFERENCE_REVIEW.md).
 SHA-256 is not producer authentication.
 The MSP430 controller may later expose a separate versioned artifact for
 another optional collector.
@@ -729,9 +737,10 @@ another optional collector.
 ## Roadmap
 
 Phase 17 adds a strict Plugin API v1 manifest and import-free installed
-entry-point discovery with explicit compatibility and conflict reporting. Plugin
-callable execution, isolation, permissions, publisher trust, and durable run
-audit remain separate work. Custom GitHub API writes, annotations, signed CI
+entry-point discovery with explicit compatibility and conflict reporting.
+Phase 18 freezes the security contract that must precede external execution;
+the runner, sandbox backend, enforcement, and durable run records remain
+separate implementation work. Custom GitHub API writes, annotations, signed CI
 provenance, OIDC, and artifact upload also remain separate. TLS, reverse-proxy identity,
 hostile-local-user defenses, durable/distributed session state, security-event
 retention/export, and managed key lifecycle must still be designed before any

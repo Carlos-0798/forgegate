@@ -81,8 +81,11 @@ does not represent a source artifact, physical measurement, or production run.
 
 ## Deferred execution boundary
 
-Plugin callable loading, collection requests/results, subprocess isolation,
-resource limits, timeouts, secret handling, permission enforcement, signatures,
-publisher trust, durable `plugin_runs` audit, and failure-to-ERROR mapping are
-not implemented. Those controls must be designed and adversarially verified
-before ForgeGate executes any external plugin code.
+Phase 18 defines the required callable protocol, subprocess trust domains,
+resource limits, timeouts, permission enforcement, durable `plugin_runs` audit,
+and failure-to-ERROR mapping in
+[`PLUGIN_EXECUTION_SECURITY_CONTRACT.md`](PLUGIN_EXECUTION_SECURITY_CONTRACT.md).
+The runner and every enforcement control remain unimplemented. Signatures,
+publisher trust, remote acquisition, and external plugin execution also remain
+deferred; ForgeGate must adversarially verify the required controls before it
+loads any external plugin code.

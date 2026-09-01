@@ -378,13 +378,33 @@ The current slice has no authenticated producer and runs no plugin code.
 | Installation location leaks through reports | Retain only sanitized distribution, entry-point, fixed relative manifest, and contract fields; omit resolved filesystem paths |
 | Fixture discovery is mistaken for plugin execution | Import-hostile standalone fixture proves metadata discovery only and reports `NOT_LOADED` |
 
+## Defined in the Phase 18 plugin execution contract, not yet enforced
+
+| Threat | Required future control |
+|---|---|
+| Compatible metadata is mistaken for execution approval | Require a separate content-derived run plan that binds one capability, exact manifest, immutable inputs, grants, limits, and backend |
+| Untrusted plugin compromises the core process | Prohibit in-process hooks and require a disposable runner behind a broker; `NONE` and `PROCESS_ONLY` tiers cannot run untrusted external plugins |
+| Declared permissions become ambient authority | Enforce `enforced <= approved <= declared`, deny by default, and fail before start if the backend cannot prove the grant set |
+| Plugin reads workspace/database/keys/tokens | Supply only broker-created handles or private staged copies; sanitize environment and deny arbitrary filesystem, database, secret, and device access |
+| Plugin reaches the network or starts helpers | Require sandbox-enforced network and process denial plus bounded process-count cleanup |
+| Plugin exhausts time, memory, CPU, disk, or logs | Enforce startup/total timeouts and CPU, memory, output-byte, file-count, process-count, and captured-log limits |
+| Plugin forges successful evidence | Treat output as a proposal; broker/core re-read, rehash, member-check, and schema-validate it before creating separate evidence |
+| Crash or leftover files imply success | Core-authored append-only transitions; recovery may close an abandoned run only as `ERROR` and must discard unvalidated output |
+| Failure text leaks secrets or local paths | Persist bounded stable issue codes and sanitized metadata; exclude raw stderr, environment, and absolute paths from durable audit |
+| Platform silently weakens isolation | Record backend/tier and fail with `PLUGIN_ISOLATION_UNAVAILABLE` or `PLUGIN_PERMISSION_UNENFORCEABLE` instead of falling back |
+
+These are design requirements only. No external plugin process is currently
+started and no sandbox, grant, quota, or `plugin_runs` persistence claim is
+made.
+
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;
 - stronger filesystem race resistance than the current open-handle metadata
   stability check;
-- malicious plugin execution and subprocess isolation; Phase 17 validates only
-  bounded manifests and never imports plugin code;
+- malicious plugin execution and subprocess isolation implementation; Phase 18
+  defines fail-closed requirements but Phase 17 still only validates bounded
+  manifests and never imports plugin code;
 - managed key generation/custody/rotation, encrypted keys, HSM/TPM/KMS support,
   trust-store distribution, online revocation, trusted timestamping, and CI
   workload identity federation;

@@ -2,9 +2,9 @@
 
 - Date: 2026-09-01
 - Version: 0.1.0.dev24
-- Stage: Phase 17 import-free Plugin SDK discovery foundation implemented,
-  locally and cross-platform verified
-- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, offline GitHub gating, and bounded import-free plugin metadata discovery; not production-ready
+- Stage: Phase 18 external-plugin execution security contract designed; Phase
+  17 import-free Plugin SDK discovery locally and cross-platform verified
+- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, offline GitHub gating, bounded import-free plugin metadata discovery, and a non-executing external-plugin security design; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
 - Remote/publication status: private `Carlos-0798/forgegate` synchronized
@@ -278,6 +278,20 @@
 - standalone import-hostile generic plugin package plus clean-wheel
   install/discover/uninstall independence smoke.
 
+## Designed, not implemented
+
+- external-plugin trust domains separating core, broker, disposable runner,
+  untrusted plugin, content-addressed inputs, and core-authored audit;
+- out-of-process bounded protocol and content-derived run plans with broker-owned
+  input/output handling;
+- deny-by-default declared/approved/enforced permission subsets, explicit
+  `NONE`/`PROCESS_ONLY`/`SANDBOXED` isolation tiers, and mandatory resource
+  limits;
+- stable plugin execution issue codes, failure-to-`ERROR` behavior, append-only
+  run transitions, crash recovery, and deterministic replay requirements;
+- exact upstream reference review with three shallow external clones and two
+  source-only fixed revisions; no third-party source copied or dependency added.
+
 ## Not implemented
 
 Non-loopback/TLS API deployment, reverse-proxy trust, hostile-local-user
@@ -285,7 +299,8 @@ defense, managed online revocation, durable/distributed sessions, per-client
 network rate controls, distributed rate state, HTTP artifact collection and
 file publication, complete rejected-request/warning ingestion, security/audit
 export/retention, administrator-resistant logging,
-external plugin execution/sandboxing/permission enforcement/run audit,
+external plugin execution, sandbox backend, permission/resource enforcement,
+and durable run-audit implementation,
 custom GitHub Checks/PR annotations/API writes,
 managed/encrypted/hardware-backed key custody, trusted timestamps, online
 revocation, CI workload identity federation, database authorization,
@@ -361,3 +376,6 @@ Phase 16 acceptance is recorded in
 `reports/PHASE_16_GITHUB_ACTIONS_GATE_ACCEPTANCE_REPORT.md`.
 Phase 17 acceptance is recorded in
 `reports/PHASE_17_PLUGIN_SDK_DISCOVERY_ACCEPTANCE_REPORT.md`.
+Phase 18 environment/reference review and the non-executing security-contract
+acceptance are recorded in
+`reports/PHASE_18_ENVIRONMENT_REFERENCE_AND_EXECUTION_CONTRACT_REPORT.md`.

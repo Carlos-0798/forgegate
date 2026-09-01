@@ -247,8 +247,26 @@
   entry-point, and installation-path disclosure risks.
 - [x] Prove clean core operation before installation, import-free discovery of
   one standalone generic fixture, and clean operation after uninstall.
-- [ ] Define plugin callable protocols, isolated execution, time/resource
-  limits, permission enforcement, failure-to-ERROR behavior, and durable run
-  audit before loading any external plugin code.
 - [ ] Move a production-quality example to an independent plugin repository
   only after separate remote creation/push authorization.
+
+## Phase 18 — External plugin execution security contract
+
+- [x] Review exact licensed upstream revisions for attestation envelopes,
+  attestor schemas, policy/enforcement separation, plugin contracts, and
+  evidence-aware security checks without copying or vendoring source.
+- [x] Define an out-of-process versioned callable protocol with immutable input
+  subjects, content-derived run plans, broker-owned I/O, and validated output.
+- [x] Define deny-by-default declared/approved/enforced permission subsets,
+  explicit isolation tiers, mandatory resource limits, and fail-closed platform
+  behavior.
+- [x] Define stable failure-to-`ERROR` mapping and append-only durable run-audit
+  semantics before loading external plugin code.
+- [x] Preserve Phase 17 `execution=NOT_LOADED` behavior and explicitly reject
+  same-process third-party plugin execution.
+- [ ] Implement strict run-plan, protocol-message, transition, and result
+  models with JSON Schemas and content-derived identities.
+- [ ] Implement and adversarially verify a `SANDBOXED` backend on each platform
+  that will be advertised as supporting external plugins.
+- [ ] Implement append-only `plugin_runs`, crash recovery, broker-owned staged
+  inputs, output re-registration, and clean-wheel hostile-fixture tests.

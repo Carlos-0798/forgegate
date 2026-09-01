@@ -110,7 +110,8 @@
 | Import-free plugin discovery | entry-point metadata + import-hostile package | PASS — code remains `NOT_LOADED`; local + private CI |
 | Plugin compatibility/failure isolation | compatible/incompatible/invalid/conflict cases | PASS — discovery metadata only; no runtime execution |
 | Plugin install/uninstall independence | standalone fixture wheel + clean ForgeGate wheel | PASS — local + three-platform clean-package smoke; no optional dependency retained |
-| External plugin execution and audit | sandbox/permissions/timeouts/plugin_runs design | NOT IMPLEMENTED — no plugin callable is loaded |
+| Plugin execution security contract | exact upstream/license traceability + architecture/threat review | DESIGN PASS — protocol, permissions, isolation tiers, limits, errors, and audit semantics defined; no code loaded |
+| External plugin execution and audit | sandbox backend/permissions/timeouts/plugin_runs implementation | NOT IMPLEMENTED — no plugin callable is loaded |
 | Registered-project candidate authority | application/CLI/API/store tests | PASS — unregistered project and missing track fail closed |
 | Release-track normalization | underscore compatibility plus ambiguity tests | PASS — new candidate/policy identity is canonical hyphen form |
 | Project/candidate discovery | bounded page model, stable cursor, CLI/API, installed-wheel smoke | PASS — candidates are project-scoped |
