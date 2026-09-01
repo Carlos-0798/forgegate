@@ -2,14 +2,14 @@
 
 - Date: 2026-09-01
 - Version: 0.1.0.dev24
-- Stage: Phase 17 import-free Plugin SDK discovery foundation implemented;
-  locally verified with cross-platform verification pending
+- Stage: Phase 17 import-free Plugin SDK discovery foundation implemented,
+  locally and cross-platform verified
 - Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, offline GitHub gating, and bounded import-free plugin metadata discovery; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
-- Remote/publication status: private `Carlos-0798/forgegate` remains at the
-  Phase 16 accepted baseline while Phase 17 local verification is in progress;
-  no public release, License, or LinkedIn publication authorized
+- Remote/publication status: private `Carlos-0798/forgegate` synchronized
+  through the Phase 17 accepted baseline; no public release, License, or
+  LinkedIn publication authorized
 
 ## Implemented
 
@@ -328,10 +328,11 @@ artifact payload/replay export, and hardware access.
 - repository-external ForgeGate installation plus sample-plugin
   install/discover/uninstall independence smoke: PASS
 - Git Bash shell-script syntax check: PASS
-- latest completed GitHub Actions baseline: Phase 16 run 33538658047 PASS on
-  Windows, Ubuntu, and macOS; each platform completed `verify.py` and
-  `release_smoke.py` for implementation commit `3d0aaf1`, and the dependent
-  Ubuntu job passed the real composite Action against the generic fixture
+- latest completed GitHub Actions baseline: Phase 17 run 33561999025 PASS on
+  Windows, Ubuntu, and macOS; each platform completed `verify.py` with 699
+  tests and `release_smoke.py` for implementation commit
+  `7290efd9f42ab37ce06d7cef4a32c9c18e6e5551`, and the dependent Ubuntu job passed
+  the real composite Action against the generic fixture
 - private GitHub synchronization: `main` pushed with noreply commit identity;
   repository visibility, default branch, About, and ten Topics read back
 

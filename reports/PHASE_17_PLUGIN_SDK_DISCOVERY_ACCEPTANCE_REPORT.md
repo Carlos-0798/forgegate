@@ -2,10 +2,9 @@
 
 - Date: 2026-09-01
 - Version: `0.1.0.dev24`
-- Stage: implemented and locally verified; private cross-platform CI
-  confirmation pending
-- Evidence class: local-host software tests over synthetic distribution
-  metadata and a standalone generic fixture
+- Stage: implemented, privately synchronized, and cross-platform verified
+- Evidence class: local-host and private CI software tests over synthetic
+  distribution metadata and a standalone generic fixture
 
 ## Accepted scope
 
@@ -47,11 +46,12 @@ Phase 17 adds a safe metadata foundation before external plugin execution:
   plugin wheel, zero-plugin discovery, import-free compatible discovery,
   versioned report validation, uninstall, and zero-plugin recovery
 
-All three skipped tests require Windows symlink creation, which this host does
-not permit. The Phase 17 skipped case directly exercises manifest-symlink
-rejection; missing, external, oversized, unlisted, malformed, depth/node, and
-other unsafe metadata paths passed. Cross-platform CI will exercise the same
-suite, but a host-unavailable symlink case remains skipped rather than PASS.
+All three local skips require Windows symlink creation, which this host does not
+permit. The Phase 17 skipped case directly exercises manifest-symlink rejection;
+missing, external, oversized, unlisted, malformed, depth/node, and other unsafe
+metadata paths passed locally. Private CI executed all 699 tests without skips
+on each supported runner, so the local host limitation remains recorded without
+being generalized to the cross-platform result.
 
 ## Explicit limitations
 
@@ -68,6 +68,12 @@ suite, but a host-unavailable symlink case remains skipped rather than PASS.
 
 ## Cross-platform evidence
 
-Private synchronization and Windows/Ubuntu/macOS CI confirmation are pending.
-This section must be updated with the exact implementation commit and run before
-the Phase is reported as cross-platform verified.
+- Implementation commit:
+  `7290efd9f42ab37ce06d7cef4a32c9c18e6e5551`
+- Private GitHub Actions run:
+  `33561999025`
+- Windows, Ubuntu, and macOS each passed all 699 tests in `verify.py` and the
+  complete `release_smoke.py` workflow, including clean ForgeGate install plus
+  standalone sample-plugin install, import-free discovery, report validation,
+  uninstall, and zero-plugin recovery.
+- The dependent generic-fixture composite Action smoke job also passed.

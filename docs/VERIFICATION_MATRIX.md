@@ -19,7 +19,7 @@
 | mypy strict | package and verification tools | PASS |
 | Source distribution contents | manifest assertion | PASS |
 | Clean release installation | temporary sdist/wheel/venv smoke | PASS |
-| Windows/Linux/macOS CI | GitHub Actions | PASS — `verify.py` + `release_smoke.py`, Phase 16 run 33538658047 (`3d0aaf1`) |
+| Windows/Linux/macOS CI | GitHub Actions | PASS — `verify.py` + `release_smoke.py`, Phase 17 run 33561999025 (`7290efd`) |
 | Artifact root and byte identity | unit/adversarial tests | PASS — local host |
 | Stable artifact read/change rejection | simulated metadata cases | PASS — local host |
 | Actual Windows symlink escape | privileged symlink fixture | NOT RUN — host disallowed symlink creation |
@@ -103,13 +103,13 @@
 | GitHub Action report contract | model/identity/Schema/loader tests | PASS — content-derived v1 report; local host |
 | Portable bundle to CI commit binding | strict verifier + complete exact object ID | PASS — partial/invalid/mismatch rejected; local host |
 | GitHub Job Summary and outputs | escaping, truncation, size/path/adversarial tests | PASS — bounded append-only runner files; local host |
-| GitHub composite Action | committed generic fixture + real workflow job | PASS — private CI run 33538658047 (`3d0aaf1`) |
+| GitHub composite Action | committed generic fixture + real workflow job | PASS — private CI run 33561999025 (`7290efd`) |
 | Installed GitHub gate | clean-wheel portable-bundle/summary/output/report smoke | PASS — local host |
 | Custom GitHub Checks/PR/API writes | token/permissions/OIDC design | NOT IMPLEMENTED — no token requested and no GitHub API called |
-| Plugin manifest contract | model/identity/Schema/loader/adversarial tests | PASS — bounded content-derived v1 metadata; local host |
-| Import-free plugin discovery | entry-point metadata + import-hostile package | PASS — code remains `NOT_LOADED`; local host |
+| Plugin manifest contract | model/identity/Schema/loader/adversarial tests | PASS — bounded content-derived v1 metadata; local + private CI |
+| Import-free plugin discovery | entry-point metadata + import-hostile package | PASS — code remains `NOT_LOADED`; local + private CI |
 | Plugin compatibility/failure isolation | compatible/incompatible/invalid/conflict cases | PASS — discovery metadata only; no runtime execution |
-| Plugin install/uninstall independence | standalone fixture wheel + clean ForgeGate wheel | PASS — clean-package smoke; no optional dependency retained |
+| Plugin install/uninstall independence | standalone fixture wheel + clean ForgeGate wheel | PASS — local + three-platform clean-package smoke; no optional dependency retained |
 | External plugin execution and audit | sandbox/permissions/timeouts/plugin_runs design | NOT IMPLEMENTED — no plugin callable is loaded |
 | Registered-project candidate authority | application/CLI/API/store tests | PASS — unregistered project and missing track fail closed |
 | Release-track normalization | underscore compatibility plus ambiguity tests | PASS — new candidate/policy identity is canonical hyphen form |
