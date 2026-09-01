@@ -55,6 +55,13 @@ Phase 9 implementation commit `61c7726` was synchronized to the same private
 passed on Windows, Ubuntu, and macOS; every job again executed both development
 verification and clean-install release smoke.
 
+Phase 15 implementation commit `3f00d91` was synchronized to the same private
+`main` branch. Run
+[`33465814655`](https://github.com/Carlos-0798/forgegate/actions/runs/33465814655)
+passed on Windows, Ubuntu, and macOS; every job executed both `tools/verify.py`
+and `tools/release_smoke.py`, including installed SQLite v8 security-event
+persistence and OpenAPI operation coverage.
+
 ## Boundaries retained
 
 - No License was added.

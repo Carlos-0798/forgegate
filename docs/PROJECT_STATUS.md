@@ -299,9 +299,9 @@ artifact payload/replay export, and hardware access.
 - complete sdist manifest and wheel build: PASS
 - repository-external wheel installation and CLI smoke: PASS
 - Git Bash shell-script syntax check: PASS
-- latest completed GitHub Actions baseline: Phase 14 run 33461739673 PASS on
+- latest completed GitHub Actions baseline: Phase 15 run 33465814655 PASS on
   Windows, Ubuntu, and macOS; each platform completed `verify.py` and
-  `release_smoke.py` for implementation commit `d226816`
+  `release_smoke.py` for implementation commit `3f00d91`
 - private GitHub synchronization: `main` pushed with noreply commit identity;
   repository visibility, default branch, About, and ten Topics read back
 

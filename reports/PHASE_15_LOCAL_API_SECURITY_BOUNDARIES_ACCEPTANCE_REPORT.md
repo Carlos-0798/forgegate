@@ -2,7 +2,7 @@
 
 - Date: 2026-08-31
 - Version: `0.1.0.dev22`
-- Stage: locally implemented and verified; cross-platform CI pending at report creation
+- Stage: implemented, locally verified, and cross-platform CI verified
 - Evidence class: local-host software tests and clean-install packaging smoke
 
 ## Accepted scope
@@ -53,5 +53,9 @@ Phase 15 API-security test.
   deployment, hardware validation, MSP430 access, or AFE runtime access is
   claimed.
 
-Cross-platform GitHub Actions evidence will be recorded after the private `main`
-branch accepts the implementation checkpoint.
+## Cross-platform evidence
+
+Private `main` implementation commit `3f00d91` triggered GitHub Actions run
+[`33465814655`](https://github.com/Carlos-0798/forgegate/actions/runs/33465814655).
+Windows, Ubuntu, and macOS all passed both `python tools/verify.py` and
+`python tools/release_smoke.py`.
