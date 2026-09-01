@@ -44,6 +44,12 @@ profile replacements and bounded version history. The
 profile ID/version to candidate identity; v1 remains committed for stateless
 and legacy compatibility.
 
+`forgegate.assurance-bundle.v1.schema.json` describes the portable combination
+of the exact project profile, evidence binding, policy material, and release
+attestation. `forgegate.assurance-bundle-manifest.v1.schema.json` describes the
+canonical README and machine-document byte sizes and SHA-256 entries. Both are
+unsigned local integrity contracts, not signatures or producer identity.
+
 `forgegate.benchmark.v1.schema.json` is the ForgeGate-owned Benchmark artifact
 contract. `analog-validation.result-export.v1.schema.json` is ForgeGate's
 consumer-side structural mirror of the upstream Studio contract; it does not

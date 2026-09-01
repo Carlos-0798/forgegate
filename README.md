@@ -8,7 +8,7 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 10 profile-authorized policy materialization implemented;
+**Phase 11 portable assurance bundle implemented;
 not production-ready.**
 
 This private-development checkpoint provides a working Python 3.12 CLI and a
@@ -41,6 +41,9 @@ current immutable project profile -> profile-bound release candidate
                               |
                               v
         immutable transition history + unsigned local attestation
+                              |
+                              v
+       content-addressed portable bundle + offline verification
 ```
 
 The core remains domain-neutral. Analog Validation Studio is consumed only
@@ -51,12 +54,12 @@ collector rather than a runtime or hardware dependency.
 
 | Gate | Result | Evidence level |
 |---|---|---|
-| Python tests | 585 passed, 1 skipped because Windows symlink creation was unavailable | Local host test |
-| Branch-aware coverage | 98.48% across 5,085 statements and 1,380 branches | Local host test |
+| Python tests | 602 passed, 1 skipped because Windows symlink creation was unavailable | Local host test |
+| Branch-aware coverage | 98.30% across 5,376 statements and 1,450 branches | Local host test |
 | Static quality gates | Ruff, formatting, and strict mypy passed | Local host test |
 | Contracts | JSON Schema and OpenAPI drift checks passed | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
-| GitHub Actions | Latest completed remote baseline; Phase 10 run pending private sync | PASS — [Phase 9 run 33436111147](https://github.com/Carlos-0798/forgegate/actions/runs/33436111147) |
+| GitHub Actions | Phase 10 completed on Windows, Ubuntu, and macOS | PASS — [run 33444090340](https://github.com/Carlos-0798/forgegate/actions/runs/33444090340) |
 | Hardware/device behavior | Not exercised by ForgeGate | Out of scope |
 
 ## Key design decisions
@@ -72,6 +75,9 @@ collector rather than a runtime or hardware dependency.
   that authorized creation; later revisions cannot reinterpret them.
 - New terminal decisions retain the exact profile-authorized policy bytes and
   bind evaluation v2 to their material ID, SHA-256, and frozen profile.
+- Portable exports bind the frozen profile, evidence binding, exact policy
+  material, and attestation into deterministic bytes that verify without the
+  source database or project tree.
 - Project revisions are complete append-only replacements guarded by expected
   profile version and exact idempotency; legacy candidates remain readable
   without fabricated profile bindings.
@@ -119,7 +125,7 @@ Implemented and host-verified in this checkpoint:
 - mandatory policy-evaluation binding for PASS/FAIL/REVIEW terminal states;
 - stateless `candidate create` and `candidate transition` CLI previews with
   committed structural and evaluation-bound Golden outputs;
-- a local SQLite v6 candidate/project store with WAL, FULL synchronous durability,
+- a local SQLite v7 candidate/project store with WAL, FULL synchronous durability,
   foreign keys, exact application/schema identity, and explicit transactions;
 - canonical append-only candidate snapshots and transition events with an
   optimistic current-revision pointer and immutable idempotency responses;
@@ -206,6 +212,10 @@ Implemented and host-verified in this checkpoint:
   non-fabricating v1-v6 migration semantics;
 - `candidate materialize-policy`, `evaluate`, and `show-policy`, with path-free
   REST evaluation and policy-material readback.
+- `forgegate.assurance-bundle.v1` and manifest contracts with deterministic,
+  atomic, content-addressed directory publication;
+- `candidate export-assurance` plus database-independent `verify-assurance`,
+  strict canonical-byte checks, and explicit source-artifact limitations.
 
 
 </details>
@@ -409,6 +419,24 @@ bytes; ForgeGate does not overwrite a conflicting target. Database persistence
 commits before filesystem publication, so an output failure is recovered by
 rerunning the same command.
 
+Export the complete retained assurance state and verify it without access to
+the database or source project:
+
+```powershell
+.\.venv\Scripts\python.exe -m forgegate candidate export-assurance `
+  work/forgegate.db <candidate_id-from-create> `
+  --output-root work/assurance
+
+.\.venv\Scripts\python.exe -m forgegate verify-assurance `
+  work/assurance/assurance-<bundle-sha256>
+```
+
+The portable directory contains canonical `assurance-bundle.json`, `README.md`,
+and `manifest.json`. It embeds the retained evidence binding and exact policy
+bytes, but not the collector source-artifact bytes; offline verification proves
+the internal document and byte associations, not producer identity or a fresh
+collector/hardware run.
+
 For a schema-v1, v2, v3, v4, or v5 database, migration is explicit:
 
 ```powershell
@@ -524,11 +552,10 @@ another optional collector.
 
 ## Roadmap
 
-The Phase 10 local CLI/API MVP now binds frozen profile authority to exact
-policy bytes. The next core slice will be selected from portable assurance
-bundling and authenticated identity; identity must still precede any
-non-loopback deployment. MSP430 compatibility remains gated on a separately
-frozen public result contract. See
+The Phase 11 local MVP now exports its complete retained decision state for
+database-independent offline verification. Authenticated identity remains the
+next security boundary and must precede any non-loopback deployment. MSP430
+compatibility remains gated on a separately frozen public result contract. See
 [docs/ROADMAP.md](docs/ROADMAP.md) for acceptance-level tasks.
 
 ## License status

@@ -35,6 +35,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/PROJECT_AUTHORITY_AND_DISCOVERY.md",
     "docs/architecture/PROJECT_PROFILE_REVISIONS.md",
     "docs/architecture/POLICY_MATERIALIZATION.md",
+    "docs/architecture/PORTABLE_ASSURANCE_BUNDLES.md",
     "examples/sample-python-api/artifacts/junit.xml",
     "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
@@ -64,11 +65,14 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_8_PROJECT_AUTHORITY_DISCOVERY_ACCEPTANCE_REPORT.md",
     "reports/PHASE_9_PROJECT_PROFILE_REVISIONS_ACCEPTANCE_REPORT.md",
     "reports/PHASE_10_POLICY_MATERIALIZATION_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_11_PORTABLE_ASSURANCE_BUNDLE_ACCEPTANCE_REPORT.md",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v2.schema.json",
     "schemas/forgegate.policy-material.v1.schema.json",
+    "schemas/forgegate.assurance-bundle.v1.schema.json",
+    "schemas/forgegate.assurance-bundle-manifest.v1.schema.json",
     "schemas/forgegate.release-candidate.v1.schema.json",
     "schemas/forgegate.release-candidate.v2.schema.json",
     "schemas/forgegate.candidate-transition.v1.schema.json",
@@ -115,6 +119,7 @@ REQUIRED_SDIST_PATHS = (
     "tests/test_project_authority_discovery.py",
     "tests/test_project_profile_revisions.py",
     "tests/test_policy_materialization.py",
+    "tests/test_assurance_bundle.py",
 )
 
 
@@ -700,6 +705,39 @@ def main() -> int:
         ]
         run(attest, cwd=root)
         run(attest, cwd=root)
+        assurance_output = root / "assurance"
+        export_assurance = [
+            str(python),
+            "-m",
+            "forgegate",
+            "candidate",
+            "export-assurance",
+            str(candidate_store),
+            candidate_id,
+            "--output-root",
+            str(assurance_output),
+        ]
+        run(export_assurance, cwd=root)
+        run(export_assurance, cwd=root)
+        assurance_directories = [path for path in assurance_output.iterdir() if path.is_dir()]
+        if len(assurance_directories) != 1:
+            raise SystemExit("installed wheel did not publish exactly one assurance directory")
+        assurance_directory = assurance_directories[0]
+        run(
+            [str(python), "-m", "forgegate", "verify-assurance", str(assurance_directory)],
+            cwd=root,
+        )
+        for document in ("assurance-bundle.json", "manifest.json"):
+            run(
+                [
+                    str(python),
+                    "-m",
+                    "forgegate",
+                    "validate-config",
+                    str(assurance_directory / document),
+                ],
+                cwd=root,
+            )
         run(
             [
                 str(python),

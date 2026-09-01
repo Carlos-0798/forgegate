@@ -1,6 +1,7 @@
 from pydantic import BaseModel
 
 from forgegate.assembly import EvidenceBundleAssembly
+from forgegate.assurance import AssuranceBundle, AssuranceBundleManifest
 from forgegate.attestations import ReleaseAttestation
 from forgegate.audit import AuditEvent, AuditEventPage
 from forgegate.candidates import CandidateEvidenceBinding
@@ -24,6 +25,8 @@ from forgegate.projects import (
 )
 
 SCHEMAS: dict[str, type[BaseModel]] = {
+    "forgegate.assurance-bundle.v1": AssuranceBundle,
+    "forgegate.assurance-bundle-manifest.v1": AssuranceBundleManifest,
     "forgegate.project.v1": ProjectConfig,
     "forgegate.policy.v1": PolicyConfig,
     "forgegate.evidence-bundle.v1": EvidenceBundle,

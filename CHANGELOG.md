@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.0.dev18 — 2026-08-31
+
+- Added self-validating `forgegate.assurance-bundle.v1` exports that combine a
+  frozen project profile, evidence binding, exact policy material, and release
+  attestation without requiring the source database for later verification.
+- Added deterministic content-addressed publication with canonical JSON,
+  human-readable evidence limits, and a self-identifying file size/SHA-256
+  manifest.
+- Added `candidate export-assurance` and top-level `verify-assurance` CLI paths
+  with strict directory members, byte limits, UTF-8/JSON parsing, identity,
+  association, canonical-byte, and replay checks.
+- Preserved `unsigned_local` assurance and explicitly declared that referenced
+  source artifact bytes are not embedded or independently recollected.
+- Added Schema, adversarial publication/verification tests, documentation, and
+  clean-install export-to-offline-verification coverage.
+
 ## 0.1.0.dev17 — 2026-08-31
 
 - Added self-validating `forgegate.policy-material.v1` documents that retain

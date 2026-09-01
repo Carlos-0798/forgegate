@@ -30,6 +30,11 @@ from forgegate.assembly import (
     EvidenceBundleAssembly,
     assemble_evidence_bundle,
 )
+from forgegate.assurance import (
+    AssuranceBundleError,
+    publish_assurance_bundle,
+    verify_assurance_bundle,
+)
 from forgegate.attestations import AttestationPublishError, publish_attestation_bundle
 from forgegate.candidates import (
     CandidateDocument,
@@ -89,7 +94,7 @@ def doctor() -> None:
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
         "supported_artifact_schemas": sorted(ARTIFACT_SCHEMAS),
-        "phase": "phase10-profile-authorized-policy-material",
+        "phase": "phase11-portable-assurance-bundle",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 
@@ -123,6 +128,27 @@ def export_schemas(
         payload = json.dumps(schema, indent=2, sort_keys=True) + "\n"
         target.write_bytes(payload.encode("utf-8"))
         typer.echo(str(target))
+
+
+@app.command("verify-assurance")
+def verify_assurance(
+    directory: Annotated[Path, typer.Argument(exists=True, file_okay=False, readable=True)],
+) -> None:
+    """Verify a portable assurance directory without a database or project tree."""
+    try:
+        verified = verify_assurance_bundle(directory)
+    except AssuranceBundleError as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    payload = {
+        "status": "VALID",
+        "bundle_id": verified.bundle.bundle_id,
+        "candidate_id": verified.bundle.attestation.candidate.candidate_id,
+        "decision": verified.bundle.attestation.candidate.status.value,
+        "assurance": verified.bundle.assurance,
+        "source_artifact_bytes": verified.bundle.source_artifact_bytes,
+    }
+    typer.echo(json.dumps(payload, indent=2, sort_keys=True))
 
 
 @app.command("export-openapi")
@@ -693,6 +719,36 @@ def candidate_show_attestation(
         typer.echo(f"ERROR: {exc}", err=True)
         raise typer.Exit(code=3) from exc
     typer.echo(attestation.model_dump_json(indent=2))
+
+
+@candidate_app.command("export-assurance")
+def candidate_export_assurance(
+    database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    candidate_id: Annotated[str, typer.Argument()],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+) -> None:
+    """Publish a content-addressed portable assurance bundle from durable state."""
+    try:
+        bundle = CandidateApplication.for_database(database).get_assurance_bundle(candidate_id)
+        published = publish_assurance_bundle(bundle, output_root)
+    except (
+        AssuranceBundleError,
+        CandidateLifecycleError,
+        CandidateStoreError,
+        ValidationError,
+        ValueError,
+    ) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    payload = {
+        "bundle": bundle.model_dump(mode="json"),
+        "bundle_directory": str(published.directory),
+        "bundle_path": str(published.bundle_path),
+        "readme_path": str(published.readme_path),
+        "manifest_path": str(published.manifest_path),
+        "output_replayed": published.replayed,
+    }
+    typer.echo(json.dumps(payload, indent=2, sort_keys=True))
 
 
 def _load_policy_evaluation(path: Path | None) -> PolicyEvaluationDocument | None:

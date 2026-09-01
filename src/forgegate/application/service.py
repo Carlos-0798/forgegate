@@ -20,6 +20,7 @@ from forgegate.application.models import (
     ProjectReviseCommand,
 )
 from forgegate.artifacts import ArtifactRegistry
+from forgegate.assurance import AssuranceBundle, create_assurance_bundle
 from forgegate.attestations import ReleaseAttestation
 from forgegate.audit import AuditEventPage
 from forgegate.candidates import (
@@ -303,6 +304,29 @@ class CandidateApplication:
 
     def get_attestation(self, candidate_id: str) -> ReleaseAttestation:
         return self.repository.get_attestation(candidate_id)
+
+    def get_assurance_bundle(self, candidate_id: str) -> AssuranceBundle:
+        candidate = self.repository.get(candidate_id)
+        if not isinstance(candidate, ProfileBoundReleaseCandidate):
+            raise CandidateLifecycleError(
+                "CANDIDATE_ASSURANCE_PROFILE_REQUIRED",
+                "portable assurance requires a profile-bound candidate",
+            )
+        try:
+            return create_assurance_bundle(
+                project_profile=self.repository.get_project_profile(
+                    candidate.project_id,
+                    candidate.project_profile_version,
+                ),
+                evidence_binding=self.repository.get_evidence_binding(candidate_id),
+                policy_material=self.repository.get_policy_material(candidate_id),
+                attestation=self.repository.get_attestation(candidate_id),
+            )
+        except ValueError as exc:
+            raise CandidateLifecycleError(
+                "CANDIDATE_ASSURANCE_INVALID",
+                str(exc),
+            ) from exc
 
 
 __all__ = ["DECISION_STATUS", "CandidateApplication"]

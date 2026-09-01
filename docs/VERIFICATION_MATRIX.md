@@ -103,10 +103,14 @@
 | Material-bound evaluation v2 | application/store/CLI/REST integration | PASS — material/profile/evidence/time bound atomically |
 | SQLite v1-v6-to-v7 migration | migration and legacy semantics | PASS — no historical policy material fabricated |
 | Path-free REST policy workflow | strict material request + retained readback | PASS — no client-selected server policy path |
+| Portable assurance document | strict model/Schema/cross-document identity tests | PASS — profile, evidence, material, evaluation, lifecycle, and attestation bound |
+| Content-addressed publication | exact replay/conflict/member/tamper tests | PASS — canonical JSON/Markdown/manifest bytes |
+| Database-independent verification | exported directory verified without store or project reads | PASS — local host |
+| Portable evidence boundary | model field, generated README, and adversarial tests | PASS — source artifact bytes explicitly not embedded |
 | HTTP artifact loading/file publication | no loader/output path; nested metadata is not dereferenced | OUT OF SCOPE |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
 
-See `reports/PHASE_10_POLICY_MATERIALIZATION_ACCEPTANCE_REPORT.md` for the
+See `reports/PHASE_11_PORTABLE_ASSURANCE_BUNDLE_ACCEPTANCE_REPORT.md` for the
 current exact local test and coverage result. Earlier acceptance reports remain
 historical records.

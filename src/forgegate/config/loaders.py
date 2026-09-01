@@ -4,6 +4,7 @@ import yaml
 from pydantic import ValidationError
 
 from forgegate.assembly import EvidenceBundleAssembly
+from forgegate.assurance import AssuranceBundle, AssuranceBundleManifest
 from forgegate.attestations import ReleaseAttestation
 from forgegate.candidates import CandidateEvidenceBinding
 from forgegate.candidates.models import (
@@ -35,6 +36,8 @@ type SupportedConfig = (
     | CandidateEvidenceBinding
     | ReleaseAttestation
     | ProjectProfileRevision
+    | AssuranceBundle
+    | AssuranceBundleManifest
 )
 
 SCHEMA_MODELS: dict[str, type[SupportedConfig]] = {
@@ -52,6 +55,8 @@ SCHEMA_MODELS: dict[str, type[SupportedConfig]] = {
     "forgegate.candidate-evidence-binding.v1": CandidateEvidenceBinding,
     "forgegate.release-attestation.v1": ReleaseAttestation,
     "forgegate.project-profile-revision.v1": ProjectProfileRevision,
+    "forgegate.assurance-bundle.v1": AssuranceBundle,
+    "forgegate.assurance-bundle-manifest.v1": AssuranceBundleManifest,
 }
 
 

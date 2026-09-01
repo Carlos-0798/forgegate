@@ -264,6 +264,20 @@ The current slice has no authenticated producer and runs no plugin code.
 | Migration invents historical policy bytes | v1-v6 candidates receive `policy_material_required = 0`; no material row or authenticity claim is synthesized |
 | Policy hash is mistaken for approval or producer identity | Contract and output documentation state unsigned-local byte association only |
 
+## Addressed in the Phase 11 portable-assurance slice
+
+| Threat | Current control |
+|---|---|
+| Export omits the exact policy used for the decision | Bundle requires the retained policy material and cross-checks material ID, artifact hash, profile, track, and evaluation |
+| Export silently joins records from different candidates | Model checks candidate, project profile, evidence binding, material, evaluation, lifecycle, and attestation associations before deriving `bundle_id` |
+| One portable file is altered or removed | Exact member set, file SHA-256/size manifest, canonical regeneration, and content-addressed directory name fail closed |
+| Duplicate JSON keys or non-finite values bypass review | Offline loader uses strict UTF-8 JSON with duplicate-key and non-finite-number rejection before Pydantic validation |
+| Existing export is silently overwritten | Atomic staged publication permits exact replay only and rejects conflicting target bytes |
+| Symlink or unexpected member redirects verification | Publisher and verifier reject symlink roots/members, non-regular files, and any member outside the three-file contract |
+| Portable verification dereferences attacker-controlled metadata paths | Verifier reads only its three fixed local filenames and never opens embedded artifact or policy paths |
+| Manifest or hash is mistaken for authentication | Bundle remains explicitly `unsigned_local`; documentation separates byte integrity from producer/operator identity and trusted time |
+| Embedded receipts are mistaken for source-artifact replay | Machine field and README declare `source_artifact_bytes=not_embedded`; no physical or production evidence is promoted |
+
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;
@@ -271,10 +285,8 @@ The current slice has no authenticated producer and runs no plugin code.
   stability check;
 - malicious plugins and subprocess isolation;
 - CI identity verification, secret redaction, signing, revocation, trusted
-  timestamping, and key
-  management;
+  timestamping, and key management;
 - database authorization, API authentication, audit retention, backup, repair,
-  encryption at rest, and administrator-resistant tamper evidence.
-- portable attestation bundling of the complete retained policy material;
+  encryption at rest, and administrator-resistant tamper evidence;
 - an exact streaming request-body limiter for unknown-length/chunked HTTP
   bodies; the current 4 MiB gate covers declared `Content-Length` only.

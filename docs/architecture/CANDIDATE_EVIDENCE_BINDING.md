@@ -83,9 +83,9 @@ The current release-attestation v1 document embeds the terminal evaluation and
 therefore its evidence fingerprint, but it does not embed the complete
 candidate-evidence binding or assembly receipts. The authoritative companion
 record is available through `candidate show-evidence`, and every attestation
-load first validates the same SQLite candidate history. A future attestation
-schema can make the companion relationship portable without silently changing
-v1.
+load first validates the same SQLite candidate history. Phase 11 preserves
+attestation v1 and makes the companion relationship portable through the
+separate `forgegate.assurance-bundle.v1` envelope.
 
 SHA-256 provides deterministic local content identity, not authentication.
 This feature does not verify a producer, CI run, commit authority, operator,

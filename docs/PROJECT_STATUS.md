@@ -1,8 +1,8 @@
 # Project status
 
 - Date: 2026-08-31
-- Version: 0.1.0.dev17
-- Stage: Phase 10 profile-authorized policy-materialization slice implemented
+- Version: 0.1.0.dev18
+- Stage: Phase 11 portable-assurance bundle slice implemented
 - Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, and bounded state discovery; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
@@ -192,6 +192,18 @@
   immutable material rows, rollback fault injection, and corruption checks;
 - explicit v1-v6 migration that assigns no historical material requirement and
   fabricates no policy bytes, approval, producer identity, or authenticity.
+- self-validating `forgegate.assurance-bundle.v1` joining the exact candidate
+  profile, evidence binding, policy material, evaluation, lifecycle, and
+  attestation under one content-derived identity;
+- deterministic three-file publication with canonical machine JSON,
+  human-readable limitations, and a self-identifying size/SHA-256 manifest;
+- database/project-independent `verify-assurance` with exact member, regular
+  file, byte-limit, UTF-8, duplicate-key, finite-number, identity, association,
+  canonical-byte, and directory-name gates;
+- exact export replay and conflict/tamper rejection without dereferencing any
+  path embedded in policy or evidence metadata;
+- explicit `unsigned_local`, retained-document verification scope and
+  `source_artifact_bytes=not_embedded` evidence boundary.
 
 ## Not implemented
 
@@ -201,8 +213,8 @@ audit export/retention,
 external plugins, GitHub integration,
 signatures/key management, database authorization, backup/repair, MSP430
 collector, Studio Phase 5
-human-readable report ingestion, authenticated provenance/signatures, portable
-attestation embedding of assembly receipts, and hardware access.
+human-readable report ingestion, authenticated provenance/signatures, source
+artifact payload/replay export, and hardware access.
 
 ## Accepted local checkpoint
 
@@ -210,8 +222,10 @@ attestation embedding of assembly receipts, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 585 passed, 1 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 98.48% across 5,085 statements and 1,380 branches
+- pytest: 602 passed, 1 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 98.30% across 5,376 statements and 1,450 branches
+- portable-assurance focus: 17 passed; assurance models 100% and portable
+  publication/verifier 95%
 - project-profile revision focus: 5 passed, including migration, corruption,
   REST, and CLI contracts
 - Analog Validation collector focus: 59 passed; 100% across 431 statements and
@@ -222,14 +236,14 @@ attestation embedding of assembly receipts, and hardware access.
   and 138 branches
 - committed JSON Schema and OpenAPI drift checks: PASS
 - project/policy/candidate/transition example documents: VALID
-- twenty canonical versioned document Schemas plus Benchmark and Analog
+- twenty-two canonical versioned document Schemas plus Benchmark and Analog
   Validation artifact Schemas: drift-checked and parsed
 - complete sdist manifest and wheel build: PASS
 - repository-external wheel installation and CLI smoke: PASS
 - Git Bash shell-script syntax check: PASS
-- latest completed GitHub Actions baseline: Phase 9 run 33436111147 PASS on Windows,
-  Ubuntu, and macOS; each platform completed `verify.py` and
-  `release_smoke.py` for commit `61c7726`; Phase 10 remote run pending private
+- latest completed GitHub Actions baseline: Phase 10 run 33444090340 PASS on
+  Windows, Ubuntu, and macOS; each platform completed `verify.py` and
+  `release_smoke.py` for commit `0962cf0`; Phase 11 remote run pending private
   synchronization
 - private GitHub synchronization: `main` pushed with noreply commit identity;
   repository visibility, default branch, About, and ten Topics read back
@@ -244,5 +258,6 @@ project-registry baseline and
 previous authority/discovery slice. See
 `reports/PHASE_9_PROJECT_PROFILE_REVISIONS_ACCEPTANCE_REPORT.md` for the
 previous slice and
-`reports/PHASE_10_POLICY_MATERIALIZATION_ACCEPTANCE_REPORT.md` for the current
-slice.
+`reports/PHASE_10_POLICY_MATERIALIZATION_ACCEPTANCE_REPORT.md` for the previous
+slice. Phase 11 acceptance is recorded in
+`reports/PHASE_11_PORTABLE_ASSURANCE_BUNDLE_ACCEPTANCE_REPORT.md`.

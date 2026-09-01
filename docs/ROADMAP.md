@@ -134,3 +134,17 @@
   policy document, never dereferencing client-controlled server paths.
 - [x] Define migration and legacy semantics without fabricating historical
   policy bytes or producer authenticity.
+
+## Phase 11 — portable assurance bundle
+
+- [x] Define a domain-neutral `forgegate.assurance-bundle.v1` that combines the
+  frozen project profile, evidence binding, exact policy material, and release
+  attestation with cross-document validation.
+- [x] Publish a deterministic content-addressed directory with canonical JSON,
+  human-readable limitations, and a SHA-256/size manifest.
+- [x] Add path-independent offline verification with strict member, size,
+  encoding, duplicate-key, canonical-byte, identity, and association checks.
+- [x] Verify exact replay and fail closed on altered, missing, extra, unsafe, or
+  renamed bundle content.
+- [x] Exercise export and database-independent verification from an installed
+  wheel while preserving the unsigned-local and source-artifact boundaries.

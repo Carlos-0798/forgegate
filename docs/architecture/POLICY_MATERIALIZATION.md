@@ -80,6 +80,7 @@ migration set the requirement marker to one.
 SHA-256 proves local byte identity and association only. The current
 `forgegate.release-attestation.v1` embeds the v2 evaluation and material ID but
 not the full policy-material bytes; the v7 database and policy read endpoint
-retain those bytes. A future portable attestation revision may embed or bundle
-the material. Authentication, signatures, trusted timestamps, policy approval,
+retain those bytes. Phase 11 keeps attestation v1 stable and instead includes
+the complete material in the separate `forgegate.assurance-bundle.v1` portable
+envelope. Authentication, signatures, trusted timestamps, policy approval,
 database authorization, and non-loopback operation remain deferred.
