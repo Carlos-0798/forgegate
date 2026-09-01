@@ -1,8 +1,8 @@
 # Project status
 
 - Date: 2026-08-31
-- Version: 0.1.0.dev20
-- Stage: Phase 13 authenticated local API foundation implemented
+- Version: 0.1.0.dev21
+- Stage: Phase 14 local session lifecycle and abuse controls implemented
 - Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, and bounded state discovery; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
@@ -230,12 +230,25 @@
 - strict `identity sign-api-challenge`, authentication routes, OpenAPI security
   scheme, adversarial authentication/authorization tests, and installed-wheel
   challenge/session smoke.
+- authenticated self-logout and operator-only exact-session revocation with
+  complete target-project coverage and non-enumerating not-found responses;
+- explicit reload from the fixed `serve --trust-store` startup path, requiring
+  the caller to remain an exact trusted operator and cover all projects in both
+  store versions;
+- pending-challenge invalidation and immediate incompatible-session removal on
+  successful changed trust-store reload, with validated no-op semantics;
+- three bounded process-local fixed-window counters for valid challenge
+  requests, session exchanges, and invalid Bearer attempts, returning `429`
+  with `Retry-After`;
+- lifecycle/reload/rate OpenAPI, adversarial tests, security documentation, and
+  installed-wheel smoke while retaining the loopback-only boundary.
 
 ## Not implemented
 
-Non-loopback/TLS API deployment, hostile-local-user defense, logout/live
-revocation, rate-based throttling, HTTP artifact collection and file
-publication, rejected-request/warning audit ingestion,
+Non-loopback/TLS API deployment, reverse-proxy trust, hostile-local-user
+defense, managed online revocation, durable/distributed sessions, per-client
+network rate controls, malformed-authentication-body throttling, HTTP artifact
+collection and file publication, rejected-request/warning/session-control audit ingestion,
 audit export/retention,
 external plugins, GitHub integration,
 managed/encrypted/hardware-backed key custody, trusted timestamps, online
@@ -251,9 +264,9 @@ artifact payload/replay export, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 637 passed, 1 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 97.90% across 6,076 statements and 1,602 branches
-- authenticated-API focus: 13 passed; authentication module 97.95%
+- pytest: 649 passed, 1 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 97.83% across 6,232 statements and 1,642 branches
+- authenticated-API focus: 25 passed; authentication module 96.60%
 - authenticated-identity focus: 22 passed; identity package 96.48%
 - portable-assurance focus: 17 passed; assurance models 100% and portable
   publication/verifier 95%
@@ -295,3 +308,5 @@ Phase 12 acceptance is recorded in
 `reports/PHASE_12_AUTHENTICATED_IDENTITY_FOUNDATION_ACCEPTANCE_REPORT.md`.
 Phase 13 acceptance is recorded in
 `reports/PHASE_13_AUTHENTICATED_LOCAL_API_ACCEPTANCE_REPORT.md`.
+Phase 14 acceptance is recorded in
+`reports/PHASE_14_LOCAL_SESSION_LIFECYCLE_ACCEPTANCE_REPORT.md`.

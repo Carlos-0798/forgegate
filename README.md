@@ -8,7 +8,7 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 13 authenticated local API foundation implemented;
+**Phase 14 local session lifecycle and abuse controls implemented;
 not production-ready.**
 
 This private-development checkpoint provides a working Python 3.12 CLI and an
@@ -53,6 +53,9 @@ current immutable project profile -> profile-bound release candidate
                               |
                               v
  project/role authorization -> authenticated audit actor on writes
+                              |
+                              v
+ logout / scoped revocation / fixed-path trust reload / bounded rate controls
 ```
 
 The core remains domain-neutral. Analog Validation Studio is consumed only
@@ -63,8 +66,8 @@ collector rather than a runtime or hardware dependency.
 
 | Gate | Result | Evidence level |
 |---|---|---|
-| Python tests | 637 passed, 1 skipped because Windows symlink creation was unavailable | Local host test |
-| Branch-aware coverage | 97.90% across 6,076 statements and 1,602 branches | Local host test |
+| Python tests | 649 passed, 1 skipped because Windows symlink creation was unavailable | Local host test |
+| Branch-aware coverage | 97.83% across 6,232 statements and 1,642 branches | Local host test |
 | Static quality gates | Ruff, formatting, and strict mypy passed | Local host test |
 | Contracts | JSON Schema and OpenAPI drift checks passed | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
@@ -97,6 +100,9 @@ collector rather than a runtime or hardware dependency.
 - Producers are read-only; operators may write and query project-scoped audit
   history. Successful API writes retain a public authenticated actor but never
   a private key or Bearer token.
+- Session logout, project-covering operator revocation, and fixed-startup-path
+  trust reload are explicit memory-only controls. Process-global fixed-window
+  authentication limits do not claim per-client network attribution.
 - Upstream AFE or future MSP430 results retain their original evidence level;
   ForgeGate does not relabel software or replay evidence as physical proof.
 
@@ -249,8 +255,17 @@ Implemented and host-verified in this checkpoint:
   inside the existing durable transaction, with no token or private-key
   persistence;
 - required `serve --trust-store`, strict `identity sign-api-challenge`, two
-  authentication endpoints, OpenAPI security declarations, adversarial tests,
-  and clean-wheel session smoke.
+  session-establishment endpoints, OpenAPI security declarations, adversarial
+  tests, and clean-wheel session smoke.
+- authenticated self-logout plus operator-only exact-session revocation whose
+  target projects must all be inside the caller's session scope;
+- explicit reload of only the trust-store path fixed at server startup, with
+  old/new global project coverage, exact caller reauthorization, pending
+  challenge invalidation, and incompatible-session removal;
+- bounded fixed-window controls for valid challenge requests, session
+  exchanges, and invalid Bearer attempts with `429` and `Retry-After`;
+- lifecycle/reload/rate OpenAPI contracts, adversarial tests, and installed
+  wheel smoke without durable session-control audit or remote-use claims.
 
 
 </details>
@@ -298,9 +313,12 @@ committed copy can be regenerated with:
 ```
 
 This API authenticates local callers and applies exact role/project authority,
-but has no TLS, remote deployment approval, hostile-local-user defense, managed
-session revocation, or trusted time. It is not approved for LAN, internet,
-shared-host, or production deployment.
+supports self-logout, scoped operator revocation, and explicit fixed-path trust
+reload, but has no TLS, remote deployment approval, hostile-local-user defense,
+durable/distributed sessions, managed online revocation, or trusted time. The
+process-global rate counters do not cover malformed bodies rejected before
+endpoint execution. It is not approved for LAN, internet, shared-host, or
+production deployment.
 
 Register and read one immutable project profile, then query its local audit
 events:
@@ -603,8 +621,11 @@ Not implemented yet:
 - rejected-request audit ingestion, audit export/retention, plugin execution,
   or product-level GitHub integration;
 - database-file authorization, backup/repair, managed or hardware-backed key
-  custody, live trust reload, online/per-session revocation, logout, trusted
-  timestamps, or CI workload identity federation;
+  custody, managed online revocation, durable/distributed session authority,
+  durable authentication-control audit, trusted timestamps, or CI workload
+  identity federation;
+- TLS/reverse-proxy trust, hostile-local-user defense, per-client network rate
+  controls, or rate limiting for malformed authentication request bodies;
 - MSP430 compatibility collection, AFE/MSP430 runtime integration, or any
   hardware operation;
 - production deployment or public release.
@@ -618,18 +639,21 @@ candidate lifecycle but does not authenticate it. Phase 12 can authenticate a
 portable bundle signer against an external local trust store. Phase 13 reuses
 that identity for a short-lived authenticated loopback API session and records
 the successful API actor, but does not authenticate source artifacts or protect
-the database from its administrator. SHA-256 is not producer authentication.
+the database from its administrator. Phase 14 adds memory-only logout,
+project-scoped revocation, fixed-path trust reload, and bounded global
+authentication counters; it does not make the service remotely safe. SHA-256
+is not producer authentication.
 The MSP430 controller may later expose a separate versioned artifact for
 another optional collector.
 
 ## Roadmap
 
-The Phase 13 local MVP adds authenticated API sessions, role/project
-authorization, and durable successful-write actor attribution without weakening
-the loopback-only service boundary. TLS, hostile-local-user defenses, live
-revocation, rate controls, and managed key lifecycle must still be designed and
-verified before any non-loopback deployment. MSP430 compatibility remains gated
-on a separately frozen public result contract. See
+The Phase 14 local MVP adds explicit session termination, constrained trust
+reload, and bounded authentication request controls without weakening the
+loopback-only service boundary. TLS, reverse-proxy identity, hostile-local-user
+defenses, durable security-event/session state, and managed key lifecycle must
+still be designed and verified before any non-loopback deployment. MSP430
+compatibility remains gated on a separately frozen public result contract. See
 [docs/ROADMAP.md](docs/ROADMAP.md) for acceptance-level tasks.
 
 ## License status

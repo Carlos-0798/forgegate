@@ -84,8 +84,11 @@ not enabled.
 These controls reduce accidental exposure and ordinary browser-origin access.
 Phase 13 authenticates a local key holder and authorizes exact projects, but it
 does not defend against a hostile local account, privileged packet observer, or
-memory reader. The current body guard does not provide an exact streaming limit for
-unknown-length/chunked requests. Any non-loopback, proxied, tunneled, shared, or
-production deployment remains prohibited until TLS/proxy trust,
-hostile-local-user defense, logout/live revocation, rate-limit, and
-streaming-boundary designs exist.
+memory reader. Phase 14 adds memory-only logout, scoped revocation, fixed-path
+trust reload, and global authentication request counters. The current body
+guard does not provide an exact streaming limit for unknown-length/chunked
+requests, and malformed authentication bodies fail before the Phase 14 endpoint
+counters. Any non-loopback, proxied, tunneled, shared, or production deployment
+remains prohibited until TLS/proxy trust, hostile-local-user defense, durable
+session/security-event state, per-client rate policy, and streaming-boundary
+designs exist.

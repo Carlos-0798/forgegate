@@ -241,6 +241,93 @@
         "title": "ApiSessionResponse",
         "type": "object"
       },
+      "ApiSessionRevocationResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "reason": {
+            "enum": [
+              "self_logout",
+              "operator_revocation"
+            ],
+            "title": "Reason",
+            "type": "string"
+          },
+          "revoked_at": {
+            "format": "date-time",
+            "title": "Revoked At",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.api-session-revocation.v1",
+            "default": "forgegate.api-session-revocation.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "session_id": {
+            "pattern": "^sess-[0-9a-f]{32}$",
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "revoked_at",
+          "reason"
+        ],
+        "title": "ApiSessionRevocationResponse",
+        "type": "object"
+      },
+      "ApiTrustStoreReloadResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "discarded_challenges": {
+            "minimum": 0.0,
+            "title": "Discarded Challenges",
+            "type": "integer"
+          },
+          "previous_trust_store_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Previous Trust Store Id",
+            "type": "string"
+          },
+          "reloaded_at": {
+            "format": "date-time",
+            "title": "Reloaded At",
+            "type": "string"
+          },
+          "retained_sessions": {
+            "minimum": 0.0,
+            "title": "Retained Sessions",
+            "type": "integer"
+          },
+          "revoked_sessions": {
+            "minimum": 0.0,
+            "title": "Revoked Sessions",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "forgegate.api-trust-store-reload.v1",
+            "default": "forgegate.api-trust-store-reload.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "trust_store_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Trust Store Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "previous_trust_store_id",
+          "trust_store_id",
+          "reloaded_at",
+          "discarded_challenges",
+          "revoked_sessions",
+          "retained_sessions"
+        ],
+        "title": "ApiTrustStoreReloadResponse",
+        "type": "object"
+      },
       "ArtifactReference": {
         "additionalProperties": false,
         "properties": {
@@ -2646,7 +2733,7 @@
   "info": {
     "summary": "Local release-assurance project and candidate API",
     "title": "ForgeGate Local API",
-    "version": "0.1.0.dev20"
+    "version": "0.1.0.dev21"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -2805,6 +2892,16 @@
             },
             "description": "Strict request validation failed"
           },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
+          },
           "500": {
             "content": {
               "application/json": {
@@ -2931,6 +3028,16 @@
             },
             "description": "Strict request validation failed"
           },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
+          },
           "500": {
             "content": {
               "application/json": {
@@ -2953,6 +3060,132 @@
           }
         },
         "summary": "Create Auth Challenge Endpoint",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/v1/auth/session": {
+      "delete": {
+        "operationId": "logoutApiSession",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSessionRevocationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request conflicts with durable state"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request body exceeds local API limit"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Strict request validation failed"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fail-closed internal error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate store unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Logout Auth Session Endpoint",
         "tags": [
           "authentication"
         ]
@@ -3052,6 +3285,16 @@
             },
             "description": "Strict request validation failed"
           },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
+          },
           "500": {
             "content": {
               "application/json": {
@@ -3074,6 +3317,270 @@
           }
         },
         "summary": "Create Auth Session Endpoint",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/v1/auth/sessions/{session_id}": {
+      "delete": {
+        "operationId": "revokeApiSession",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "pattern": "^sess-[0-9a-f]{32}$",
+              "title": "Session Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSessionRevocationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request conflicts with durable state"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request body exceeds local API limit"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Strict request validation failed"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fail-closed internal error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate store unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Revoke Auth Session Endpoint",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/v1/auth/trust-store/reload": {
+      "post": {
+        "operationId": "reloadApiTrustStore",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTrustStoreReloadResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request conflicts with durable state"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request body exceeds local API limit"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Strict request validation failed"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fail-closed internal error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate store unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Reload Api Trust Store Endpoint",
         "tags": [
           "authentication"
         ]
@@ -3183,6 +3690,16 @@
               }
             },
             "description": "Strict request validation failed"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
           },
           "500": {
             "content": {
@@ -3311,6 +3828,16 @@
             },
             "description": "Strict request validation failed"
           },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
+          },
           "500": {
             "content": {
               "application/json": {
@@ -3437,6 +3964,16 @@
               }
             },
             "description": "Strict request validation failed"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
           },
           "500": {
             "content": {
@@ -3572,6 +4109,16 @@
               }
             },
             "description": "Strict request validation failed"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
           },
           "500": {
             "content": {
@@ -3719,6 +4266,16 @@
             },
             "description": "Strict request validation failed"
           },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
+          },
           "500": {
             "content": {
               "application/json": {
@@ -3845,6 +4402,16 @@
               }
             },
             "description": "Strict request validation failed"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
           },
           "500": {
             "content": {
@@ -3990,6 +4557,16 @@
             },
             "description": "Strict request validation failed"
           },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
+          },
           "500": {
             "content": {
               "application/json": {
@@ -4116,6 +4693,16 @@
               }
             },
             "description": "Strict request validation failed"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
           },
           "500": {
             "content": {
@@ -4244,6 +4831,16 @@
               }
             },
             "description": "Strict request validation failed"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
           },
           "500": {
             "content": {
@@ -4391,6 +4988,16 @@
             },
             "description": "Strict request validation failed"
           },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
+          },
           "500": {
             "content": {
               "application/json": {
@@ -4537,6 +5144,16 @@
             },
             "description": "Strict request validation failed"
           },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
+          },
           "500": {
             "content": {
               "application/json": {
@@ -4672,6 +5289,16 @@
             },
             "description": "Strict request validation failed"
           },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
+          },
           "500": {
             "content": {
               "application/json": {
@@ -4798,6 +5425,16 @@
               }
             },
             "description": "Strict request validation failed"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
           },
           "500": {
             "content": {
@@ -4954,6 +5591,16 @@
             },
             "description": "Strict request validation failed"
           },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
+          },
           "500": {
             "content": {
               "application/json": {
@@ -5080,6 +5727,16 @@
               }
             },
             "description": "Strict request validation failed"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
           },
           "500": {
             "content": {
@@ -5231,6 +5888,16 @@
             },
             "description": "Strict request validation failed"
           },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
+          },
           "500": {
             "content": {
               "application/json": {
@@ -5374,6 +6041,16 @@
               }
             },
             "description": "Strict request validation failed"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
           },
           "500": {
             "content": {

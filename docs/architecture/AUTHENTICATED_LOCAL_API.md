@@ -3,9 +3,11 @@
 ## Scope
 
 Phase 13 adds caller authentication and project-scoped authorization to the
-existing local REST transport. It reuses the Phase 12 Ed25519 signing identity
-and external trust-store contracts; it does not introduce passwords, a user
-database, remote identity federation, TLS termination, or non-loopback serving.
+existing local REST transport. Phase 14 adds explicit local session lifecycle,
+fixed-path trust reload, and bounded authentication request controls. Both
+reuse the Phase 12 Ed25519 identity and external trust-store contracts; neither
+introduces passwords, a user database, remote identity federation, TLS
+termination, or non-loopback serving.
 
 `forgegate serve` now requires `--trust-store`. Direct application construction
 also requires an `ApiAuthenticator`; the contract-only construction path exists
@@ -78,16 +80,60 @@ SQLite. Event time remains the operation's existing caller-supplied domain time,
 while `authenticated_at` is the server time at session creation. Neither is a
 trusted timestamp.
 
+## Session lifecycle
+
+`DELETE /v1/auth/session` removes the caller's current session. An operator may
+also call `DELETE /v1/auth/sessions/{session_id}` for a target whose complete
+project set is covered by the operator session. Producer sessions cannot revoke
+other sessions. An absent or out-of-scope target returns the same not-found
+error so the endpoint does not disclose whether that session exists.
+
+Revocation is immediate for later requests in the current process, but it is
+not persisted and is unnecessary after restart because every session already
+disappears. Logout and revocation responses are not inserted into the durable
+candidate/project audit ledger; that ledger remains limited to successful
+product state changes.
+
+## Fixed-path trust-store reload
+
+`POST /v1/auth/trust-store/reload` rereads only the trust-store path supplied to
+`forgegate serve`; the HTTP caller cannot choose a filesystem path. The caller
+must be an operator that remains exactly trusted by the new document, and its
+session project set must cover every project mentioned by either the current or
+replacement store. This prevents a project-scoped operator from changing trust
+for unrelated projects or granting itself a new project during reload.
+
+A changed store invalidates every pending challenge and immediately removes
+each session whose exact identity document, role, or project set is no longer
+authorized. Compatible sessions remain valid and retain the trust-store ID that
+authenticated them for later actor attribution. A byte-identical reload is a
+validated no-op. Invalid or unreadable replacement content fails closed without
+changing the active store.
+
+## Authentication request controls
+
+The authenticator keeps three fixed-window counters: challenge requests,
+session exchanges, and invalid Bearer authentications. Defaults are 60, 60, and
+120 events per 60 seconds. State is bounded to those three process-local
+counters, and a rejected request receives `429 API_AUTH_RATE_LIMITED` plus an
+integer `Retry-After` value. A valid existing Bearer session is not blocked by
+the invalid-authentication counter.
+
+These limits do not trust `X-Forwarded-For` or claim per-user/per-process
+attribution; all local callers share the same service counters. Strict request
+models reject malformed challenge/session bodies before these endpoint-level
+counters run, so this is not a complete HTTP denial-of-service control.
+
 ## Residual boundary
 
 The service remains bound to loopback and rejects non-loopback HTTP `Host`
 values. Bearer traffic is not protected by TLS, so the design does not defend
 against a privileged local packet observer, hostile process under the same
-account, debugger, memory reader, or compromised host. There is no logout,
-per-session revocation, durable session store, distributed deployment,
-rate-based throttling, reverse-proxy trust, online trust-store reload, or
-administrator-resistant audit protection.
+account, debugger, memory reader, or compromised host. There is no durable
+session or revocation store, distributed deployment, per-client network rate
+limiting, reverse-proxy trust, managed online trust distribution, durable
+authentication-control audit, or administrator-resistant protection.
 
-The trust store is a startup snapshot and its custody/distribution remain
-external. This phase is sufficient for authenticated local integration testing,
-not for LAN, shared-host, internet, production, AFE runtime, or MSP430 access.
+Trust-store custody/distribution remain external. Phase 14 is sufficient for
+better controlled local integration testing, not for LAN, shared-host,
+internet, production, AFE runtime, or MSP430 access.

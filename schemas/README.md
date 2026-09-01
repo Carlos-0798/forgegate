@@ -18,6 +18,11 @@ bytes with the current FastAPI application, and clean-wheel smoke verifies that
 an installed package exports the same contract. It is an interface description,
 not an authentication or deployment guarantee.
 
+Phase 14 adds OpenAPI-only response components and operations for self-logout,
+operator session revocation, and fixed-startup-path trust-store reload. These
+ephemeral process-control documents are not standalone configuration or durable
+audit Schemas and are therefore committed only inside the OpenAPI contract.
+
 `forgegate.evidence-bundle-assembly.v1.schema.json` describes the audited
 envelope around a candidate-bound evidence bundle and its collection receipts.
 It is accepted by configuration validation and policy evaluation without

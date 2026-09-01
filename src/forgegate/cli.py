@@ -345,12 +345,19 @@ def serve(
 
     try:
         bind_host = validated_loopback_host(host)
-        trust_store = load_identity_document(trust_store_path)
-        if not isinstance(trust_store, TrustStore):
-            raise ValueError("--trust-store must contain forgegate.trust-store.v1")
+        runtime_trust_store_path = trust_store_path.expanduser().absolute()
+
+        def load_runtime_trust_store() -> TrustStore:
+            document = load_identity_document(runtime_trust_store_path)
+            if not isinstance(document, TrustStore):
+                raise ValueError("--trust-store must contain forgegate.trust-store.v1")
+            return document
+
+        trust_store = load_runtime_trust_store()
         authenticator = ApiAuthenticator(
             trust_store,
             session_ttl=timedelta(seconds=session_ttl_seconds),
+            trust_store_loader=load_runtime_trust_store,
         )
         application = CandidateApplication.for_database(database)
         application.initialize()

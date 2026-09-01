@@ -5,8 +5,8 @@
 Phase 5 exposes a small HTTP transport over ForgeGate's existing candidate
 domain and SQLite store. It is intended for local tool integration while the
 product remains under development. Phase 13 adds an authenticated local session
-layer, while the service remains deliberately restricted to the loopback
-interface.
+layer, and Phase 14 adds memory-only lifecycle/reload/rate controls, while the
+service remains deliberately restricted to the loopback interface.
 
 The v1 baseline includes:
 
@@ -89,15 +89,17 @@ values reject before the database or server is opened. Middleware separately
 requires the HTTP `Host` to identify localhost or a loopback IP. Requests with
 a declared `Content-Length` above 4 MiB reject before model validation.
 
-These transport guards are separate from Phase 13 authentication. Protected
-routes additionally require a short-lived session derived from an Ed25519
-challenge and an external trust store. The body limit does not yet enforce an
+These transport guards are separate from authentication. Protected routes
+additionally require a short-lived session derived from an Ed25519 challenge
+and an external trust store. Phase 14 adds self-logout, scoped operator
+revocation, explicit reload from the fixed startup trust-store path, and three
+process-global authentication counters. The body limit does not yet enforce an
 exact streaming ceiling for unknown-length or chunked requests.
 
-No TLS, rate-based throttling, multi-tenant isolation, reverse-proxy trust, or
-hostile-local-user defense is claimed. Session state is memory-only and has no
-logout or live trust reload. The server must not be forwarded or exposed
-through a proxy, container port, tunnel, LAN address, or public interface.
+No TLS, per-client network throttling, multi-tenant isolation, reverse-proxy
+trust, durable sessions/revocation, or hostile-local-user defense is claimed.
+The server must not be forwarded or exposed through a proxy, container port,
+tunnel, LAN address, or public interface.
 
 ## OpenAPI and verification
 
@@ -111,7 +113,8 @@ external bind request fails.
 Tests cover API/CLI parity, exact replay/conflict, expected-revision races,
 invalid states, frozen-profile policy-material mismatch, structured failures,
 correlation IDs, loopback bind/Host handling, declared body size, challenge and
-session authentication, project/role authorization, audit actors, contract
-paths, and a complete durable candidate workflow. These are local-host
-software results only; they do not exercise AFE runtime code, MSP430 hardware,
-a network deployment, or remote CI.
+session authentication, project/role authorization, audit actors, logout,
+targeted revocation, trust reload, authentication rate windows, contract paths,
+and a complete durable candidate workflow. These are local-host software
+results only; they do not exercise AFE runtime code, MSP430 hardware, a network
+deployment, or remote CI.

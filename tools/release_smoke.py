@@ -41,6 +41,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/PORTABLE_ASSURANCE_BUNDLES.md",
     "docs/architecture/AUTHENTICATED_ASSURANCE_IDENTITY.md",
     "docs/architecture/AUTHENTICATED_LOCAL_API.md",
+    "docs/architecture/LOCAL_SESSION_LIFECYCLE.md",
     "examples/sample-python-api/artifacts/junit.xml",
     "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
@@ -73,6 +74,7 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_11_PORTABLE_ASSURANCE_BUNDLE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_12_AUTHENTICATED_IDENTITY_FOUNDATION_ACCEPTANCE_REPORT.md",
     "reports/PHASE_13_AUTHENTICATED_LOCAL_API_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_14_LOCAL_SESSION_LIFECYCLE_ACCEPTANCE_REPORT.md",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
@@ -320,7 +322,10 @@ def main() -> int:
         openapi = json.loads(exported_openapi.read_text(encoding="utf-8"))
         expected_operations = {
             ("/v1/auth/challenges", "post"): "createApiAuthChallenge",
+            ("/v1/auth/session", "delete"): "logoutApiSession",
             ("/v1/auth/sessions", "post"): "createApiSession",
+            ("/v1/auth/sessions/{session_id}", "delete"): "revokeApiSession",
+            ("/v1/auth/trust-store/reload", "post"): "reloadApiTrustStore",
             ("/v1/projects", "post"): "registerProject",
             ("/v1/projects", "get"): "listProjects",
             ("/v1/projects/{project_id}", "get"): "getProject",
@@ -849,14 +854,19 @@ def main() -> int:
                     "identity=load_identity_document(Path(sys.argv[2])); "
                     "assert isinstance(trust, TrustStore) and "
                     "isinstance(identity, SigningIdentity); "
-                    "auth=ApiAuthenticator(trust); challenge=auth.issue_challenge("
+                    "auth=ApiAuthenticator(trust, trust_store_loader=lambda: trust); "
+                    "challenge=auth.issue_challenge("
                     "ApiChallengeRequest(identity_id=identity.identity_id, "
                     "role=IdentityRole.OPERATOR, project_ids=('sample-api',))); "
                     "session=auth.create_session(sign_api_challenge(challenge, identity=identity, "
                     "private_key=load_ed25519_private_key(Path(sys.argv[3])))); "
                     "principal=auth.authenticate('Bearer '+session.access_token); "
                     "assert principal.identity == identity and "
-                    "principal.role is IdentityRole.OPERATOR"
+                    "principal.role is IdentityRole.OPERATOR; "
+                    "reload_result=auth.reload_trust_store(principal); "
+                    "assert reload_result.retained_sessions == 1; "
+                    "revoked=auth.logout(principal); "
+                    "assert revoked.session_id == session.session_id"
                 ),
                 str(trust_store_path),
                 str(identity_path),

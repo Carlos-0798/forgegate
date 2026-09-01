@@ -175,6 +175,23 @@
   the existing state-change transaction without persisting tokens.
 - [x] Add challenge/session capacity limits, expiry/replay/tamper/revocation
   tests, strict challenge-file signing CLI, OpenAPI, and clean-wheel smoke.
-- [ ] Design TLS termination, reverse-proxy trust, hostile-local-user defense,
-  logout/live revocation, request-rate controls, and durable session policy
+- [x] Freeze TLS termination, reverse-proxy trust, hostile-local-user defense,
+  and durable/distributed session policy as separate prerequisites before any
+  non-loopback deployment.
+
+## Phase 14 — local session lifecycle and abuse controls
+
+- [x] Add authenticated self-logout that removes only the presented in-memory
+  session and rejects later token reuse.
+- [x] Add operator session revocation with exact target session IDs, complete
+  project-scope coverage, producer denial, and non-enumerating not-found errors.
+- [x] Reload the external trust store only from the server's fixed startup path;
+  require the caller to remain a trusted operator covering every old/new
+  project, clear pending challenges, and revoke incompatible sessions.
+- [x] Add bounded fixed-window limits for valid challenge requests, session
+  exchanges, and invalid Bearer authentication with explicit retry guidance.
+- [x] Commit OpenAPI, adversarial lifecycle/reload/rate tests, architecture and
+  security documentation, and clean-installed-wheel smoke.
+- [ ] Design TLS, proxy identity, hostile-local-user defense, durable security
+  event audit, malformed-body throttling, and durable/distributed sessions
   before considering any non-loopback deployment.

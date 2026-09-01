@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.0.dev21 — 2026-08-31
+
+- Added authenticated self-logout and exact operator session revocation with
+  fail-closed project-scope checks and non-enumerating not-found responses.
+- Added explicit trust-store reload from the `serve` process's fixed startup
+  path; the caller must remain a trusted operator and cover every project in
+  both trust-store versions.
+- Clear pending challenges and immediately remove sessions whose identity,
+  role, or project authority no longer matches a successfully reloaded store.
+- Added bounded fixed-window limits for validly shaped challenge requests,
+  session exchanges, and invalid Bearer authentication, including `429` and
+  `Retry-After` responses.
+- Added lifecycle/reload/rate adversarial tests, OpenAPI operations, installed
+  wheel smoke, and explicit boundaries for memory-only state, unaudited
+  authentication control events, malformed-body handling, and loopback use.
+
 ## 0.1.0.dev20 — 2026-08-31
 
 - Required an external trust store for `serve` and added domain-separated,

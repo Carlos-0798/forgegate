@@ -539,7 +539,10 @@ def test_openapi_export_is_deterministic_and_complete(tmp_path: Path) -> None:
     assert set(schema["paths"]) == {
         "/healthz",
         "/v1/auth/challenges",
+        "/v1/auth/session",
         "/v1/auth/sessions",
+        "/v1/auth/sessions/{session_id}",
+        "/v1/auth/trust-store/reload",
         "/v1/projects",
         "/v1/projects/{project_id}",
         "/v1/projects/{project_id}/candidates",
@@ -563,6 +566,10 @@ def test_openapi_export_is_deterministic_and_complete(tmp_path: Path) -> None:
     }
     assert schema["paths"]["/v1/projects"]["post"]["security"] == [{"HTTPBearer": []}]
     assert "security" not in schema["paths"]["/v1/auth/challenges"]["post"]
+    assert schema["paths"]["/v1/auth/session"]["delete"]["security"] == [{"HTTPBearer": []}]
+    assert schema["paths"]["/v1/auth/trust-store/reload"]["post"]["security"] == [
+        {"HTTPBearer": []}
+    ]
     assert (
         schema["paths"]["/v1/projects/{project_id}/candidates"]["get"]["operationId"]
         == "listProjectCandidates"

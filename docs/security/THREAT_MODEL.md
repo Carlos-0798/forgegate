@@ -315,6 +315,21 @@ The current slice has no authenticated producer and runs no plugin code.
 | Local authentication is mistaken for remote transport security | Loopback bind/Host gates remain; documentation denies TLS, proxy, LAN, shared-host, internet, and production approval |
 | Caller-supplied operation time is mistaken for authentication time | Actor has a separate server `authenticated_at`; neither field is claimed as a trusted timestamp |
 
+## Addressed in the Phase 14 local session lifecycle slice
+
+| Threat | Current control |
+|---|---|
+| A caller cannot terminate a captured current session | Authenticated self-logout deletes the exact in-memory session before returning and later token reuse fails |
+| An operator revokes a session for an unrelated project | Target projects must be a subset of the operator session; absent and out-of-scope IDs return the same not-found error |
+| A producer terminates other callers' sessions | Only operator sessions can use targeted revocation; producers may only log out themselves |
+| A revoked trust record remains usable until restart | Explicit reload of the fixed startup path removes every incompatible session and clears all challenges bound to the old trust-store ID |
+| A project-scoped operator changes unrelated trust authority | Reload requires an operator session covering every project in both old and new stores, and the caller must remain exactly trusted afterward |
+| Invalid replacement trust data destroys current authority | The replacement is loaded and strictly validated before the active in-memory store changes; failure returns a generic unavailable response |
+| Authentication work is requested without bound | Three bounded fixed-window counters cover valid challenge requests, session exchanges, and invalid Bearer attempts, returning `429` with `Retry-After` |
+| Forwarded-address metadata is mistaken for local caller identity | Rate controls are explicitly process-global and never trust `X-Forwarded-For` or claim per-client attribution |
+| Session-control responses are mistaken for durable audit | Logout, revocation, reload, and rejected authentication remain process-local control activity and are not represented as durable product-state audit events |
+| Local lifecycle controls are mistaken for remote safety | Loopback bind and Host restrictions remain; no TLS, proxy trust, shared-host, LAN, internet, or production approval is claimed |
+
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;
@@ -326,8 +341,10 @@ The current slice has no authenticated producer and runs no plugin code.
   workload identity federation;
 - database-file authorization, audit retention, backup, repair, encryption at
   rest, and administrator-resistant tamper evidence;
-- TLS termination, reverse-proxy trust, hostile-local-user defense, logout,
-  live trust reload/per-session revocation, durable/distributed sessions, and
-  rate-based request controls;
+- TLS termination, reverse-proxy trust, hostile-local-user defense, managed
+  online trust distribution, durable/distributed sessions or revocation, and
+  per-client network rate controls;
+- durable rejected-authentication/session-control security-event audit and
+  authentication limits for malformed bodies rejected before endpoint logic;
 - an exact streaming request-body limiter for unknown-length/chunked HTTP
   bodies; the current 4 MiB gate covers declared `Content-Length` only.

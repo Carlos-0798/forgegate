@@ -26,8 +26,15 @@ integrity or claimed association only. A Phase 12 Ed25519 sidecar authenticates
 the signer of exact canonical assurance-bundle bytes only when the verifier
 supplies a matching external trust store. It does not prove that a test ran,
 authenticate the source artifacts, establish trusted time, or make the local
-REST API safe for remote use. API sessions disappear on restart and the trust
-store is a startup snapshot; there is no logout, live revocation, rate-based
-throttling, reverse-proxy trust, or persistent session authority. ForgeGate does
-not manage or generate long-term private keys; private-key and trust-store
-custody remain operator duties. See `docs/security/THREAT_MODEL.md`.
+REST API safe for remote use. API sessions disappear on restart. Phase 14 adds
+self-logout, project-scoped operator revocation, bounded in-process
+authentication rate limits, and an explicit reload of the same fixed startup
+trust-store path. A reload succeeds only for an operator session covering every
+project in the old and new stores; it clears pending challenges and removes
+sessions whose authority no longer matches. These controls are memory-only,
+are not a durable security-event audit, do not rate-limit malformed bodies that
+fail before endpoint execution, and do not establish online managed revocation,
+reverse-proxy trust, hostile-local-user defense, or persistent/distributed
+session authority. ForgeGate does not manage or generate long-term private
+keys; private-key and trust-store custody remain operator duties. See
+`docs/security/THREAT_MODEL.md`.

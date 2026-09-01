@@ -81,6 +81,10 @@
 | API role/project authorization | producer/operator and cross-project adversarial tests | PASS — exact session scopes; producer read-only |
 | Authenticated audit actor | API write/readback, event identity, token absence | PASS — successful writes only |
 | Session replay/expiry/capacity | one-time challenge, bounded memory, restart semantics | PASS — local host |
+| Session logout/operator revocation | token reuse, role, target scope, hidden-ID adversarial tests | PASS — memory-only local host |
+| Fixed-path trust-store reload | old/new scope, invalid input, challenge/session invalidation | PASS — explicit operator action; no managed online distribution |
+| Authentication request limits | challenge/session/failure fixed windows + retry header | PASS — process-global valid endpoint calls; malformed body NOT COVERED |
+| Durable authentication-control audit | rejected auth, logout, revocation, reload events | NOT IMPLEMENTED — product-state audit only |
 | Non-loopback/TLS API | transport, proxy, hostile-local-user controls | NOT IMPLEMENTED |
 | REST lifecycle transitions | expected revision + idempotent replay/conflict | PASS — local host |
 | REST evidence binding | strict nested assembly + immutable SQLite binding | PASS — local host |
@@ -117,12 +121,12 @@
 | Strict identity document loading | size/encoding/duplicate/non-finite/schema/change tests | PASS — bounded JSON-only trust boundary |
 | Signature publication | staging, content address, replay/conflict/concurrency tests | PASS — local host |
 | Installed identity workflow | ephemeral key derive/trust/sign/replay/verify smoke | PASS — clean-wheel local host |
-| Trusted timestamp/online revocation | managed external infrastructure | NOT IMPLEMENTED — signed/auth times are not trusted; trust is a startup snapshot |
+| Trusted timestamp/managed online revocation | managed external infrastructure | NOT IMPLEMENTED — signed/auth times are not trusted; API reload is explicit from one fixed local file |
 | Source-artifact producer chain | producer-signed artifact receipts | NOT IMPLEMENTED — signature covers retained bundle only |
 | HTTP artifact loading/file publication | no loader/output path; nested metadata is not dereferenced | OUT OF SCOPE |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
 
-See `reports/PHASE_13_AUTHENTICATED_LOCAL_API_ACCEPTANCE_REPORT.md`
+See `reports/PHASE_14_LOCAL_SESSION_LIFECYCLE_ACCEPTANCE_REPORT.md`
 for the current exact local test and coverage result. Earlier acceptance
 reports remain historical records.

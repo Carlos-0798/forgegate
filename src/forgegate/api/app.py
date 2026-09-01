@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Annotated
 
 from fastapi import Depends, FastAPI, Header, Query, Request, status
+from fastapi import Path as ApiPath
 from fastapi.exceptions import RequestValidationError
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import ValidationError
@@ -23,6 +24,8 @@ from forgegate.api.auth import (
     ApiPrincipal,
     ApiSessionCreateRequest,
     ApiSessionResponse,
+    ApiSessionRevocationResponse,
+    ApiTrustStoreReloadResponse,
 )
 from forgegate.api.models import ApiError, ApiErrorResponse, HealthResponse
 from forgegate.application import (
@@ -71,6 +74,7 @@ ERROR_RESPONSES: dict[int | str, dict[str, object]] = {
     404: {"model": ApiErrorResponse, "description": "Candidate resource not found"},
     409: {"model": ApiErrorResponse, "description": "Request conflicts with durable state"},
     413: {"model": ApiErrorResponse, "description": "Request body exceeds local API limit"},
+    429: {"model": ApiErrorResponse, "description": "Authentication rate limit exceeded"},
     422: {"model": ApiErrorResponse, "description": "Strict request validation failed"},
     500: {"model": ApiErrorResponse, "description": "Fail-closed internal error"},
     503: {"model": ApiErrorResponse, "description": "Candidate store unavailable"},
@@ -219,6 +223,8 @@ def create_api_app(
         )
         if exc.status_code == status.HTTP_401_UNAUTHORIZED:
             response.headers["WWW-Authenticate"] = "Bearer"
+        if exc.retry_after_seconds is not None:
+            response.headers["Retry-After"] = str(exc.retry_after_seconds)
         return response
 
     @app.exception_handler(CandidateLifecycleError)
@@ -305,6 +311,46 @@ def create_api_app(
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
         return authenticator.create_session(command)
+
+    @app.delete(
+        "/v1/auth/session",
+        response_model=ApiSessionRevocationResponse,
+        operation_id="logoutApiSession",
+        tags=["authentication"],
+        responses=ERROR_RESPONSES,
+    )
+    def logout_auth_session_endpoint(
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
+    ) -> ApiSessionRevocationResponse:
+        assert authenticator is not None
+        return authenticator.logout(principal)
+
+    @app.delete(
+        "/v1/auth/sessions/{session_id}",
+        response_model=ApiSessionRevocationResponse,
+        operation_id="revokeApiSession",
+        tags=["authentication"],
+        responses=ERROR_RESPONSES,
+    )
+    def revoke_auth_session_endpoint(
+        session_id: Annotated[str, ApiPath(pattern=r"^sess-[0-9a-f]{32}$")],
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
+    ) -> ApiSessionRevocationResponse:
+        assert authenticator is not None
+        return authenticator.revoke_session(principal, session_id)
+
+    @app.post(
+        "/v1/auth/trust-store/reload",
+        response_model=ApiTrustStoreReloadResponse,
+        operation_id="reloadApiTrustStore",
+        tags=["authentication"],
+        responses=ERROR_RESPONSES,
+    )
+    def reload_api_trust_store_endpoint(
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
+    ) -> ApiTrustStoreReloadResponse:
+        assert authenticator is not None
+        return authenticator.reload_trust_store(principal)
 
     @app.post(
         "/v1/projects",

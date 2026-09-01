@@ -18,6 +18,8 @@ from forgegate.api import (
     ApiChallengeRequest,
     ApiSessionCreateRequest,
     ApiSessionResponse,
+    ApiSessionRevocationResponse,
+    ApiTrustStoreReloadResponse,
     create_api_app,
     load_api_challenge,
     sign_api_challenge,
@@ -30,6 +32,7 @@ from forgegate.identity import (
     IdentityStatus,
     TrustedIdentity,
     create_trust_store,
+    derive_signing_identity,
 )
 from tests.api_auth_support import TEST_IDENTITY, TEST_PRIVATE_KEY, TEST_TRUST_STORE
 
@@ -370,6 +373,10 @@ def test_authentication_cache_capacity_is_bounded() -> None:
         {"session_ttl": timedelta(hours=2)},
         {"max_pending_challenges": 0},
         {"max_active_sessions": 10_001},
+        {"challenge_rate_limit": 0},
+        {"session_rate_limit": 10_001},
+        {"auth_failure_rate_limit": 0},
+        {"rate_limit_window": timedelta(milliseconds=999)},
     ],
 )
 def test_authenticator_rejects_unsafe_bounds(overrides: dict[str, object]) -> None:
@@ -452,3 +459,285 @@ def test_clock_and_challenge_loader_error_boundaries(
     monkeypatch.setattr(Path, "read_bytes", fail_read)
     with pytest.raises(ApiAuthenticationError, match="API_CHALLENGE_DOCUMENT_IO"):
         load_api_challenge(readable)
+
+
+def test_session_logout_revokes_the_presented_session(tmp_path: Path) -> None:
+    app = create_api_app(
+        tmp_path / "logout.db",
+        authenticator=ApiAuthenticator(TEST_TRUST_STORE),
+    )
+    with TestClient(app, base_url="http://127.0.0.1") as client:
+        session = _create_session(client)
+        authorization = {"Authorization": f"Bearer {session.access_token}"}
+        logout = client.delete("/v1/auth/session", headers=authorization)
+        reuse = client.get("/v1/projects/sample-api", headers=authorization)
+
+    revoked = ApiSessionRevocationResponse.model_validate(logout.json())
+    assert logout.status_code == 200
+    assert revoked.session_id == session.session_id
+    assert revoked.reason == "self_logout"
+    assert reuse.status_code == 401
+    assert reuse.json()["error"]["code"] == "API_SESSION_INVALID"
+
+
+def test_operator_revocation_is_exact_and_project_scoped(tmp_path: Path) -> None:
+    app = create_api_app(
+        tmp_path / "revocation.db",
+        authenticator=ApiAuthenticator(TEST_TRUST_STORE),
+    )
+    with TestClient(app, base_url="http://127.0.0.1") as client:
+        operator = _create_session(client, project_ids=("sample-api",))
+        target = _create_session(client, project_ids=("sample-api",))
+        outside_scope = _create_session(client, project_ids=("another-project",))
+        operator_headers = {"Authorization": f"Bearer {operator.access_token}"}
+
+        revoked = client.delete(
+            f"/v1/auth/sessions/{target.session_id}",
+            headers=operator_headers,
+        )
+        hidden = client.delete(
+            f"/v1/auth/sessions/{outside_scope.session_id}",
+            headers=operator_headers,
+        )
+        target_reuse = client.get(
+            "/v1/projects/sample-api",
+            headers={"Authorization": f"Bearer {target.access_token}"},
+        )
+        operator_reuse = client.get("/v1/projects/sample-api", headers=operator_headers)
+
+    result = ApiSessionRevocationResponse.model_validate(revoked.json())
+    assert result.reason == "operator_revocation"
+    assert result.session_id == target.session_id
+    assert hidden.status_code == 404
+    assert hidden.json()["error"]["code"] == "API_SESSION_NOT_FOUND"
+    assert target_reuse.status_code == 401
+    assert operator_reuse.status_code == 404
+
+
+def test_producer_cannot_revoke_another_session(tmp_path: Path) -> None:
+    producer_store = create_trust_store(
+        (
+            TrustedIdentity(
+                identity=TEST_IDENTITY,
+                roles=(IdentityRole.PRODUCER,),
+                project_ids=("sample-api",),
+            ),
+        )
+    )
+    app = create_api_app(
+        tmp_path / "producer-revocation.db",
+        authenticator=ApiAuthenticator(producer_store),
+    )
+    with TestClient(app, base_url="http://127.0.0.1") as client:
+        producer = _create_session(client, role="producer")
+        target = _create_session(client, role="producer")
+        denied = client.delete(
+            f"/v1/auth/sessions/{target.session_id}",
+            headers={"Authorization": f"Bearer {producer.access_token}"},
+        )
+        reload_denied = client.post(
+            "/v1/auth/trust-store/reload",
+            headers={"Authorization": f"Bearer {producer.access_token}"},
+        )
+
+    assert denied.status_code == 403
+    assert denied.json()["error"]["code"] == "API_ROLE_FORBIDDEN"
+    assert reload_denied.status_code == 403
+    assert reload_denied.json()["error"]["code"] == "API_TRUST_STORE_RELOAD_FORBIDDEN"
+
+
+def test_live_trust_store_reload_revokes_incompatible_sessions_and_challenges(
+    tmp_path: Path,
+) -> None:
+    target_key = Ed25519PrivateKey.from_private_bytes(bytes(range(33, 65)))
+    target_identity = derive_signing_identity(target_key, display_name="reload-target")
+    initial_store = create_trust_store(
+        (
+            TrustedIdentity(
+                identity=TEST_IDENTITY,
+                roles=(IdentityRole.OPERATOR,),
+                project_ids=TEST_TRUST_STORE.identities[0].project_ids,
+            ),
+            TrustedIdentity(
+                identity=target_identity,
+                roles=(IdentityRole.PRODUCER,),
+                project_ids=("sample-api",),
+            ),
+        )
+    )
+    replacement_store = create_trust_store((TEST_TRUST_STORE.identities[0],))
+    configured = [replacement_store]
+    authenticator = ApiAuthenticator(initial_store, trust_store_loader=lambda: configured[0])
+    app = create_api_app(tmp_path / "reload.db", authenticator=authenticator)
+
+    with TestClient(app, base_url="http://127.0.0.1") as client:
+        operator = _create_session(
+            client,
+            project_ids=TEST_TRUST_STORE.identities[0].project_ids,
+        )
+        target = _create_session(
+            client,
+            identity=target_identity,
+            private_key=target_key,
+            role="producer",
+        )
+        pending_response = client.post(
+            "/v1/auth/challenges",
+            json={
+                "identity_id": target_identity.identity_id,
+                "role": "producer",
+                "project_ids": ["sample-api"],
+            },
+        )
+        pending = ApiAuthChallenge.model_validate(pending_response.json())
+        pending_request = sign_api_challenge(
+            pending,
+            identity=target_identity,
+            private_key=target_key,
+        )
+        operator_headers = {"Authorization": f"Bearer {operator.access_token}"}
+        reloaded = client.post("/v1/auth/trust-store/reload", headers=operator_headers)
+        target_reuse = client.get(
+            "/v1/projects/sample-api",
+            headers={"Authorization": f"Bearer {target.access_token}"},
+        )
+        challenge_reuse = client.post(
+            "/v1/auth/sessions",
+            json=pending_request.model_dump(mode="json"),
+        )
+        operator_reuse = client.get("/v1/projects/sample-api", headers=operator_headers)
+
+    result = ApiTrustStoreReloadResponse.model_validate(reloaded.json())
+    assert reloaded.status_code == 200
+    assert result.previous_trust_store_id == initial_store.trust_store_id
+    assert result.trust_store_id == replacement_store.trust_store_id
+    assert result.discarded_challenges == 1
+    assert result.revoked_sessions == 1
+    assert result.retained_sessions == 1
+    assert target_reuse.status_code == challenge_reuse.status_code == 401
+    assert operator_reuse.status_code == 404
+
+
+def test_trust_store_reload_requires_global_operator_scope_and_valid_input(
+    tmp_path: Path,
+) -> None:
+    invalid_loader = ApiAuthenticator(
+        TEST_TRUST_STORE,
+        trust_store_loader=lambda: (_ for _ in ()).throw(ValueError("invalid")),
+    )
+    invalid_app = create_api_app(tmp_path / "invalid-reload.db", authenticator=invalid_loader)
+    with TestClient(invalid_app, base_url="http://127.0.0.1") as client:
+        session = _create_session(client, project_ids=("sample-api",))
+        failed = client.post(
+            "/v1/auth/trust-store/reload",
+            headers={"Authorization": f"Bearer {session.access_token}"},
+        )
+    assert failed.status_code == 503
+    assert failed.json()["error"] == {
+        "code": "API_TRUST_STORE_RELOAD_FAILED",
+        "message": "configured trust store could not be loaded and validated",
+        "request_id": failed.json()["error"]["request_id"],
+    }
+
+    scoped = ApiAuthenticator(TEST_TRUST_STORE, trust_store_loader=lambda: TEST_TRUST_STORE)
+    scoped_app = create_api_app(tmp_path / "scoped-reload.db", authenticator=scoped)
+    with TestClient(scoped_app, base_url="http://127.0.0.1") as client:
+        session = _create_session(client, project_ids=("sample-api",))
+        denied = client.post(
+            "/v1/auth/trust-store/reload",
+            headers={"Authorization": f"Bearer {session.access_token}"},
+        )
+    assert denied.status_code == 403
+    assert denied.json()["error"]["code"] == "API_TRUST_STORE_RELOAD_FORBIDDEN"
+
+
+def test_trust_store_reload_unavailable_noop_and_missing_session_boundaries(
+    tmp_path: Path,
+) -> None:
+    unavailable = ApiAuthenticator(TEST_TRUST_STORE)
+    unavailable_app = create_api_app(tmp_path / "unavailable.db", authenticator=unavailable)
+    with TestClient(unavailable_app, base_url="http://127.0.0.1") as client:
+        session = _create_session(
+            client,
+            project_ids=TEST_TRUST_STORE.identities[0].project_ids,
+        )
+        headers = {"Authorization": f"Bearer {session.access_token}"}
+        reload_response = client.post("/v1/auth/trust-store/reload", headers=headers)
+        missing = client.delete(
+            "/v1/auth/sessions/sess-00000000000000000000000000000000",
+            headers=headers,
+        )
+    assert reload_response.status_code == 503
+    assert reload_response.json()["error"]["code"] == "API_TRUST_STORE_RELOAD_UNAVAILABLE"
+    assert missing.status_code == 404
+    assert missing.json()["error"]["code"] == "API_SESSION_NOT_FOUND"
+
+    no_op = ApiAuthenticator(TEST_TRUST_STORE, trust_store_loader=lambda: TEST_TRUST_STORE)
+    no_op_app = create_api_app(tmp_path / "no-op.db", authenticator=no_op)
+    with TestClient(no_op_app, base_url="http://127.0.0.1") as client:
+        session = _create_session(
+            client,
+            project_ids=TEST_TRUST_STORE.identities[0].project_ids,
+        )
+        response = client.post(
+            "/v1/auth/trust-store/reload",
+            headers={"Authorization": f"Bearer {session.access_token}"},
+        )
+    result = ApiTrustStoreReloadResponse.model_validate(response.json())
+    assert result.previous_trust_store_id == result.trust_store_id
+    assert result.discarded_challenges == result.revoked_sessions == 0
+    assert result.retained_sessions == 1
+
+
+def test_authentication_rate_limits_are_bounded_and_return_retry_after(tmp_path: Path) -> None:
+    current = [datetime(2026, 8, 31, 21, 0, tzinfo=UTC)]
+    authenticator = ApiAuthenticator(
+        TEST_TRUST_STORE,
+        challenge_rate_limit=1,
+        auth_failure_rate_limit=1,
+        rate_limit_window=timedelta(seconds=30),
+        clock=lambda: current[0],
+    )
+    app = create_api_app(tmp_path / "rate-limit.db", authenticator=authenticator)
+    payload = {
+        "identity_id": TEST_IDENTITY.identity_id,
+        "role": "operator",
+        "project_ids": ["sample-api"],
+    }
+    with TestClient(app, base_url="http://127.0.0.1") as client:
+        first = client.post("/v1/auth/challenges", json=payload)
+        limited = client.post("/v1/auth/challenges", json=payload)
+        first_failure = client.get("/v1/projects/sample-api")
+        limited_failure = client.get("/v1/projects/sample-api")
+        current[0] += timedelta(seconds=30)
+        reset = client.post("/v1/auth/challenges", json=payload)
+
+    assert first.status_code == reset.status_code == 201
+    assert first_failure.status_code == 401
+    assert limited.status_code == limited_failure.status_code == 429
+    assert limited.headers["retry-after"] == limited_failure.headers["retry-after"] == "30"
+    assert limited.json()["error"]["code"] == "API_AUTH_RATE_LIMITED"
+
+
+def test_session_exchange_rate_limit_precedes_signature_work() -> None:
+    authenticator = ApiAuthenticator(TEST_TRUST_STORE, session_rate_limit=1)
+    challenge = authenticator.issue_challenge(
+        ApiChallengeRequest(
+            identity_id=TEST_IDENTITY.identity_id,
+            role=IdentityRole.OPERATOR,
+            project_ids=("sample-api",),
+        )
+    )
+    request = sign_api_challenge(
+        challenge,
+        identity=TEST_IDENTITY,
+        private_key=TEST_PRIVATE_KEY,
+    )
+    session = authenticator.create_session(request)
+    assert authenticator.authenticate(f"Bearer {session.access_token}").session_id == (
+        session.session_id
+    )
+    with pytest.raises(ApiAuthenticationError, match="API_AUTH_RATE_LIMITED") as caught:
+        authenticator.create_session(request)
+    assert caught.value.status_code == 429
+    assert caught.value.retry_after_seconds is not None
