@@ -345,6 +345,23 @@ The current slice has no authenticated producer and runs no plugin code.
 | New schema silently invents historical security activity | Explicit v7-to-v8 migration creates an empty security table and fabricates no prior request/control events |
 | Application-layer limits are mistaken for remote denial-of-service protection | Loopback-only boundary remains; transport buffers, local privileged peers, TLS/proxy identity, per-client attribution, and distributed state remain out of scope |
 
+## Addressed in the Phase 16 GitHub Actions gate slice
+
+| Threat | Current control |
+|---|---|
+| Assurance from another revision gates the current CI context | Require a complete 40- or 64-hex caller commit and exact case-normalized equality with the verified candidate commit |
+| Partial SHA creates ambiguous commit binding | Reject every candidate or expected commit that is not a complete 40- or 64-hex object ID |
+| Tampered portable output reaches the summary | Run the Phase 11 exact-member, canonical-byte, manifest, identity, and cross-document verifier before rendering |
+| Action input injects shell commands | Composite Action passes paths and commit through quoted environment variables rather than inline expression interpolation |
+| Policy explanation injects Markdown/table or HTML content | Escape HTML, pipes, CR, and LF; truncate rule rows under an explicit 64 KiB summary limit |
+| Arbitrary content enters GitHub workflow outputs | Emit only fixed keys with schema-constrained status, enum, slug, ID, assurance, and hexadecimal values |
+| Runner file redirects writes | Reject visible symlinks, non-regular files, missing/non-directory parents, excess file size, and I/O failure |
+| Valid bundle is confused with a PASS decision | Separate `gate_status=VALID` from the decision and preserve 0/1/2/3 decision exit semantics |
+| Workflow check is mistaken for GitHub API or identity integration | Action requests no token and calls no Checks/PR/Issue/Release API; commit is caller-supplied association, not authenticated workload identity |
+| Job Summary is mistaken for durable audit evidence | Summary/output are bounded presentation files only; the portable bundle remains the retained record |
+| CI fixture is mistaken for current-revision evidence | Workflow and documentation label the fixed generic bundle and `aaaaaaaa...` commit as fixture-only Action mechanics |
+| CI presentation promotes evidence level | Report retains `unsigned_local` and `source_artifact_bytes=not_embedded`; no source replay, producer authentication, trusted time, or hardware claim is added |
+
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;
@@ -363,3 +380,5 @@ The current slice has no authenticated producer and runs no plugin code.
   completeness guarantees, and durable/distributed security-session state;
 - transport-layer request limiting before the ASGI server allocates an incoming
   chunk; Phase 15 bounds application-retained bytes, not privileged local peers.
+- GitHub Checks/PR annotations, artifact upload, repository API writes, custom
+  token scopes, OIDC workload identity, and authenticated CI provenance.

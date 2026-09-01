@@ -36,3 +36,39 @@ jobs:
           -c requirements/dev-constraints.txt -e ".[dev]"
       - run: python tools/verify.py
       - run: python tools/release_smoke.py
+
+  github-action-smoke-fixture:
+    name: GitHub Action smoke (generic fixture)
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: |
+            pyproject.toml
+            requirements/dev-constraints.txt
+      - run: >-
+          python -m pip install --disable-pip-version-check
+          -c requirements/dev-constraints.txt .
+      - id: fixture-gate
+        name: Run fixture-only portable assurance gate
+        uses: ./.github/actions/assurance-gate
+        with:
+          assurance-directory: >-
+            examples/sample-python-api/github-action-fixture/assurance-dbb54d911ff973918e1e89e52c4d58785ee6b8cb3f43e6f76c946c0a6ae605c9
+          expected-commit: aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
+      - name: Assert stable action outputs
+        env:
+          FORGEGATE_GATE_STATUS: ${{ steps.fixture-gate.outputs.gate-status }}
+          FORGEGATE_GATE_DECISION: ${{ steps.fixture-gate.outputs.decision }}
+          FORGEGATE_GATE_ASSURANCE: ${{ steps.fixture-gate.outputs.assurance }}
+        run: >-
+          test "$FORGEGATE_GATE_STATUS" = "VALID" &&
+          test "$FORGEGATE_GATE_DECISION" = "PASS" &&
+          test "$FORGEGATE_GATE_ASSURANCE" = "unsigned_local"

@@ -15,6 +15,7 @@ from forgegate.candidates.models import (
 from forgegate.collectors.analog_validation import AFE_RESULT_JSON_SCHEMA
 from forgegate.collectors.benchmark import BENCHMARK_JSON_SCHEMA
 from forgegate.domain.models import EvidenceBundle, PolicyConfig, ProjectConfig
+from forgegate.github_actions import GitHubActionReport
 from forgegate.identity import AssuranceSignature, SigningIdentity, TrustStore
 from forgegate.policy import PolicyMaterial
 from forgegate.policy.models import PolicyEvaluation, ProfileAuthorizedPolicyEvaluation
@@ -55,6 +56,7 @@ SCHEMAS: dict[str, type[BaseModel]] = {
     "forgegate.audit-actor.v1": AuditActor,
     "forgegate.api-security-event.v1": ApiSecurityEvent,
     "forgegate.api-security-event-page.v1": ApiSecurityEventPage,
+    "forgegate.github-action-report.v1": GitHubActionReport,
 }
 
 ARTIFACT_SCHEMAS: dict[str, dict[str, object]] = {

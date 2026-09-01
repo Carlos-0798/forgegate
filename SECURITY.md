@@ -46,4 +46,14 @@ or unavailable store records every control event. These controls do not
 establish online managed revocation, reverse-proxy trust, hostile-local-user
 defense, or persistent/distributed session authority. ForgeGate does not manage
 or generate long-term private keys; private-key and trust-store custody remain
-operator duties. See `docs/security/THREAT_MODEL.md`.
+operator duties.
+
+Phase 16 adds an offline GitHub Actions bridge over an already-verified portable
+bundle. It requires exact full commit equality, escapes and bounds Job Summary
+content, and writes only schema-constrained values to runner output files. It
+requests no GitHub token and calls no GitHub API. A successful bridge retains
+the bundle's `unsigned_local` and source-artifact-not-embedded limitations; it
+does not authenticate the workflow, repository, evidence producers, or time,
+and it does not turn CI execution into target, HIL, bench, physical, field, or
+production verification. Runner summary/output files are not durable audit or
+administrator-resistant storage. See `docs/security/THREAT_MODEL.md`.

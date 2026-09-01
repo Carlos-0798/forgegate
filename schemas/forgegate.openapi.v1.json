@@ -2892,7 +2892,7 @@
   "info": {
     "summary": "Local release-assurance project and candidate API",
     "title": "ForgeGate Local API",
-    "version": "0.1.0.dev22"
+    "version": "0.1.0.dev23"
   },
   "openapi": "3.1.0",
   "paths": {

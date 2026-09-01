@@ -216,3 +216,21 @@
 - [ ] Define retention/export operations, durable/distributed sessions and rate
   state, TLS/proxy identity, hostile-local-user controls, and
   administrator-resistant logging before any non-loopback deployment.
+
+## Phase 16 — offline GitHub Actions assurance gate
+
+- [x] Verify an existing portable assurance bundle before using any retained
+  candidate or decision field in CI presentation.
+- [x] Require exact complete candidate/CI commit equality and preserve decision
+  exit codes 0/1/2/3.
+- [x] Define a content-derived `forgegate.github-action-report.v1` with explicit
+  `unsigned_local` and source-artifact-not-embedded boundaries.
+- [x] Append bounded escaped Job Summary content and schema-constrained outputs
+  through runner-provided or explicit regular files.
+- [x] Add a token-free repository-local composite Action and a clearly labeled
+  generic fixture job that exercises its real metadata and outputs.
+- [x] Add model, adversarial, CLI, Schema, clean-wheel, and cross-platform CI
+  verification plus architecture/security documentation.
+- [ ] Design custom Checks/PR annotations, signed CI provenance, artifact
+  upload, permissions, OIDC workload identity, and any GitHub API mutation as
+  separate explicitly authorized work.

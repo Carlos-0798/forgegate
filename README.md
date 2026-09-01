@@ -8,7 +8,7 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 15 local API security boundaries implemented;
+**Phase 16 offline GitHub Actions assurance gate implemented;
 not production-ready.**
 
 This private-development checkpoint provides a working Python 3.12 CLI and an
@@ -59,6 +59,9 @@ current immutable project profile -> profile-bound release candidate
                               |
                               v
  streamed body cap + separate bounded API security-event journal
+                              |
+                              v
+ verified portable bundle + exact CI commit -> bounded GitHub Job Summary
 ```
 
 The core remains domain-neutral. Analog Validation Studio is consumed only
@@ -69,8 +72,8 @@ collector rather than a runtime or hardware dependency.
 
 | Gate | Result | Evidence level |
 |---|---|---|
-| Python tests | 656 passed, 1 skipped because Windows symlink creation was unavailable | Local host test |
-| Branch-aware coverage | 97.48% across 6,453 statements and 1,708 branches | Local host test |
+| Python tests | 666 passed, 2 skipped because Windows symlink creation was unavailable | Local host test |
+| Branch-aware coverage | 97.46% across 6,623 statements and 1,750 branches | Local host test |
 | Static quality gates | Ruff, formatting, and strict mypy passed | Local host test |
 | Contracts | JSON Schema and OpenAPI drift checks passed | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
@@ -110,6 +113,10 @@ collector rather than a runtime or hardware dependency.
   bounded at 10,000 events by default and globally operator-readable. It stores
   no token, signature, body, private key, or arbitrary header and is not the
   release-state audit chain or a complete compliance log.
+- The GitHub Actions bridge accepts only a strictly verified portable bundle,
+  requires an exact complete candidate/CI commit match, writes bounded escaped
+  summary/output files, and preserves 0/1/2/3 decision exits without requesting
+  a token or calling GitHub APIs.
 - Upstream AFE or future MSP430 results retain their original evidence level;
   ForgeGate does not relabel software or replay evidence as physical proof.
 
@@ -283,6 +290,14 @@ Implemented and host-verified in this checkpoint:
 - best-effort retention of authentication rejection/rate-limit events and
   successful logout, scoped revocation, and trust reload, without changing the
   in-memory session or loopback-only deployment boundary.
+- strict `forgegate.github-action-report.v1` binding a verified portable bundle
+  and manifest to one exact complete CI commit and existing ForgeGate decision;
+- `github-gate` with PASS/FAIL/REVIEW/ERROR exits 0/1/2/3, bounded escaped Job
+  Summary rendering, schema-constrained outputs, unsafe-target rejection, and
+  sanitized ERROR presentation;
+- a token-free repository-local composite Action, canonical generic fixture,
+  real workflow smoke job, Schema drift gate, adversarial tests, and installed-
+  wheel verification without Checks/PR/Issue/Release API writes.
 
 
 </details>
@@ -514,6 +529,23 @@ bytes, but not the collector source-artifact bytes; offline verification proves
 the internal document and byte associations, not producer identity or a fresh
 collector/hardware run.
 
+Drive a GitHub Actions job from that verified bundle and bind it to the exact CI
+commit represented by the candidate:
+
+```powershell
+forgegate github-gate work/assurance/assurance-<bundle-sha256> `
+  --expected-commit <complete-40-or-64-hex-ci-commit>
+```
+
+Inside GitHub Actions, the command appends a bounded escaped Job Summary and
+stable outputs through `GITHUB_STEP_SUMMARY` and `GITHUB_OUTPUT`; the repository-
+local `.github/actions/assurance-gate` composite Action wraps this command. For a
+pull-request candidate built from the PR head, pass the head SHA rather than a
+synthetic merge SHA. The bridge does not install ForgeGate, request a token,
+call GitHub APIs, upload artifacts, rerun collectors, or authenticate the
+workflow. `gate_status=VALID` describes bundle/commit validity and remains
+separate from the PASS/FAIL/REVIEW/ERROR decision.
+
 Authenticate the signer of those exact canonical bundle bytes against a
 separately protected trust store:
 
@@ -637,7 +669,7 @@ Not implemented yet:
 - non-loopback or TLS-protected API deployment;
 - HTTP artifact collection or filesystem publication;
 - complete rejected-request ingestion, security/audit export and retention,
-  plugin execution, or product-level GitHub integration;
+  plugin execution, or custom GitHub Checks/PR annotations/API integration;
 - database-file authorization, backup/repair, managed or hardware-backed key
   custody, managed online revocation, durable/distributed session authority,
   trusted timestamps, or CI workload identity federation;
@@ -661,18 +693,23 @@ project-scoped revocation, fixed-path trust reload, and bounded global
 authentication counters. Phase 15 adds an exact received-byte cap,
 pre-validation endpoint counters, and a bounded separate API security-event
 journal; it still does not make the service remotely safe or create a complete
-compliance record. SHA-256 is not producer authentication.
+compliance record. Phase 16 adds only an offline, token-free GitHub Actions
+presentation/exit bridge over the Phase 11 portable bundle; it does not add CI
+workload identity, source-artifact authentication, or GitHub API authority.
+SHA-256 is not producer authentication.
 The MSP430 controller may later expose a separate versioned artifact for
 another optional collector.
 
 ## Roadmap
 
-The Phase 15 local MVP adds parsing-independent request limits and a bounded,
-separate security-control event journal without weakening the loopback-only
-service boundary. TLS, reverse-proxy identity, hostile-local-user defenses,
-durable/distributed session state, security-event retention/export, and managed
-key lifecycle must still be designed and verified before any non-loopback deployment. MSP430
-compatibility remains gated on a separately frozen public result contract. See
+Phase 16 adds an offline GitHub Actions gate over a strictly verified portable
+bundle, exact CI commit binding, stable decision exits, and bounded Job Summary
+presentation. Custom GitHub API writes, annotations, signed CI provenance, OIDC,
+and artifact upload remain separate work. TLS, reverse-proxy identity,
+hostile-local-user defenses, durable/distributed session state, security-event
+retention/export, and managed key lifecycle must still be designed before any
+non-loopback deployment. MSP430 compatibility remains gated on a separately
+frozen public result contract. See
 [docs/ROADMAP.md](docs/ROADMAP.md) for acceptance-level tasks.
 
 ## License status

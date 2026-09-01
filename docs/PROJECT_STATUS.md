@@ -1,13 +1,14 @@
 # Project status
 
-- Date: 2026-08-31
-- Version: 0.1.0.dev22
-- Stage: Phase 15 local API security boundaries implemented
-- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, and bounded state discovery; not production-ready
+- Date: 2026-09-01
+- Version: 0.1.0.dev23
+- Stage: Phase 16 offline GitHub Actions assurance gate implemented locally
+- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, bounded state discovery, and an offline token-free GitHub Actions gate; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
-- Remote/publication status: synchronized to private `Carlos-0798/forgegate`;
-  no public release, License, or LinkedIn publication authorized
+- Remote/publication status: private `Carlos-0798/forgegate` remains at the
+  Phase 15 baseline while Phase 16 local verification is in progress; no public
+  release, License, or LinkedIn publication authorized
 
 ## Implemented
 
@@ -255,6 +256,18 @@
 - best-effort journal writes that retain no token, signature, request body,
   private key, or arbitrary header and do not alter the transactional release
   audit, session outcome, or loopback-only product boundary.
+- strict content-derived `forgegate.github-action-report.v1` retaining verified
+  bundle/manifest IDs, exact full candidate/CI commit binding, decision,
+  recommended conclusion, and unchanged evidence-boundary fields;
+- `github-gate` over a Phase 11 portable directory with existing 0/1/2/3
+  decision exits, bounded escaped rule summary, schema-constrained runner
+  outputs, unsafe-target rejection, and sanitized integration failures;
+- token-free repository-local composite Action using environment-bound inputs,
+  plus a canonical generic PASS fixture and real Ubuntu workflow smoke job that
+  is explicitly not the ForgeGate repository's current revision;
+- installed-wheel GitHub gate/report validation and local Action mechanics
+  coverage without GitHub API, artifact upload, source replay, CI identity, or
+  hardware claims.
 
 ## Not implemented
 
@@ -263,7 +276,7 @@ defense, managed online revocation, durable/distributed sessions, per-client
 network rate controls, distributed rate state, HTTP artifact collection and
 file publication, complete rejected-request/warning ingestion, security/audit
 export/retention, administrator-resistant logging,
-external plugins, GitHub integration,
+external plugins, custom GitHub Checks/PR annotations/API writes,
 managed/encrypted/hardware-backed key custody, trusted timestamps, online
 revocation, CI workload identity federation, database authorization,
 backup/repair, MSP430
@@ -277,8 +290,10 @@ artifact payload/replay export, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 656 passed, 1 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 97.48% across 6,453 statements and 1,708 branches
+- pytest: 666 passed, 2 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 97.46% across 6,623 statements and 1,750 branches
+- GitHub Actions gate focus: 10 passed, 1 skipped (Windows symlink creation
+  unavailable); models 100%, integration service 98%
 - API security-event focus: 5 passed, covering contracts, persistence,
   migration, access, saturation, privacy, and control behavior
 - authenticated-identity focus: 22 passed; identity package 96.48%
@@ -294,7 +309,7 @@ artifact payload/replay export, and hardware access.
   and 138 branches
 - committed JSON Schema and OpenAPI drift checks: PASS
 - project/policy/candidate/transition example documents: VALID
-- twenty-eight canonical versioned document Schemas plus Benchmark and Analog
+- twenty-nine canonical versioned document Schemas plus Benchmark and Analog
   Validation artifact Schemas: drift-checked and parsed
 - complete sdist manifest and wheel build: PASS
 - repository-external wheel installation and CLI smoke: PASS
@@ -326,3 +341,5 @@ Phase 14 acceptance is recorded in
 `reports/PHASE_14_LOCAL_SESSION_LIFECYCLE_ACCEPTANCE_REPORT.md`.
 Phase 15 acceptance is recorded in
 `reports/PHASE_15_LOCAL_API_SECURITY_BOUNDARIES_ACCEPTANCE_REPORT.md`.
+Phase 16 acceptance is recorded in
+`reports/PHASE_16_GITHUB_ACTIONS_GATE_ACCEPTANCE_REPORT.md`.

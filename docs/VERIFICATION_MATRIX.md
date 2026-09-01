@@ -11,7 +11,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — twenty-eight document plus two artifact schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — twenty-nine document plus two artifact schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Analog Validation result Schema mirror | committed upstream-consumer contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
@@ -100,6 +100,12 @@
 | SQLite v1/v2/v3/v4/v5-to-v6 migration | audit/profile backfill and legacy-candidate tests | PASS — registration profiles only; no candidate-profile fabrication or duplicate audit |
 | Project/audit contract drift | five JSON Schemas + OpenAPI | PASS — byte checked |
 | API security-event contract drift | two JSON Schemas + OpenAPI query | PASS — byte checked and clean-wheel persisted |
+| GitHub Action report contract | model/identity/Schema/loader tests | PASS — content-derived v1 report; local host |
+| Portable bundle to CI commit binding | strict verifier + complete exact object ID | PASS — partial/invalid/mismatch rejected; local host |
+| GitHub Job Summary and outputs | escaping, truncation, size/path/adversarial tests | PASS — bounded append-only runner files; local host |
+| GitHub composite Action | committed generic fixture + real workflow job | IMPLEMENTED — private CI confirmation pending |
+| Installed GitHub gate | clean-wheel portable-bundle/summary/output/report smoke | PASS — local host |
+| Custom GitHub Checks/PR/API writes | token/permissions/OIDC design | NOT IMPLEMENTED — no token requested and no GitHub API called |
 | Registered-project candidate authority | application/CLI/API/store tests | PASS — unregistered project and missing track fail closed |
 | Release-track normalization | underscore compatibility plus ambiguity tests | PASS — new candidate/policy identity is canonical hyphen form |
 | Project/candidate discovery | bounded page model, stable cursor, CLI/API, installed-wheel smoke | PASS — candidates are project-scoped |
@@ -129,6 +135,6 @@
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
 
-See `reports/PHASE_15_LOCAL_API_SECURITY_BOUNDARIES_ACCEPTANCE_REPORT.md`
+See `reports/PHASE_16_GITHUB_ACTIONS_GATE_ACCEPTANCE_REPORT.md`
 for the current exact local test and coverage result. Earlier acceptance
 reports remain historical records.

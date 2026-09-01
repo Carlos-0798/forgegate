@@ -42,6 +42,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/AUTHENTICATED_ASSURANCE_IDENTITY.md",
     "docs/architecture/AUTHENTICATED_LOCAL_API.md",
     "docs/architecture/LOCAL_SESSION_LIFECYCLE.md",
+    "docs/architecture/GITHUB_ACTIONS_GATE.md",
     "examples/sample-python-api/artifacts/junit.xml",
     "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
@@ -54,6 +55,9 @@ REQUIRED_SDIST_PATHS = (
     "examples/sample-python-api/evidence/fail-bundle.json",
     "examples/sample-python-api/candidates/draft.json",
     "examples/sample-python-api/candidates/evaluating.json",
+    "examples/sample-python-api/github-action-fixture/assurance-dbb54d911ff973918e1e89e52c4d58785ee6b8cb3f43e6f76c946c0a6ae605c9/assurance-bundle.json",
+    "examples/sample-python-api/github-action-fixture/assurance-dbb54d911ff973918e1e89e52c4d58785ee6b8cb3f43e6f76c946c0a6ae605c9/manifest.json",
+    "examples/sample-python-api/github-action-fixture/assurance-dbb54d911ff973918e1e89e52c4d58785ee6b8cb3f43e6f76c946c0a6ae605c9/README.md",
     "reports/PHASE_1_JUNIT_SLICE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_1_COVERAGE_SLICE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_1_BENCHMARK_SLICE_ACCEPTANCE_REPORT.md",
@@ -76,6 +80,7 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_13_AUTHENTICATED_LOCAL_API_ACCEPTANCE_REPORT.md",
     "reports/PHASE_14_LOCAL_SESSION_LIFECYCLE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_15_LOCAL_API_SECURITY_BOUNDARIES_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_16_GITHUB_ACTIONS_GATE_ACCEPTANCE_REPORT.md",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
@@ -103,6 +108,7 @@ REQUIRED_SDIST_PATHS = (
     "schemas/forgegate.audit-actor.v1.schema.json",
     "schemas/forgegate.api-security-event.v1.schema.json",
     "schemas/forgegate.api-security-event-page.v1.schema.json",
+    "schemas/forgegate.github-action-report.v1.schema.json",
     "schemas/forgegate.openapi.v1.json",
     "schemas/forgegate.benchmark.v1.schema.json",
     "schemas/analog-validation.result-export.v1.schema.json",
@@ -752,6 +758,39 @@ def main() -> int:
             [str(python), "-m", "forgegate", "verify-assurance", str(assurance_directory)],
             cwd=root,
         )
+        github_output = root / "github-output.txt"
+        github_summary = root / "github-summary.md"
+        github_report = root / "github-action-report.json"
+        github_gate = [
+            str(python),
+            "-m",
+            "forgegate",
+            "github-gate",
+            str(assurance_directory),
+            "--expected-commit",
+            "a" * 40,
+        ]
+        run_capture(
+            [
+                *github_gate,
+                "--github-output",
+                str(github_output),
+                "--step-summary",
+                str(github_summary),
+            ],
+            github_report,
+            cwd=root,
+        )
+        if "gate_status=VALID\n" not in github_output.read_text(encoding="utf-8"):
+            raise SystemExit("installed GitHub gate did not write VALID action output")
+        if "**Decision: PASS**" not in github_summary.read_text(encoding="utf-8"):
+            raise SystemExit("installed GitHub gate did not write the PASS job summary")
+        run(
+            [str(python), "-m", "forgegate", "validate-config", str(github_report)],
+            cwd=root,
+        )
+        if os.environ.get("GITHUB_OUTPUT") and os.environ.get("GITHUB_STEP_SUMMARY"):
+            run(github_gate, cwd=root)
         for assurance_member in ("assurance-bundle.json", "manifest.json"):
             run(
                 [

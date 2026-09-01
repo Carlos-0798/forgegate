@@ -1,4 +1,5 @@
 import json
+import os
 import platform
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -63,6 +64,16 @@ from forgegate.collectors import (
 from forgegate.config import ConfigLoadError, load_config
 from forgegate.domain.enums import CandidateStatus, Decision, EvidenceTrust, VerificationLevel
 from forgegate.domain.models import EvidenceBundle, ExecutionContext, PolicyConfig, ProjectConfig
+from forgegate.github_actions import (
+    GitHubActionGateError,
+    append_github_file,
+    create_github_action_report,
+    github_action_exit_code,
+    render_github_error_outputs,
+    render_github_error_summary,
+    render_github_outputs,
+    render_github_step_summary,
+)
 from forgegate.identity import (
     AssuranceSignature,
     IdentityError,
@@ -112,7 +123,7 @@ def doctor() -> None:
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
         "supported_artifact_schemas": sorted(ARTIFACT_SCHEMAS),
-        "phase": "phase15-local-api-security-boundaries",
+        "phase": "phase16-github-actions-gate",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 
@@ -167,6 +178,49 @@ def verify_assurance(
         "source_artifact_bytes": verified.bundle.source_artifact_bytes,
     }
     typer.echo(json.dumps(payload, indent=2, sort_keys=True))
+
+
+@app.command("github-gate")
+def github_gate(
+    directory: Annotated[Path, typer.Argument(exists=True, file_okay=False, readable=True)],
+    expected_commit: Annotated[str, typer.Option("--expected-commit")],
+    github_output: Annotated[Path | None, typer.Option("--github-output")] = None,
+    step_summary: Annotated[Path | None, typer.Option("--step-summary")] = None,
+) -> None:
+    """Verify an assurance bundle, bind its commit, and drive a GitHub Actions gate."""
+    output_path = github_output or _path_from_environment("GITHUB_OUTPUT")
+    summary_path = step_summary or _path_from_environment("GITHUB_STEP_SUMMARY")
+    try:
+        verified = verify_assurance_bundle(directory)
+        report = create_github_action_report(verified, expected_commit=expected_commit)
+        if summary_path is not None:
+            append_github_file(summary_path, render_github_step_summary(report, verified.bundle))
+        if output_path is not None:
+            append_github_file(output_path, render_github_outputs(report))
+    except (AssuranceBundleError, GitHubActionGateError) as exc:
+        code = exc.code
+        try:
+            if summary_path is not None:
+                append_github_file(summary_path, render_github_error_summary(code))
+            if output_path is not None:
+                append_github_file(output_path, render_github_error_outputs())
+        except GitHubActionGateError as output_exc:
+            typer.echo(
+                f"ERROR: {exc}; additionally failed to write GitHub files: {output_exc}",
+                err=True,
+            )
+            raise typer.Exit(code=3) from output_exc
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(report.model_dump_json(indent=2))
+    exit_code = github_action_exit_code(report.decision)
+    if exit_code:
+        raise typer.Exit(code=exit_code)
+
+
+def _path_from_environment(name: str) -> Path | None:
+    value = os.environ.get(name)
+    return Path(value) if value else None
 
 
 @identity_app.command("derive")

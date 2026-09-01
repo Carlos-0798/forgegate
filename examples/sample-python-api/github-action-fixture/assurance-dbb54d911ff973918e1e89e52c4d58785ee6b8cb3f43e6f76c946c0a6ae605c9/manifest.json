@@ -1,0 +1,19 @@
+{
+  "bundle_id": "sha256:dbb54d911ff973918e1e89e52c4d58785ee6b8cb3f43e6f76c946c0a6ae605c9",
+  "files": [
+    {
+      "media_type": "text/markdown",
+      "path": "README.md",
+      "sha256": "686b85dca119fb4a4f7250d563d29d60c7c112aaad2bdf42258fbbf1ccecc56a",
+      "size_bytes": 967
+    },
+    {
+      "media_type": "application/json",
+      "path": "assurance-bundle.json",
+      "sha256": "e441c635e0900fffcb365d72feab60f7760573a0a20dd9aeca8ba3b837d8da50",
+      "size_bytes": 13245
+    }
+  ],
+  "manifest_id": "sha256:e01caad0930fd37f8a4f776965b665ad9dc7ece059cc397b31f59b88da69e4d1",
+  "schema_version": "forgegate.assurance-bundle-manifest.v1"
+}

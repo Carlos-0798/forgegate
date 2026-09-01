@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.0.dev23 — 2026-09-01
+
+- Added an offline `github-gate` command that strictly verifies a portable
+  assurance bundle, requires exact full candidate/CI commit equality, emits a
+  versioned content-derived report, and preserves 0/1/2/3 decision exits.
+- Added bounded escaped GitHub Job Summary rendering and schema-constrained
+  runner outputs with unsafe-target, payload, and file-size rejection.
+- Added a token-free repository-local composite Action plus a canonical generic
+  fixture workflow job that verifies real Action metadata and outputs without
+  claiming the fixture represents the repository's current commit.
+- Added the `forgegate.github-action-report.v1` Schema, adversarial/CLI tests,
+  installed-wheel smoke, and explicit boundaries for unsigned-local evidence,
+  absent source replay, absent GitHub API writes, and absent hardware claims.
+
 ## 0.1.0.dev22 — 2026-08-31
 
 - Added a separate append-only SQLite v8 API security-event journal for

@@ -1,0 +1,54 @@
+name: ForgeGate assurance gate
+description: Verify a portable ForgeGate assurance bundle and bind it to the expected CI commit.
+
+inputs:
+  assurance-directory:
+    description: Path to a forgegate.assurance-bundle.v1 portable directory.
+    required: true
+  expected-commit:
+    description: Complete 40- or 64-hex commit object ID expected for this CI context.
+    required: true
+  python-command:
+    description: Python executable with ForgeGate installed.
+    required: false
+    default: python
+
+outputs:
+  gate-status:
+    description: VALID when bundle and commit binding passed; ERROR otherwise.
+    value: ${{ steps.gate.outputs.gate_status }}
+  decision:
+    description: ForgeGate PASS, FAIL, REVIEW, or ERROR decision.
+    value: ${{ steps.gate.outputs.decision }}
+  recommended-conclusion:
+    description: Recommended GitHub conclusion for a later explicit Checks API integration.
+    value: ${{ steps.gate.outputs.recommended_conclusion }}
+  report-id:
+    description: Content-derived forgegate.github-action-report.v1 identity.
+    value: ${{ steps.gate.outputs.report_id }}
+  bundle-id:
+    description: Verified portable assurance bundle identity.
+    value: ${{ steps.gate.outputs.bundle_id }}
+  candidate-id:
+    description: Verified ForgeGate candidate identity.
+    value: ${{ steps.gate.outputs.candidate_id }}
+  candidate-commit:
+    description: Exact verified candidate commit.
+    value: ${{ steps.gate.outputs.candidate_commit }}
+  assurance:
+    description: Retained assurance level; currently unsigned_local.
+    value: ${{ steps.gate.outputs.assurance }}
+
+runs:
+  using: composite
+  steps:
+    - id: gate
+      shell: bash
+      env:
+        FORGEGATE_ACTION_ASSURANCE_DIRECTORY: ${{ inputs.assurance-directory }}
+        FORGEGATE_ACTION_EXPECTED_COMMIT: ${{ inputs.expected-commit }}
+        FORGEGATE_ACTION_PYTHON: ${{ inputs.python-command }}
+      run: >-
+        "$FORGEGATE_ACTION_PYTHON" -m forgegate github-gate
+        "$FORGEGATE_ACTION_ASSURANCE_DIRECTORY"
+        --expected-commit "$FORGEGATE_ACTION_EXPECTED_COMMIT"
