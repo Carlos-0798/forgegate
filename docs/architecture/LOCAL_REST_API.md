@@ -4,8 +4,9 @@
 
 Phase 5 exposes a small HTTP transport over ForgeGate's existing candidate
 domain and SQLite store. It is intended for local tool integration while the
-product remains under development. The server is unauthenticated and is
-therefore deliberately restricted to the local loopback interface.
+product remains under development. Phase 13 adds an authenticated local session
+layer, while the service remains deliberately restricted to the loopback
+interface.
 
 The v1 baseline includes:
 
@@ -88,15 +89,15 @@ values reject before the database or server is opened. Middleware separately
 requires the HTTP `Host` to identify localhost or a loopback IP. Requests with
 a declared `Content-Length` above 4 MiB reject before model validation.
 
-These are safety guards, not authentication: any process or user able to
-connect to the loopback port has the API's current local permissions. The body
-limit does not yet enforce an exact streaming ceiling for unknown-length or
-chunked requests.
+These transport guards are separate from Phase 13 authentication. Protected
+routes additionally require a short-lived session derived from an Ed25519
+challenge and an external trust store. The body limit does not yet enforce an
+exact streaming ceiling for unknown-length or chunked requests.
 
-No TLS, identity, authorization, rate limiting, multi-tenant isolation, reverse
-proxy trust, or hostile-local-user defense is claimed. The server must not be
-forwarded or exposed through a proxy, container port, tunnel, LAN address, or
-public interface.
+No TLS, rate-based throttling, multi-tenant isolation, reverse-proxy trust, or
+hostile-local-user defense is claimed. Session state is memory-only and has no
+logout or live trust reload. The server must not be forwarded or exposed
+through a proxy, container port, tunnel, LAN address, or public interface.
 
 ## OpenAPI and verification
 
@@ -109,7 +110,8 @@ external bind request fails.
 
 Tests cover API/CLI parity, exact replay/conflict, expected-revision races,
 invalid states, frozen-profile policy-material mismatch, structured failures,
-correlation IDs, loopback bind/Host handling, declared body size, contract
+correlation IDs, loopback bind/Host handling, declared body size, challenge and
+session authentication, project/role authorization, audit actors, contract
 paths, and a complete durable candidate workflow. These are local-host
 software results only; they do not exercise AFE runtime code, MSP430 hardware,
 a network deployment, or remote CI.

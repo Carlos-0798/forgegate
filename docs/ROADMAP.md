@@ -161,5 +161,20 @@
   publication, exact replay, conflict handling, and installed-wheel CLI smoke.
 - [x] Preserve `unsigned_local` evidence semantics and explicitly defer trusted
   time, source-producer chains, online revocation, and managed key custody.
-- [ ] Design authenticated API sessions, authorization, transport security, and
+- [x] Design authenticated API sessions, authorization, transport security, and
   audit actor semantics before considering non-loopback deployment.
+
+## Phase 13 — authenticated local API foundation
+
+- [x] Require an external Phase 12 trust store when serving the local API.
+- [x] Add domain-separated, one-time Ed25519 challenges and bounded short-lived
+  in-memory Bearer sessions without sending a private key to the server.
+- [x] Enforce exact project scopes with producer read-only and operator
+  write/audit permissions across every protected route.
+- [x] Add authenticated actor identity to successful API-origin audit events in
+  the existing state-change transaction without persisting tokens.
+- [x] Add challenge/session capacity limits, expiry/replay/tamper/revocation
+  tests, strict challenge-file signing CLI, OpenAPI, and clean-wheel smoke.
+- [ ] Design TLS termination, reverse-proxy trust, hostile-local-user defense,
+  logout/live revocation, request-rate controls, and durable session policy
+  before considering any non-loopback deployment.

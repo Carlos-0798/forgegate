@@ -11,6 +11,109 @@
         "title": "Aggregation",
         "type": "string"
       },
+      "ApiAuthChallenge": {
+        "additionalProperties": false,
+        "properties": {
+          "challenge_id": {
+            "pattern": "^chal-[0-9a-f]{32}$",
+            "title": "Challenge Id",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "identity_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Identity Id",
+            "type": "string"
+          },
+          "issued_at": {
+            "format": "date-time",
+            "title": "Issued At",
+            "type": "string"
+          },
+          "nonce_base64": {
+            "maxLength": 44,
+            "minLength": 44,
+            "title": "Nonce Base64",
+            "type": "string"
+          },
+          "project_ids": {
+            "items": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Project Ids",
+            "type": "array"
+          },
+          "role": {
+            "$ref": "#/components/schemas/IdentityRole"
+          },
+          "schema_version": {
+            "const": "forgegate.api-auth-challenge.v1",
+            "default": "forgegate.api-auth-challenge.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "server_instance_id": {
+            "pattern": "^api-[0-9a-f]{32}$",
+            "title": "Server Instance Id",
+            "type": "string"
+          },
+          "trust_store_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Trust Store Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "server_instance_id",
+          "trust_store_id",
+          "identity_id",
+          "role",
+          "project_ids",
+          "nonce_base64",
+          "issued_at",
+          "expires_at"
+        ],
+        "title": "ApiAuthChallenge",
+        "type": "object"
+      },
+      "ApiChallengeRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "identity_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Identity Id",
+            "type": "string"
+          },
+          "project_ids": {
+            "items": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Project Ids",
+            "type": "array"
+          },
+          "role": {
+            "$ref": "#/components/schemas/IdentityRole"
+          }
+        },
+        "required": [
+          "identity_id",
+          "role",
+          "project_ids"
+        ],
+        "title": "ApiChallengeRequest",
+        "type": "object"
+      },
       "ApiError": {
         "additionalProperties": false,
         "properties": {
@@ -52,6 +155,92 @@
         "title": "ApiErrorResponse",
         "type": "object"
       },
+      "ApiSessionCreateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "challenge_id": {
+            "pattern": "^chal-[0-9a-f]{32}$",
+            "title": "Challenge Id",
+            "type": "string"
+          },
+          "signature_base64": {
+            "maxLength": 88,
+            "minLength": 88,
+            "title": "Signature Base64",
+            "type": "string"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "signature_base64"
+        ],
+        "title": "ApiSessionCreateRequest",
+        "type": "object"
+      },
+      "ApiSessionResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "access_token": {
+            "pattern": "^[A-Za-z0-9_-]{43}$",
+            "title": "Access Token",
+            "type": "string"
+          },
+          "authenticated_at": {
+            "format": "date-time",
+            "title": "Authenticated At",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "identity": {
+            "$ref": "#/components/schemas/SigningIdentity"
+          },
+          "project_ids": {
+            "items": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Project Ids",
+            "type": "array"
+          },
+          "role": {
+            "$ref": "#/components/schemas/IdentityRole"
+          },
+          "schema_version": {
+            "const": "forgegate.api-session.v1",
+            "default": "forgegate.api-session.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "session_id": {
+            "pattern": "^sess-[0-9a-f]{32}$",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "token_type": {
+            "const": "Bearer",
+            "default": "Bearer",
+            "title": "Token Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "identity",
+          "role",
+          "project_ids",
+          "authenticated_at",
+          "expires_at",
+          "access_token"
+        ],
+        "title": "ApiSessionResponse",
+        "type": "object"
+      },
       "ArtifactReference": {
         "additionalProperties": false,
         "properties": {
@@ -87,9 +276,74 @@
         "title": "ArtifactReference",
         "type": "object"
       },
+      "AuditActor": {
+        "additionalProperties": false,
+        "properties": {
+          "authenticated_at": {
+            "format": "date-time",
+            "title": "Authenticated At",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "identity_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Identity Id",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "producer",
+              "operator"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.audit-actor.v1",
+            "default": "forgegate.audit-actor.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "session_id": {
+            "pattern": "^sess-[0-9a-f]{32}$",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "trust_store_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Trust Store Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "identity_id",
+          "display_name",
+          "role",
+          "session_id",
+          "trust_store_id",
+          "authenticated_at"
+        ],
+        "title": "AuditActor",
+        "type": "object"
+      },
       "AuditEvent": {
         "additionalProperties": false,
         "properties": {
+          "actor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AuditActor"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "candidate_id": {
             "anyOf": [
               {
@@ -1115,6 +1369,14 @@
         ],
         "title": "HealthResponse",
         "type": "object"
+      },
+      "IdentityRole": {
+        "enum": [
+          "producer",
+          "operator"
+        ],
+        "title": "IdentityRole",
+        "type": "string"
       },
       "IssueSeverity": {
         "enum": [
@@ -2317,6 +2579,47 @@
         "title": "RuleEvaluation",
         "type": "object"
       },
+      "SigningIdentity": {
+        "additionalProperties": false,
+        "properties": {
+          "algorithm": {
+            "const": "ed25519",
+            "default": "ed25519",
+            "title": "Algorithm",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "identity_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Identity Id",
+            "type": "string"
+          },
+          "public_key_base64": {
+            "maxLength": 44,
+            "minLength": 44,
+            "title": "Public Key Base64",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.signing-identity.v1",
+            "default": "forgegate.signing-identity.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "identity_id",
+          "display_name",
+          "public_key_base64"
+        ],
+        "title": "SigningIdentity",
+        "type": "object"
+      },
       "VerificationLevel": {
         "description": "What kind of engineering observation the evidence represents.",
         "enum": [
@@ -2332,12 +2635,18 @@
         "title": "VerificationLevel",
         "type": "string"
       }
+    },
+    "securitySchemes": {
+      "HTTPBearer": {
+        "scheme": "bearer",
+        "type": "http"
+      }
     }
   },
   "info": {
     "summary": "Local release-assurance project and candidate API",
     "title": "ForgeGate Local API",
-    "version": "0.1.0.dev19"
+    "version": "0.1.0.dev20"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -2368,6 +2677,15 @@
         "parameters": [
           {
             "in": "query",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
             "name": "after_sequence",
             "required": false,
             "schema": {
@@ -2387,22 +2705,6 @@
               "minimum": 1,
               "title": "Limit",
               "type": "integer"
-            }
-          },
-          {
-            "in": "query",
-            "name": "project_id",
-            "required": false,
-            "schema": {
-              "anyOf": [
-                {
-                  "type": "string"
-                },
-                {
-                  "type": "null"
-                }
-              ],
-              "title": "Project Id"
             }
           },
           {
@@ -2442,6 +2744,26 @@
               }
             },
             "description": "Invalid request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
           },
           "404": {
             "content": {
@@ -2504,9 +2826,256 @@
             "description": "Candidate store unavailable"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Query Audit Events Endpoint",
         "tags": [
           "audit"
+        ]
+      }
+    },
+    "/v1/auth/challenges": {
+      "post": {
+        "operationId": "createApiAuthChallenge",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiChallengeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiAuthChallenge"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request conflicts with durable state"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request body exceeds local API limit"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Strict request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fail-closed internal error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate store unavailable"
+          }
+        },
+        "summary": "Create Auth Challenge Endpoint",
+        "tags": [
+          "authentication"
+        ]
+      }
+    },
+    "/v1/auth/sessions": {
+      "post": {
+        "operationId": "createApiSession",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiSessionCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request conflicts with durable state"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request body exceeds local API limit"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Strict request validation failed"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fail-closed internal error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate store unavailable"
+          }
+        },
+        "summary": "Create Auth Session Endpoint",
+        "tags": [
+          "authentication"
         ]
       }
     },
@@ -2555,6 +3124,26 @@
             },
             "description": "Invalid request"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -2616,6 +3205,11 @@
             "description": "Candidate store unavailable"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Create Candidate Endpoint",
         "tags": [
           "candidates"
@@ -2657,6 +3251,26 @@
             },
             "description": "Invalid request"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -2718,6 +3332,11 @@
             "description": "Candidate store unavailable"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Get Candidate Endpoint",
         "tags": [
           "candidates"
@@ -2759,6 +3378,26 @@
             },
             "description": "Invalid request"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -2820,6 +3459,11 @@
             "description": "Candidate store unavailable"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Get Candidate Attestation Endpoint",
         "tags": [
           "candidates"
@@ -2869,6 +3513,26 @@
             },
             "description": "Invalid request"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -2930,6 +3594,11 @@
             "description": "Candidate store unavailable"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Attest Candidate Endpoint",
         "tags": [
           "candidate commands"
@@ -2990,6 +3659,26 @@
             },
             "description": "Invalid request"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -3051,6 +3740,11 @@
             "description": "Candidate store unavailable"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Evaluate Candidate Endpoint",
         "tags": [
           "candidate commands"
@@ -3092,6 +3786,26 @@
             },
             "description": "Invalid request"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -3153,6 +3867,11 @@
             "description": "Candidate store unavailable"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Get Candidate Evidence Endpoint",
         "tags": [
           "candidates"
@@ -3211,6 +3930,26 @@
             },
             "description": "Invalid request"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -3272,6 +4011,11 @@
             "description": "Candidate store unavailable"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Bind Candidate Evidence Endpoint",
         "tags": [
           "candidate commands"
@@ -3313,6 +4057,26 @@
             },
             "description": "Invalid request"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -3374,6 +4138,11 @@
             "description": "Candidate store unavailable"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Get Candidate History Endpoint",
         "tags": [
           "candidates"
@@ -3416,6 +4185,26 @@
             },
             "description": "Invalid request"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -3477,6 +4266,11 @@
             "description": "Candidate store unavailable"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Get Candidate Policy Material Endpoint",
         "tags": [
           "candidates"
@@ -3537,6 +4331,26 @@
             },
             "description": "Invalid request"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -3598,6 +4412,11 @@
             "description": "Candidate store unavailable"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Advance Candidate Endpoint",
         "tags": [
           "candidate commands"
@@ -3658,6 +4477,26 @@
             },
             "description": "Invalid request"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -3719,6 +4558,11 @@
             "description": "Candidate store unavailable"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "List Projects Endpoint",
         "tags": [
           "projects"
@@ -3768,6 +4612,26 @@
             },
             "description": "Invalid request"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -3829,6 +4693,11 @@
             "description": "Candidate store unavailable"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Register Project Endpoint",
         "tags": [
           "projects"
@@ -3870,6 +4739,26 @@
             },
             "description": "Invalid request"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -3931,6 +4820,11 @@
             "description": "Candidate store unavailable"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Get Project Endpoint",
         "tags": [
           "projects"
@@ -4000,6 +4894,26 @@
             },
             "description": "Invalid request"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -4061,6 +4975,11 @@
             "description": "Candidate store unavailable"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "List Project Candidates Endpoint",
         "tags": [
           "candidates"
@@ -4102,6 +5021,26 @@
             },
             "description": "Invalid request"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -4163,6 +5102,11 @@
             "description": "Candidate store unavailable"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Get Current Project Profile Endpoint",
         "tags": [
           "projects"
@@ -4227,6 +5171,26 @@
             },
             "description": "Invalid request"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -4288,6 +5252,11 @@
             "description": "Candidate store unavailable"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "List Project Profile Revisions Endpoint",
         "tags": [
           "projects"
@@ -4346,6 +5315,26 @@
             },
             "description": "Invalid request"
           },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
           "404": {
             "content": {
               "application/json": {
@@ -4407,6 +5396,11 @@
             "description": "Candidate store unavailable"
           }
         },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
         "summary": "Revise Project Profile Endpoint",
         "tags": [
           "projects"

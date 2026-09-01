@@ -40,6 +40,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/POLICY_MATERIALIZATION.md",
     "docs/architecture/PORTABLE_ASSURANCE_BUNDLES.md",
     "docs/architecture/AUTHENTICATED_ASSURANCE_IDENTITY.md",
+    "docs/architecture/AUTHENTICATED_LOCAL_API.md",
     "examples/sample-python-api/artifacts/junit.xml",
     "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
@@ -71,6 +72,7 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_10_POLICY_MATERIALIZATION_ACCEPTANCE_REPORT.md",
     "reports/PHASE_11_PORTABLE_ASSURANCE_BUNDLE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_12_AUTHENTICATED_IDENTITY_FOUNDATION_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_13_AUTHENTICATED_LOCAL_API_ACCEPTANCE_REPORT.md",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
@@ -95,6 +97,7 @@ REQUIRED_SDIST_PATHS = (
     "schemas/forgegate.release-candidate-page.v1.schema.json",
     "schemas/forgegate.audit-event.v1.schema.json",
     "schemas/forgegate.audit-event-page.v1.schema.json",
+    "schemas/forgegate.audit-actor.v1.schema.json",
     "schemas/forgegate.openapi.v1.json",
     "schemas/forgegate.benchmark.v1.schema.json",
     "schemas/analog-validation.result-export.v1.schema.json",
@@ -316,6 +319,8 @@ def main() -> int:
             raise SystemExit("installed wheel OpenAPI contract differs from committed contract")
         openapi = json.loads(exported_openapi.read_text(encoding="utf-8"))
         expected_operations = {
+            ("/v1/auth/challenges", "post"): "createApiAuthChallenge",
+            ("/v1/auth/sessions", "post"): "createApiSession",
             ("/v1/projects", "post"): "registerProject",
             ("/v1/projects", "get"): "listProjects",
             ("/v1/projects/{project_id}", "get"): "getProject",
@@ -341,6 +346,8 @@ def main() -> int:
                 "serve",
                 "--database",
                 str(root / "api-rejected.db"),
+                "--trust-store",
+                str(REPOSITORY_ROOT / "pyproject.toml"),
                 "--host",
                 "0.0.0.0",
             ],
@@ -781,10 +788,80 @@ def main() -> int:
                 str(identity_path),
                 "--role",
                 "producer",
+                "--role",
+                "operator",
                 "--project",
                 "sample-api",
             ],
             trust_store_path,
+            cwd=root,
+        )
+        challenge_path = root / "api-challenge.json"
+        run_capture(
+            [
+                str(python),
+                "-c",
+                (
+                    "import sys; from pathlib import Path; "
+                    "from forgegate.api import ApiAuthenticator, ApiChallengeRequest; "
+                    "from forgegate.identity import IdentityRole, TrustStore, "
+                    "load_identity_document; "
+                    "trust=load_identity_document(Path(sys.argv[1])); "
+                    "assert isinstance(trust, TrustStore); "
+                    "identity=trust.identities[0].identity; "
+                    "challenge=ApiAuthenticator(trust).issue_challenge(ApiChallengeRequest("
+                    "identity_id=identity.identity_id, role=IdentityRole.OPERATOR, "
+                    "project_ids=('sample-api',))); print(challenge.model_dump_json(indent=2))"
+                ),
+                str(trust_store_path),
+            ],
+            challenge_path,
+            cwd=root,
+        )
+        session_request_path = root / "api-session-request.json"
+        run_capture(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "identity",
+                "sign-api-challenge",
+                str(challenge_path),
+                str(identity_path),
+                str(private_key_path),
+            ],
+            session_request_path,
+            cwd=root,
+        )
+        session_request = json.loads(session_request_path.read_text(encoding="utf-8"))
+        if set(session_request) != {"challenge_id", "signature_base64"}:
+            raise SystemExit("installed wheel API challenge signer returned an invalid request")
+        run(
+            [
+                str(python),
+                "-c",
+                (
+                    "import sys; from pathlib import Path; "
+                    "from forgegate.api import ApiAuthenticator, ApiChallengeRequest, "
+                    "sign_api_challenge; from forgegate.identity import IdentityRole, "
+                    "SigningIdentity, TrustStore, load_ed25519_private_key, "
+                    "load_identity_document; trust=load_identity_document(Path(sys.argv[1])); "
+                    "identity=load_identity_document(Path(sys.argv[2])); "
+                    "assert isinstance(trust, TrustStore) and "
+                    "isinstance(identity, SigningIdentity); "
+                    "auth=ApiAuthenticator(trust); challenge=auth.issue_challenge("
+                    "ApiChallengeRequest(identity_id=identity.identity_id, "
+                    "role=IdentityRole.OPERATOR, project_ids=('sample-api',))); "
+                    "session=auth.create_session(sign_api_challenge(challenge, identity=identity, "
+                    "private_key=load_ed25519_private_key(Path(sys.argv[3])))); "
+                    "principal=auth.authenticate('Bearer '+session.access_token); "
+                    "assert principal.identity == identity and "
+                    "principal.role is IdentityRole.OPERATOR"
+                ),
+                str(trust_store_path),
+                str(identity_path),
+                str(private_key_path),
+            ],
             cwd=root,
         )
         signature_output = root / "signatures"

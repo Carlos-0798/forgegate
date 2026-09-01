@@ -22,7 +22,7 @@ from forgegate.application.models import (
 from forgegate.artifacts import ArtifactRegistry
 from forgegate.assurance import AssuranceBundle, create_assurance_bundle
 from forgegate.attestations import ReleaseAttestation
-from forgegate.audit import AuditEventPage
+from forgegate.audit import AuditActor, AuditEventPage
 from forgegate.candidates import (
     CandidateDocument,
     CandidateEvidenceBinding,
@@ -77,11 +77,13 @@ class CandidateApplication:
         command: ProjectRegisterCommand,
         *,
         idempotency_key: str,
+        actor: AuditActor | None = None,
     ) -> RegisteredProject:
         return self.repository.register_project(
             command.config,
             registered_at=command.registered_at,
             idempotency_key=idempotency_key,
+            actor=actor,
         )
 
     def get_project(self, project_id: str) -> RegisteredProject:
@@ -93,6 +95,7 @@ class CandidateApplication:
         command: ProjectReviseCommand,
         *,
         idempotency_key: str,
+        actor: AuditActor | None = None,
     ) -> ProjectProfileRevision:
         return self.repository.revise_project(
             project_id,
@@ -100,6 +103,7 @@ class CandidateApplication:
             expected_profile_version=command.expected_profile_version,
             effective_at=command.effective_at,
             idempotency_key=idempotency_key,
+            actor=actor,
         )
 
     def get_current_project_profile(self, project_id: str) -> ProjectProfileDocument:
@@ -142,11 +146,13 @@ class CandidateApplication:
         command: CandidateCreateCommand,
         *,
         idempotency_key: str,
+        actor: AuditActor | None = None,
     ) -> CandidateDocument:
         candidate = self.preview_candidate(command)
         return self.repository.create_for_registered_project(
             candidate,
             idempotency_key=idempotency_key,
+            actor=actor,
         )
 
     def get_candidate(self, candidate_id: str) -> CandidateDocument:
@@ -166,6 +172,7 @@ class CandidateApplication:
         *,
         idempotency_key: str,
         evaluation: PolicyEvaluationDocument | None = None,
+        actor: AuditActor | None = None,
     ) -> CandidateTransitionResult:
         return self.repository.advance(
             candidate_id,
@@ -175,6 +182,7 @@ class CandidateApplication:
             idempotency_key=idempotency_key,
             reason=command.reason,
             evaluation=evaluation,
+            actor=actor,
         )
 
     def bind_evidence(
@@ -183,12 +191,14 @@ class CandidateApplication:
         command: CandidateBindEvidenceCommand,
         *,
         idempotency_key: str,
+        actor: AuditActor | None = None,
     ) -> CandidateEvidenceBinding:
         return self.repository.bind_evidence(
             candidate_id,
             command.assembly,
             bound_at=command.bound_at,
             idempotency_key=idempotency_key,
+            actor=actor,
         )
 
     def evaluate_candidate(
@@ -197,6 +207,7 @@ class CandidateApplication:
         command: CandidateEvaluateCommand,
         *,
         idempotency_key: str,
+        actor: AuditActor | None = None,
     ) -> CandidateEvaluationResult:
         binding = self.repository.get_evidence_binding(candidate_id)
         try:
@@ -228,6 +239,7 @@ class CandidateApplication:
             reason=command.reason,
             evaluation=evaluation,
             policy_material=command.policy_material,
+            actor=actor,
         )
         return CandidateEvaluationResult(
             evaluation=evaluation,
@@ -286,11 +298,14 @@ class CandidateApplication:
         self,
         candidate_id: str,
         command: CandidateAttestCommand,
+        *,
+        actor: AuditActor | None = None,
     ) -> ReleaseAttestation:
         return self.repository.attest(
             candidate_id,
             issued_at=command.issued_at,
             generator_version=__version__,
+            actor=actor,
         )
 
     def get_history(self, candidate_id: str) -> CandidateHistoryView:

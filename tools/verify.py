@@ -41,7 +41,7 @@ def verify_committed_schemas() -> None:
 def verify_committed_openapi() -> None:
     expected = (
         json.dumps(
-            create_api_app(Path("forgegate-openapi-contract.db")).openapi(),
+            create_api_app(Path("forgegate-openapi-contract.db"), contract_only=True).openapi(),
             indent=2,
             sort_keys=True,
         )

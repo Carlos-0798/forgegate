@@ -71,5 +71,6 @@ software evidence into bench, hardware, field, or production evidence.
 The embedded `unsigned_local` assurance label remains unchanged. Phase 12 can
 attach a separately published Ed25519 sidecar and verify its signer against an
 external trust store; that authenticates the bundle statement, not the source
-artifacts or REST caller. API identity and authorization are still required
-before any non-loopback service deployment.
+artifacts. Phase 13 separately authenticates a local REST caller and exact
+project authority, but TLS and the remaining remote-transport controls are
+still required before any non-loopback service deployment.

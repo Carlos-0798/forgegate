@@ -6,11 +6,9 @@ from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
-from fastapi.testclient import TestClient
 from pydantic import ValidationError
 from typer.testing import CliRunner
 
-from forgegate.api import create_api_app
 from forgegate.audit import AuditEvent, AuditEventPage, AuditEventType, create_audit_event
 from forgegate.candidates import CandidateStoreError, SQLiteCandidateRepository, create_candidate
 from forgegate.candidates.store import (
@@ -25,6 +23,12 @@ from forgegate.domain.enums import CandidateStatus
 from forgegate.domain.models import ProjectConfig
 from forgegate.policy import evaluate_policy
 from forgegate.projects import RegisteredProject, create_registered_project
+from tests.api_auth_support import (
+    AuthenticatedTestClient as TestClient,
+)
+from tests.api_auth_support import (
+    create_test_api_app as create_api_app,
+)
 
 runner = CliRunner()
 REGISTERED_AT = datetime(2026, 8, 31, 14, 0, tzinfo=UTC)

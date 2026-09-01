@@ -11,7 +11,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — twenty-five document plus two artifact schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — twenty-six document plus two artifact schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Analog Validation result Schema mirror | committed upstream-consumer contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
@@ -77,7 +77,11 @@
 | Request correlation and error sanitization | generated/supplied/invalid IDs + injected exception | PASS — local host |
 | Loopback-only API bind | IPv4/IPv6/localhost allowlist + external-address rejection | PASS — local host |
 | OpenAPI 3.1 contract | committed byte comparison + installed-wheel export | PASS — drift-checked |
-| Authenticated/non-loopback API | identity, authorization, transport controls | NOT IMPLEMENTED |
+| Authenticated local API | Ed25519 challenge, Bearer session, trust recheck | PASS — local host, loopback only |
+| API role/project authorization | producer/operator and cross-project adversarial tests | PASS — exact session scopes; producer read-only |
+| Authenticated audit actor | API write/readback, event identity, token absence | PASS — successful writes only |
+| Session replay/expiry/capacity | one-time challenge, bounded memory, restart semantics | PASS — local host |
+| Non-loopback/TLS API | transport, proxy, hostile-local-user controls | NOT IMPLEMENTED |
 | REST lifecycle transitions | expected revision + idempotent replay/conflict | PASS — local host |
 | REST evidence binding | strict nested assembly + immutable SQLite binding | PASS — local host |
 | REST bound-evidence evaluation | policy engine + atomic terminal transition | PASS — local host |
@@ -113,12 +117,12 @@
 | Strict identity document loading | size/encoding/duplicate/non-finite/schema/change tests | PASS — bounded JSON-only trust boundary |
 | Signature publication | staging, content address, replay/conflict/concurrency tests | PASS — local host |
 | Installed identity workflow | ephemeral key derive/trust/sign/replay/verify smoke | PASS — clean-wheel local host |
-| Trusted timestamp/online revocation | managed external infrastructure | NOT IMPLEMENTED — signed time is caller supplied; revocation is a local snapshot |
+| Trusted timestamp/online revocation | managed external infrastructure | NOT IMPLEMENTED — signed/auth times are not trusted; trust is a startup snapshot |
 | Source-artifact producer chain | producer-signed artifact receipts | NOT IMPLEMENTED — signature covers retained bundle only |
 | HTTP artifact loading/file publication | no loader/output path; nested metadata is not dereferenced | OUT OF SCOPE |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
 
-See `reports/PHASE_12_AUTHENTICATED_IDENTITY_FOUNDATION_ACCEPTANCE_REPORT.md`
+See `reports/PHASE_13_AUTHENTICATED_LOCAL_API_ACCEPTANCE_REPORT.md`
 for the current exact local test and coverage result. Earlier acceptance
 reports remain historical records.

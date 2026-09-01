@@ -1,8 +1,8 @@
 # Project status
 
 - Date: 2026-08-31
-- Version: 0.1.0.dev19
-- Stage: Phase 12 authenticated-assurance identity foundation implemented
+- Version: 0.1.0.dev20
+- Stage: Phase 13 authenticated local API foundation implemented
 - Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, and bounded state discovery; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
@@ -217,10 +217,24 @@
 - installed `identity derive`, `identity trust`, `sign-assurance`, and
   `verify-assurance-signature` CLI workflow without private-key generation or
   retention.
+- external trust-store requirement for `serve`, with no unauthenticated runtime
+  application construction path;
+- domain-separated one-time Ed25519 challenges binding server instance,
+  trust-store ID, identity, role, exact projects, nonce, and expiry;
+- short-lived memory-only Bearer sessions retaining token digests rather than
+  raw tokens, with bounded challenge/session caches and restart expiry;
+- exact project authorization, producer read-only policy, operator write/audit
+  authority, filtered project discovery, and mandatory REST audit project scope;
+- `forgegate.audit-actor.v1` attribution inside successful API state-change
+  transactions, with content-derived event binding and no token/key retention;
+- strict `identity sign-api-challenge`, authentication routes, OpenAPI security
+  scheme, adversarial authentication/authorization tests, and installed-wheel
+  challenge/session smoke.
 
 ## Not implemented
 
-Authenticated/non-loopback API deployment, HTTP artifact collection and file
+Non-loopback/TLS API deployment, hostile-local-user defense, logout/live
+revocation, rate-based throttling, HTTP artifact collection and file
 publication, rejected-request/warning audit ingestion,
 audit export/retention,
 external plugins, GitHub integration,
@@ -237,8 +251,9 @@ artifact payload/replay export, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 624 passed, 1 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 98.13% across 5,733 statements and 1,526 branches
+- pytest: 637 passed, 1 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 97.90% across 6,076 statements and 1,602 branches
+- authenticated-API focus: 13 passed; authentication module 97.95%
 - authenticated-identity focus: 22 passed; identity package 96.48%
 - portable-assurance focus: 17 passed; assurance models 100% and portable
   publication/verifier 95%
@@ -252,7 +267,7 @@ artifact payload/replay export, and hardware access.
   and 138 branches
 - committed JSON Schema and OpenAPI drift checks: PASS
 - project/policy/candidate/transition example documents: VALID
-- twenty-five canonical versioned document Schemas plus Benchmark and Analog
+- twenty-six canonical versioned document Schemas plus Benchmark and Analog
   Validation artifact Schemas: drift-checked and parsed
 - complete sdist manifest and wheel build: PASS
 - repository-external wheel installation and CLI smoke: PASS
@@ -278,3 +293,5 @@ slice. Phase 11 acceptance is recorded in
 `reports/PHASE_11_PORTABLE_ASSURANCE_BUNDLE_ACCEPTANCE_REPORT.md`.
 Phase 12 acceptance is recorded in
 `reports/PHASE_12_AUTHENTICATED_IDENTITY_FOUNDATION_ACCEPTANCE_REPORT.md`.
+Phase 13 acceptance is recorded in
+`reports/PHASE_13_AUTHENTICATED_LOCAL_API_ACCEPTANCE_REPORT.md`.

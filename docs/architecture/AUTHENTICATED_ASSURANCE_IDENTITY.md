@@ -5,7 +5,9 @@
 Phase 12 authenticates the signer of one exact Phase 11 portable assurance
 bundle. It does not change the bundle contract, reopen its content-addressed
 directory, or claim that referenced source artifacts were produced by that
-signer. The local REST service remains unauthenticated and loopback-only.
+signer. Phase 12 left the REST service unauthenticated; Phase 13 separately
+reuses the same trust identities for short-lived local API sessions while
+retaining the loopback-only boundary.
 
 Three domain-neutral documents define the boundary:
 

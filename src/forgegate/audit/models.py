@@ -10,6 +10,25 @@ from forgegate.candidates.models import CANDIDATE_ID_PATTERN, FINGERPRINT_PATTER
 from forgegate.canonical import sha256_fingerprint
 from forgegate.domain.models import SLUG_PATTERN, StrictModel
 
+SESSION_ID_PATTERN = r"^sess-[0-9a-f]{32}$"
+
+
+class AuditActor(StrictModel):
+    schema_version: Literal["forgegate.audit-actor.v1"] = "forgegate.audit-actor.v1"
+    identity_id: str = Field(pattern=FINGERPRINT_PATTERN)
+    display_name: str = Field(min_length=1, max_length=120)
+    role: Literal["producer", "operator"]
+    session_id: str = Field(pattern=SESSION_ID_PATTERN)
+    trust_store_id: str = Field(pattern=FINGERPRINT_PATTERN)
+    authenticated_at: datetime
+
+    @field_validator("authenticated_at")
+    @classmethod
+    def authenticated_at_must_include_timezone(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("authenticated_at must include a UTC offset")
+        return value
+
 
 class AuditEventType(StrEnum):
     PROJECT_REGISTERED = "project.registered"
@@ -32,6 +51,7 @@ class AuditEvent(StrictModel):
     subject_schema_version: str = Field(min_length=1, max_length=120)
     subject_id: str = Field(min_length=1, max_length=255)
     subject_fingerprint: str = Field(pattern=FINGERPRINT_PATTERN)
+    actor: AuditActor | None = None
 
     @field_validator("occurred_at")
     @classmethod
@@ -58,6 +78,7 @@ class AuditEvent(StrictModel):
             subject_schema_version=self.subject_schema_version,
             subject_id=self.subject_id,
             subject_fingerprint=self.subject_fingerprint,
+            actor=self.actor,
         )
         if self.event_id != sha256_fingerprint(identity):
             raise ValueError("event_id does not match audit-event content")
@@ -93,6 +114,7 @@ def create_audit_event(
     subject_schema_version: str,
     subject_id: str,
     subject_fingerprint: str,
+    actor: AuditActor | None = None,
 ) -> AuditEvent:
     identity = _audit_identity(
         event_type=event_type,
@@ -102,6 +124,7 @@ def create_audit_event(
         subject_schema_version=subject_schema_version,
         subject_id=subject_id,
         subject_fingerprint=subject_fingerprint,
+        actor=actor,
     )
     return AuditEvent(
         event_id=sha256_fingerprint(identity),
@@ -113,6 +136,7 @@ def create_audit_event(
         subject_schema_version=subject_schema_version,
         subject_id=subject_id,
         subject_fingerprint=subject_fingerprint,
+        actor=actor,
     )
 
 
@@ -125,8 +149,9 @@ def _audit_identity(
     subject_schema_version: str,
     subject_id: str,
     subject_fingerprint: str,
+    actor: AuditActor | None,
 ) -> dict[str, object]:
-    return {
+    identity: dict[str, object] = {
         "event_type": event_type.value,
         "occurred_at": occurred_at.isoformat().replace("+00:00", "Z"),
         "project_id": project_id,
@@ -135,3 +160,6 @@ def _audit_identity(
         "subject_id": subject_id,
         "subject_fingerprint": subject_fingerprint,
     }
+    if actor is not None:
+        identity["actor"] = actor.model_dump(mode="json")
+    return identity

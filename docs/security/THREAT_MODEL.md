@@ -205,7 +205,7 @@ The current slice has no authenticated producer and runs no plugin code.
 | Attestation request races mutable candidate state | Store accepts only a terminal immutable revision-four candidate and exact deterministic replay |
 | DNS rebinding or forged HTTP Host bypasses bind intent | Middleware requires the request Host itself to be localhost or a loopback IP |
 | Declared oversized JSON exhausts ordinary local use | Requests declaring more than 4 MiB in `Content-Length` reject before validation |
-| Local command endpoint is mistaken for operator authentication | Authority remains the local OS process/account boundary; no ForgeGate user identity is claimed |
+| Local command endpoint is mistaken for operator authentication | Phase 6 documented the OS-account-only boundary; Phase 13 supersedes REST commands with explicit session identity while CLI authority remains local-OS based |
 
 ## Addressed in the Phase 7 project registry and audit-query slice
 
@@ -293,8 +293,27 @@ The current slice has no authenticated producer and runs no plugin code.
 | Existing signature output is overwritten | Content-addressed publication permits exact replay only and rejects conflicts or unsafe roots |
 | Signed time is mistaken for trusted time | Verification output and documentation explicitly report that trusted time is not established |
 | Bundle signer is mistaken for every source-artifact producer | Contract and documentation limit authentication to the canonical bundle statement; embedded evidence remains `unsigned_local` |
-| Bundle signing is mistaken for API authentication | Loopback-only bind/Host restrictions remain and no HTTP identity or authorization claim is made |
+| Bundle signing is mistaken for API authentication | Phase 12 made no HTTP claim; Phase 13 adds a separate challenge/session protocol and does not treat a bundle signature as an API credential |
 | Trust-store SHA-256 is mistaken for a trust root | Trust store remains an externally protected input; its ID detects content change but does not establish authority |
+
+## Addressed in the Phase 13 authenticated local API slice
+
+| Threat | Current control |
+|---|---|
+| Any local process can issue release commands without identity | Every project/candidate/audit route requires a valid short-lived Bearer session; only health, OpenAPI, and session establishment remain public |
+| A caller proves possession once and requests unrelated authority | The signed challenge binds identity, role, exact canonical project set, trust-store ID, server instance, nonce, and expiry |
+| A captured challenge is replayed | Unpredictable challenge IDs/nonces, a short server window, and single-use removal before signature verification |
+| A self-selected key opens a session | Server resolves the exact active identity from its external startup trust store before challenge issue and session creation |
+| A producer performs release-control writes | Fixed authorization policy makes producer sessions read-only; operator role is required for writes and audit queries |
+| A valid identity crosses project boundaries | Session projects must be a subset of the trust record and each route rechecks the exact target project |
+| Global list/audit endpoints leak other projects | Project listing filters to session authority and REST audit queries require one authorized project ID |
+| Bearer token is recovered from SQLite or audit export | Only a SHA-256 token digest exists in process memory; durable actor records contain no token or private key |
+| Authentication floods process memory | Expired entries are purged and pending challenges/active sessions have explicit bounded capacities |
+| Service restart preserves stale access | Challenges and sessions are memory-only and disappear when the process exits |
+| Audit actor is changed after the write | Actor is inside the content-derived audit-event identity and the same append-only transaction as the state change |
+| Migration invents historical actors | Existing and CLI events retain `actor = null`; no identity is synthesized |
+| Local authentication is mistaken for remote transport security | Loopback bind/Host gates remain; documentation denies TLS, proxy, LAN, shared-host, internet, and production approval |
+| Caller-supplied operation time is mistaken for authentication time | Actor has a separate server `authenticated_at`; neither field is claimed as a trusted timestamp |
 
 ## Deferred risks
 
@@ -305,7 +324,10 @@ The current slice has no authenticated producer and runs no plugin code.
 - managed key generation/custody/rotation, encrypted keys, HSM/TPM/KMS support,
   trust-store distribution, online revocation, trusted timestamping, and CI
   workload identity federation;
-- database authorization, API authentication, audit retention, backup, repair,
-  encryption at rest, and administrator-resistant tamper evidence;
+- database-file authorization, audit retention, backup, repair, encryption at
+  rest, and administrator-resistant tamper evidence;
+- TLS termination, reverse-proxy trust, hostile-local-user defense, logout,
+  live trust reload/per-session revocation, durable/distributed sessions, and
+  rate-based request controls;
 - an exact streaming request-body limiter for unknown-length/chunked HTTP
   bodies; the current 4 MiB gate covers declared `Content-Length` only.

@@ -29,13 +29,16 @@ to one complete audited assembly before a new persisted candidate may become
 `READY`.
 
 `forgegate.registered-project.v1.schema.json` describes one immutable local
-project-profile registration. `forgegate.audit-event.v1.schema.json` describes
-content-bound metadata for one successful durable state change, while
-`forgegate.audit-event-page.v1.schema.json` describes bounded stable-cursor
-query output. `forgegate.registered-project-page.v1.schema.json` and
+project-profile registration. `forgegate.audit-actor.v1.schema.json` describes
+the authenticated public identity, role, session, and trust snapshot attached
+to a successful API-origin write. `forgegate.audit-event.v1.schema.json`
+describes content-bound metadata for one successful durable state change and
+optionally includes that actor, while `forgegate.audit-event-page.v1.schema.json`
+describes bounded stable-cursor query output. Legacy and CLI events retain a
+null actor; no Bearer token or private key is part of these contracts.
+`forgegate.registered-project-page.v1.schema.json` and
 `forgegate.release-candidate-page.v1.schema.json` describe bounded project and
-project-scoped candidate discovery. These contracts do not authenticate an
-operator or producer.
+project-scoped candidate discovery.
 
 `forgegate.project-profile-revision.v1.schema.json` and
 `forgegate.project-profile-page.v1.schema.json` describe append-only complete

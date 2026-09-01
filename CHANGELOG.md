@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.0.dev20 — 2026-08-31
+
+- Required an external trust store for `serve` and added domain-separated,
+  single-use Ed25519 challenges plus bounded short-lived in-memory Bearer
+  sessions.
+- Enforced exact project scopes, producer read-only access, and operator
+  write/audit authority across the protected REST surface.
+- Added optional authenticated `forgegate.audit-actor.v1` attribution to
+  successful API state-change events without retaining tokens or private keys.
+- Added `identity sign-api-challenge`, challenge/session OpenAPI contracts,
+  strict challenge loading, capacity/expiry/replay/tamper/revocation tests, and
+  clean-wheel authentication smoke.
+- Retained mandatory loopback bind/Host controls and explicitly deferred TLS,
+  hostile-local-user defense, logout/live revocation, reverse-proxy trust, and
+  non-loopback deployment.
+
 ## 0.1.0.dev19 — 2026-08-31
 
 - Added key-derived `forgegate.signing-identity.v1` and externally supplied

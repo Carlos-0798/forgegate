@@ -8,13 +8,13 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 12 authenticated assurance identity foundation implemented;
+**Phase 13 authenticated local API foundation implemented;
 not production-ready.**
 
-This private-development checkpoint provides a working Python 3.12 CLI and a
-loopback-only REST API. Its strongest ForgeGate-owned evidence is local host
-testing; it contains no physical-device verification or production-deployment
-claim.
+This private-development checkpoint provides a working Python 3.12 CLI and an
+Ed25519-authenticated, project-authorized, loopback-only REST API. Its strongest
+ForgeGate-owned evidence is local host testing; it contains no physical-device
+verification or production-deployment claim.
 
 ## Architecture and workflow
 
@@ -47,6 +47,12 @@ current immutable project profile -> profile-bound release candidate
                               |
                               v
  external trust store -> Ed25519 signer authentication sidecar
+                              |
+                              v
+      one-time Ed25519 challenge -> short-lived local API session
+                              |
+                              v
+ project/role authorization -> authenticated audit actor on writes
 ```
 
 The core remains domain-neutral. Analog Validation Studio is consumed only
@@ -57,12 +63,12 @@ collector rather than a runtime or hardware dependency.
 
 | Gate | Result | Evidence level |
 |---|---|---|
-| Python tests | 624 passed, 1 skipped because Windows symlink creation was unavailable | Local host test |
-| Branch-aware coverage | 98.13% across 5,733 statements and 1,526 branches | Local host test |
+| Python tests | 637 passed, 1 skipped because Windows symlink creation was unavailable | Local host test |
+| Branch-aware coverage | 97.90% across 6,076 statements and 1,602 branches | Local host test |
 | Static quality gates | Ruff, formatting, and strict mypy passed | Local host test |
 | Contracts | JSON Schema and OpenAPI drift checks passed | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
-| GitHub Actions | Phase 12 completed on Windows, Ubuntu, and macOS | PASS — [run 33455212296](https://github.com/Carlos-0798/forgegate/actions/runs/33455212296) |
+| GitHub Actions | Latest completed remote baseline is Phase 12 on Windows, Ubuntu, and macOS; Phase 13 pending push | PASS — [run 33455212296](https://github.com/Carlos-0798/forgegate/actions/runs/33455212296) |
 | Hardware/device behavior | Not exercised by ForgeGate | Out of scope |
 
 ## Key design decisions
@@ -86,7 +92,11 @@ collector rather than a runtime or hardware dependency.
   profile version and exact idempotency; legacy candidates remain readable
   without fabricated profile bindings.
 - The REST API shares its application service with the CLI, accepts no local
-  artifact-loader or output-directory path, and is restricted to loopback.
+  artifact-loader or output-directory path, requires a short-lived session
+  authorized by an external trust store, and remains restricted to loopback.
+- Producers are read-only; operators may write and query project-scoped audit
+  history. Successful API writes retain a public authenticated actor but never
+  a private key or Bearer token.
 - Upstream AFE or future MSP430 results retain their original evidence level;
   ForgeGate does not relabel software or replay evidence as physical proof.
 
@@ -228,6 +238,19 @@ Implemented and host-verified in this checkpoint:
   trust-store verification for an authorized producer or operator role;
 - strict bounded JSON identity loading plus `identity derive`, `identity trust`,
   `sign-assurance`, and `verify-assurance-signature` installed CLI paths.
+- domain-separated, one-time Ed25519 API challenges bound to server instance,
+  trust store, role, exact projects, nonce, and short server time window;
+- bounded short-lived in-memory Bearer sessions that retain only token digests,
+  expire on schedule or restart, and recheck active trust authority;
+- exact project authorization with producer read-only and operator write/audit
+  permissions, including filtered project discovery and mandatory project audit
+  scope;
+- authenticated `forgegate.audit-actor.v1` attribution on successful API writes
+  inside the existing durable transaction, with no token or private-key
+  persistence;
+- required `serve --trust-store`, strict `identity sign-api-challenge`, two
+  authentication endpoints, OpenAPI security declarations, adversarial tests,
+  and clean-wheel session smoke.
 
 
 </details>
@@ -252,17 +275,21 @@ Start the local API against an existing or new local candidate database:
 ```powershell
 .\.venv\Scripts\python.exe -m forgegate serve `
   --database work/forgegate.db `
+  --trust-store work/trust-store.json `
   --host 127.0.0.1 --port 8000
 ```
 
-The server accepts only `localhost` or a loopback IP and also rejects a
-non-loopback HTTP `Host`. Candidate creation, transition, evidence binding, and
-evaluation writes require `Idempotency-Key`; transitions and evaluation also
-require `expected_revision`. Attestation creation is content-deterministic and
-persists only to SQLite. The API never accepts a path from which to load an
-assembly/artifact or an attestation output directory; path metadata already
-inside a validated assembly is not dereferenced. OpenAPI is available at
-`/openapi.json`, and the
+The server accepts only `localhost` or a loopback IP, rejects a non-loopback
+HTTP `Host`, and requires an external `forgegate.trust-store.v1`. Obtain a
+one-time challenge from `/v1/auth/challenges`, sign its saved JSON with
+`forgegate identity sign-api-challenge`, exchange the signature at
+`/v1/auth/sessions`, and use the returned short-lived Bearer token. Candidate
+creation, transition, evidence binding, and evaluation writes also require
+`Idempotency-Key`; transitions and evaluation require `expected_revision`.
+Attestation creation is content-deterministic and persists only to SQLite. The
+API never accepts a path from which to load an assembly/artifact or an
+attestation output directory; path metadata already inside a validated assembly
+is not dereferenced. OpenAPI is available at `/openapi.json`, and the
 committed copy can be regenerated with:
 
 ```powershell
@@ -270,8 +297,10 @@ committed copy can be regenerated with:
   schemas/forgegate.openapi.v1.json
 ```
 
-This API has no authentication or authorization and is not approved for LAN,
-internet, shared-host, or production deployment.
+This API authenticates local callers and applies exact role/project authority,
+but has no TLS, remote deployment approval, hostile-local-user defense, managed
+session revocation, or trusted time. It is not approved for LAN, internet,
+shared-host, or production deployment.
 
 Register and read one immutable project profile, then query its local audit
 events:
@@ -569,12 +598,13 @@ until a separate ForgeGate policy evaluates it.
 
 Not implemented yet:
 
-- authenticated or non-loopback API deployment;
+- non-loopback or TLS-protected API deployment;
 - HTTP artifact collection or filesystem publication;
 - rejected-request audit ingestion, audit export/retention, plugin execution,
   or product-level GitHub integration;
-- database authorization, backup/repair, managed or hardware-backed key custody,
-  online revocation, trusted timestamps, or CI workload identity federation;
+- database-file authorization, backup/repair, managed or hardware-backed key
+  custody, live trust reload, online/per-session revocation, logout, trusted
+  timestamps, or CI workload identity federation;
 - MSP430 compatibility collection, AFE/MSP430 runtime integration, or any
   hardware operation;
 - production deployment or public release.
@@ -585,19 +615,21 @@ artifact; it neither imports Studio code nor converts current `BENCH_*` labels
 into physical verification. Assembly only revalidates local artifacts and
 joins existing evidence; persisted binding connects that local assembly to the
 candidate lifecycle but does not authenticate it. Phase 12 can authenticate a
-portable bundle signer against an external local trust store. The REST API is a loopback
-transport over the same application service and SQLite adapter; it adds no
-user, producer, or machine identity. SHA-256 is not producer authentication.
+portable bundle signer against an external local trust store. Phase 13 reuses
+that identity for a short-lived authenticated loopback API session and records
+the successful API actor, but does not authenticate source artifacts or protect
+the database from its administrator. SHA-256 is not producer authentication.
 The MSP430 controller may later expose a separate versioned artifact for
 another optional collector.
 
 ## Roadmap
 
-The Phase 12 local MVP adds authenticated signer identity for portable assurance
-without weakening the loopback-only service boundary. API authentication,
-authorization, secure transport, and managed key lifecycle must still be
-designed and verified before any non-loopback deployment. MSP430 compatibility
-remains gated on a separately frozen public result contract. See
+The Phase 13 local MVP adds authenticated API sessions, role/project
+authorization, and durable successful-write actor attribution without weakening
+the loopback-only service boundary. TLS, hostile-local-user defenses, live
+revocation, rate controls, and managed key lifecycle must still be designed and
+verified before any non-loopback deployment. MSP430 compatibility remains gated
+on a separately frozen public result contract. See
 [docs/ROADMAP.md](docs/ROADMAP.md) for acceptance-level tasks.
 
 ## License status

@@ -3,7 +3,7 @@ from pydantic import BaseModel
 from forgegate.assembly import EvidenceBundleAssembly
 from forgegate.assurance import AssuranceBundle, AssuranceBundleManifest
 from forgegate.attestations import ReleaseAttestation
-from forgegate.audit import AuditEvent, AuditEventPage
+from forgegate.audit import AuditActor, AuditEvent, AuditEventPage
 from forgegate.candidates import CandidateEvidenceBinding
 from forgegate.candidates.models import (
     CandidateTransition,
@@ -51,6 +51,7 @@ SCHEMAS: dict[str, type[BaseModel]] = {
     "forgegate.project-profile-page.v1": ProjectProfilePage,
     "forgegate.audit-event.v1": AuditEvent,
     "forgegate.audit-event-page.v1": AuditEventPage,
+    "forgegate.audit-actor.v1": AuditActor,
 }
 
 ARTIFACT_SCHEMAS: dict[str, dict[str, object]] = {

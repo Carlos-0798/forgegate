@@ -10,7 +10,8 @@ legacy persistence remain separate compatibility paths; existing candidates
 remain readable by exact candidate ID after migration.
 
 Registration does not authenticate a repository, commit, operator, producer,
-policy file, or clock. The API remains unauthenticated and loopback-only.
+policy file, or clock. Phase 13 adds separate caller authentication and exact
+project authorization while retaining the loopback-only boundary.
 
 ## Candidate-creation authority
 

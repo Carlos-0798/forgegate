@@ -8,11 +8,11 @@ from typing import Any
 import pytest
 import uvicorn
 from fastapi import Request
-from fastapi.testclient import TestClient
+from fastapi.testclient import TestClient as RawTestClient
 from typer.testing import CliRunner
 
 from forgegate import __version__
-from forgegate.api import ApiErrorResponse, create_api_app
+from forgegate.api import ApiErrorResponse
 from forgegate.api.app import (
     MAX_REQUEST_BODY_BYTES,
     _error_message,
@@ -29,6 +29,15 @@ from forgegate.cli import app as cli_app
 from forgegate.config import load_config
 from forgegate.domain.models import ProjectConfig
 from forgegate.network import is_loopback_host
+from tests.api_auth_support import (
+    TEST_TRUST_STORE,
+)
+from tests.api_auth_support import (
+    AuthenticatedTestClient as TestClient,
+)
+from tests.api_auth_support import (
+    create_test_api_app as create_api_app,
+)
 
 runner = CliRunner()
 
@@ -157,7 +166,7 @@ def test_api_rejects_invalid_request_ids_and_strict_inputs(tmp_path: Path) -> No
 
 def test_api_enforces_local_host_and_bounded_content_length(tmp_path: Path) -> None:
     assert is_loopback_host(None) is False
-    with TestClient(
+    with RawTestClient(
         create_api_app(tmp_path / "external-host.db"), base_url="http://example.invalid"
     ) as external_client:
         external_host = external_client.get("/healthz")
@@ -435,8 +444,10 @@ def test_api_exception_handlers_fail_closed(
         _command: CandidateCreateCommand,
         *,
         idempotency_key: str,
+        actor: Any = None,
     ) -> Any:
         assert idempotency_key
+        assert actor is not None
         raise CandidateLifecycleError("CANDIDATE_TEST_FAILURE", "safe lifecycle message")
 
     monkeypatch.setattr(CandidateApplication, "create_candidate", raise_lifecycle)
@@ -455,8 +466,10 @@ def test_api_exception_handlers_fail_closed(
         _command: CandidateCreateCommand,
         *,
         idempotency_key: str,
+        actor: Any = None,
     ) -> Any:
         assert idempotency_key
+        assert actor is not None
         CandidateCreateCommand.model_validate({"created_at": "invalid"})
 
     monkeypatch.setattr(CandidateApplication, "create_candidate", raise_validation)
@@ -525,6 +538,8 @@ def test_openapi_export_is_deterministic_and_complete(tmp_path: Path) -> None:
     assert json.loads(output.read_text(encoding="utf-8")) == schema
     assert set(schema["paths"]) == {
         "/healthz",
+        "/v1/auth/challenges",
+        "/v1/auth/sessions",
         "/v1/projects",
         "/v1/projects/{project_id}",
         "/v1/projects/{project_id}/candidates",
@@ -542,6 +557,12 @@ def test_openapi_export_is_deterministic_and_complete(tmp_path: Path) -> None:
     }
     assert schema["paths"]["/v1/candidates"]["post"]["operationId"] == "createCandidate"
     assert schema["paths"]["/v1/projects"]["get"]["operationId"] == "listProjects"
+    assert schema["components"]["securitySchemes"]["HTTPBearer"] == {
+        "scheme": "bearer",
+        "type": "http",
+    }
+    assert schema["paths"]["/v1/projects"]["post"]["security"] == [{"HTTPBearer": []}]
+    assert "security" not in schema["paths"]["/v1/auth/challenges"]["post"]
     assert (
         schema["paths"]["/v1/projects/{project_id}/candidates"]["get"]["operationId"]
         == "listProjectCandidates"
@@ -559,6 +580,8 @@ def test_openapi_export_is_deterministic_and_complete(tmp_path: Path) -> None:
 
 
 def test_openapi_export_and_serve_cli_errors(tmp_path: Path) -> None:
+    trust_store_path = tmp_path / "trust-store.json"
+    trust_store_path.write_text(TEST_TRUST_STORE.model_dump_json(indent=2), encoding="utf-8")
     missing_parent = runner.invoke(
         cli_app, ["export-openapi", str(tmp_path / "missing" / "openapi.json")]
     )
@@ -568,6 +591,8 @@ def test_openapi_export_and_serve_cli_errors(tmp_path: Path) -> None:
             "serve",
             "--database",
             str(tmp_path / "forgegate.db"),
+            "--trust-store",
+            str(trust_store_path),
             "--host",
             "0.0.0.0",
         ],
@@ -578,6 +603,8 @@ def test_openapi_export_and_serve_cli_errors(tmp_path: Path) -> None:
             "serve",
             "--database",
             str(tmp_path / "forgegate.db"),
+            "--trust-store",
+            str(trust_store_path),
             "--host",
             "not-an-address",
         ],
@@ -603,12 +630,16 @@ def test_serve_cli_accepts_only_loopback_hosts(
 
     monkeypatch.setattr(uvicorn, "run", fake_run)
     database = tmp_path / f"{host.replace(':', '_')}.db"
+    trust_store_path = tmp_path / "trust-store.json"
+    trust_store_path.write_text(TEST_TRUST_STORE.model_dump_json(indent=2), encoding="utf-8")
     result = runner.invoke(
         cli_app,
         [
             "serve",
             "--database",
             str(database),
+            "--trust-store",
+            str(trust_store_path),
             "--host",
             host,
             "--port",

@@ -3,10 +3,10 @@
 ## Command boundary
 
 Phase 6 completes the local candidate workflow over HTTP without turning the
-service into a remote or multi-user system. The authority model is deliberately
-the same as the CLI: a process running under the local OS account and able to
-reach the loopback port may issue commands. ForgeGate provides no internal user
-identity, login, role, or producer authentication.
+service into a remote or multi-user system. Phase 13 supersedes the original
+transport-only authority model: protected routes now require a short-lived
+Ed25519-authenticated session, exact project scope, and an appropriate producer
+or operator role. The CLI remains authorized by the local OS account.
 
 The command routes are:
 
@@ -81,9 +81,11 @@ loopback IP. Non-loopback and wildcard values fail closed. Requests declaring
 more than 4 MiB through `Content-Length` reject before model validation. CORS is
 not enabled.
 
-These controls reduce accidental exposure and ordinary browser-origin access;
-they do not authenticate a local caller or defend against a hostile local
-account. The current body guard does not provide an exact streaming limit for
+These controls reduce accidental exposure and ordinary browser-origin access.
+Phase 13 authenticates a local key holder and authorizes exact projects, but it
+does not defend against a hostile local account, privileged packet observer, or
+memory reader. The current body guard does not provide an exact streaming limit for
 unknown-length/chunked requests. Any non-loopback, proxied, tunneled, shared, or
-production deployment remains prohibited until explicit identity,
-authorization, transport, rate-limit, and streaming-boundary designs exist.
+production deployment remains prohibited until TLS/proxy trust,
+hostile-local-user defense, logout/live revocation, rate-limit, and
+streaming-boundary designs exist.

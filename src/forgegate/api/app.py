@@ -7,13 +7,23 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Annotated
 
-from fastapi import FastAPI, Header, Query, Request, status
+from fastapi import Depends, FastAPI, Header, Query, Request, status
 from fastapi.exceptions import RequestValidationError
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import ValidationError
 from starlette.middleware.base import RequestResponseEndpoint
 from starlette.responses import JSONResponse, Response
 
 from forgegate import __version__
+from forgegate.api.auth import (
+    ApiAuthChallenge,
+    ApiAuthenticationError,
+    ApiAuthenticator,
+    ApiChallengeRequest,
+    ApiPrincipal,
+    ApiSessionCreateRequest,
+    ApiSessionResponse,
+)
 from forgegate.api.models import ApiError, ApiErrorResponse, HealthResponse
 from forgegate.application import (
     AuditEventQuery,
@@ -27,7 +37,6 @@ from forgegate.application import (
     CandidateHistoryView,
     CandidateQuery,
     ProjectProfileQuery,
-    ProjectQuery,
     ProjectRegisterCommand,
     ProjectReviseCommand,
 )
@@ -53,9 +62,12 @@ from forgegate.projects import (
 
 REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
 MAX_REQUEST_BODY_BYTES = 4 * 1024 * 1024
+BEARER_SCHEME = HTTPBearer(auto_error=False)
 
 ERROR_RESPONSES: dict[int | str, dict[str, object]] = {
     400: {"model": ApiErrorResponse, "description": "Invalid request"},
+    401: {"model": ApiErrorResponse, "description": "Authentication required or invalid"},
+    403: {"model": ApiErrorResponse, "description": "Authenticated identity is not authorized"},
     404: {"model": ApiErrorResponse, "description": "Candidate resource not found"},
     409: {"model": ApiErrorResponse, "description": "Request conflicts with durable state"},
     413: {"model": ApiErrorResponse, "description": "Request body exceeds local API limit"},
@@ -65,11 +77,32 @@ ERROR_RESPONSES: dict[int | str, dict[str, object]] = {
 }
 
 
+def authenticated_principal_dependency(
+    request: Request,
+    credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(BEARER_SCHEME)],
+) -> ApiPrincipal:
+    authenticator = getattr(request.app.state, "authenticator", None)
+    if not isinstance(authenticator, ApiAuthenticator):
+        raise ApiAuthenticationError(
+            "API_AUTHENTICATOR_UNAVAILABLE",
+            "runtime authenticator is unavailable",
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+        )
+    authorization = (
+        f"{credentials.scheme} {credentials.credentials}" if credentials is not None else None
+    )
+    return authenticator.authenticate(authorization)
+
+
 def create_api_app(
     database: Path,
     *,
     application: CandidateApplication | None = None,
+    authenticator: ApiAuthenticator | None = None,
+    contract_only: bool = False,
 ) -> FastAPI:
+    if authenticator is None and not contract_only:
+        raise ValueError("authenticated API construction requires an ApiAuthenticator")
     candidate_application = application or CandidateApplication.for_database(database)
 
     @asynccontextmanager
@@ -82,9 +115,32 @@ def create_api_app(
         summary="Local release-assurance project and candidate API",
         version=__version__,
         openapi_version="3.1.0",
+        docs_url=None,
+        redoc_url=None,
         lifespan=lifespan,
     )
     app.state.candidate_application = candidate_application
+    app.state.authenticator = authenticator
+
+    def require_project(
+        principal: ApiPrincipal,
+        project_id: str,
+        *,
+        write: bool = False,
+        audit: bool = False,
+    ) -> None:
+        assert authenticator is not None
+        authenticator.require_project(principal, project_id, write=write, audit=audit)
+
+    def require_candidate(
+        principal: ApiPrincipal,
+        candidate_id: str,
+        *,
+        write: bool = False,
+    ) -> CandidateDocument:
+        candidate = candidate_application.get_candidate(candidate_id)
+        require_project(principal, candidate.project_id, write=write)
+        return candidate
 
     @app.middleware("http")
     async def correlation_id_middleware(
@@ -150,6 +206,21 @@ def create_api_app(
             _request_id(request),
         )
 
+    @app.exception_handler(ApiAuthenticationError)
+    async def authentication_error_handler(
+        request: Request,
+        exc: ApiAuthenticationError,
+    ) -> JSONResponse:
+        response = _error_response(
+            exc.status_code,
+            exc.code,
+            _error_message(exc.code, str(exc)),
+            _request_id(request),
+        )
+        if exc.status_code == status.HTTP_401_UNAUTHORIZED:
+            response.headers["WWW-Authenticate"] = "Bearer"
+        return response
+
     @app.exception_handler(CandidateLifecycleError)
     async def candidate_lifecycle_error_handler(
         request: Request,
@@ -202,6 +273,40 @@ def create_api_app(
         return HealthResponse(forgegate_version=__version__)
 
     @app.post(
+        "/v1/auth/challenges",
+        response_model=ApiAuthChallenge,
+        status_code=status.HTTP_201_CREATED,
+        operation_id="createApiAuthChallenge",
+        tags=["authentication"],
+        responses=ERROR_RESPONSES,
+    )
+    def create_auth_challenge_endpoint(command: ApiChallengeRequest) -> ApiAuthChallenge:
+        if authenticator is None:
+            raise ApiAuthenticationError(
+                "API_AUTHENTICATOR_UNAVAILABLE",
+                "runtime authenticator is unavailable",
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        return authenticator.issue_challenge(command)
+
+    @app.post(
+        "/v1/auth/sessions",
+        response_model=ApiSessionResponse,
+        status_code=status.HTTP_201_CREATED,
+        operation_id="createApiSession",
+        tags=["authentication"],
+        responses=ERROR_RESPONSES,
+    )
+    def create_auth_session_endpoint(command: ApiSessionCreateRequest) -> ApiSessionResponse:
+        if authenticator is None:
+            raise ApiAuthenticationError(
+                "API_AUTHENTICATOR_UNAVAILABLE",
+                "runtime authenticator is unavailable",
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+        return authenticator.create_session(command)
+
+    @app.post(
         "/v1/projects",
         response_model=RegisteredProject,
         status_code=status.HTTP_201_CREATED,
@@ -212,10 +317,13 @@ def create_api_app(
     def register_project_endpoint(
         command: ProjectRegisterCommand,
         idempotency_key: Annotated[str, Header(alias="Idempotency-Key")],
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
     ) -> RegisteredProject:
+        require_project(principal, command.config.project.id, write=True)
         return candidate_application.register_project(
             command,
             idempotency_key=idempotency_key,
+            actor=principal.audit_actor(),
         )
 
     @app.get(
@@ -226,11 +334,29 @@ def create_api_app(
         responses=ERROR_RESPONSES,
     )
     def list_projects_endpoint(
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
         after_project_id: str | None = None,
         limit: Annotated[int, Query(ge=1, le=200)] = 100,
     ) -> RegisteredProjectPage:
-        return candidate_application.list_projects(
-            ProjectQuery(after_project_id=after_project_id, limit=limit)
+        authorized_ids = tuple(
+            project_id
+            for project_id in principal.project_ids
+            if after_project_id is None or project_id > after_project_id
+        )
+        projects: list[RegisteredProject] = []
+        for project_id in authorized_ids:
+            try:
+                projects.append(candidate_application.get_project(project_id))
+            except CandidateStoreError as exc:
+                if exc.code != "STORE_PROJECT_NOT_FOUND":
+                    raise
+            if len(projects) > limit:
+                break
+        visible = tuple(projects[:limit])
+        return RegisteredProjectPage(
+            projects=visible,
+            next_after_project_id=visible[-1].project_id if visible else None,
+            has_more=len(projects) > limit,
         )
 
     @app.get(
@@ -240,7 +366,11 @@ def create_api_app(
         tags=["projects"],
         responses=ERROR_RESPONSES,
     )
-    def get_project_endpoint(project_id: str) -> RegisteredProject:
+    def get_project_endpoint(
+        project_id: str,
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
+    ) -> RegisteredProject:
+        require_project(principal, project_id)
         return candidate_application.get_project(project_id)
 
     @app.post(
@@ -255,11 +385,14 @@ def create_api_app(
         project_id: str,
         command: ProjectReviseCommand,
         idempotency_key: Annotated[str, Header(alias="Idempotency-Key")],
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
     ) -> ProjectProfileRevision:
+        require_project(principal, project_id, write=True)
         return candidate_application.revise_project(
             project_id,
             command,
             idempotency_key=idempotency_key,
+            actor=principal.audit_actor(),
         )
 
     @app.get(
@@ -269,7 +402,11 @@ def create_api_app(
         tags=["projects"],
         responses=ERROR_RESPONSES,
     )
-    def get_current_project_profile_endpoint(project_id: str) -> ProjectProfileDocument:
+    def get_current_project_profile_endpoint(
+        project_id: str,
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
+    ) -> ProjectProfileDocument:
+        require_project(principal, project_id)
         return candidate_application.get_current_project_profile(project_id)
 
     @app.get(
@@ -281,9 +418,11 @@ def create_api_app(
     )
     def list_project_profile_revisions_endpoint(
         project_id: str,
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
         after_profile_version: Annotated[int, Query(ge=0)] = 0,
         limit: Annotated[int, Query(ge=1, le=200)] = 100,
     ) -> ProjectProfilePage:
+        require_project(principal, project_id)
         return candidate_application.list_project_profiles(
             ProjectProfileQuery(
                 project_id=project_id,
@@ -301,9 +440,11 @@ def create_api_app(
     )
     def list_project_candidates_endpoint(
         project_id: str,
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
         after_candidate_id: str | None = None,
         limit: Annotated[int, Query(ge=1, le=200)] = 100,
     ) -> ReleaseCandidatePage:
+        require_project(principal, project_id)
         return candidate_application.list_candidates(
             CandidateQuery(
                 project_id=project_id,
@@ -320,11 +461,13 @@ def create_api_app(
         responses=ERROR_RESPONSES,
     )
     def query_audit_events_endpoint(
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
+        project_id: str,
         after_sequence: Annotated[int, Query(ge=0)] = 0,
         limit: Annotated[int, Query(ge=1, le=200)] = 100,
-        project_id: str | None = None,
         candidate_id: str | None = None,
     ) -> AuditEventPage:
+        require_project(principal, project_id, audit=True)
         return candidate_application.query_audit_events(
             AuditEventQuery(
                 after_sequence=after_sequence,
@@ -345,10 +488,13 @@ def create_api_app(
     def create_candidate_endpoint(
         command: CandidateCreateCommand,
         idempotency_key: Annotated[str, Header(alias="Idempotency-Key")],
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
     ) -> CandidateDocument:
+        require_project(principal, command.project_id, write=True)
         return candidate_application.create_candidate(
             command,
             idempotency_key=idempotency_key,
+            actor=principal.audit_actor(),
         )
 
     @app.post(
@@ -362,11 +508,14 @@ def create_api_app(
         candidate_id: str,
         command: CandidateAdvanceCommand,
         idempotency_key: Annotated[str, Header(alias="Idempotency-Key")],
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
     ) -> CandidateTransitionResult:
+        require_candidate(principal, candidate_id, write=True)
         return candidate_application.advance_candidate(
             candidate_id,
             command,
             idempotency_key=idempotency_key,
+            actor=principal.audit_actor(),
         )
 
     @app.post(
@@ -380,11 +529,14 @@ def create_api_app(
         candidate_id: str,
         command: CandidateBindEvidenceCommand,
         idempotency_key: Annotated[str, Header(alias="Idempotency-Key")],
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
     ) -> CandidateEvidenceBinding:
+        require_candidate(principal, candidate_id, write=True)
         return candidate_application.bind_evidence(
             candidate_id,
             command,
             idempotency_key=idempotency_key,
+            actor=principal.audit_actor(),
         )
 
     @app.post(
@@ -398,11 +550,14 @@ def create_api_app(
         candidate_id: str,
         command: CandidateEvaluateCommand,
         idempotency_key: Annotated[str, Header(alias="Idempotency-Key")],
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
     ) -> CandidateEvaluationResult:
+        require_candidate(principal, candidate_id, write=True)
         return candidate_application.evaluate_candidate(
             candidate_id,
             command,
             idempotency_key=idempotency_key,
+            actor=principal.audit_actor(),
         )
 
     @app.post(
@@ -415,8 +570,14 @@ def create_api_app(
     def attest_candidate_endpoint(
         candidate_id: str,
         command: CandidateAttestCommand,
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
     ) -> ReleaseAttestation:
-        return candidate_application.attest_candidate(candidate_id, command)
+        require_candidate(principal, candidate_id, write=True)
+        return candidate_application.attest_candidate(
+            candidate_id,
+            command,
+            actor=principal.audit_actor(),
+        )
 
     @app.get(
         "/v1/candidates/{candidate_id}",
@@ -425,8 +586,11 @@ def create_api_app(
         tags=["candidates"],
         responses=ERROR_RESPONSES,
     )
-    def get_candidate_endpoint(candidate_id: str) -> CandidateDocument:
-        return candidate_application.get_candidate(candidate_id)
+    def get_candidate_endpoint(
+        candidate_id: str,
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
+    ) -> CandidateDocument:
+        return require_candidate(principal, candidate_id)
 
     @app.get(
         "/v1/candidates/{candidate_id}/history",
@@ -435,7 +599,11 @@ def create_api_app(
         tags=["candidates"],
         responses=ERROR_RESPONSES,
     )
-    def get_candidate_history_endpoint(candidate_id: str) -> CandidateHistoryView:
+    def get_candidate_history_endpoint(
+        candidate_id: str,
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
+    ) -> CandidateHistoryView:
+        require_candidate(principal, candidate_id)
         return candidate_application.get_history(candidate_id)
 
     @app.get(
@@ -445,7 +613,11 @@ def create_api_app(
         tags=["candidates"],
         responses=ERROR_RESPONSES,
     )
-    def get_candidate_evidence_endpoint(candidate_id: str) -> CandidateEvidenceBinding:
+    def get_candidate_evidence_endpoint(
+        candidate_id: str,
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
+    ) -> CandidateEvidenceBinding:
+        require_candidate(principal, candidate_id)
         return candidate_application.get_evidence(candidate_id)
 
     @app.get(
@@ -455,8 +627,12 @@ def create_api_app(
         tags=["candidates"],
         responses=ERROR_RESPONSES,
     )
-    def get_candidate_policy_material_endpoint(candidate_id: str) -> PolicyMaterial:
+    def get_candidate_policy_material_endpoint(
+        candidate_id: str,
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
+    ) -> PolicyMaterial:
         """Return exact profile-authorized policy material retained at evaluation."""
+        require_candidate(principal, candidate_id)
         return candidate_application.get_policy_material(candidate_id)
 
     @app.get(
@@ -466,7 +642,11 @@ def create_api_app(
         tags=["candidates"],
         responses=ERROR_RESPONSES,
     )
-    def get_candidate_attestation_endpoint(candidate_id: str) -> ReleaseAttestation:
+    def get_candidate_attestation_endpoint(
+        candidate_id: str,
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
+    ) -> ReleaseAttestation:
+        require_candidate(principal, candidate_id)
         return candidate_application.get_attestation(candidate_id)
 
     return app

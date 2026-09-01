@@ -18,7 +18,13 @@ from forgegate.attestations import (
     create_release_attestation,
     render_attestation_markdown,
 )
-from forgegate.audit import AuditEvent, AuditEventPage, AuditEventType, create_audit_event
+from forgegate.audit import (
+    AuditActor,
+    AuditEvent,
+    AuditEventPage,
+    AuditEventType,
+    create_audit_event,
+)
 from forgegate.candidates.evidence_binding import (
     CandidateEvidenceBinding,
     create_candidate_evidence_binding,
@@ -911,6 +917,7 @@ class SQLiteCandidateRepository:
         *,
         registered_at: datetime,
         idempotency_key: str,
+        actor: AuditActor | None = None,
     ) -> RegisteredProject:
         """Persist one immutable project profile with exact idempotent replay."""
         key = _validated_idempotency_key(idempotency_key)
@@ -987,6 +994,7 @@ class SQLiteCandidateRepository:
                     candidate_id=None,
                     subject_id=registration.registration_id,
                     subject=registration,
+                    actor=actor,
                 )
                 self._checkpoint("after_project_insert", connection)
             else:
@@ -1028,6 +1036,7 @@ class SQLiteCandidateRepository:
         expected_profile_version: int,
         effective_at: datetime,
         idempotency_key: str,
+        actor: AuditActor | None = None,
     ) -> ProjectProfileRevision:
         """Append one complete replacement profile under CAS and exact replay."""
         key = _validated_idempotency_key(idempotency_key)
@@ -1125,6 +1134,7 @@ class SQLiteCandidateRepository:
                 candidate_id=None,
                 subject_id=revision.revision_id,
                 subject=revision,
+                actor=actor,
             )
             connection.execute(
                 """
@@ -1287,12 +1297,14 @@ class SQLiteCandidateRepository:
         candidate: ReleaseCandidate,
         *,
         idempotency_key: str,
+        actor: AuditActor | None = None,
     ) -> ReleaseCandidate:
         """Persist a low-level candidate without retroactive project authority."""
         stored = self._create(
             candidate,
             idempotency_key=idempotency_key,
             require_registered_project=False,
+            actor=actor,
         )
         _require(isinstance(stored, ReleaseCandidate), "low-level candidate changed schema")
         assert isinstance(stored, ReleaseCandidate)
@@ -1303,12 +1315,14 @@ class SQLiteCandidateRepository:
         candidate: ReleaseCandidate,
         *,
         idempotency_key: str,
+        actor: AuditActor | None = None,
     ) -> ProfileBoundReleaseCandidate | ReleaseCandidate:
         """Persist a new product-surface candidate under registered project authority."""
         return self._create(
             candidate,
             idempotency_key=idempotency_key,
             require_registered_project=True,
+            actor=actor,
         )
 
     def _create(
@@ -1317,6 +1331,7 @@ class SQLiteCandidateRepository:
         *,
         idempotency_key: str,
         require_registered_project: bool,
+        actor: AuditActor | None,
     ) -> CandidateDocument:
         key = _validated_idempotency_key(idempotency_key)
         if candidate.status is not CandidateStatus.DRAFT or candidate.revision != 0:
@@ -1402,6 +1417,7 @@ class SQLiteCandidateRepository:
                     candidate_id=durable_candidate.candidate_id,
                     subject_id=durable_candidate.candidate_id,
                     subject=durable_candidate,
+                    actor=actor,
                 )
                 self._checkpoint("after_candidate_insert", connection)
             else:
@@ -1485,6 +1501,7 @@ class SQLiteCandidateRepository:
         *,
         bound_at: datetime,
         idempotency_key: str,
+        actor: AuditActor | None = None,
     ) -> CandidateEvidenceBinding:
         """Persist one immutable assembly binding for a COLLECTING candidate."""
         key = _validated_idempotency_key(idempotency_key)
@@ -1539,6 +1556,7 @@ class SQLiteCandidateRepository:
                     candidate_id=candidate_id,
                     subject_id=binding.binding_id,
                     subject=binding,
+                    actor=actor,
                 )
                 self._checkpoint("after_evidence_binding_insert", connection)
             binding_json = _model_json(binding)
@@ -1621,6 +1639,7 @@ class SQLiteCandidateRepository:
         *,
         issued_at: datetime,
         generator_version: str,
+        actor: AuditActor | None = None,
     ) -> ReleaseAttestation:
         """Create or exactly replay one durable self-contained attestation per candidate."""
         with self._transaction(write=True) as connection:
@@ -1673,6 +1692,7 @@ class SQLiteCandidateRepository:
                 candidate_id=candidate_id,
                 subject_id=attestation.attestation_id,
                 subject=attestation,
+                actor=actor,
             )
             self._checkpoint("after_attestation_insert", connection)
         return attestation
@@ -1702,6 +1722,7 @@ class SQLiteCandidateRepository:
         reason: str | None = None,
         evaluation: PolicyEvaluationDocument | None = None,
         policy_material: PolicyMaterial | None = None,
+        actor: AuditActor | None = None,
     ) -> CandidateTransitionResult:
         """Atomically append one legal transition using compare-and-swap revision control."""
         if expected_revision < 0:
@@ -1844,6 +1865,7 @@ class SQLiteCandidateRepository:
                 candidate_id=candidate_id,
                 subject_id=result.transition.transition_id,
                 subject=result.transition,
+                actor=actor,
             )
             if evaluation is not None:
                 self._append_subject_audit_event(
@@ -1854,6 +1876,7 @@ class SQLiteCandidateRepository:
                     candidate_id=candidate_id,
                     subject_id=evaluation.evaluation_id,
                     subject=evaluation,
+                    actor=actor,
                 )
             self._checkpoint("after_transition_append", connection)
             updated = connection.execute(
@@ -2274,6 +2297,7 @@ class SQLiteCandidateRepository:
         candidate_id: str | None,
         subject_id: str,
         subject: BaseModel,
+        actor: AuditActor | None = None,
     ) -> AuditEvent:
         schema_version = getattr(subject, "schema_version", None)
         _require(isinstance(schema_version, str), "audit subject lacks a schema version")
@@ -2291,6 +2315,7 @@ class SQLiteCandidateRepository:
             subject_schema_version=cast(str, schema_version),
             subject_id=subject_id,
             subject_fingerprint=sha256_fingerprint(subject.model_dump(mode="json")),
+            actor=actor,
         )
         connection.execute(
             """

@@ -1,0 +1,55 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "authenticated_at": {
+      "format": "date-time",
+      "title": "Authenticated At",
+      "type": "string"
+    },
+    "display_name": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Display Name",
+      "type": "string"
+    },
+    "identity_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Identity Id",
+      "type": "string"
+    },
+    "role": {
+      "enum": [
+        "producer",
+        "operator"
+      ],
+      "title": "Role",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "forgegate.audit-actor.v1",
+      "default": "forgegate.audit-actor.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "session_id": {
+      "pattern": "^sess-[0-9a-f]{32}$",
+      "title": "Session Id",
+      "type": "string"
+    },
+    "trust_store_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Trust Store Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "identity_id",
+    "display_name",
+    "role",
+    "session_id",
+    "trust_store_id",
+    "authenticated_at"
+  ],
+  "title": "AuditActor",
+  "type": "object"
+}

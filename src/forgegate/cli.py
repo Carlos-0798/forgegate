@@ -1,6 +1,6 @@
 import json
 import platform
-from datetime import datetime
+from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Annotated
 
@@ -112,7 +112,7 @@ def doctor() -> None:
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
         "supported_artifact_schemas": sorted(ARTIFACT_SCHEMAS),
-        "phase": "phase12-authenticated-identity-foundation",
+        "phase": "phase13-authenticated-local-api",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 
@@ -209,6 +209,31 @@ def identity_trust(
     typer.echo(trust_store.model_dump_json(indent=2))
 
 
+@identity_app.command("sign-api-challenge")
+def identity_sign_api_challenge(
+    challenge_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    identity_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    private_key_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+) -> None:
+    """Sign one short-lived API challenge without exposing the private key to the server."""
+    from forgegate.api import ApiAuthenticationError, load_api_challenge, sign_api_challenge
+
+    try:
+        challenge = load_api_challenge(challenge_path)
+        identity = load_identity_document(identity_path)
+        if not isinstance(identity, SigningIdentity):
+            raise ValueError("identity path must contain forgegate.signing-identity.v1")
+        request = sign_api_challenge(
+            challenge,
+            identity=identity,
+            private_key=load_ed25519_private_key(private_key_path),
+        )
+    except (ApiAuthenticationError, IdentityError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(request.model_dump_json(indent=2))
+
+
 @app.command("sign-assurance")
 def sign_assurance(
     directory: Annotated[Path, typer.Argument(exists=True, file_okay=False, readable=True)],
@@ -289,7 +314,7 @@ def export_openapi(
         raise typer.Exit(code=3)
     payload = (
         json.dumps(
-            create_api_app(Path("forgegate-openapi-contract.db")).openapi(),
+            create_api_app(Path("forgegate-openapi-contract.db"), contract_only=True).openapi(),
             indent=2,
             sort_keys=True,
         )
@@ -302,23 +327,42 @@ def export_openapi(
 @app.command("serve")
 def serve(
     database: Annotated[Path, typer.Option("--database", dir_okay=False)],
+    trust_store_path: Annotated[
+        Path,
+        typer.Option("--trust-store", exists=True, dir_okay=False, readable=True),
+    ],
     host: Annotated[str, typer.Option("--host")] = "127.0.0.1",
     port: Annotated[int, typer.Option("--port", min=1, max=65535)] = 8000,
+    session_ttl_seconds: Annotated[
+        int,
+        typer.Option("--session-ttl-seconds", min=60, max=3600),
+    ] = 900,
 ) -> None:
-    """Serve the local REST API on an explicitly loopback-only address."""
+    """Serve the authenticated REST API on an explicitly loopback-only address."""
     import uvicorn
 
-    from forgegate.api import create_api_app
+    from forgegate.api import ApiAuthenticator, create_api_app
 
     try:
         bind_host = validated_loopback_host(host)
+        trust_store = load_identity_document(trust_store_path)
+        if not isinstance(trust_store, TrustStore):
+            raise ValueError("--trust-store must contain forgegate.trust-store.v1")
+        authenticator = ApiAuthenticator(
+            trust_store,
+            session_ttl=timedelta(seconds=session_ttl_seconds),
+        )
         application = CandidateApplication.for_database(database)
         application.initialize()
-    except (CandidateStoreError, ValueError) as exc:
+    except (CandidateStoreError, IdentityError, ValueError) as exc:
         typer.echo(f"ERROR: {exc}", err=True)
         raise typer.Exit(code=3) from exc
     uvicorn.run(
-        create_api_app(database, application=application),
+        create_api_app(
+            database,
+            application=application,
+            authenticator=authenticator,
+        ),
         host=bind_host,
         port=port,
         log_level="info",
