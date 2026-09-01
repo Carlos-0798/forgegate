@@ -8,8 +8,8 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 18 external-plugin execution security contract designed; Phase 17
-import-free discovery implemented; not production-ready.**
+**Phase 18 external-plugin execution contract models locally verified; plugin
+execution and sandbox enforcement remain prohibited; not production-ready.**
 
 This private-development checkpoint provides a working Python 3.12 CLI and an
 Ed25519-authenticated, project-authorized, loopback-only REST API. Its strongest
@@ -65,6 +65,9 @@ current immutable project profile -> profile-bound release candidate
                               |
                               v
  installed entry-point metadata -> bounded manifest compatibility report
+                              |
+                              v
+ approved authority -> content-addressed run/protocol/state/result documents
 ```
 
 The core remains domain-neutral. Analog Validation Studio is consumed only
@@ -75,12 +78,13 @@ collector rather than a runtime or hardware dependency.
 
 | Gate | Result | Evidence level |
 |---|---|---|
-| Python tests | 696 passed, 3 skipped because Windows symlink creation was unavailable | Local host test |
-| Branch-aware coverage | 97.55% across 6,955 statements and 1,844 branches | Local host test |
+| Python tests | 703 passed, 3 skipped because Windows symlink creation was unavailable | Local host test |
+| Branch-aware coverage | 96.59% across 7,315 statements and 1,982 branches | Local host test |
 | Static quality gates | Ruff, formatting, and strict mypy passed | Local host test |
-| Contracts | JSON Schema and OpenAPI drift checks passed | Local host test |
+| Contracts | 35 document and 2 artifact JSON Schemas plus OpenAPI passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | Plugin discovery | 30 passed, 1 skipped; standalone wheel install/discover/uninstall passed | Local host test; code not loaded |
+| Plugin execution documents | 7 focused model/identity/chain/loader tests passed | Local host test; no process started |
 | GitHub Actions | Phase 18 documentation baseline passed `verify.py` and `release_smoke.py` on Windows, Ubuntu, and macOS; the generic composite Action smoke also passed | PASS — [run 33566424223](https://github.com/Carlos-0798/forgegate/actions/runs/33566424223) |
 | Hardware/device behavior | Not exercised by ForgeGate | Out of scope |
 
@@ -311,6 +315,10 @@ Implemented and host-verified in this checkpoint:
   invalid, and duplicate-ID conflict states plus sanitized issue codes;
 - a separately buildable import-hostile generic plugin fixture and clean-wheel
   install/discover/uninstall smoke proving core operation without plugins.
+- strict content-derived run-plan, protocol-message, transition, and terminal-
+  result contracts with exact manifest authority, `SANDBOXED`-only planning,
+  resource limits, stable issues, and complete state-chain validation; these
+  are public documents, not an execution or isolation implementation.
 
 
 </details>
@@ -677,7 +685,7 @@ until a separate ForgeGate policy evaluates it.
 
 | Path | Purpose |
 |---|---|
-| `src/forgegate/` | Domain models, collectors, policy engine, plugin metadata discovery, persistence, CLI, and REST API |
+| `src/forgegate/` | Domain models, collectors, policy engine, plugin discovery and execution contracts, persistence, CLI, and REST API |
 | `tests/` | Unit, adversarial, integration, Golden, and contract-drift tests |
 | `schemas/` | Committed JSON Schema and OpenAPI contracts |
 | `examples/` | Generic reproducible project, policies, evidence, and artifacts |
@@ -692,8 +700,8 @@ Not implemented yet:
 - non-loopback or TLS-protected API deployment;
 - HTTP artifact collection or filesystem publication;
 - complete rejected-request ingestion, security/audit export and retention,
-  plugin execution implementation/sandbox enforcement/run audit, or custom
-  GitHub Checks/PR annotations/API integration;
+  external plugin execution, sandbox enforcement, broker I/O, durable
+  `plugin_runs`, or custom GitHub Checks/PR annotations/API integration;
 - database-file authorization, backup/repair, managed or hardware-backed key
   custody, managed online revocation, durable/distributed session authority,
   trusted timestamps, or CI workload identity federation;
@@ -723,10 +731,10 @@ workload identity, source-artifact authentication, or GitHub API authority.
 Phase 17 adds only bounded import-free plugin metadata discovery; compatibility
 does not authenticate a publisher, load a callable, grant permissions, isolate
 a subprocess, or create durable plugin-run audit evidence.
-Phase 18 defines the required out-of-process protocol, deny-by-default grants,
-enforceable sandbox tiers, resource limits, failure mapping, and append-only run
-audit, but implements none of those runtime controls and still loads no plugin
-code. See
+Phase 18 now implements strict public documents for run authority, protocol
+messages, legal transitions, stable failure classes, bounded validated outputs,
+and terminal replay. It implements none of the runner, sandbox, broker-I/O, or
+durable-store controls and still loads no plugin code. See
 [`docs/architecture/PLUGIN_EXECUTION_SECURITY_CONTRACT.md`](docs/architecture/PLUGIN_EXECUTION_SECURITY_CONTRACT.md)
 and the exact upstream review in
 [`docs/research/OPEN_SOURCE_REFERENCE_REVIEW.md`](docs/research/OPEN_SOURCE_REFERENCE_REVIEW.md).
@@ -738,14 +746,15 @@ another optional collector.
 
 Phase 17 adds a strict Plugin API v1 manifest and import-free installed
 entry-point discovery with explicit compatibility and conflict reporting.
-Phase 18 freezes the security contract that must precede external execution;
-the runner, sandbox backend, enforcement, and durable run records remain
-separate implementation work. Custom GitHub API writes, annotations, signed CI
-provenance, OIDC, and artifact upload also remain separate. TLS, reverse-proxy identity,
-hostile-local-user defenses, durable/distributed session state, security-event
-retention/export, and managed key lifecycle must still be designed before any
-non-loopback deployment. MSP430 compatibility remains gated on a separately
-frozen public result contract. See
+Phase 18 freezes the security contract and implements its public content-
+addressed documents; the runner, sandbox backend, enforcement, broker I/O, and
+durable run records remain separate implementation work. Custom GitHub API
+writes, annotations, signed CI provenance, OIDC, and artifact upload also
+remain separate. TLS, reverse-proxy identity, hostile-local-user defenses,
+durable/distributed session state, security-event retention/export, and managed
+key lifecycle must still be designed before any non-loopback deployment.
+MSP430 compatibility remains gated on a separately frozen public result
+contract. See
 [docs/ROADMAP.md](docs/ROADMAP.md) for acceptance-level tasks.
 
 ## License status

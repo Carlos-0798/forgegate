@@ -126,7 +126,7 @@ def doctor() -> None:
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
         "supported_artifact_schemas": sorted(ARTIFACT_SCHEMAS),
-        "phase": "phase17-plugin-discovery-foundation",
+        "phase": "phase18-plugin-execution-contract-models",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 

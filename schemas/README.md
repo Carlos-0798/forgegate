@@ -36,6 +36,13 @@ deterministic compatibility results. These contracts describe bounded installed
 metadata only: discovery never imports a plugin, grants a declared permission,
 or approves external code execution.
 
+Phase 18 adds `forgegate.plugin-run-plan.v1.schema.json`,
+`forgegate.plugin-protocol-message.v1.schema.json`,
+`forgegate.plugin-run-transition.v1.schema.json`, and
+`forgegate.plugin-run-result.v1.schema.json`. They freeze content-derived
+authority, bounded-message, state-chain, and validated-result documents. They
+do not provide a runner, sandbox, permission enforcement, or durable run store.
+
 `forgegate.evidence-bundle-assembly.v1.schema.json` describes the audited
 envelope around a candidate-bound evidence bundle and its collection receipts.
 It is accepted by configuration validation and policy evaluation without

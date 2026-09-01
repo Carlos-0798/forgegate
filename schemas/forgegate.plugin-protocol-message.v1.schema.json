@@ -1,0 +1,528 @@
+{
+  "$defs": {
+    "PluginCapability": {
+      "enum": [
+        "collector",
+        "evaluator",
+        "exporter",
+        "notifier",
+        "solution-pack-metadata"
+      ],
+      "title": "PluginCapability",
+      "type": "string"
+    },
+    "PluginExecutionTarget": {
+      "additionalProperties": false,
+      "description": "Pinned metadata for a discovered plugin without importing its entry point.",
+      "properties": {
+        "distribution_name": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]{0,127}$",
+          "title": "Distribution Name",
+          "type": "string"
+        },
+        "distribution_version": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]{0,127}$",
+          "title": "Distribution Version",
+          "type": "string"
+        },
+        "entry_point_name": {
+          "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9][a-z0-9-]*){1,7}$",
+          "title": "Entry Point Name",
+          "type": "string"
+        },
+        "entry_point_value": {
+          "maxLength": 256,
+          "pattern": "^[A-Za-z_][A-Za-z0-9_]*(?:\\.[A-Za-z_][A-Za-z0-9_]*)*:[A-Za-z_][A-Za-z0-9_]*$",
+          "title": "Entry Point Value",
+          "type": "string"
+        },
+        "manifest": {
+          "$ref": "#/$defs/PluginManifest"
+        }
+      },
+      "required": [
+        "distribution_name",
+        "distribution_version",
+        "entry_point_name",
+        "entry_point_value",
+        "manifest"
+      ],
+      "title": "PluginExecutionTarget",
+      "type": "object"
+    },
+    "PluginManifest": {
+      "additionalProperties": false,
+      "description": "Declarative plugin metadata; validating it never imports plugin code.",
+      "properties": {
+        "capabilities": {
+          "items": {
+            "$ref": "#/$defs/PluginCapability"
+          },
+          "maxItems": 8,
+          "minItems": 1,
+          "title": "Capabilities",
+          "type": "array"
+        },
+        "description": {
+          "maxLength": 512,
+          "minLength": 1,
+          "title": "Description",
+          "type": "string"
+        },
+        "display_name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Display Name",
+          "type": "string"
+        },
+        "forgegate_api_version": {
+          "pattern": "^[1-9][0-9]*$",
+          "title": "Forgegate Api Version",
+          "type": "string"
+        },
+        "input_schemas": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 32,
+          "title": "Input Schemas",
+          "type": "array"
+        },
+        "manifest_id": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Manifest Id",
+          "type": "string"
+        },
+        "output_evidence_kinds": {
+          "default": [],
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 64,
+          "title": "Output Evidence Kinds",
+          "type": "array"
+        },
+        "permissions": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PluginPermission"
+          },
+          "maxItems": 16,
+          "title": "Permissions",
+          "type": "array"
+        },
+        "plugin_id": {
+          "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9][a-z0-9-]*){1,7}$",
+          "title": "Plugin Id",
+          "type": "string"
+        },
+        "plugin_version": {
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+          "title": "Plugin Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "forgegate.plugin-manifest.v1",
+          "default": "forgegate.plugin-manifest.v1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "manifest_id",
+        "plugin_id",
+        "display_name",
+        "description",
+        "plugin_version",
+        "forgegate_api_version",
+        "capabilities"
+      ],
+      "title": "PluginManifest",
+      "type": "object"
+    },
+    "PluginPermission": {
+      "enum": [
+        "artifact-read",
+        "filesystem-write",
+        "network",
+        "notification",
+        "secrets",
+        "subprocess"
+      ],
+      "title": "PluginPermission",
+      "type": "string"
+    },
+    "PluginProtocolDirection": {
+      "enum": [
+        "CORE_TO_PLUGIN",
+        "PLUGIN_TO_CORE"
+      ],
+      "title": "PluginProtocolDirection",
+      "type": "string"
+    },
+    "PluginProtocolMessageKind": {
+      "enum": [
+        "START",
+        "READY",
+        "RESULT",
+        "ERROR"
+      ],
+      "title": "PluginProtocolMessageKind",
+      "type": "string"
+    },
+    "PluginResourceLimits": {
+      "additionalProperties": false,
+      "properties": {
+        "cpu_time_ms": {
+          "default": 30000,
+          "maximum": 900000,
+          "minimum": 100,
+          "title": "Cpu Time Ms",
+          "type": "integer"
+        },
+        "file_count": {
+          "default": 64,
+          "maximum": 4096,
+          "minimum": 1,
+          "title": "File Count",
+          "type": "integer"
+        },
+        "memory_bytes": {
+          "default": 268435456,
+          "maximum": 4294967296,
+          "minimum": 16777216,
+          "title": "Memory Bytes",
+          "type": "integer"
+        },
+        "output_bytes": {
+          "default": 67108864,
+          "maximum": 1073741824,
+          "minimum": 1024,
+          "title": "Output Bytes",
+          "type": "integer"
+        },
+        "process_count": {
+          "const": 1,
+          "default": 1,
+          "title": "Process Count",
+          "type": "integer"
+        },
+        "startup_timeout_ms": {
+          "default": 5000,
+          "maximum": 120000,
+          "minimum": 100,
+          "title": "Startup Timeout Ms",
+          "type": "integer"
+        },
+        "stderr_bytes": {
+          "default": 1048576,
+          "maximum": 16777216,
+          "minimum": 0,
+          "title": "Stderr Bytes",
+          "type": "integer"
+        },
+        "stdout_bytes": {
+          "default": 1048576,
+          "maximum": 16777216,
+          "minimum": 0,
+          "title": "Stdout Bytes",
+          "type": "integer"
+        },
+        "total_timeout_ms": {
+          "default": 60000,
+          "maximum": 900000,
+          "minimum": 100,
+          "title": "Total Timeout Ms",
+          "type": "integer"
+        }
+      },
+      "title": "PluginResourceLimits",
+      "type": "object"
+    },
+    "PluginRunIssue": {
+      "additionalProperties": false,
+      "description": "Stable, non-secret-bearing failure classification.",
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/PluginRunIssueCode"
+        }
+      },
+      "required": [
+        "code"
+      ],
+      "title": "PluginRunIssue",
+      "type": "object"
+    },
+    "PluginRunIssueCode": {
+      "enum": [
+        "PLUGIN_PLAN_INVALID",
+        "PLUGIN_PERMISSION_DENIED",
+        "PLUGIN_PERMISSION_UNENFORCEABLE",
+        "PLUGIN_ISOLATION_UNAVAILABLE",
+        "PLUGIN_START_FAILED",
+        "PLUGIN_PROTOCOL_INVALID",
+        "PLUGIN_TIMEOUT",
+        "PLUGIN_RESOURCE_LIMIT",
+        "PLUGIN_EXIT_ERROR",
+        "PLUGIN_OUTPUT_INVALID",
+        "PLUGIN_AUDIT_FAILED",
+        "PLUGIN_CANCELLED"
+      ],
+      "title": "PluginRunIssueCode",
+      "type": "string"
+    },
+    "PluginRunPlan": {
+      "additionalProperties": false,
+      "description": "Content-addressed authority envelope for one future plugin invocation.",
+      "properties": {
+        "approved_permissions": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PluginPermission"
+          },
+          "maxItems": 16,
+          "title": "Approved Permissions",
+          "type": "array"
+        },
+        "capability": {
+          "$ref": "#/$defs/PluginCapability"
+        },
+        "declared_permissions": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PluginPermission"
+          },
+          "maxItems": 16,
+          "title": "Declared Permissions",
+          "type": "array"
+        },
+        "enforced_permissions": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PluginPermission"
+          },
+          "maxItems": 16,
+          "title": "Enforced Permissions",
+          "type": "array"
+        },
+        "enforcement_backend": {
+          "pattern": "^[a-z][a-z0-9-]{1,62}$",
+          "title": "Enforcement Backend",
+          "type": "string"
+        },
+        "enforcement_backend_version": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9._+-]{0,127}$",
+          "title": "Enforcement Backend Version",
+          "type": "string"
+        },
+        "environment_policy": {
+          "const": "sanitized-empty",
+          "default": "sanitized-empty",
+          "title": "Environment Policy",
+          "type": "string"
+        },
+        "expected_output_evidence_kinds": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 64,
+          "minItems": 1,
+          "title": "Expected Output Evidence Kinds",
+          "type": "array"
+        },
+        "input_policy": {
+          "const": "broker-private-read-only",
+          "default": "broker-private-read-only",
+          "title": "Input Policy",
+          "type": "string"
+        },
+        "input_schema": {
+          "title": "Input Schema",
+          "type": "string"
+        },
+        "inputs": {
+          "items": {
+            "$ref": "#/$defs/PluginRunSubject"
+          },
+          "maxItems": 64,
+          "minItems": 1,
+          "title": "Inputs",
+          "type": "array"
+        },
+        "isolation_tier": {
+          "const": "SANDBOXED",
+          "default": "SANDBOXED",
+          "title": "Isolation Tier",
+          "type": "string"
+        },
+        "network_policy": {
+          "const": "deny",
+          "default": "deny",
+          "title": "Network Policy",
+          "type": "string"
+        },
+        "planned_at": {
+          "format": "date-time",
+          "title": "Planned At",
+          "type": "string"
+        },
+        "resource_limits": {
+          "$ref": "#/$defs/PluginResourceLimits"
+        },
+        "run_plan_id": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Run Plan Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "forgegate.plugin-run-plan.v1",
+          "default": "forgegate.plugin-run-plan.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "subprocess_policy": {
+          "const": "deny",
+          "default": "deny",
+          "title": "Subprocess Policy",
+          "type": "string"
+        },
+        "target": {
+          "$ref": "#/$defs/PluginExecutionTarget"
+        }
+      },
+      "required": [
+        "run_plan_id",
+        "target",
+        "capability",
+        "input_schema",
+        "inputs",
+        "expected_output_evidence_kinds",
+        "enforcement_backend",
+        "enforcement_backend_version",
+        "resource_limits",
+        "planned_at"
+      ],
+      "title": "PluginRunPlan",
+      "type": "object"
+    },
+    "PluginRunSubject": {
+      "additionalProperties": false,
+      "description": "Broker-owned logical artifact presented to a plugin runner.",
+      "properties": {
+        "digest": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Digest",
+          "type": "string"
+        },
+        "media_type": {
+          "pattern": "^[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,126}/[A-Za-z0-9][A-Za-z0-9!#$&^_.+-]{0,126}$",
+          "title": "Media Type",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "size_bytes": {
+          "maximum": 4294967296,
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name",
+        "media_type",
+        "digest",
+        "size_bytes"
+      ],
+      "title": "PluginRunSubject",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Strict, bounded message envelope for the future runner protocol.",
+  "properties": {
+    "direction": {
+      "$ref": "#/$defs/PluginProtocolDirection"
+    },
+    "issue": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PluginRunIssue"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "kind": {
+      "$ref": "#/$defs/PluginProtocolMessageKind"
+    },
+    "message_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Message Id",
+      "type": "string"
+    },
+    "output_set_id": {
+      "anyOf": [
+        {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Output Set Id"
+    },
+    "protocol_version": {
+      "const": "1",
+      "default": "1",
+      "title": "Protocol Version",
+      "type": "string"
+    },
+    "run_plan": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PluginRunPlan"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "run_plan_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Run Plan Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "forgegate.plugin-protocol-message.v1",
+      "default": "forgegate.plugin-protocol-message.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "sequence": {
+      "maximum": 2,
+      "minimum": 0,
+      "title": "Sequence",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "message_id",
+    "run_plan_id",
+    "sequence",
+    "direction",
+    "kind"
+  ],
+  "title": "PluginProtocolMessage",
+  "type": "object"
+}

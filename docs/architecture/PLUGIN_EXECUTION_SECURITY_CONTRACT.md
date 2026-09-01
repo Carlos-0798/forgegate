@@ -3,9 +3,10 @@
 ## Status and boundary
 
 Phase 18 defines the contract that must exist before ForgeGate can execute an
-external plugin. It is a design baseline, not an implementation or security
-claim. Phase 17 discovery remains import-free, every discovery result remains
-`execution=NOT_LOADED`, and ForgeGate still has no plugin runner.
+external plugin. The public contract models and JSON Schemas are implemented;
+the runner and operating-system controls are not. Phase 17 discovery remains
+import-free, every discovery result remains `execution=NOT_LOADED`, and
+ForgeGate still has no plugin runner or sandbox claim.
 
 The core rule is fail-closed: a valid manifest proves only that metadata is
 well-formed. It does not authenticate the publisher, approve a capability,
@@ -73,6 +74,21 @@ re-read broker-owned output files, enforce the declared member set and limits,
 recompute content digests, validate every evidence schema, and only then create
 a separate ForgeGate collection record. A plugin cannot directly transition a
 candidate, evaluate policy, sign an assurance bundle, or write audit rows.
+
+The schema-only public surface now consists of:
+
+- `forgegate.plugin-run-plan.v1`, which binds the exact manifest, target,
+  inputs, authority, isolation tier, policies, resource limits, and UTC time;
+- `forgegate.plugin-protocol-message.v1`, which permits only ordered
+  `START`, `READY`, `RESULT`, and `ERROR` envelopes;
+- `forgegate.plugin-run-transition.v1`, which binds each legal state change to
+  its predecessor and optional protocol message; and
+- `forgegate.plugin-run-result.v1`, which revalidates the complete terminal
+  chain and binds only core-rehashed, schema-validated output identities.
+
+These documents can be constructed, serialized, Schema-checked, and replay-
+validated without loading a plugin. They do not prove that a backend enforced
+their requested controls.
 
 ## Permissions and enforcement
 
@@ -150,18 +166,20 @@ At minimum, the implementation must preserve these categories:
 | `PLUGIN_EXIT_ERROR` | bounded nonzero/abnormal process termination |
 | `PLUGIN_OUTPUT_INVALID` | result members, digests, or evidence schemas invalid |
 | `PLUGIN_AUDIT_FAILED` | required durable transition could not be committed |
+| `PLUGIN_CANCELLED` | an authorized cancellation closed the run |
 
-All failures map to the plugin run's `ERROR` state. They do not automatically
-change a release candidate; a later policy may explicitly consume validated
-run evidence and decide how absence or error affects the release.
+All failure codes map to the plugin run's `ERROR` state; `PLUGIN_CANCELLED`
+maps only to `CANCELLED`. Neither outcome automatically changes a release
+candidate. A later policy may explicitly consume validated run evidence and
+decide how absence, error, or cancellation affects the release.
 
 ## Implementation gates
 
 External plugin execution remains prohibited until all of the following are
 implemented and verified:
 
-1. strict run-plan, protocol-message, transition, and result models plus JSON
-   Schemas and content-derived identities;
+1. **implemented:** strict run-plan, protocol-message, transition, and result
+   models plus JSON Schemas and content-derived identities;
 2. one cross-platform or explicitly platform-scoped `SANDBOXED` backend with
    denial tests for filesystem, network, child-process, environment, and
    resource escape;

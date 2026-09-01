@@ -11,7 +11,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — thirty-one document plus two artifact schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — thirty-five document plus two artifact schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Analog Validation result Schema mirror | committed upstream-consumer contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
@@ -111,6 +111,7 @@
 | Plugin compatibility/failure isolation | compatible/incompatible/invalid/conflict cases | PASS — discovery metadata only; no runtime execution |
 | Plugin install/uninstall independence | standalone fixture wheel + clean ForgeGate wheel | PASS — local + three-platform clean-package smoke; no optional dependency retained |
 | Plugin execution security contract | exact upstream/license traceability + architecture/threat review | DESIGN PASS — protocol, permissions, isolation tiers, limits, errors, and audit semantics defined; no code loaded |
+| Plugin run-plan/protocol/transition/result contracts | model/identity/authority/chain/resource/Schema/loader tests | PASS — local host; 7 focused tests, four content-derived document Schemas, no process started |
 | External plugin execution and audit | sandbox backend/permissions/timeouts/plugin_runs implementation | NOT IMPLEMENTED — no plugin callable is loaded |
 | Registered-project candidate authority | application/CLI/API/store tests | PASS — unregistered project and missing track fail closed |
 | Release-track normalization | underscore compatibility plus ambiguity tests | PASS — new candidate/policy identity is canonical hyphen form |

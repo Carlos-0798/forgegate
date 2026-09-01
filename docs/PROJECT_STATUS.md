@@ -1,10 +1,10 @@
 # Project status
 
 - Date: 2026-09-01
-- Version: 0.1.0.dev24
-- Stage: Phase 18 external-plugin execution security contract designed; Phase
-  17 import-free Plugin SDK discovery locally and cross-platform verified
-- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, offline GitHub gating, bounded import-free plugin metadata discovery, and a non-executing external-plugin security design; not production-ready
+- Version: 0.1.0.dev25
+- Stage: Phase 18 public execution-contract models locally verified; external
+  plugin import, runner, sandbox enforcement, and durable run storage absent
+- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, offline GitHub gating, bounded import-free plugin metadata discovery, and non-executing plugin run/protocol/state/result contracts; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
 - Remote/publication status: private `Carlos-0798/forgegate` synchronized
@@ -277,18 +277,28 @@
   with stable sanitized issues and no installation-path disclosure;
 - standalone import-hostile generic plugin package plus clean-wheel
   install/discover/uninstall independence smoke.
+- strict `forgegate.plugin-run-plan.v1` authority envelope binding an exact
+  target manifest, content-addressed logical inputs, declared/approved/enforced
+  permission sets, `SANDBOXED` tier, deny policies, limits, and UTC plan time;
+- strict `forgegate.plugin-protocol-message.v1` sequencing for bounded `START`,
+  `READY`, `RESULT`, and stable-code `ERROR` envelopes;
+- append-only-shaped `forgegate.plugin-run-transition.v1` legal state links and
+  replay-validating `forgegate.plugin-run-result.v1` terminal documents with
+  core-rehashed/schema-validated output identities;
+- public configuration loading, four generated JSON Schemas, Schema drift
+  checks, and adversarial identity/authority/state/resource tests for those
+  documents without importing or starting plugin code.
 
 ## Designed, not implemented
 
 - external-plugin trust domains separating core, broker, disposable runner,
   untrusted plugin, content-addressed inputs, and core-authored audit;
-- out-of-process bounded protocol and content-derived run plans with broker-owned
-  input/output handling;
-- deny-by-default declared/approved/enforced permission subsets, explicit
-  `NONE`/`PROCESS_ONLY`/`SANDBOXED` isolation tiers, and mandatory resource
-  limits;
-- stable plugin execution issue codes, failure-to-`ERROR` behavior, append-only
-  run transitions, crash recovery, and deterministic replay requirements;
+- out-of-process runner and broker implementation for the modeled bounded
+  protocol and broker-owned input/output handling;
+- operating-system enforcement for the modeled deny-by-default permissions,
+  `SANDBOXED` isolation tier, and mandatory resource limits;
+- durable append-only run storage, crash recovery, and idempotent replay over
+  the implemented transition/result contracts;
 - exact upstream reference review with three shallow external clones and two
   source-only fixed revisions; no third-party source copied or dependency added.
 
@@ -315,8 +325,11 @@ artifact payload/replay export, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 696 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 97.55% across 6,955 statements and 1,844 branches
+- pytest: 703 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 96.59% across 7,315 statements and 1,982 branches
+- Plugin execution contract focus: 7 passed across plan authority, protocol
+  sequencing, legal transitions, terminal replay, resource limits, JSON
+  loading, and content-derived identity; no process started
 - Plugin SDK discovery focus: 30 passed, 1 skipped; plugin package 99.27%
   branch-aware coverage, with the skipped path requiring unavailable Windows
   symlink creation
@@ -337,7 +350,7 @@ artifact payload/replay export, and hardware access.
   and 138 branches
 - committed JSON Schema and OpenAPI drift checks: PASS
 - project/policy/candidate/transition example documents: VALID
-- thirty-one canonical versioned document Schemas plus Benchmark and Analog
+- thirty-five canonical versioned document Schemas plus Benchmark and Analog
   Validation artifact Schemas: drift-checked and parsed
 - complete sdist manifest and ForgeGate/sample-plugin wheel builds: PASS
 - repository-external ForgeGate installation plus sample-plugin
@@ -379,3 +392,5 @@ Phase 17 acceptance is recorded in
 Phase 18 environment/reference review and the non-executing security-contract
 acceptance are recorded in
 `reports/PHASE_18_ENVIRONMENT_REFERENCE_AND_EXECUTION_CONTRACT_REPORT.md`.
+The implemented public model slice is recorded separately in
+`reports/PHASE_18_PLUGIN_EXECUTION_CONTRACT_MODELS_ACCEPTANCE_REPORT.md`.

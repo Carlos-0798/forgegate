@@ -16,7 +16,14 @@ from forgegate.candidates.models import (
 from forgegate.domain.models import EvidenceBundle, PolicyConfig, ProjectConfig
 from forgegate.github_actions import GitHubActionReport
 from forgegate.identity import AssuranceSignature, SigningIdentity, TrustStore
-from forgegate.plugins import PluginDiscoveryReport, PluginManifest
+from forgegate.plugins import (
+    PluginDiscoveryReport,
+    PluginManifest,
+    PluginProtocolMessage,
+    PluginRunPlan,
+    PluginRunResult,
+    PluginRunTransition,
+)
 from forgegate.policy import PolicyMaterial
 from forgegate.policy.models import PolicyEvaluation, ProfileAuthorizedPolicyEvaluation
 from forgegate.projects import ProjectProfileRevision
@@ -47,6 +54,10 @@ type SupportedConfig = (
     | GitHubActionReport
     | PluginManifest
     | PluginDiscoveryReport
+    | PluginRunPlan
+    | PluginProtocolMessage
+    | PluginRunTransition
+    | PluginRunResult
 )
 
 SCHEMA_MODELS: dict[str, type[SupportedConfig]] = {
@@ -72,6 +83,10 @@ SCHEMA_MODELS: dict[str, type[SupportedConfig]] = {
     "forgegate.github-action-report.v1": GitHubActionReport,
     "forgegate.plugin-manifest.v1": PluginManifest,
     "forgegate.plugin-discovery.v1": PluginDiscoveryReport,
+    "forgegate.plugin-run-plan.v1": PluginRunPlan,
+    "forgegate.plugin-protocol-message.v1": PluginProtocolMessage,
+    "forgegate.plugin-run-transition.v1": PluginRunTransition,
+    "forgegate.plugin-run-result.v1": PluginRunResult,
 }
 
 

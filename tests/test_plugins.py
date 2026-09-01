@@ -457,7 +457,7 @@ def test_empty_environment_keeps_core_operational(monkeypatch: pytest.MonkeyPatc
     assert listed.exit_code == doctor.exit_code == 0
     assert json.loads(listed.stdout)["core_operational_without_plugins"] is True
     assert json.loads(listed.stdout)["total"] == 0
-    assert json.loads(doctor.stdout)["phase"] == "phase17-plugin-discovery-foundation"
+    assert json.loads(doctor.stdout)["phase"] == "phase18-plugin-execution-contract-models"
 
 
 def test_committed_sample_manifest_matches_sdk_contract(repository_root: Path) -> None:

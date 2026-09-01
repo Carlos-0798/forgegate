@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.0.dev25 — 2026-09-01
+
+- Added strict, content-derived Plugin API v1 run-plan, protocol-message,
+  transition, validated-output, and terminal-result models.
+- Added fail-closed collector authority checks for declared, approved, and
+  enforced permissions; `SANDBOXED`-only isolation; broker-owned logical
+  subjects; deny-network/subprocess policy; and bounded resources.
+- Added replay-verifiable state-chain validation, stable non-secret-bearing
+  issue codes, four public JSON Schemas, configuration loading, Schema drift
+  checks, and adversarial model tests.
+- External plugin import, process creation, sandbox enforcement, broker I/O,
+  and durable `plugin_runs` remain intentionally unimplemented.
+
 ## 0.1.0.dev24 — 2026-09-01
 
 - Added strict content-derived `forgegate.plugin-manifest.v1` and deterministic

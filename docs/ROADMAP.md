@@ -264,7 +264,7 @@
   semantics before loading external plugin code.
 - [x] Preserve Phase 17 `execution=NOT_LOADED` behavior and explicitly reject
   same-process third-party plugin execution.
-- [ ] Implement strict run-plan, protocol-message, transition, and result
+- [x] Implement strict run-plan, protocol-message, transition, and result
   models with JSON Schemas and content-derived identities.
 - [ ] Implement and adversarially verify a `SANDBOXED` backend on each platform
   that will be advertised as supporting external plugins.

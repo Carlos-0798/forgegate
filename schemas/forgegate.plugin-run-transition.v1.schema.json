@@ -1,0 +1,152 @@
+{
+  "$defs": {
+    "PluginRunIssue": {
+      "additionalProperties": false,
+      "description": "Stable, non-secret-bearing failure classification.",
+      "properties": {
+        "code": {
+          "$ref": "#/$defs/PluginRunIssueCode"
+        }
+      },
+      "required": [
+        "code"
+      ],
+      "title": "PluginRunIssue",
+      "type": "object"
+    },
+    "PluginRunIssueCode": {
+      "enum": [
+        "PLUGIN_PLAN_INVALID",
+        "PLUGIN_PERMISSION_DENIED",
+        "PLUGIN_PERMISSION_UNENFORCEABLE",
+        "PLUGIN_ISOLATION_UNAVAILABLE",
+        "PLUGIN_START_FAILED",
+        "PLUGIN_PROTOCOL_INVALID",
+        "PLUGIN_TIMEOUT",
+        "PLUGIN_RESOURCE_LIMIT",
+        "PLUGIN_EXIT_ERROR",
+        "PLUGIN_OUTPUT_INVALID",
+        "PLUGIN_AUDIT_FAILED",
+        "PLUGIN_CANCELLED"
+      ],
+      "title": "PluginRunIssueCode",
+      "type": "string"
+    },
+    "PluginRunState": {
+      "enum": [
+        "PLANNED",
+        "STARTING",
+        "RUNNING",
+        "SUCCEEDED",
+        "ERROR",
+        "CANCELLED"
+      ],
+      "title": "PluginRunState",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "One content-addressed transition in a plugin run state chain.",
+  "properties": {
+    "from_state": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PluginRunState"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "issue": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/PluginRunIssue"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "title": "Occurred At",
+      "type": "string"
+    },
+    "output_set_id": {
+      "anyOf": [
+        {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Output Set Id"
+    },
+    "previous_transition_id": {
+      "anyOf": [
+        {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Previous Transition Id"
+    },
+    "protocol_message_id": {
+      "anyOf": [
+        {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Protocol Message Id"
+    },
+    "run_plan_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Run Plan Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "forgegate.plugin-run-transition.v1",
+      "default": "forgegate.plugin-run-transition.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "sequence": {
+      "maximum": 3,
+      "minimum": 0,
+      "title": "Sequence",
+      "type": "integer"
+    },
+    "to_state": {
+      "$ref": "#/$defs/PluginRunState"
+    },
+    "transition_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Transition Id",
+      "type": "string"
+    }
+  },
+  "required": [
+    "transition_id",
+    "run_plan_id",
+    "sequence",
+    "from_state",
+    "to_state",
+    "occurred_at"
+  ],
+  "title": "PluginRunTransition",
+  "type": "object"
+}
