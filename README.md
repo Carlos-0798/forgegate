@@ -8,7 +8,7 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 11 portable assurance bundle implemented;
+**Phase 12 authenticated assurance identity foundation implemented;
 not production-ready.**
 
 This private-development checkpoint provides a working Python 3.12 CLI and a
@@ -44,6 +44,9 @@ current immutable project profile -> profile-bound release candidate
                               |
                               v
        content-addressed portable bundle + offline verification
+                              |
+                              v
+ external trust store -> Ed25519 signer authentication sidecar
 ```
 
 The core remains domain-neutral. Analog Validation Studio is consumed only
@@ -54,12 +57,12 @@ collector rather than a runtime or hardware dependency.
 
 | Gate | Result | Evidence level |
 |---|---|---|
-| Python tests | 602 passed, 1 skipped because Windows symlink creation was unavailable | Local host test |
-| Branch-aware coverage | 98.30% across 5,376 statements and 1,450 branches | Local host test |
+| Python tests | 624 passed, 1 skipped because Windows symlink creation was unavailable | Local host test |
+| Branch-aware coverage | 98.13% across 5,733 statements and 1,526 branches | Local host test |
 | Static quality gates | Ruff, formatting, and strict mypy passed | Local host test |
 | Contracts | JSON Schema and OpenAPI drift checks passed | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
-| GitHub Actions | Phase 10 completed on Windows, Ubuntu, and macOS | PASS — [run 33444090340](https://github.com/Carlos-0798/forgegate/actions/runs/33444090340) |
+| GitHub Actions | Phase 11 completed on Windows, Ubuntu, and macOS | PASS — [run 33453696337](https://github.com/Carlos-0798/forgegate/actions/runs/33453696337) |
 | Hardware/device behavior | Not exercised by ForgeGate | Out of scope |
 
 ## Key design decisions
@@ -67,8 +70,9 @@ collector rather than a runtime or hardware dependency.
 - Evidence collection, policy evaluation, candidate transitions, and
   attestation are separate operations so a successful collector cannot silently
   become a release decision.
-- SHA-256 identities establish byte integrity and association, not producer or
-  operator authenticity.
+- SHA-256 identities establish byte integrity and association, not authenticity.
+  A separate Ed25519 sidecar authenticates its signer only when an external
+  trust store authorizes that exact key, role, and project.
 - Candidate writes use caller-owned idempotency keys and optimistic revisions;
   persisted history is append-only.
 - New persisted candidates bind the exact immutable project-profile ID/version
@@ -216,6 +220,14 @@ Implemented and host-verified in this checkpoint:
   atomic, content-addressed directory publication;
 - `candidate export-assurance` plus database-independent `verify-assurance`,
   strict canonical-byte checks, and explicit source-artifact limitations.
+- strict `forgegate.signing-identity.v1`, `forgegate.trust-store.v1`, and
+  `forgegate.assurance-signature.v1` contracts with key-derived identity and
+  content-derived trust/signature IDs;
+- domain-separated Ed25519 signatures over canonical Phase 11 bundle bytes,
+  content-addressed signature publication, exact replay, and external
+  trust-store verification for an authorized producer or operator role;
+- strict bounded JSON identity loading plus `identity derive`, `identity trust`,
+  `sign-assurance`, and `verify-assurance-signature` installed CLI paths.
 
 
 </details>
@@ -437,6 +449,34 @@ bytes, but not the collector source-artifact bytes; offline verification proves
 the internal document and byte associations, not producer identity or a fresh
 collector/hardware run.
 
+Authenticate the signer of those exact canonical bundle bytes against a
+separately protected trust store:
+
+```powershell
+forgegate identity derive producer-key.pem --display-name sample-ci-producer `
+  > work/signing-identity.json
+
+forgegate identity trust work/signing-identity.json `
+  --role producer --project sample-api > work/trust-store.json
+
+forgegate sign-assurance work/assurance/assurance-<bundle-sha256> `
+  work/signing-identity.json producer-key.pem `
+  --role producer --signed-at 2026-08-31T23:00:00Z `
+  --output-root work/signatures
+
+forgegate verify-assurance-signature `
+  work/assurance/assurance-<bundle-sha256> `
+  work/signatures/assurance-signature-<signature-sha256>.json `
+  work/trust-store.json
+```
+
+ForgeGate does not generate or retain private keys. The current CLI accepts an
+existing unencrypted PKCS8 Ed25519 PEM and leaves key encryption, OS ACLs,
+hardware-backed custody, trust-store distribution, and rotation to the operator.
+The signature authenticates the bundle signer at verification time; it does not
+authenticate the original source artifacts, establish trusted time, or change
+the embedded bundle's `unsigned_local` evidence label.
+
 For a schema-v1, v2, v3, v4, or v5 database, migration is explicit:
 
 ```powershell
@@ -533,8 +573,8 @@ Not implemented yet:
 - HTTP artifact collection or filesystem publication;
 - rejected-request audit ingestion, audit export/retention, plugin execution,
   or product-level GitHub integration;
-- database authorization, backup/repair, signatures, or trusted producer/CI
-  identity;
+- database authorization, backup/repair, managed or hardware-backed key custody,
+  online revocation, trusted timestamps, or CI workload identity federation;
 - MSP430 compatibility collection, AFE/MSP430 runtime integration, or any
   hardware operation;
 - production deployment or public release.
@@ -544,7 +584,8 @@ measurements. The Studio integration consumes only its frozen public JSON
 artifact; it neither imports Studio code nor converts current `BENCH_*` labels
 into physical verification. Assembly only revalidates local artifacts and
 joins existing evidence; persisted binding connects that local assembly to the
-candidate lifecycle but does not authenticate it. The REST API is a loopback
+candidate lifecycle but does not authenticate it. Phase 12 can authenticate a
+portable bundle signer against an external local trust store. The REST API is a loopback
 transport over the same application service and SQLite adapter; it adds no
 user, producer, or machine identity. SHA-256 is not producer authentication.
 The MSP430 controller may later expose a separate versioned artifact for
@@ -552,10 +593,11 @@ another optional collector.
 
 ## Roadmap
 
-The Phase 11 local MVP now exports its complete retained decision state for
-database-independent offline verification. Authenticated identity remains the
-next security boundary and must precede any non-loopback deployment. MSP430
-compatibility remains gated on a separately frozen public result contract. See
+The Phase 12 local MVP adds authenticated signer identity for portable assurance
+without weakening the loopback-only service boundary. API authentication,
+authorization, secure transport, and managed key lifecycle must still be
+designed and verified before any non-loopback deployment. MSP430 compatibility
+remains gated on a separately frozen public result contract. See
 [docs/ROADMAP.md](docs/ROADMAP.md) for acceptance-level tasks.
 
 ## License status

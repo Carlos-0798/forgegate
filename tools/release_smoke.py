@@ -11,6 +11,9 @@ import tempfile
 import venv
 from pathlib import Path
 
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_SDIST_PATHS = (
     "AGENTS.md",
@@ -36,6 +39,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/PROJECT_PROFILE_REVISIONS.md",
     "docs/architecture/POLICY_MATERIALIZATION.md",
     "docs/architecture/PORTABLE_ASSURANCE_BUNDLES.md",
+    "docs/architecture/AUTHENTICATED_ASSURANCE_IDENTITY.md",
     "examples/sample-python-api/artifacts/junit.xml",
     "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
@@ -66,6 +70,7 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_9_PROJECT_PROFILE_REVISIONS_ACCEPTANCE_REPORT.md",
     "reports/PHASE_10_POLICY_MATERIALIZATION_ACCEPTANCE_REPORT.md",
     "reports/PHASE_11_PORTABLE_ASSURANCE_BUNDLE_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_12_AUTHENTICATED_IDENTITY_FOUNDATION_ACCEPTANCE_REPORT.md",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
@@ -73,6 +78,9 @@ REQUIRED_SDIST_PATHS = (
     "schemas/forgegate.policy-material.v1.schema.json",
     "schemas/forgegate.assurance-bundle.v1.schema.json",
     "schemas/forgegate.assurance-bundle-manifest.v1.schema.json",
+    "schemas/forgegate.assurance-signature.v1.schema.json",
+    "schemas/forgegate.signing-identity.v1.schema.json",
+    "schemas/forgegate.trust-store.v1.schema.json",
     "schemas/forgegate.release-candidate.v1.schema.json",
     "schemas/forgegate.release-candidate.v2.schema.json",
     "schemas/forgegate.candidate-transition.v1.schema.json",
@@ -120,6 +128,7 @@ REQUIRED_SDIST_PATHS = (
     "tests/test_project_profile_revisions.py",
     "tests/test_policy_materialization.py",
     "tests/test_assurance_bundle.py",
+    "tests/test_identity_signatures.py",
 )
 
 
@@ -727,14 +736,102 @@ def main() -> int:
             [str(python), "-m", "forgegate", "verify-assurance", str(assurance_directory)],
             cwd=root,
         )
-        for document in ("assurance-bundle.json", "manifest.json"):
+        for assurance_member in ("assurance-bundle.json", "manifest.json"):
             run(
                 [
                     str(python),
                     "-m",
                     "forgegate",
                     "validate-config",
-                    str(assurance_directory / document),
+                    str(assurance_directory / assurance_member),
+                ],
+                cwd=root,
+            )
+        private_key_path = root / "ephemeral-producer-key.pem"
+        private_key_path.write_bytes(
+            Ed25519PrivateKey.generate().private_bytes(
+                encoding=serialization.Encoding.PEM,
+                format=serialization.PrivateFormat.PKCS8,
+                encryption_algorithm=serialization.NoEncryption(),
+            )
+        )
+        identity_path = root / "signing-identity.json"
+        run_capture(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "identity",
+                "derive",
+                str(private_key_path),
+                "--display-name",
+                "release-smoke-producer",
+            ],
+            identity_path,
+            cwd=root,
+        )
+        trust_store_path = root / "trust-store.json"
+        run_capture(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "identity",
+                "trust",
+                str(identity_path),
+                "--role",
+                "producer",
+                "--project",
+                "sample-api",
+            ],
+            trust_store_path,
+            cwd=root,
+        )
+        signature_output = root / "signatures"
+        sign_assurance = [
+            str(python),
+            "-m",
+            "forgegate",
+            "sign-assurance",
+            str(assurance_directory),
+            str(identity_path),
+            str(private_key_path),
+            "--role",
+            "producer",
+            "--signed-at",
+            "2026-08-31T23:00:00Z",
+            "--output-root",
+            str(signature_output),
+        ]
+        first_signature_result = root / "first-signature-result.json"
+        second_signature_result = root / "second-signature-result.json"
+        run_capture(sign_assurance, first_signature_result, cwd=root)
+        run_capture(sign_assurance, second_signature_result, cwd=root)
+        first_signature = json.loads(first_signature_result.read_text(encoding="utf-8"))
+        second_signature = json.loads(second_signature_result.read_text(encoding="utf-8"))
+        if first_signature["output_replayed"] or not second_signature["output_replayed"]:
+            raise SystemExit("installed wheel did not preserve exact signature replay semantics")
+        signature_path = Path(str(second_signature["signature_path"]))
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "verify-assurance-signature",
+                str(assurance_directory),
+                str(signature_path),
+                str(trust_store_path),
+            ],
+            cwd=root,
+        )
+        for identity_document_path in (identity_path, trust_store_path, signature_path):
+            run(
+                [
+                    str(python),
+                    "-m",
+                    "forgegate",
+                    "validate-config",
+                    str(identity_document_path),
                 ],
                 cwd=root,
             )

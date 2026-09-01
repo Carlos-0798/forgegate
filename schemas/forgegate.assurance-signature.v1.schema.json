@@ -1,0 +1,105 @@
+{
+  "$defs": {
+    "IdentityRole": {
+      "enum": [
+        "producer",
+        "operator"
+      ],
+      "title": "IdentityRole",
+      "type": "string"
+    },
+    "SigningIdentity": {
+      "additionalProperties": false,
+      "properties": {
+        "algorithm": {
+          "const": "ed25519",
+          "default": "ed25519",
+          "title": "Algorithm",
+          "type": "string"
+        },
+        "display_name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Display Name",
+          "type": "string"
+        },
+        "identity_id": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Identity Id",
+          "type": "string"
+        },
+        "public_key_base64": {
+          "maxLength": 44,
+          "minLength": 44,
+          "title": "Public Key Base64",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "forgegate.signing-identity.v1",
+          "default": "forgegate.signing-identity.v1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "identity_id",
+        "display_name",
+        "public_key_base64"
+      ],
+      "title": "SigningIdentity",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "bundle_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Bundle Id",
+      "type": "string"
+    },
+    "bundle_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Bundle Sha256",
+      "type": "string"
+    },
+    "role": {
+      "$ref": "#/$defs/IdentityRole"
+    },
+    "schema_version": {
+      "const": "forgegate.assurance-signature.v1",
+      "default": "forgegate.assurance-signature.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "signature_base64": {
+      "maxLength": 88,
+      "minLength": 88,
+      "title": "Signature Base64",
+      "type": "string"
+    },
+    "signature_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Signature Id",
+      "type": "string"
+    },
+    "signed_at": {
+      "format": "date-time",
+      "title": "Signed At",
+      "type": "string"
+    },
+    "signer": {
+      "$ref": "#/$defs/SigningIdentity"
+    }
+  },
+  "required": [
+    "signature_id",
+    "bundle_id",
+    "bundle_sha256",
+    "signer",
+    "role",
+    "signed_at",
+    "signature_base64"
+  ],
+  "title": "AssuranceSignature",
+  "type": "object"
+}

@@ -1,8 +1,8 @@
 # Project status
 
 - Date: 2026-08-31
-- Version: 0.1.0.dev18
-- Stage: Phase 11 portable-assurance bundle slice implemented
+- Version: 0.1.0.dev19
+- Stage: Phase 12 authenticated-assurance identity foundation implemented
 - Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, and bounded state discovery; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
@@ -204,6 +204,19 @@
   path embedded in policy or evidence metadata;
 - explicit `unsigned_local`, retained-document verification scope and
   `source_artifact_bytes=not_embedded` evidence boundary.
+- key-derived `forgegate.signing-identity.v1` documents with canonical Ed25519
+  public-key base64 and stable identity IDs;
+- external `forgegate.trust-store.v1` authorization for explicit active/revoked
+  identities, producer/operator roles, and project scopes;
+- domain-separated `forgegate.assurance-signature.v1` statements binding exact
+  canonical bundle bytes, signer, role, and caller-supplied time;
+- cryptographic verification followed by exact external trust-record, status,
+  role, and project authorization checks;
+- bounded strict-JSON identity loading and deterministic content-addressed
+  signature publication with exact replay and conflict rejection;
+- installed `identity derive`, `identity trust`, `sign-assurance`, and
+  `verify-assurance-signature` CLI workflow without private-key generation or
+  retention.
 
 ## Not implemented
 
@@ -211,7 +224,9 @@ Authenticated/non-loopback API deployment, HTTP artifact collection and file
 publication, rejected-request/warning audit ingestion,
 audit export/retention,
 external plugins, GitHub integration,
-signatures/key management, database authorization, backup/repair, MSP430
+managed/encrypted/hardware-backed key custody, trusted timestamps, online
+revocation, CI workload identity federation, database authorization,
+backup/repair, MSP430
 collector, Studio Phase 5
 human-readable report ingestion, authenticated provenance/signatures, source
 artifact payload/replay export, and hardware access.
@@ -222,8 +237,9 @@ artifact payload/replay export, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 602 passed, 1 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 98.30% across 5,376 statements and 1,450 branches
+- pytest: 624 passed, 1 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 98.13% across 5,733 statements and 1,526 branches
+- authenticated-identity focus: 22 passed; identity package 96.48%
 - portable-assurance focus: 17 passed; assurance models 100% and portable
   publication/verifier 95%
 - project-profile revision focus: 5 passed, including migration, corruption,
@@ -236,14 +252,14 @@ artifact payload/replay export, and hardware access.
   and 138 branches
 - committed JSON Schema and OpenAPI drift checks: PASS
 - project/policy/candidate/transition example documents: VALID
-- twenty-two canonical versioned document Schemas plus Benchmark and Analog
+- twenty-five canonical versioned document Schemas plus Benchmark and Analog
   Validation artifact Schemas: drift-checked and parsed
 - complete sdist manifest and wheel build: PASS
 - repository-external wheel installation and CLI smoke: PASS
 - Git Bash shell-script syntax check: PASS
-- latest completed GitHub Actions baseline: Phase 10 run 33444090340 PASS on
+- latest completed GitHub Actions baseline: Phase 11 run 33453696337 PASS on
   Windows, Ubuntu, and macOS; each platform completed `verify.py` and
-  `release_smoke.py` for commit `0962cf0`; Phase 11 remote run pending private
+  `release_smoke.py` for commit `12e2931`; Phase 12 remote run pending private
   synchronization
 - private GitHub synchronization: `main` pushed with noreply commit identity;
   repository visibility, default branch, About, and ten Topics read back
@@ -261,3 +277,5 @@ previous slice and
 `reports/PHASE_10_POLICY_MATERIALIZATION_ACCEPTANCE_REPORT.md` for the previous
 slice. Phase 11 acceptance is recorded in
 `reports/PHASE_11_PORTABLE_ASSURANCE_BUNDLE_ACCEPTANCE_REPORT.md`.
+Phase 12 acceptance is recorded in
+`reports/PHASE_12_AUTHENTICATED_IDENTITY_FOUNDATION_ACCEPTANCE_REPORT.md`.

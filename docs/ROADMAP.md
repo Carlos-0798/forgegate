@@ -148,3 +148,18 @@
   renamed bundle content.
 - [x] Exercise export and database-independent verification from an installed
   wheel while preserving the unsigned-local and source-artifact boundaries.
+
+## Phase 12 — authenticated assurance identity foundation
+
+- [x] Define key-derived Ed25519 public identities and an external trust-store
+  contract with explicit role, project, active/revoked, and content identity.
+- [x] Sign canonical portable-assurance bytes with a domain-separated statement
+  that binds bundle ID/hash, signer, role, and caller-supplied time.
+- [x] Verify the signature before requiring an exact active trust record whose
+  role and project authority cover the bundled candidate.
+- [x] Add strict bounded identity JSON loading, content-addressed signature
+  publication, exact replay, conflict handling, and installed-wheel CLI smoke.
+- [x] Preserve `unsigned_local` evidence semantics and explicitly defer trusted
+  time, source-producer chains, online revocation, and managed key custody.
+- [ ] Design authenticated API sessions, authorization, transport security, and
+  audit actor semantics before considering non-loopback deployment.

@@ -50,6 +50,13 @@ attestation. `forgegate.assurance-bundle-manifest.v1.schema.json` describes the
 canonical README and machine-document byte sizes and SHA-256 entries. Both are
 unsigned local integrity contracts, not signatures or producer identity.
 
+`forgegate.signing-identity.v1.schema.json` describes one key-derived Ed25519
+public identity. `forgegate.trust-store.v1.schema.json` authorizes exact public
+identities for bounded roles and projects, while
+`forgegate.assurance-signature.v1.schema.json` binds one signer and role to the
+exact canonical assurance-bundle bytes. A trust-store ID is an integrity value,
+not a trust root by itself; trust-store distribution and custody are external.
+
 `forgegate.benchmark.v1.schema.json` is the ForgeGate-owned Benchmark artifact
 contract. `analog-validation.result-export.v1.schema.json` is ForgeGate's
 consumer-side structural mirror of the upstream Studio contract; it does not

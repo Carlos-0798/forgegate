@@ -15,6 +15,7 @@ from forgegate.candidates.models import (
 from forgegate.collectors.analog_validation import AFE_RESULT_JSON_SCHEMA
 from forgegate.collectors.benchmark import BENCHMARK_JSON_SCHEMA
 from forgegate.domain.models import EvidenceBundle, PolicyConfig, ProjectConfig
+from forgegate.identity import AssuranceSignature, SigningIdentity, TrustStore
 from forgegate.policy import PolicyMaterial
 from forgegate.policy.models import PolicyEvaluation, ProfileAuthorizedPolicyEvaluation
 from forgegate.projects import (
@@ -27,6 +28,9 @@ from forgegate.projects import (
 SCHEMAS: dict[str, type[BaseModel]] = {
     "forgegate.assurance-bundle.v1": AssuranceBundle,
     "forgegate.assurance-bundle-manifest.v1": AssuranceBundleManifest,
+    "forgegate.assurance-signature.v1": AssuranceSignature,
+    "forgegate.signing-identity.v1": SigningIdentity,
+    "forgegate.trust-store.v1": TrustStore,
     "forgegate.project.v1": ProjectConfig,
     "forgegate.policy.v1": PolicyConfig,
     "forgegate.evidence-bundle.v1": EvidenceBundle,

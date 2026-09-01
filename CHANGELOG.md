@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.1.0.dev19 — 2026-08-31
+
+- Added key-derived `forgegate.signing-identity.v1` and externally supplied
+  `forgegate.trust-store.v1` contracts with explicit producer/operator roles,
+  project scope, active/revoked status, and content-derived IDs.
+- Added domain-separated Ed25519 signatures over the exact canonical Phase 11
+  bundle bytes through `forgegate.assurance-signature.v1`.
+- Added strict bounded identity JSON loading, deterministic content-addressed
+  signature publication, exact replay, and fail-closed key, signature, trust,
+  role, project, and revocation checks.
+- Added `identity derive`, `identity trust`, `sign-assurance`, and
+  `verify-assurance-signature` CLI paths plus clean-install operation coverage.
+- Kept the REST API loopback-only and the embedded evidence `unsigned_local`;
+  trusted time, source-artifact authentication, managed key custody, and API
+  authentication remain explicit limitations.
+
 ## 0.1.0.dev18 — 2026-08-31
 
 - Added self-validating `forgegate.assurance-bundle.v1` exports that combine a

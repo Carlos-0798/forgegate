@@ -11,7 +11,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — twenty document plus two artifact schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — twenty-five document plus two artifact schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Analog Validation result Schema mirror | committed upstream-consumer contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
@@ -19,7 +19,7 @@
 | mypy strict | package and verification tools | PASS |
 | Source distribution contents | manifest assertion | PASS |
 | Clean release installation | temporary sdist/wheel/venv smoke | PASS |
-| Windows/Linux/macOS CI | GitHub Actions | PASS — `verify.py` + `release_smoke.py`, Phase 9 run 33436111147 (`61c7726`) |
+| Windows/Linux/macOS CI | GitHub Actions | PASS — `verify.py` + `release_smoke.py`, Phase 11 run 33453696337 (`12e2931`) |
 | Artifact root and byte identity | unit/adversarial tests | PASS — local host |
 | Stable artifact read/change rejection | simulated metadata cases | PASS — local host |
 | Actual Windows symlink escape | privileged symlink fixture | NOT RUN — host disallowed symlink creation |
@@ -107,10 +107,18 @@
 | Content-addressed publication | exact replay/conflict/member/tamper tests | PASS — canonical JSON/Markdown/manifest bytes |
 | Database-independent verification | exported directory verified without store or project reads | PASS — local host |
 | Portable evidence boundary | model field, generated README, and adversarial tests | PASS — source artifact bytes explicitly not embedded |
+| Key-derived Ed25519 identity | model, Schema, derive CLI, private-key mismatch tests | PASS — local host; no long-term key generated or retained |
+| External trust-store authorization | role/project/status/content-ID adversarial tests | PASS — exact active trust record required |
+| Assurance signature | domain-separated Ed25519 sign/verify and tamper tests | PASS — exact canonical Phase 11 bundle bytes |
+| Strict identity document loading | size/encoding/duplicate/non-finite/schema/change tests | PASS — bounded JSON-only trust boundary |
+| Signature publication | staging, content address, replay/conflict/concurrency tests | PASS — local host |
+| Installed identity workflow | ephemeral key derive/trust/sign/replay/verify smoke | PASS — clean-wheel local host |
+| Trusted timestamp/online revocation | managed external infrastructure | NOT IMPLEMENTED — signed time is caller supplied; revocation is a local snapshot |
+| Source-artifact producer chain | producer-signed artifact receipts | NOT IMPLEMENTED — signature covers retained bundle only |
 | HTTP artifact loading/file publication | no loader/output path; nested metadata is not dereferenced | OUT OF SCOPE |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
 
-See `reports/PHASE_11_PORTABLE_ASSURANCE_BUNDLE_ACCEPTANCE_REPORT.md` for the
-current exact local test and coverage result. Earlier acceptance reports remain
-historical records.
+See `reports/PHASE_12_AUTHENTICATED_IDENTITY_FOUNDATION_ACCEPTANCE_REPORT.md`
+for the current exact local test and coverage result. Earlier acceptance
+reports remain historical records.

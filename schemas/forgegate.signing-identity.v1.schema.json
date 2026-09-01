@@ -1,0 +1,41 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "algorithm": {
+      "const": "ed25519",
+      "default": "ed25519",
+      "title": "Algorithm",
+      "type": "string"
+    },
+    "display_name": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Display Name",
+      "type": "string"
+    },
+    "identity_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Identity Id",
+      "type": "string"
+    },
+    "public_key_base64": {
+      "maxLength": 44,
+      "minLength": 44,
+      "title": "Public Key Base64",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "forgegate.signing-identity.v1",
+      "default": "forgegate.signing-identity.v1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "identity_id",
+    "display_name",
+    "public_key_base64"
+  ],
+  "title": "SigningIdentity",
+  "type": "object"
+}

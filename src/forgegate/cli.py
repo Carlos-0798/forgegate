@@ -63,6 +63,22 @@ from forgegate.collectors import (
 from forgegate.config import ConfigLoadError, load_config
 from forgegate.domain.enums import CandidateStatus, Decision, EvidenceTrust, VerificationLevel
 from forgegate.domain.models import EvidenceBundle, ExecutionContext, PolicyConfig, ProjectConfig
+from forgegate.identity import (
+    AssuranceSignature,
+    IdentityError,
+    IdentityRole,
+    IdentityStatus,
+    SigningIdentity,
+    TrustedIdentity,
+    TrustStore,
+    create_assurance_signature,
+    create_trust_store,
+    derive_signing_identity,
+    load_ed25519_private_key,
+    load_identity_document,
+    publish_assurance_signature,
+    verify_assurance_signature,
+)
 from forgegate.network import validated_loopback_host
 from forgegate.policy import PolicyMaterial, evaluate_policy
 from forgegate.policy.models import (
@@ -80,9 +96,11 @@ app = typer.Typer(
 candidate_app = typer.Typer(help="Create and advance immutable release candidates.")
 project_app = typer.Typer(help="Register and inspect immutable project profiles.")
 audit_app = typer.Typer(help="Query durable append-only audit events.")
+identity_app = typer.Typer(help="Derive public identities and author local trust stores.")
 app.add_typer(candidate_app, name="candidate")
 app.add_typer(project_app, name="project")
 app.add_typer(audit_app, name="audit")
+app.add_typer(identity_app, name="identity")
 
 
 @app.command()
@@ -94,7 +112,7 @@ def doctor() -> None:
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
         "supported_artifact_schemas": sorted(ARTIFACT_SCHEMAS),
-        "phase": "phase11-portable-assurance-bundle",
+        "phase": "phase12-authenticated-identity-foundation",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 
@@ -147,6 +165,114 @@ def verify_assurance(
         "decision": verified.bundle.attestation.candidate.status.value,
         "assurance": verified.bundle.assurance,
         "source_artifact_bytes": verified.bundle.source_artifact_bytes,
+    }
+    typer.echo(json.dumps(payload, indent=2, sort_keys=True))
+
+
+@identity_app.command("derive")
+def identity_derive(
+    private_key_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    display_name: Annotated[str, typer.Option("--display-name", min=1, max=120)],
+) -> None:
+    """Derive a public ForgeGate identity from an existing Ed25519 private key."""
+    try:
+        private_key = load_ed25519_private_key(private_key_path)
+        identity = derive_signing_identity(private_key, display_name=display_name)
+    except (IdentityError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(identity.model_dump_json(indent=2))
+
+
+@identity_app.command("trust")
+def identity_trust(
+    identity_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    roles: Annotated[list[IdentityRole], typer.Option("--role")],
+    projects: Annotated[list[str], typer.Option("--project")],
+    status: Annotated[IdentityStatus, typer.Option("--status")] = IdentityStatus.ACTIVE,
+) -> None:
+    """Create a one-identity trust store for explicit roles and projects."""
+    try:
+        identity = load_identity_document(identity_path)
+        if not isinstance(identity, SigningIdentity):
+            raise ValueError("identity path must contain forgegate.signing-identity.v1")
+        trusted = TrustedIdentity(
+            identity=identity,
+            roles=tuple(sorted(set(roles), key=lambda item: item.value)),
+            project_ids=tuple(sorted(set(projects))),
+            status=status,
+        )
+        trust_store = create_trust_store((trusted,))
+    except (IdentityError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(trust_store.model_dump_json(indent=2))
+
+
+@app.command("sign-assurance")
+def sign_assurance(
+    directory: Annotated[Path, typer.Argument(exists=True, file_okay=False, readable=True)],
+    identity_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    private_key_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    role: Annotated[IdentityRole, typer.Option("--role")],
+    signed_at: Annotated[str, typer.Option("--signed-at")],
+    output_root: Annotated[Path, typer.Option("--output-root", file_okay=False)],
+) -> None:
+    """Sign one verified portable assurance bundle with an Ed25519 identity."""
+    try:
+        verified = verify_assurance_bundle(directory)
+        identity = load_identity_document(identity_path)
+        if not isinstance(identity, SigningIdentity):
+            raise ValueError("identity path must contain forgegate.signing-identity.v1")
+        signature = create_assurance_signature(
+            verified.bundle,
+            signer=identity,
+            role=role,
+            signed_at=datetime.fromisoformat(signed_at.replace("Z", "+00:00")),
+            private_key=load_ed25519_private_key(private_key_path),
+        )
+        published = publish_assurance_signature(signature, output_root)
+    except (AssuranceBundleError, IdentityError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    payload = {
+        "signature": signature.model_dump(mode="json"),
+        "signature_path": str(published.path),
+        "output_replayed": published.replayed,
+    }
+    typer.echo(json.dumps(payload, indent=2, sort_keys=True))
+
+
+@app.command("verify-assurance-signature")
+def verify_assurance_signature_command(
+    directory: Annotated[Path, typer.Argument(exists=True, file_okay=False, readable=True)],
+    signature_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+    trust_store_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
+) -> None:
+    """Verify a bundle signature against an external local trust store."""
+    try:
+        bundle = verify_assurance_bundle(directory).bundle
+        signature = load_identity_document(signature_path)
+        trust_store = load_identity_document(trust_store_path)
+        if not isinstance(signature, AssuranceSignature):
+            raise ValueError("signature path must contain forgegate.assurance-signature.v1")
+        if not isinstance(trust_store, TrustStore):
+            raise ValueError("trust path must contain forgegate.trust-store.v1")
+        authenticated = verify_assurance_signature(bundle, signature, trust_store)
+    except (AssuranceBundleError, IdentityError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    payload = {
+        "status": "AUTHENTICATED",
+        "bundle_id": authenticated.bundle_id,
+        "candidate_id": authenticated.candidate_id,
+        "project_id": authenticated.project_id,
+        "identity_id": authenticated.identity_id,
+        "display_name": authenticated.display_name,
+        "role": authenticated.role.value,
+        "trust_store_id": authenticated.trust_store_id,
+        "trusted_time": "not_established",
+        "source_artifact_authentication": "not_established",
     }
     typer.echo(json.dumps(payload, indent=2, sort_keys=True))
 

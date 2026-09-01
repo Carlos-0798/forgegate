@@ -68,5 +68,8 @@ available, independently recompute collector outputs, authenticate a producer
 or operator, establish trusted time, provide a digital signature, or promote
 software evidence into bench, hardware, field, or production evidence.
 
-The `unsigned_local` assurance label remains unchanged. Authenticated identity
-is still required before any non-loopback service deployment.
+The embedded `unsigned_local` assurance label remains unchanged. Phase 12 can
+attach a separately published Ed25519 sidecar and verify its signer against an
+external trust store; that authenticates the bundle statement, not the source
+artifacts or REST caller. API identity and authorization are still required
+before any non-loopback service deployment.

@@ -278,14 +278,33 @@ The current slice has no authenticated producer and runs no plugin code.
 | Manifest or hash is mistaken for authentication | Bundle remains explicitly `unsigned_local`; documentation separates byte integrity from producer/operator identity and trusted time |
 | Embedded receipts are mistaken for source-artifact replay | Machine field and README declare `source_artifact_bytes=not_embedded`; no physical or production evidence is promoted |
 
+## Addressed in the Phase 12 authenticated-assurance identity slice
+
+| Threat | Current control |
+|---|---|
+| A self-declared public key is mistaken for trusted identity | Verifier requires an exact independently supplied trust-store record after cryptographic verification |
+| A signature is replayed over another bundle | Domain-separated statement binds both bundle ID and SHA-256 of exact canonical bundle JSON |
+| Signer metadata changes under the same key | Complete signing-identity document is signed and must exactly match the trust record |
+| A valid key exceeds its authority | Trust record must explicitly authorize the claimed producer/operator role and bundled project ID |
+| A revoked key remains accepted | Static trust-store status fails closed when the exact identity is marked `revoked` |
+| Malformed identity JSON changes parser meaning | Identity loader is JSON-only and rejects excess size, symlinks, unstable reads, invalid UTF-8, duplicate keys, non-finite numbers, unknown fields, and unsupported versions |
+| Noncanonical key or signature bytes create alternate encodings | Models require canonical base64 and exact 32-byte Ed25519 public keys and 64-byte signatures |
+| Wrong private key signs for a declared identity | Signer derives the public identity from the private key and requires exact equality before signing |
+| Existing signature output is overwritten | Content-addressed publication permits exact replay only and rejects conflicts or unsafe roots |
+| Signed time is mistaken for trusted time | Verification output and documentation explicitly report that trusted time is not established |
+| Bundle signer is mistaken for every source-artifact producer | Contract and documentation limit authentication to the canonical bundle statement; embedded evidence remains `unsigned_local` |
+| Bundle signing is mistaken for API authentication | Loopback-only bind/Host restrictions remain and no HTTP identity or authorization claim is made |
+| Trust-store SHA-256 is mistaken for a trust root | Trust store remains an externally protected input; its ID detects content change but does not establish authority |
+
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;
 - stronger filesystem race resistance than the current open-handle metadata
   stability check;
 - malicious plugins and subprocess isolation;
-- CI identity verification, secret redaction, signing, revocation, trusted
-  timestamping, and key management;
+- managed key generation/custody/rotation, encrypted keys, HSM/TPM/KMS support,
+  trust-store distribution, online revocation, trusted timestamping, and CI
+  workload identity federation;
 - database authorization, API authentication, audit retention, backup, repair,
   encryption at rest, and administrator-resistant tamper evidence;
 - an exact streaming request-body limiter for unknown-length/chunked HTTP
