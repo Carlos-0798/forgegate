@@ -30,6 +30,12 @@ also exposes `GET /v1/security-events` to a global operator. These contracts
 exclude credentials and request payloads and do not turn the best-effort journal
 into a complete compliance audit.
 
+Phase 17 adds `forgegate.plugin-manifest.v1.schema.json` for content-derived
+Plugin API declarations and `forgegate.plugin-discovery.v1.schema.json` for
+deterministic compatibility results. These contracts describe bounded installed
+metadata only: discovery never imports a plugin, grants a declared permission,
+or approves external code execution.
+
 `forgegate.evidence-bundle-assembly.v1.schema.json` describes the audited
 envelope around a candidate-bound evidence bundle and its collection receipts.
 It is accepted by configuration validation and policy evaluation without

@@ -91,6 +91,7 @@ from forgegate.identity import (
     verify_assurance_signature,
 )
 from forgegate.network import validated_loopback_host
+from forgegate.plugins import PluginDiscoveryError, discover_plugins
 from forgegate.policy import PolicyMaterial, evaluate_policy
 from forgegate.policy.models import (
     PolicyEvaluation,
@@ -108,10 +109,12 @@ candidate_app = typer.Typer(help="Create and advance immutable release candidate
 project_app = typer.Typer(help="Register and inspect immutable project profiles.")
 audit_app = typer.Typer(help="Query durable append-only audit events.")
 identity_app = typer.Typer(help="Derive public identities and author local trust stores.")
+plugins_app = typer.Typer(help="Inspect installed plugin metadata without importing plugin code.")
 app.add_typer(candidate_app, name="candidate")
 app.add_typer(project_app, name="project")
 app.add_typer(audit_app, name="audit")
 app.add_typer(identity_app, name="identity")
+app.add_typer(plugins_app, name="plugins")
 
 
 @app.command()
@@ -123,7 +126,7 @@ def doctor() -> None:
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
         "supported_artifact_schemas": sorted(ARTIFACT_SCHEMAS),
-        "phase": "phase16-github-actions-gate",
+        "phase": "phase17-plugin-discovery-foundation",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 
@@ -221,6 +224,17 @@ def github_gate(
 def _path_from_environment(name: str) -> Path | None:
     value = os.environ.get(name)
     return Path(value) if value else None
+
+
+@plugins_app.command("list")
+def plugins_list() -> None:
+    """List plugin compatibility from bounded manifests without loading code."""
+    try:
+        report = discover_plugins()
+    except (PluginDiscoveryError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(report.model_dump_json(indent=2))
 
 
 @identity_app.command("derive")

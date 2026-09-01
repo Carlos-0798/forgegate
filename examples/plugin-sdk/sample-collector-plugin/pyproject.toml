@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools==84.0.0", "wheel==0.48.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "forgegate-sample-collector-plugin"
+version = "0.1.0"
+description = "Import-hostile manifest-only fixture for ForgeGate plugin discovery"
+readme = "README.md"
+requires-python = ">=3.12"
+
+[project.entry-points."forgegate.plugins.v1"]
+"example.forgegate-sample-collector" = "forgegate_sample_collector.runtime:plugin"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+forgegate_sample_collector = ["forgegate-plugin.json"]

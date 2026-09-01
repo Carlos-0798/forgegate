@@ -1,0 +1,116 @@
+{
+  "$defs": {
+    "PluginCapability": {
+      "enum": [
+        "collector",
+        "evaluator",
+        "exporter",
+        "notifier",
+        "solution-pack-metadata"
+      ],
+      "title": "PluginCapability",
+      "type": "string"
+    },
+    "PluginPermission": {
+      "enum": [
+        "artifact-read",
+        "filesystem-write",
+        "network",
+        "notification",
+        "secrets",
+        "subprocess"
+      ],
+      "title": "PluginPermission",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Declarative plugin metadata; validating it never imports plugin code.",
+  "properties": {
+    "capabilities": {
+      "items": {
+        "$ref": "#/$defs/PluginCapability"
+      },
+      "maxItems": 8,
+      "minItems": 1,
+      "title": "Capabilities",
+      "type": "array"
+    },
+    "description": {
+      "maxLength": 512,
+      "minLength": 1,
+      "title": "Description",
+      "type": "string"
+    },
+    "display_name": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Display Name",
+      "type": "string"
+    },
+    "forgegate_api_version": {
+      "pattern": "^[1-9][0-9]*$",
+      "title": "Forgegate Api Version",
+      "type": "string"
+    },
+    "input_schemas": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 32,
+      "title": "Input Schemas",
+      "type": "array"
+    },
+    "manifest_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Manifest Id",
+      "type": "string"
+    },
+    "output_evidence_kinds": {
+      "default": [],
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 64,
+      "title": "Output Evidence Kinds",
+      "type": "array"
+    },
+    "permissions": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/PluginPermission"
+      },
+      "maxItems": 16,
+      "title": "Permissions",
+      "type": "array"
+    },
+    "plugin_id": {
+      "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9][a-z0-9-]*){1,7}$",
+      "title": "Plugin Id",
+      "type": "string"
+    },
+    "plugin_version": {
+      "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+      "title": "Plugin Version",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "forgegate.plugin-manifest.v1",
+      "default": "forgegate.plugin-manifest.v1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "manifest_id",
+    "plugin_id",
+    "display_name",
+    "description",
+    "plugin_version",
+    "forgegate_api_version",
+    "capabilities"
+  ],
+  "title": "PluginManifest",
+  "type": "object"
+}

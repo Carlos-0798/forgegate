@@ -17,6 +17,7 @@ from forgegate.collectors.benchmark import BENCHMARK_JSON_SCHEMA
 from forgegate.domain.models import EvidenceBundle, PolicyConfig, ProjectConfig
 from forgegate.github_actions import GitHubActionReport
 from forgegate.identity import AssuranceSignature, SigningIdentity, TrustStore
+from forgegate.plugins import PluginDiscoveryReport, PluginManifest
 from forgegate.policy import PolicyMaterial
 from forgegate.policy.models import PolicyEvaluation, ProfileAuthorizedPolicyEvaluation
 from forgegate.projects import (
@@ -57,6 +58,8 @@ SCHEMAS: dict[str, type[BaseModel]] = {
     "forgegate.api-security-event.v1": ApiSecurityEvent,
     "forgegate.api-security-event-page.v1": ApiSecurityEventPage,
     "forgegate.github-action-report.v1": GitHubActionReport,
+    "forgegate.plugin-manifest.v1": PluginManifest,
+    "forgegate.plugin-discovery.v1": PluginDiscoveryReport,
 }
 
 ARTIFACT_SCHEMAS: dict[str, dict[str, object]] = {

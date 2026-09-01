@@ -11,7 +11,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — twenty-nine document plus two artifact schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — thirty-one document plus two artifact schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Analog Validation result Schema mirror | committed upstream-consumer contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
@@ -106,6 +106,11 @@
 | GitHub composite Action | committed generic fixture + real workflow job | PASS — private CI run 33538658047 (`3d0aaf1`) |
 | Installed GitHub gate | clean-wheel portable-bundle/summary/output/report smoke | PASS — local host |
 | Custom GitHub Checks/PR/API writes | token/permissions/OIDC design | NOT IMPLEMENTED — no token requested and no GitHub API called |
+| Plugin manifest contract | model/identity/Schema/loader/adversarial tests | PASS — bounded content-derived v1 metadata; local host |
+| Import-free plugin discovery | entry-point metadata + import-hostile package | PASS — code remains `NOT_LOADED`; local host |
+| Plugin compatibility/failure isolation | compatible/incompatible/invalid/conflict cases | PASS — discovery metadata only; no runtime execution |
+| Plugin install/uninstall independence | standalone fixture wheel + clean ForgeGate wheel | PASS — clean-package smoke; no optional dependency retained |
+| External plugin execution and audit | sandbox/permissions/timeouts/plugin_runs design | NOT IMPLEMENTED — no plugin callable is loaded |
 | Registered-project candidate authority | application/CLI/API/store tests | PASS — unregistered project and missing track fail closed |
 | Release-track normalization | underscore compatibility plus ambiguity tests | PASS — new candidate/policy identity is canonical hyphen form |
 | Project/candidate discovery | bounded page model, stable cursor, CLI/API, installed-wheel smoke | PASS — candidates are project-scoped |

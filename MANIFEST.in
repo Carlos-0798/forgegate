@@ -5,6 +5,9 @@ include CHANGELOG.md
 include SECURITY.md
 recursive-include docs *.md
 recursive-include examples *.yaml *.xml *.info *.sarif *.json *.md
+recursive-include examples/plugin-sdk *.toml *.py
+prune examples/plugin-sdk/sample-collector-plugin/build
+prune examples/plugin-sdk/sample-collector-plugin/src/forgegate_sample_collector_plugin.egg-info
 recursive-include requirements *.txt
 recursive-include reports *.md
 recursive-include schemas *.json *.md

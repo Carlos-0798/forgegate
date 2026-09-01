@@ -1,0 +1,21 @@
+{
+  "capabilities": [
+    "collector"
+  ],
+  "description": "Generic metadata-only collector fixture for import-free discovery.",
+  "display_name": "ForgeGate Sample Collector",
+  "forgegate_api_version": "1",
+  "input_schemas": [
+    "example.sample-input.v1"
+  ],
+  "manifest_id": "sha256:9fabefbbafc2956e0f20a31eeaa5edee650e3791d98786345f5e8f4a46198508",
+  "output_evidence_kinds": [
+    "sample.metric"
+  ],
+  "permissions": [
+    "artifact-read"
+  ],
+  "plugin_id": "example.forgegate-sample-collector",
+  "plugin_version": "0.1.0",
+  "schema_version": "forgegate.plugin-manifest.v1"
+}

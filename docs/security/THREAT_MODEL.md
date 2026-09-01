@@ -362,12 +362,29 @@ The current slice has no authenticated producer and runs no plugin code.
 | CI fixture is mistaken for current-revision evidence | Workflow and documentation label the fixed generic bundle and `aaaaaaaa...` commit as fixture-only Action mechanics |
 | CI presentation promotes evidence level | Report retains `unsigned_local` and `source_artifact_bytes=not_embedded`; no source replay, producer authentication, trusted time, or hardware claim is added |
 
+## Addressed in the Phase 17 Plugin SDK discovery slice
+
+| Threat | Current control |
+|---|---|
+| Discovery imports arbitrary plugin code | Enumerate distribution entry-point metadata only and never call `EntryPoint.load` or import the target module |
+| Entry point redirects manifest lookup | Accept only `package.module:attribute`, derive one fixed top-package manifest path, and require that path in the distribution file list |
+| Manifest path escapes or redirects | Root-confined stable artifact read rejects missing, external, non-regular, changed, oversized, and visible symlink manifests |
+| Malformed manifest exhausts parsing | Enforce 64 KiB, strict UTF-8 JSON, duplicate/non-finite rejection, 2,048 nodes, depth 16, and strict Pydantic fields |
+| Reordered or altered metadata retains identity | Normalize set-like declarations and require a content-derived `manifest_id` |
+| Unsupported plugin is treated as loadable | Report exact API mismatch as `INCOMPATIBLE`; every result states `execution=NOT_LOADED` |
+| Duplicate plugin identity is selected ambiguously | Mark every repeated valid plugin ID as `CONFLICT`; discovery chooses no winner |
+| Invalid plugin breaks the core list operation | Convert per-entry metadata failures to bounded sanitized `INVALID` issues and continue deterministic discovery |
+| Declared permission is mistaken for authorization | Manifest permissions are declarations only; Phase 17 grants and enforces none |
+| Installation location leaks through reports | Retain only sanitized distribution, entry-point, fixed relative manifest, and contract fields; omit resolved filesystem paths |
+| Fixture discovery is mistaken for plugin execution | Import-hostile standalone fixture proves metadata discovery only and reports `NOT_LOADED` |
+
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;
 - stronger filesystem race resistance than the current open-handle metadata
   stability check;
-- malicious plugins and subprocess isolation;
+- malicious plugin execution and subprocess isolation; Phase 17 validates only
+  bounded manifests and never imports plugin code;
 - managed key generation/custody/rotation, encrypted keys, HSM/TPM/KMS support,
   trust-store distribution, online revocation, trusted timestamping, and CI
   workload identity federation;

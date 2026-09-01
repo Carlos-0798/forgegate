@@ -234,3 +234,21 @@
 - [ ] Design custom Checks/PR annotations, signed CI provenance, artifact
   upload, permissions, OIDC workload identity, and any GitHub API mutation as
   separate explicitly authorized work.
+
+## Phase 17 — Plugin SDK discovery foundation
+
+- [x] Define a content-derived plugin manifest with plugin/API versions,
+  capabilities, input schemas, requested permissions, and output evidence kinds.
+- [x] Discover only the `forgegate.plugins.v1` entry-point group without
+  importing or executing plugin modules.
+- [x] Report compatible, incompatible, invalid, and duplicate-ID conflict
+  states through a deterministic versioned document and `plugins list` CLI.
+- [x] Bound manifest path, bytes, encoding, JSON shape, node/depth, identity,
+  entry-point, and installation-path disclosure risks.
+- [x] Prove clean core operation before installation, import-free discovery of
+  one standalone generic fixture, and clean operation after uninstall.
+- [ ] Define plugin callable protocols, isolated execution, time/resource
+  limits, permission enforcement, failure-to-ERROR behavior, and durable run
+  audit before loading any external plugin code.
+- [ ] Move a production-quality example to an independent plugin repository
+  only after separate remote creation/push authorization.

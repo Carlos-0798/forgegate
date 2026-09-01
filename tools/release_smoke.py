@@ -43,6 +43,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/AUTHENTICATED_LOCAL_API.md",
     "docs/architecture/LOCAL_SESSION_LIFECYCLE.md",
     "docs/architecture/GITHUB_ACTIONS_GATE.md",
+    "docs/architecture/PLUGIN_SDK_DISCOVERY.md",
     "examples/sample-python-api/artifacts/junit.xml",
     "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
@@ -51,6 +52,11 @@ REQUIRED_SDIST_PATHS = (
     "examples/sample-python-api/artifacts/coverage.xml",
     "examples/sample-python-api/artifacts/analog-validation-result.json",
     "examples/sample-python-api/forgegate.yaml",
+    "examples/plugin-sdk/sample-collector-plugin/pyproject.toml",
+    "examples/plugin-sdk/sample-collector-plugin/README.md",
+    "examples/plugin-sdk/sample-collector-plugin/src/forgegate_sample_collector/__init__.py",
+    "examples/plugin-sdk/sample-collector-plugin/src/forgegate_sample_collector/runtime.py",
+    "examples/plugin-sdk/sample-collector-plugin/src/forgegate_sample_collector/forgegate-plugin.json",
     "examples/sample-python-api/evidence/pass-bundle.json",
     "examples/sample-python-api/evidence/fail-bundle.json",
     "examples/sample-python-api/candidates/draft.json",
@@ -81,6 +87,7 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_14_LOCAL_SESSION_LIFECYCLE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_15_LOCAL_API_SECURITY_BOUNDARIES_ACCEPTANCE_REPORT.md",
     "reports/PHASE_16_GITHUB_ACTIONS_GATE_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_17_PLUGIN_SDK_DISCOVERY_ACCEPTANCE_REPORT.md",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
@@ -109,6 +116,8 @@ REQUIRED_SDIST_PATHS = (
     "schemas/forgegate.api-security-event.v1.schema.json",
     "schemas/forgegate.api-security-event-page.v1.schema.json",
     "schemas/forgegate.github-action-report.v1.schema.json",
+    "schemas/forgegate.plugin-manifest.v1.schema.json",
+    "schemas/forgegate.plugin-discovery.v1.schema.json",
     "schemas/forgegate.openapi.v1.json",
     "schemas/forgegate.benchmark.v1.schema.json",
     "schemas/analog-validation.result-export.v1.schema.json",
@@ -143,6 +152,11 @@ REQUIRED_SDIST_PATHS = (
     "tests/test_policy_materialization.py",
     "tests/test_assurance_bundle.py",
     "tests/test_identity_signatures.py",
+    "tests/test_plugins.py",
+)
+FORBIDDEN_SDIST_PREFIXES = (
+    "examples/plugin-sdk/sample-collector-plugin/build/",
+    "examples/plugin-sdk/sample-collector-plugin/src/forgegate_sample_collector_plugin.egg-info/",
 )
 
 
@@ -194,6 +208,14 @@ def verify_sdist(sdist: Path) -> None:
     ]
     if missing:
         raise SystemExit("sdist is missing required paths: " + ", ".join(missing))
+    payload_paths = {member.split("/", maxsplit=1)[1] for member in members if "/" in member}
+    forbidden = sorted(
+        path
+        for path in payload_paths
+        if any(path.startswith(prefix) for prefix in FORBIDDEN_SDIST_PREFIXES)
+    )
+    if forbidden:
+        raise SystemExit("sdist contains build residue: " + ", ".join(forbidden))
     print("\nSource distribution manifest: PASS", flush=True)
 
 
@@ -203,12 +225,28 @@ def main() -> int:
         dist = root / "dist"
         run([sys.executable, "-m", "build", "--outdir", str(dist)])
 
+        plugin_dist = root / "plugin-dist"
+        plugin_source = root / "sample-collector-plugin"
+        shutil.copytree(
+            REPOSITORY_ROOT / "examples/plugin-sdk/sample-collector-plugin",
+            plugin_source,
+            ignore=shutil.ignore_patterns("build", "dist", "*.egg-info", "__pycache__"),
+        )
+        run(
+            [sys.executable, "-m", "build", "--wheel", "--outdir", str(plugin_dist)],
+            cwd=plugin_source,
+        )
+
         wheels = list(dist.glob("*.whl"))
         sdists = list(dist.glob("*.tar.gz"))
         if len(wheels) != 1 or len(sdists) != 1:
             raise SystemExit("release build must produce exactly one wheel and one sdist")
         wheel = wheels[0]
         sdist = sdists[0]
+        plugin_wheels = list(plugin_dist.glob("*.whl"))
+        if len(plugin_wheels) != 1:
+            raise SystemExit("sample plugin build must produce exactly one wheel")
+        plugin_wheel = plugin_wheels[0]
         verify_sdist(sdist)
 
         environment = root / "clean-environment"
@@ -225,6 +263,62 @@ def main() -> int:
             ],
             cwd=root,
         )
+        empty_plugin_report = root / "plugins-empty.json"
+        run_capture(
+            [str(python), "-m", "forgegate", "plugins", "list"],
+            empty_plugin_report,
+            cwd=root,
+        )
+        if json.loads(empty_plugin_report.read_text(encoding="utf-8"))["total"] != 0:
+            raise SystemExit("clean ForgeGate wheel unexpectedly discovered a plugin")
+        run(
+            [
+                str(python),
+                "-m",
+                "pip",
+                "install",
+                "--disable-pip-version-check",
+                str(plugin_wheel),
+            ],
+            cwd=root,
+        )
+        plugin_report = root / "plugins-installed.json"
+        run_capture(
+            [str(python), "-m", "forgegate", "plugins", "list"],
+            plugin_report,
+            cwd=root,
+        )
+        installed_plugin = json.loads(plugin_report.read_text(encoding="utf-8"))
+        if (
+            installed_plugin["total"] != 1
+            or installed_plugin["compatible"] != 1
+            or installed_plugin["plugins"][0]["plugin_id"] != "example.forgegate-sample-collector"
+            or installed_plugin["plugins"][0]["execution"] != "NOT_LOADED"
+        ):
+            raise SystemExit("installed sample plugin was not discovered safely")
+        run(
+            [str(python), "-m", "forgegate", "validate-config", str(plugin_report)],
+            cwd=root,
+        )
+        run(
+            [
+                str(python),
+                "-m",
+                "pip",
+                "uninstall",
+                "--yes",
+                "forgegate-sample-collector-plugin",
+            ],
+            cwd=root,
+        )
+        removed_plugin_report = root / "plugins-removed.json"
+        run_capture(
+            [str(python), "-m", "forgegate", "plugins", "list"],
+            removed_plugin_report,
+            cwd=root,
+        )
+        if json.loads(removed_plugin_report.read_text(encoding="utf-8"))["total"] != 0:
+            raise SystemExit("sample plugin remained discoverable after uninstall")
         run(
             [
                 str(python),

@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.1.0.dev24 — 2026-09-01
+
+- Added strict content-derived `forgegate.plugin-manifest.v1` and deterministic
+  `forgegate.plugin-discovery.v1` contracts for Plugin API v1.
+- Added `forgegate plugins list`, which inspects installed entry-point metadata
+  and bounded distribution-listed manifests without importing or executing
+  plugin code.
+- Added explicit compatible, incompatible, invalid, and duplicate-ID conflict
+  states with stable sanitized issue codes and no installation-path disclosure.
+- Added a standalone import-hostile generic plugin distribution plus clean-wheel
+  install/discover/uninstall verification. Plugin execution, permission grants,
+  subprocess isolation, publisher trust, and durable run audit remain deferred.
+
 ## 0.1.0.dev23 — 2026-09-01
 
 - Added an offline `github-gate` command that strictly verifies a portable

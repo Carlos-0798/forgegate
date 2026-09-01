@@ -1,15 +1,15 @@
 # Project status
 
 - Date: 2026-09-01
-- Version: 0.1.0.dev23
-- Stage: Phase 16 offline GitHub Actions assurance gate implemented, locally
-  verified, and cross-platform CI verified
-- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, bounded state discovery, and an offline token-free GitHub Actions gate; not production-ready
+- Version: 0.1.0.dev24
+- Stage: Phase 17 import-free Plugin SDK discovery foundation implemented;
+  locally verified with cross-platform verification pending
+- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, offline GitHub gating, and bounded import-free plugin metadata discovery; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
-- Remote/publication status: Phase 16 is synchronized to private
-  `Carlos-0798/forgegate`; no public release, License, or LinkedIn publication
-  authorized
+- Remote/publication status: private `Carlos-0798/forgegate` remains at the
+  Phase 16 accepted baseline while Phase 17 local verification is in progress;
+  no public release, License, or LinkedIn publication authorized
 
 ## Implemented
 
@@ -269,6 +269,14 @@
 - installed-wheel GitHub gate/report validation and local Action mechanics
   coverage without GitHub API, artifact upload, source replay, CI identity, or
   hardware claims.
+- strict content-derived plugin manifest and deterministic discovery-report
+  contracts for Plugin API v1;
+- installed `forgegate.plugins.v1` entry-point enumeration through bounded,
+  distribution-listed manifests without `EntryPoint.load` or module import;
+- explicit compatible, incompatible, invalid, and duplicate-ID conflict states
+  with stable sanitized issues and no installation-path disclosure;
+- standalone import-hostile generic plugin package plus clean-wheel
+  install/discover/uninstall independence smoke.
 
 ## Not implemented
 
@@ -277,7 +285,8 @@ defense, managed online revocation, durable/distributed sessions, per-client
 network rate controls, distributed rate state, HTTP artifact collection and
 file publication, complete rejected-request/warning ingestion, security/audit
 export/retention, administrator-resistant logging,
-external plugins, custom GitHub Checks/PR annotations/API writes,
+external plugin execution/sandboxing/permission enforcement/run audit,
+custom GitHub Checks/PR annotations/API writes,
 managed/encrypted/hardware-backed key custody, trusted timestamps, online
 revocation, CI workload identity federation, database authorization,
 backup/repair, MSP430
@@ -291,8 +300,11 @@ artifact payload/replay export, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 666 passed, 2 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 97.46% across 6,623 statements and 1,750 branches
+- pytest: 696 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 97.55% across 6,955 statements and 1,844 branches
+- Plugin SDK discovery focus: 30 passed, 1 skipped; plugin package 99.27%
+  branch-aware coverage, with the skipped path requiring unavailable Windows
+  symlink creation
 - GitHub Actions gate focus: 10 passed, 1 skipped (Windows symlink creation
   unavailable); models 100%, integration service 98%
 - API security-event focus: 5 passed, covering contracts, persistence,
@@ -310,10 +322,11 @@ artifact payload/replay export, and hardware access.
   and 138 branches
 - committed JSON Schema and OpenAPI drift checks: PASS
 - project/policy/candidate/transition example documents: VALID
-- twenty-nine canonical versioned document Schemas plus Benchmark and Analog
+- thirty-one canonical versioned document Schemas plus Benchmark and Analog
   Validation artifact Schemas: drift-checked and parsed
-- complete sdist manifest and wheel build: PASS
-- repository-external wheel installation and CLI smoke: PASS
+- complete sdist manifest and ForgeGate/sample-plugin wheel builds: PASS
+- repository-external ForgeGate installation plus sample-plugin
+  install/discover/uninstall independence smoke: PASS
 - Git Bash shell-script syntax check: PASS
 - latest completed GitHub Actions baseline: Phase 16 run 33538658047 PASS on
   Windows, Ubuntu, and macOS; each platform completed `verify.py` and
@@ -345,3 +358,5 @@ Phase 15 acceptance is recorded in
 `reports/PHASE_15_LOCAL_API_SECURITY_BOUNDARIES_ACCEPTANCE_REPORT.md`.
 Phase 16 acceptance is recorded in
 `reports/PHASE_16_GITHUB_ACTIONS_GATE_ACCEPTANCE_REPORT.md`.
+Phase 17 acceptance is recorded in
+`reports/PHASE_17_PLUGIN_SDK_DISCOVERY_ACCEPTANCE_REPORT.md`.

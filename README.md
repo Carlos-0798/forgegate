@@ -8,7 +8,7 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 16 offline GitHub Actions assurance gate implemented;
+**Phase 17 import-free Plugin SDK discovery foundation implemented;
 not production-ready.**
 
 This private-development checkpoint provides a working Python 3.12 CLI and an
@@ -62,6 +62,9 @@ current immutable project profile -> profile-bound release candidate
                               |
                               v
  verified portable bundle + exact CI commit -> bounded GitHub Job Summary
+                              |
+                              v
+ installed entry-point metadata -> bounded manifest compatibility report
 ```
 
 The core remains domain-neutral. Analog Validation Studio is consumed only
@@ -72,11 +75,12 @@ collector rather than a runtime or hardware dependency.
 
 | Gate | Result | Evidence level |
 |---|---|---|
-| Python tests | 666 passed, 2 skipped because Windows symlink creation was unavailable | Local host test |
-| Branch-aware coverage | 97.46% across 6,623 statements and 1,750 branches | Local host test |
+| Python tests | 696 passed, 3 skipped because Windows symlink creation was unavailable | Local host test |
+| Branch-aware coverage | 97.55% across 6,955 statements and 1,844 branches | Local host test |
 | Static quality gates | Ruff, formatting, and strict mypy passed | Local host test |
 | Contracts | JSON Schema and OpenAPI drift checks passed | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
+| Plugin discovery | 30 passed, 1 skipped; standalone wheel install/discover/uninstall passed | Local host test; code not loaded |
 | GitHub Actions | Phase 16 passed `verify.py` and `release_smoke.py` on Windows, Ubuntu, and macOS; the generic composite Action smoke also passed | PASS — [run 33538658047](https://github.com/Carlos-0798/forgegate/actions/runs/33538658047) |
 | Hardware/device behavior | Not exercised by ForgeGate | Out of scope |
 
@@ -117,6 +121,9 @@ collector rather than a runtime or hardware dependency.
   requires an exact complete candidate/CI commit match, writes bounded escaped
   summary/output files, and preserves 0/1/2/3 decision exits without requesting
   a token or calling GitHub APIs.
+- Plugin discovery reads only distribution-listed bounded manifests, never
+  imports entry-point modules, and reports compatibility separately from code
+  execution or publisher trust.
 - Upstream AFE or future MSP430 results retain their original evidence level;
   ForgeGate does not relabel software or replay evidence as physical proof.
 
@@ -298,6 +305,12 @@ Implemented and host-verified in this checkpoint:
 - a token-free repository-local composite Action, canonical generic fixture,
   real workflow smoke job, Schema drift gate, adversarial tests, and installed-
   wheel verification without Checks/PR/Issue/Release API writes.
+- strict content-derived `forgegate.plugin-manifest.v1` and
+  `forgegate.plugin-discovery.v1` contracts for Plugin API v1;
+- import-free `plugins list` enumeration with compatible, incompatible,
+  invalid, and duplicate-ID conflict states plus sanitized issue codes;
+- a separately buildable import-hostile generic plugin fixture and clean-wheel
+  install/discover/uninstall smoke proving core operation without plugins.
 
 
 </details>
@@ -316,6 +329,16 @@ the package retains compatible version ranges for downstream users.
 
 See `docs/PROJECT_STATUS.md`, `docs/ROADMAP.md`, and
 `docs/VERIFICATION_MATRIX.md` before making capability claims.
+
+Inspect installed plugin metadata without importing plugin code:
+
+```powershell
+.\.venv\Scripts\python.exe -m forgegate plugins list
+```
+
+Every result explicitly reports `execution=NOT_LOADED`. `COMPATIBLE` means only
+that the strict manifest targets Plugin API v1; it is not approval to execute
+the entry point and grants none of its declared permissions.
 
 Start the local API against an existing or new local candidate database:
 
@@ -654,7 +677,7 @@ until a separate ForgeGate policy evaluates it.
 
 | Path | Purpose |
 |---|---|
-| `src/forgegate/` | Domain models, collectors, policy engine, persistence, CLI, and REST API |
+| `src/forgegate/` | Domain models, collectors, policy engine, plugin metadata discovery, persistence, CLI, and REST API |
 | `tests/` | Unit, adversarial, integration, Golden, and contract-drift tests |
 | `schemas/` | Committed JSON Schema and OpenAPI contracts |
 | `examples/` | Generic reproducible project, policies, evidence, and artifacts |
@@ -669,7 +692,7 @@ Not implemented yet:
 - non-loopback or TLS-protected API deployment;
 - HTTP artifact collection or filesystem publication;
 - complete rejected-request ingestion, security/audit export and retention,
-  plugin execution, or custom GitHub Checks/PR annotations/API integration;
+  plugin execution/sandboxing/run audit, or custom GitHub Checks/PR annotations/API integration;
 - database-file authorization, backup/repair, managed or hardware-backed key
   custody, managed online revocation, durable/distributed session authority,
   trusted timestamps, or CI workload identity federation;
@@ -696,16 +719,20 @@ journal; it still does not make the service remotely safe or create a complete
 compliance record. Phase 16 adds only an offline, token-free GitHub Actions
 presentation/exit bridge over the Phase 11 portable bundle; it does not add CI
 workload identity, source-artifact authentication, or GitHub API authority.
+Phase 17 adds only bounded import-free plugin metadata discovery; compatibility
+does not authenticate a publisher, load a callable, grant permissions, isolate
+a subprocess, or create durable plugin-run audit evidence.
 SHA-256 is not producer authentication.
 The MSP430 controller may later expose a separate versioned artifact for
 another optional collector.
 
 ## Roadmap
 
-Phase 16 adds an offline GitHub Actions gate over a strictly verified portable
-bundle, exact CI commit binding, stable decision exits, and bounded Job Summary
-presentation. Custom GitHub API writes, annotations, signed CI provenance, OIDC,
-and artifact upload remain separate work. TLS, reverse-proxy identity,
+Phase 17 adds a strict Plugin API v1 manifest and import-free installed
+entry-point discovery with explicit compatibility and conflict reporting. Plugin
+callable execution, isolation, permissions, publisher trust, and durable run
+audit remain separate work. Custom GitHub API writes, annotations, signed CI
+provenance, OIDC, and artifact upload also remain separate. TLS, reverse-proxy identity,
 hostile-local-user defenses, durable/distributed session state, security-event
 retention/export, and managed key lifecycle must still be designed before any
 non-loopback deployment. MSP430 compatibility remains gated on a separately

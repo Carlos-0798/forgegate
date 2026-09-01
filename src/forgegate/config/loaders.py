@@ -16,6 +16,7 @@ from forgegate.candidates.models import (
 from forgegate.domain.models import EvidenceBundle, PolicyConfig, ProjectConfig
 from forgegate.github_actions import GitHubActionReport
 from forgegate.identity import AssuranceSignature, SigningIdentity, TrustStore
+from forgegate.plugins import PluginDiscoveryReport, PluginManifest
 from forgegate.policy import PolicyMaterial
 from forgegate.policy.models import PolicyEvaluation, ProfileAuthorizedPolicyEvaluation
 from forgegate.projects import ProjectProfileRevision
@@ -44,6 +45,8 @@ type SupportedConfig = (
     | SigningIdentity
     | TrustStore
     | GitHubActionReport
+    | PluginManifest
+    | PluginDiscoveryReport
 )
 
 SCHEMA_MODELS: dict[str, type[SupportedConfig]] = {
@@ -67,6 +70,8 @@ SCHEMA_MODELS: dict[str, type[SupportedConfig]] = {
     "forgegate.signing-identity.v1": SigningIdentity,
     "forgegate.trust-store.v1": TrustStore,
     "forgegate.github-action-report.v1": GitHubActionReport,
+    "forgegate.plugin-manifest.v1": PluginManifest,
+    "forgegate.plugin-discovery.v1": PluginDiscoveryReport,
 }
 
 

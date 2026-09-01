@@ -4,9 +4,11 @@ ForgeGate is pre-release software. Do not use it as a security or compliance
 control for a production release.
 
 Configuration and evidence loaders use strict schemas, bounded parsing, and
-safe YAML handling. Identity and signature inputs use bounded strict JSON with
-duplicate-key and non-finite-number rejection. The product does not load
-external plugins or evaluate executable policy expressions. The REST API uses
+safe YAML handling. Identity, signature, and plugin-manifest inputs use bounded
+strict JSON with duplicate-key and non-finite-number rejection. Plugin
+discovery reads installed metadata without importing or executing plugin code;
+requested permissions are not granted. The product does not load external
+plugin callables or evaluate executable policy expressions. The REST API uses
 one-time Ed25519 challenges, short-lived in-memory Bearer sessions, and exact
 role/project authorization, but must remain on a loopback address. It has no
 TLS or hostile-local-user defense and is not approved for LAN, shared-host, or
@@ -57,3 +59,10 @@ does not authenticate the workflow, repository, evidence producers, or time,
 and it does not turn CI execution into target, HIL, bench, physical, field, or
 production verification. Runner summary/output files are not durable audit or
 administrator-resistant storage. See `docs/security/THREAT_MODEL.md`.
+
+Phase 17 adds manifest-only Python entry-point discovery. A compatible result
+means only that a content-derived manifest targets Plugin API v1; it does not
+authenticate a publisher or approve code execution. Missing, malformed,
+incompatible, and conflicting metadata is reported but never loaded. External
+plugin execution, sandboxing, permission enforcement, secrets, subprocesses,
+network access, and durable plugin-run audit remain unimplemented.
