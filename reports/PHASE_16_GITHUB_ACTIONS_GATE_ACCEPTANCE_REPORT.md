@@ -2,9 +2,8 @@
 
 - Date: 2026-09-01
 - Version: `0.1.0.dev23`
-- Stage: implemented and locally verified; private cross-platform CI
-  confirmation pending
-- Evidence class: local-host software tests over a generic fixture
+- Stage: implemented, locally verified, and private cross-platform CI verified
+- Evidence class: local-host and CI software tests over a generic fixture
 
 ## Accepted scope
 
@@ -41,7 +40,8 @@ is explicitly not a claim about the current ForgeGate repository revision.
 Both skipped tests require Windows symlink creation, which this host does not
 permit. The new skipped case directly exercises the runner-output symlink
 rejection; equivalent non-regular, missing-parent, oversize, and I/O failure
-paths passed, while CI will exercise the same suite on other hosts.
+paths passed. CI subsequently exercised the same suite across three platforms;
+the host-unavailable symlink case remains recorded as skipped rather than PASS.
 
 ## Explicit limitations
 
@@ -61,6 +61,10 @@ paths passed, while CI will exercise the same suite on other hosts.
 
 ## Cross-platform evidence
 
-Private GitHub synchronization and Windows/Ubuntu/macOS CI confirmation are
-pending. This section must be updated with the exact implementation commit and
-run before the Phase is reported as cross-platform verified.
+Implementation commit `3d0aaf182164d28e2662d51ceae25437097e6698` was
+synchronized to the private repository and
+[GitHub Actions run 33538658047](https://github.com/Carlos-0798/forgegate/actions/runs/33538658047)
+passed. Windows, Ubuntu, and macOS each completed `python tools/verify.py` and
+`python tools/release_smoke.py`; the dependent Ubuntu job also executed the real
+composite Action against the committed generic fixture and asserted its stable
+outputs.
