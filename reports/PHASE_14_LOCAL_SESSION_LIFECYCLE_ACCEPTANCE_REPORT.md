@@ -49,8 +49,8 @@
 - committed JSON Schemas and OpenAPI: generated, parsed, and drift-checked
 - sdist, wheel, clean installation, installed lifecycle smoke, and existing
   release-assurance workflow: PASS
-- latest completed remote baseline before this implementation push: Phase 13
-  GitHub Actions run 33457321733 PASS on Windows, Ubuntu, and macOS
+- GitHub Actions run 33461739673 PASS on Windows, Ubuntu, and macOS for Phase
+  14 implementation commit `d226816`
 
 ## Explicit limitations
 
