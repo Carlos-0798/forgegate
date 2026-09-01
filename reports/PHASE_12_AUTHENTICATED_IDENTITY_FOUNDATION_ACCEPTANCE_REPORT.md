@@ -42,7 +42,9 @@ trust, and validates all three new document contracts.
 - OpenAPI: drift-checked; no authenticated or non-loopback route was added
 - source distribution, wheel, clean-install identity/sign/replay/verify smoke:
   PASS
-- GitHub Actions: Phase 12 remote run pending private synchronization
+- GitHub Actions: PASS on Windows, Ubuntu, and macOS; each platform completed
+  `verify.py` and `release_smoke.py` in run 33455212296 for implementation
+  commit `85586a0`
 
 ## Explicit limitations
 
