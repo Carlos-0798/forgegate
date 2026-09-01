@@ -8,6 +8,11 @@ one server process. The phase does not add TLS, proxy identity, remote serving,
 durable sessions, or protection from a hostile process under the same OS
 account.
 
+Phase 15 retains these lifecycle semantics but supersedes the request-limit and
+telemetry gaps described below. See `LOCAL_API_SECURITY_BOUNDARIES.md` for the
+actual streamed-byte cap, pre-validation counters, and separate bounded
+security-event journal.
+
 ## Session termination
 
 ```text
@@ -27,8 +32,9 @@ operator's project authority both return `API_SESSION_NOT_FOUND`; the response
 does not reveal target identity, role, projects, or existence.
 
 Termination removes the token digest and principal from memory before the
-success response is returned. Later use of the raw token therefore fails, but
-the action is not durable and no token is ever written to SQLite. Restart
+success response is returned. Later use of the raw token therefore fails. The
+session removal itself is not durable and no token is ever written to SQLite;
+Phase 15 records only a minimal best-effort control event in a separate table. Restart
 already removes every session, so no migration or database schema change is
 required.
 
@@ -63,8 +69,8 @@ The authenticator owns three process-global counters:
 
 | Scope | Default events | Default window |
 |---|---:|---:|
-| Valid challenge request reaching the authenticator | 60 | 60 seconds |
-| Valid session-exchange request reaching the authenticator | 60 | 60 seconds |
+| Challenge HTTP request before body validation | 60 | 60 seconds |
+| Session-exchange HTTP request before body validation | 60 | 60 seconds |
 | Invalid or missing Bearer authentication | 120 | 60 seconds |
 
 The counter set has three fixed keys and cannot grow with attacker-supplied
@@ -73,15 +79,15 @@ identity, token, IP, or header values. An exceeded window returns
 session does not consume the invalid-Bearer counter.
 
 The service does not trust forwarded-address headers and does not distinguish
-local client processes. Pydantic rejects malformed authentication bodies before
-the typed endpoint invokes its counter, so those validation failures are not
-rate-limited by Phase 14. This control bounds selected authentication work; it
-is not a general HTTP denial-of-service defense.
+local client processes. Phase 15 moves challenge/session accounting ahead of
+Pydantic, so malformed authentication bodies consume the same window. This
+control bounds selected authentication work; it is not a general HTTP
+denial-of-service defense.
 
 ## Audit and evidence boundary
 
 Logout, targeted revocation, trust reload, rate rejection, and unsuccessful
-authentication do not modify release state and are not inserted into the
-durable project/candidate audit ledger. The endpoint responses and tests prove
-process behavior only. They are not a compliance log, trusted timestamp,
-production observation, or physical evidence.
+authentication do not modify release state and are never inserted into the
+durable project/candidate audit ledger. Phase 15 records a bounded subset in a
+separate best-effort API security-event journal. It is not a compliance log,
+trusted timestamp, production observation, or physical evidence.

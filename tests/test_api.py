@@ -130,7 +130,7 @@ def test_health_and_candidate_read_write_contract(tmp_path: Path) -> None:
         "status": "ok",
         "api_version": "v1",
         "forgegate_version": __version__,
-        "store_schema": "forgegate.candidate-store.v7",
+        "store_schema": "forgegate.candidate-store.v8",
     }
     assert health.headers["X-Request-ID"] == request_id
     assert created.status_code == replay.status_code == 201
@@ -180,6 +180,24 @@ def test_api_enforces_local_host_and_bounded_content_length(tmp_path: Path) -> N
     assert_error(external_host, 400, "API_HOST_INVALID")
     assert_error(invalid_length, 400, "API_CONTENT_LENGTH_INVALID")
     assert_error(negative_length, 400, "API_CONTENT_LENGTH_INVALID")
+    assert_error(oversized, 413, "API_BODY_TOO_LARGE")
+
+
+def test_api_enforces_actual_streamed_body_limit_without_content_length(tmp_path: Path) -> None:
+    app = create_api_app(tmp_path / "streamed-length.db")
+    with RawTestClient(app, base_url="http://127.0.0.1") as client:
+        at_limit = client.post(
+            "/healthz",
+            content=iter((b"x" * MAX_REQUEST_BODY_BYTES,)),
+        )
+        oversized = client.post(
+            "/healthz",
+            content=iter((b"x" * MAX_REQUEST_BODY_BYTES, b"x")),
+        )
+
+    assert "content-length" not in at_limit.request.headers
+    assert "content-length" not in oversized.request.headers
+    assert at_limit.status_code == 405
     assert_error(oversized, 413, "API_BODY_TOO_LARGE")
 
 
@@ -549,6 +567,7 @@ def test_openapi_export_is_deterministic_and_complete(tmp_path: Path) -> None:
         "/v1/projects/{project_id}/profile",
         "/v1/projects/{project_id}/revisions",
         "/v1/audit-events",
+        "/v1/security-events",
         "/v1/candidates",
         "/v1/candidates/{candidate_id}",
         "/v1/candidates/{candidate_id}/history",

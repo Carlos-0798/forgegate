@@ -66,6 +66,13 @@ from forgegate.projects import (
     profile_effective_at,
     profile_id,
 )
+from forgegate.security_events import (
+    ApiSecurityEvent,
+    ApiSecurityEventPage,
+    ApiSecurityEventType,
+    SecurityEventTargetType,
+    create_api_security_event,
+)
 
 STORE_APPLICATION_ID = 0x46474154  # ASCII "FGAT"
 LEGACY_STORE_SCHEMA_VERSION = 1
@@ -80,9 +87,12 @@ DISCOVERY_STORE_SCHEMA_VERSION = 5
 DISCOVERY_STORE_SCHEMA_NAME = "forgegate.candidate-store.v5"
 PROFILE_STORE_SCHEMA_VERSION = 6
 PROFILE_STORE_SCHEMA_NAME = "forgegate.candidate-store.v6"
-STORE_SCHEMA_VERSION = 7
-STORE_SCHEMA_NAME = "forgegate.candidate-store.v7"
+POLICY_STORE_SCHEMA_VERSION = 7
+POLICY_STORE_SCHEMA_NAME = "forgegate.candidate-store.v7"
+STORE_SCHEMA_VERSION = 8
+STORE_SCHEMA_NAME = "forgegate.candidate-store.v8"
 IDEMPOTENCY_KEY_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
+DEFAULT_SECURITY_EVENT_CAPACITY = 10_000
 
 _SCHEMA_V1_STATEMENTS = (
     """
@@ -653,6 +663,42 @@ _SCHEMA_V7_STATEMENTS = (
     """,
 )
 
+_SCHEMA_V8_STATEMENTS = (
+    """
+    CREATE TABLE api_security_events (
+        sequence INTEGER PRIMARY KEY CHECK (sequence >= 1),
+        event_id TEXT NOT NULL UNIQUE,
+        event_type TEXT NOT NULL CHECK (
+            event_type IN (
+                'authentication.rejected', 'authentication.rate-limited',
+                'session.logged-out', 'session.revoked', 'trust-store.reloaded'
+            )
+        ),
+        occurred_at TEXT NOT NULL,
+        request_id TEXT NOT NULL,
+        outcome_code TEXT NOT NULL,
+        target_type TEXT CHECK (target_type IN ('session', 'trust_store')),
+        target_id TEXT,
+        event_json TEXT NOT NULL,
+        CHECK ((target_type IS NULL) = (target_id IS NULL))
+    ) STRICT
+    """,
+    """
+    CREATE TRIGGER api_security_events_guard_update
+    BEFORE UPDATE ON api_security_events
+    BEGIN
+        SELECT RAISE(ABORT, 'API security events are append-only');
+    END
+    """,
+    """
+    CREATE TRIGGER api_security_events_guard_delete
+    BEFORE DELETE ON api_security_events
+    BEGIN
+        SELECT RAISE(ABORT, 'API security events are append-only');
+    END
+    """,
+)
+
 _REQUIRED_OBJECTS_V1 = frozenset(
     {
         ("table", "forgegate_metadata"),
@@ -734,6 +780,14 @@ _REQUIRED_OBJECTS_V7 = _REQUIRED_OBJECTS_V6 | frozenset(
     }
 )
 
+_REQUIRED_OBJECTS_V8 = _REQUIRED_OBJECTS_V7 | frozenset(
+    {
+        ("table", "api_security_events"),
+        ("trigger", "api_security_events_guard_update"),
+        ("trigger", "api_security_events_guard_delete"),
+    }
+)
+
 
 class CandidateStoreError(RuntimeError):
     """Stable failure returned by the local candidate persistence boundary."""
@@ -761,16 +815,20 @@ class SQLiteCandidateRepository:
         database_path: Path,
         *,
         timeout_seconds: float = 5.0,
+        security_event_capacity: int = DEFAULT_SECURITY_EVENT_CAPACITY,
         _failure_injector: Callable[[str, sqlite3.Connection], None] | None = None,
     ) -> None:
         if timeout_seconds < 0:
             raise ValueError("timeout_seconds cannot be negative")
+        if not 1 <= security_event_capacity <= 1_000_000:
+            raise ValueError("security-event capacity must be between 1 and 1000000")
         self.database_path = database_path.expanduser().resolve(strict=False)
         self.timeout_seconds = timeout_seconds
+        self.security_event_capacity = security_event_capacity
         self._failure_injector = _failure_injector
 
     def initialize(self) -> None:
-        """Create schema v7 or validate an existing current ForgeGate store."""
+        """Create schema v8 or validate an existing current ForgeGate store."""
         connection = self._open(require_exists=False)
         try:
             journal_mode = str(connection.execute("PRAGMA journal_mode = WAL").fetchone()[0])
@@ -800,6 +858,7 @@ class SQLiteCandidateRepository:
                     *_SCHEMA_V5_STATEMENTS,
                     *_SCHEMA_V6_STATEMENTS,
                     *_SCHEMA_V7_STATEMENTS,
+                    *_SCHEMA_V8_STATEMENTS,
                 ):
                     connection.execute(statement)
                 connection.executemany(
@@ -822,10 +881,11 @@ class SQLiteCandidateRepository:
                 AUDIT_STORE_SCHEMA_VERSION,
                 DISCOVERY_STORE_SCHEMA_VERSION,
                 PROFILE_STORE_SCHEMA_VERSION,
+                POLICY_STORE_SCHEMA_VERSION,
             }:
                 raise CandidateStoreError(
                     "STORE_MIGRATION_REQUIRED",
-                    f"candidate database schema v{user_version} requires explicit migration to v7",
+                    f"candidate database schema v{user_version} requires explicit migration to v8",
                 )
             self._validate_store(connection)
         except sqlite3.Error as exc:
@@ -835,7 +895,7 @@ class SQLiteCandidateRepository:
             connection.close()
 
     def migrate(self) -> None:
-        """Explicitly migrate a validated schema-v1 through v6 store to schema v7."""
+        """Explicitly migrate a validated schema-v1 through v7 store to schema v8."""
         connection = self._open(require_exists=True)
         try:
             user_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
@@ -849,10 +909,11 @@ class SQLiteCandidateRepository:
                 AUDIT_STORE_SCHEMA_VERSION,
                 DISCOVERY_STORE_SCHEMA_VERSION,
                 PROFILE_STORE_SCHEMA_VERSION,
+                POLICY_STORE_SCHEMA_VERSION,
             }:
                 raise CandidateStoreError(
                     "STORE_SCHEMA_UNSUPPORTED",
-                    f"database schema version {user_version} cannot migrate to v7",
+                    f"database schema version {user_version} cannot migrate to v8",
                 )
             self._validate_store_version(connection, user_version)
             connection.execute("BEGIN IMMEDIATE")
@@ -864,6 +925,7 @@ class SQLiteCandidateRepository:
                     *_SCHEMA_V5_STATEMENTS,
                     *_SCHEMA_V6_STATEMENTS,
                     *_SCHEMA_V7_STATEMENTS,
+                    *_SCHEMA_V8_STATEMENTS,
                 ),
                 PREVIOUS_STORE_SCHEMA_VERSION: (
                     *_SCHEMA_V3_STATEMENTS,
@@ -871,23 +933,28 @@ class SQLiteCandidateRepository:
                     *_SCHEMA_V5_STATEMENTS,
                     *_SCHEMA_V6_STATEMENTS,
                     *_SCHEMA_V7_STATEMENTS,
+                    *_SCHEMA_V8_STATEMENTS,
                 ),
                 BINDING_STORE_SCHEMA_VERSION: (
                     *_SCHEMA_V4_STATEMENTS,
                     *_SCHEMA_V5_STATEMENTS,
                     *_SCHEMA_V6_STATEMENTS,
                     *_SCHEMA_V7_STATEMENTS,
+                    *_SCHEMA_V8_STATEMENTS,
                 ),
                 AUDIT_STORE_SCHEMA_VERSION: (
                     *_SCHEMA_V5_STATEMENTS,
                     *_SCHEMA_V6_STATEMENTS,
                     *_SCHEMA_V7_STATEMENTS,
+                    *_SCHEMA_V8_STATEMENTS,
                 ),
                 DISCOVERY_STORE_SCHEMA_VERSION: (
                     *_SCHEMA_V6_STATEMENTS,
                     *_SCHEMA_V7_STATEMENTS,
+                    *_SCHEMA_V8_STATEMENTS,
                 ),
-                PROFILE_STORE_SCHEMA_VERSION: _SCHEMA_V7_STATEMENTS,
+                PROFILE_STORE_SCHEMA_VERSION: (*_SCHEMA_V7_STATEMENTS, *_SCHEMA_V8_STATEMENTS),
+                POLICY_STORE_SCHEMA_VERSION: _SCHEMA_V8_STATEMENTS,
             }[user_version]
             for statement in migration_statements:
                 connection.execute(statement)
@@ -1290,6 +1357,105 @@ class SQLiteCandidateRepository:
             events=events,
             next_after_sequence=events[-1].sequence if events else None,
             has_more=len(rows) > limit,
+        )
+
+    def append_api_security_event(
+        self,
+        *,
+        event_type: ApiSecurityEventType,
+        occurred_at: datetime,
+        request_id: str,
+        outcome_code: str,
+        actor: AuditActor | None = None,
+        target_type: SecurityEventTargetType | None = None,
+        target_id: str | None = None,
+    ) -> ApiSecurityEvent:
+        """Append one bounded API-control event outside the product-state audit log."""
+        with self._transaction(write=True) as connection:
+            recorded_count = int(
+                connection.execute("SELECT COUNT(*) FROM api_security_events").fetchone()[0]
+            )
+            if recorded_count >= self.security_event_capacity:
+                raise CandidateStoreError(
+                    "STORE_SECURITY_EVENT_CAPACITY_REACHED",
+                    "API security-event journal capacity is exhausted",
+                )
+            sequence = int(
+                connection.execute(
+                    "SELECT COALESCE(MAX(sequence), 0) + 1 FROM api_security_events"
+                ).fetchone()[0]
+            )
+            event = create_api_security_event(
+                sequence=sequence,
+                event_type=event_type,
+                occurred_at=occurred_at,
+                request_id=request_id,
+                outcome_code=outcome_code,
+                actor=actor,
+                target_type=target_type,
+                target_id=target_id,
+            )
+            connection.execute(
+                """
+                INSERT INTO api_security_events(
+                    sequence, event_id, event_type, occurred_at, request_id,
+                    outcome_code, target_type, target_id, event_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    event.sequence,
+                    event.event_id,
+                    event.event_type.value,
+                    _json_timestamp(event.occurred_at),
+                    event.request_id,
+                    event.outcome_code,
+                    event.target_type.value if event.target_type is not None else None,
+                    event.target_id,
+                    _model_json(event),
+                ),
+            )
+        return event
+
+    def api_security_events(
+        self,
+        *,
+        after_sequence: int = 0,
+        limit: int = 100,
+        event_type: ApiSecurityEventType | None = None,
+    ) -> ApiSecurityEventPage:
+        """Return a stable page from the separate bounded API security-event journal."""
+        if after_sequence < 0:
+            raise CandidateStoreError(
+                "STORE_SECURITY_EVENT_CURSOR_INVALID", "after_sequence cannot be negative"
+            )
+        if not 1 <= limit <= 200:
+            raise CandidateStoreError(
+                "STORE_SECURITY_EVENT_LIMIT_INVALID", "limit must be between 1 and 200"
+            )
+        clauses = ["sequence > ?"]
+        parameters: list[object] = [after_sequence]
+        if event_type is not None:
+            clauses.append("event_type = ?")
+            parameters.append(event_type.value)
+        parameters.append(limit + 1)
+        query = (
+            "SELECT * FROM api_security_events WHERE "
+            + " AND ".join(clauses)
+            + " ORDER BY sequence LIMIT ?"
+        )
+        with self._transaction(write=False) as connection:
+            rows = list(connection.execute(query, parameters))
+            events = tuple(self._decode_api_security_event_row(row) for row in rows[:limit])
+            recorded_count = int(
+                connection.execute("SELECT COUNT(*) FROM api_security_events").fetchone()[0]
+            )
+        return ApiSecurityEventPage(
+            events=events,
+            next_after_sequence=events[-1].sequence if events else None,
+            has_more=len(rows) > limit,
+            capacity=self.security_event_capacity,
+            recorded_count=recorded_count,
+            saturated=recorded_count >= self.security_event_capacity,
         )
 
     def create(
@@ -1992,7 +2158,8 @@ class SQLiteCandidateRepository:
             AUDIT_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V4,
             DISCOVERY_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V5,
             PROFILE_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V6,
-            STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V7,
+            POLICY_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V7,
+            STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V8,
         }.get(expected_version)
         if required_objects is None:
             raise CandidateStoreError(
@@ -2014,6 +2181,7 @@ class SQLiteCandidateRepository:
                     AUDIT_STORE_SCHEMA_VERSION: AUDIT_STORE_SCHEMA_NAME,
                     DISCOVERY_STORE_SCHEMA_VERSION: DISCOVERY_STORE_SCHEMA_NAME,
                     PROFILE_STORE_SCHEMA_VERSION: PROFILE_STORE_SCHEMA_NAME,
+                    POLICY_STORE_SCHEMA_VERSION: POLICY_STORE_SCHEMA_NAME,
                     STORE_SCHEMA_VERSION: STORE_SCHEMA_NAME,
                 }[expected_version],
                 "schema_version": str(expected_version),
@@ -2284,6 +2452,35 @@ class SQLiteCandidateRepository:
                 event.subject_fingerprint,
             ),
             "audit-event metadata does not match its document",
+        )
+        return event
+
+    @staticmethod
+    def _decode_api_security_event_row(row: sqlite3.Row) -> ApiSecurityEvent:
+        event = _decode_model(str(row["event_json"]), ApiSecurityEvent)
+        target_type = event.target_type.value if event.target_type is not None else None
+        _require(
+            (
+                int(row["sequence"]),
+                row["event_id"],
+                row["event_type"],
+                row["occurred_at"],
+                row["request_id"],
+                row["outcome_code"],
+                row["target_type"],
+                row["target_id"],
+            )
+            == (
+                event.sequence,
+                event.event_id,
+                event.event_type.value,
+                _json_timestamp(event.occurred_at),
+                event.request_id,
+                event.outcome_code,
+                target_type,
+                event.target_id,
+            ),
+            "API security-event metadata does not match its document",
         )
         return event
 

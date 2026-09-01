@@ -1,8 +1,8 @@
 # Project status
 
 - Date: 2026-08-31
-- Version: 0.1.0.dev21
-- Stage: Phase 14 local session lifecycle and abuse controls implemented
+- Version: 0.1.0.dev22
+- Stage: Phase 15 local API security boundaries implemented
 - Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, and bounded state discovery; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
@@ -54,7 +54,7 @@
   commit, decision, and timestamp;
 - stateless `candidate create` and `candidate transition` CLI previews with
   generic DRAFT/EVALUATING fixtures and structural/evaluation-bound Goldens;
-- SQLite candidate-store schema v7 with ForgeGate application identity, WAL,
+- SQLite candidate-store schema v8 with ForgeGate application identity, WAL,
   FULL synchronous durability, foreign keys, exact-version validation, and
   explicit read/write transactions;
 - append-only canonical candidate snapshots, content-addressed transitions,
@@ -64,7 +64,7 @@
   detection;
 - persisted candidate create/advance/show/history CLI flow while retaining the
   stateless preview commands;
-- explicit, validated SQLite v1/v2/v3/v4/v5/v6-to-v7 migration plus exact legacy
+- explicit, validated SQLite v1/v2/v3/v4/v5/v6/v7-to-v8 migration plus exact legacy
   terminal evaluation and audit backfill where applicable;
 - durable append-only policy-evaluation and release-attestation documents bound
   to the authoritative candidate audit chain;
@@ -242,14 +242,27 @@
   with `Retry-After`;
 - lifecycle/reload/rate OpenAPI, adversarial tests, security documentation, and
   installed-wheel smoke while retaining the loopback-only boundary.
+- exact ASGI request-byte accounting with a 4 MiB cap for declared and
+  unknown-length/chunked bodies;
+- challenge and session endpoint counters applied before strict request-model
+  parsing, so malformed authentication JSON consumes the same bounded window;
+- separate content-addressed `forgegate.api-security-event.v1` and bounded page
+  contracts for authentication rejections, rate limiting, logout, scoped
+  revocation, and trust reload;
+- SQLite v8 append-only API security-event table with explicit v7 migration,
+  10,000-event default capacity, visible saturation, stable cursor queries, and
+  global-operator REST authorization;
+- best-effort journal writes that retain no token, signature, request body,
+  private key, or arbitrary header and do not alter the transactional release
+  audit, session outcome, or loopback-only product boundary.
 
 ## Not implemented
 
 Non-loopback/TLS API deployment, reverse-proxy trust, hostile-local-user
 defense, managed online revocation, durable/distributed sessions, per-client
-network rate controls, malformed-authentication-body throttling, HTTP artifact
-collection and file publication, rejected-request/warning/session-control audit ingestion,
-audit export/retention,
+network rate controls, distributed rate state, HTTP artifact collection and
+file publication, complete rejected-request/warning ingestion, security/audit
+export/retention, administrator-resistant logging,
 external plugins, GitHub integration,
 managed/encrypted/hardware-backed key custody, trusted timestamps, online
 revocation, CI workload identity federation, database authorization,
@@ -264,9 +277,10 @@ artifact payload/replay export, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 649 passed, 1 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 97.83% across 6,232 statements and 1,642 branches
-- authenticated-API focus: 25 passed; authentication module 96.60%
+- pytest: 656 passed, 1 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 97.48% across 6,453 statements and 1,708 branches
+- API security-event focus: 5 passed, covering contracts, persistence,
+  migration, access, saturation, privacy, and control behavior
 - authenticated-identity focus: 22 passed; identity package 96.48%
 - portable-assurance focus: 17 passed; assurance models 100% and portable
   publication/verifier 95%
@@ -280,7 +294,7 @@ artifact payload/replay export, and hardware access.
   and 138 branches
 - committed JSON Schema and OpenAPI drift checks: PASS
 - project/policy/candidate/transition example documents: VALID
-- twenty-six canonical versioned document Schemas plus Benchmark and Analog
+- twenty-eight canonical versioned document Schemas plus Benchmark and Analog
   Validation artifact Schemas: drift-checked and parsed
 - complete sdist manifest and wheel build: PASS
 - repository-external wheel installation and CLI smoke: PASS
@@ -310,3 +324,5 @@ Phase 13 acceptance is recorded in
 `reports/PHASE_13_AUTHENTICATED_LOCAL_API_ACCEPTANCE_REPORT.md`.
 Phase 14 acceptance is recorded in
 `reports/PHASE_14_LOCAL_SESSION_LIFECYCLE_ACCEPTANCE_REPORT.md`.
+Phase 15 acceptance is recorded in
+`reports/PHASE_15_LOCAL_API_SECURITY_BOUNDARIES_ACCEPTANCE_REPORT.md`.

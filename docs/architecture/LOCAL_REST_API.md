@@ -5,8 +5,9 @@
 Phase 5 exposes a small HTTP transport over ForgeGate's existing candidate
 domain and SQLite store. It is intended for local tool integration while the
 product remains under development. Phase 13 adds an authenticated local session
-layer, and Phase 14 adds memory-only lifecycle/reload/rate controls, while the
-service remains deliberately restricted to the loopback interface.
+layer, Phase 14 adds memory-only lifecycle/reload/rate controls, and Phase 15
+adds byte-accurate body limits plus a separate bounded security-event journal,
+while the service remains deliberately restricted to the loopback interface.
 
 The v1 baseline includes:
 
@@ -16,6 +17,7 @@ The v1 baseline includes:
 - `GET /v1/projects/{project_id}/profile`;
 - `GET /v1/projects/{project_id}/revisions`;
 - `POST /v1/projects/{project_id}/revisions`;
+- `GET /v1/security-events`;
 - `GET /v1/projects/{project_id}/candidates`;
 - `POST /v1/candidates`;
 - `POST /v1/candidates/{candidate_id}/transitions`;
@@ -87,17 +89,25 @@ a replacement safe ID.
 library reports `is_loopback`. Wildcard, LAN, public, and unparseable bind
 values reject before the database or server is opened. Middleware separately
 requires the HTTP `Host` to identify localhost or a loopback IP. Requests with
-a declared `Content-Length` above 4 MiB reject before model validation.
+a declared `Content-Length` above 4 MiB reject before model validation. The
+middleware also counts actual ASGI body bytes and rejects requests that cross
+the same ceiling even when the declared length is absent or misleading.
 
 These transport guards are separate from authentication. Protected routes
 additionally require a short-lived session derived from an Ed25519 challenge
 and an external trust store. Phase 14 adds self-logout, scoped operator
 revocation, explicit reload from the fixed startup trust-store path, and three
-process-global authentication counters. The body limit does not yet enforce an
-exact streaming ceiling for unknown-length or chunked requests.
+process-global authentication counters. Phase 15 consumes the challenge and
+session endpoint budgets before body-model validation, so malformed requests
+cannot bypass those two counters. It also writes minimal successful-control and
+authentication-rejection metadata to a bounded, append-only SQLite v8 journal.
+An active operator covering every current trust-store project may query that
+journal through `GET /v1/security-events`; capacity and saturation are visible.
+Logging is best-effort and never changes the original control response.
 
 No TLS, per-client network throttling, multi-tenant isolation, reverse-proxy
-trust, durable sessions/revocation, or hostile-local-user defense is claimed.
+trust, durable sessions/revocation, complete compliance audit, or
+hostile-local-user defense is claimed.
 The server must not be forwarded or exposed through a proxy, container port,
 tunnel, LAN address, or public interface.
 
@@ -115,6 +125,7 @@ invalid states, frozen-profile policy-material mismatch, structured failures,
 correlation IDs, loopback bind/Host handling, declared body size, challenge and
 session authentication, project/role authorization, audit actors, logout,
 targeted revocation, trust reload, authentication rate windows, contract paths,
-and a complete durable candidate workflow. These are local-host software
-results only; they do not exercise AFE runtime code, MSP430 hardware, a network
-deployment, or remote CI.
+malformed pre-validation attempts, unknown-length/chunked body size, security
+event privacy/capacity/query behavior, and a complete durable candidate
+workflow. These are local-host software results only; they do not exercise AFE
+runtime code, MSP430 hardware, a network deployment, or remote CI.

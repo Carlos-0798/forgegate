@@ -112,7 +112,7 @@ def doctor() -> None:
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
         "supported_artifact_schemas": sorted(ARTIFACT_SCHEMAS),
-        "phase": "phase13-authenticated-local-api",
+        "phase": "phase15-local-api-security-boundaries",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 

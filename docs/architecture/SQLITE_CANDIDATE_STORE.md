@@ -8,12 +8,12 @@ the original v1 document for legacy/stateless compatibility. The store does not
 contain upstream AFE/MSP430 internals.
 
 `SQLiteCandidateRepository` owns one local database file. Initialization sets a
-ForgeGate application ID, schema version 7, WAL journaling, FULL synchronous
+ForgeGate application ID, schema version 8, WAL journaling, FULL synchronous
 durability, foreign keys, and a bounded busy timeout. A future schema version is
 rejected. An existing schema-v1, schema-v2, schema-v3, or schema-v4 store is
 never changed by `init-store`; the owner must run the explicit, validated
-`migrate-store` operation. Validated schema-v5 and schema-v6 stores follow the
-same explicit migration rule.
+`migrate-store` operation. Validated schema-v5, schema-v6, and schema-v7 stores
+follow the same explicit migration rule.
 
 ## Tables and ordering
 
@@ -44,15 +44,19 @@ same explicit migration rule.
   profile identity/version without rewriting candidate history;
 - `audit_events` stores ordered content-bound metadata for successful durable
   state changes;
+- `api_security_events` stores a separate bounded sequence of minimal API
+  authentication/session/trust-control metadata without credentials or request
+  bodies;
 - `forgegate_metadata` identifies the exact storage schema.
 
-Schema v7 retains the v5 `(project_id, candidate_id)` discovery index and v6
-version-ordered project-profile index.
+Schema v8 retains the v5 `(project_id, candidate_id)` discovery index, v6
+version-ordered project-profile index, and v7 policy-material records.
 
 Database triggers reject candidate deletion, identity rewriting, non-unit
 current-revision updates, and every update/delete of snapshot, transition, and
 idempotency, evidence-binding, policy-material, evaluation, and attestation
-rows. These controls
+rows. Separate triggers reject every update/delete of security-event rows.
+These controls
 protect accidental or direct SQL mutation;
 they are not an authorization boundary against an administrator who can replace
 the database file or rewrite its schema.
@@ -120,10 +124,10 @@ assembly identities and compare the embedded candidate with revision one.
 Corruption fails closed with a stable store error; this checkpoint does not
 repair, salvage, back up, encrypt, or replicate a damaged database.
 
-## Explicit v1/v2/v3/v4/v5/v6 migration
+## Explicit v1/v2/v3/v4/v5/v6/v7 migration
 
 `candidate migrate-store DATABASE` accepts only a fully valid schema-v1,
-schema-v2, schema-v3, schema-v4, schema-v5, or schema-v6 store. Missing
+schema-v2, schema-v3, schema-v4, schema-v5, schema-v6, or schema-v7 store. Missing
 historical layers are added
 before the v4 project/audit objects. Existing immutable candidate documents are
 then projected into deterministic audit-event order. The v4-to-v5 step adds
@@ -134,8 +138,11 @@ for any legacy candidate, evidence, rejected request, or actor identity.
 The v6-to-v7 step adds policy-material persistence and defaults every historical
 candidate's immutable requirement marker to zero. It never invents historical
 policy bytes, hashes, approval, or producer authenticity.
+The v7-to-v8 step adds the empty security-event journal and append-only
+triggers. It never invents historical rejected requests, control events,
+actors, or trusted timestamps.
 The operation updates both metadata values and `PRAGMA user_version` in one
-transaction, then revalidates the result. Calling it on v7 is an idempotent
+transaction, then revalidates the result. Calling it on v8 is an idempotent
 validation. Unknown, foreign, or corrupt stores fail closed.
 
 Existing candidates receive an immutable `evidence_binding_required = 0`

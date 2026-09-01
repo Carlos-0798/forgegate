@@ -1,0 +1,162 @@
+{
+  "$defs": {
+    "ApiSecurityEventType": {
+      "enum": [
+        "authentication.rejected",
+        "authentication.rate-limited",
+        "session.logged-out",
+        "session.revoked",
+        "trust-store.reloaded"
+      ],
+      "title": "ApiSecurityEventType",
+      "type": "string"
+    },
+    "AuditActor": {
+      "additionalProperties": false,
+      "properties": {
+        "authenticated_at": {
+          "format": "date-time",
+          "title": "Authenticated At",
+          "type": "string"
+        },
+        "display_name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Display Name",
+          "type": "string"
+        },
+        "identity_id": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Identity Id",
+          "type": "string"
+        },
+        "role": {
+          "enum": [
+            "producer",
+            "operator"
+          ],
+          "title": "Role",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "forgegate.audit-actor.v1",
+          "default": "forgegate.audit-actor.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "session_id": {
+          "pattern": "^sess-[0-9a-f]{32}$",
+          "title": "Session Id",
+          "type": "string"
+        },
+        "trust_store_id": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Trust Store Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "identity_id",
+        "display_name",
+        "role",
+        "session_id",
+        "trust_store_id",
+        "authenticated_at"
+      ],
+      "title": "AuditActor",
+      "type": "object"
+    },
+    "SecurityEventTargetType": {
+      "enum": [
+        "session",
+        "trust_store"
+      ],
+      "title": "SecurityEventTargetType",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Minimal API-control event; intentionally separate from product-state audit.",
+  "properties": {
+    "actor": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/AuditActor"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    },
+    "event_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Event Id",
+      "type": "string"
+    },
+    "event_type": {
+      "$ref": "#/$defs/ApiSecurityEventType"
+    },
+    "occurred_at": {
+      "format": "date-time",
+      "title": "Occurred At",
+      "type": "string"
+    },
+    "outcome_code": {
+      "pattern": "^[A-Z][A-Z0-9_]{2,127}$",
+      "title": "Outcome Code",
+      "type": "string"
+    },
+    "request_id": {
+      "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$",
+      "title": "Request Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "forgegate.api-security-event.v1",
+      "default": "forgegate.api-security-event.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "sequence": {
+      "minimum": 1,
+      "title": "Sequence",
+      "type": "integer"
+    },
+    "target_id": {
+      "anyOf": [
+        {
+          "maxLength": 128,
+          "minLength": 1,
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Target Id"
+    },
+    "target_type": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/SecurityEventTargetType"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "event_id",
+    "sequence",
+    "event_type",
+    "occurred_at",
+    "request_id",
+    "outcome_code"
+  ],
+  "title": "ApiSecurityEvent",
+  "type": "object"
+}

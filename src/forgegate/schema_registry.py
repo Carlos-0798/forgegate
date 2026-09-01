@@ -24,6 +24,7 @@ from forgegate.projects import (
     RegisteredProject,
     RegisteredProjectPage,
 )
+from forgegate.security_events import ApiSecurityEvent, ApiSecurityEventPage
 
 SCHEMAS: dict[str, type[BaseModel]] = {
     "forgegate.assurance-bundle.v1": AssuranceBundle,
@@ -52,6 +53,8 @@ SCHEMAS: dict[str, type[BaseModel]] = {
     "forgegate.audit-event.v1": AuditEvent,
     "forgegate.audit-event-page.v1": AuditEventPage,
     "forgegate.audit-actor.v1": AuditActor,
+    "forgegate.api-security-event.v1": ApiSecurityEvent,
+    "forgegate.api-security-event-page.v1": ApiSecurityEventPage,
 }
 
 ARTIFACT_SCHEMAS: dict[str, dict[str, object]] = {

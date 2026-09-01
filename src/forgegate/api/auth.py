@@ -263,9 +263,20 @@ class ApiAuthenticator:
         with self._lock:
             return self._trust_store.trust_store_id
 
-    def issue_challenge(self, request: ApiChallengeRequest) -> ApiAuthChallenge:
+    def consume_endpoint_request(self, endpoint: Literal["challenge", "session"]) -> None:
+        """Count an HTTP authentication request before body-model validation."""
+        limit = self._challenge_rate_limit if endpoint == "challenge" else self._session_rate_limit
+        self._consume_rate(endpoint, limit, self._now())
+
+    def issue_challenge(
+        self,
+        request: ApiChallengeRequest,
+        *,
+        endpoint_rate_checked: bool = False,
+    ) -> ApiAuthChallenge:
         now = self._now()
-        self._consume_rate("challenge", self._challenge_rate_limit, now)
+        if not endpoint_rate_checked:
+            self._consume_rate("challenge", self._challenge_rate_limit, now)
         with self._lock:
             self._purge_expired(now)
             try:
@@ -300,9 +311,15 @@ class ApiAuthenticator:
             self._challenges[challenge.challenge_id] = challenge
         return challenge
 
-    def create_session(self, request: ApiSessionCreateRequest) -> ApiSessionResponse:
+    def create_session(
+        self,
+        request: ApiSessionCreateRequest,
+        *,
+        endpoint_rate_checked: bool = False,
+    ) -> ApiSessionResponse:
         now = self._now()
-        self._consume_rate("session", self._session_rate_limit, now)
+        if not endpoint_rate_checked:
+            self._consume_rate("session", self._session_rate_limit, now)
         with self._lock:
             self._purge_expired(now)
             challenge = self._challenges.pop(request.challenge_id, None)
@@ -524,6 +541,20 @@ class ApiAuthenticator:
                 "operator role is required for this operation",
                 status_code=403,
             )
+
+    def require_global_security_audit(self, principal: ApiPrincipal) -> None:
+        """Require an active operator session covering the whole current trust store."""
+        with self._lock:
+            self._require_matching_principal(self._trust_store, principal)
+            all_projects = self._trust_store_projects(self._trust_store)
+            if principal.role is not IdentityRole.OPERATOR or not all_projects.issubset(
+                principal.project_ids
+            ):
+                raise ApiAuthenticationError(
+                    "API_SECURITY_AUDIT_FORBIDDEN",
+                    "global operator authority is required for API security-event access",
+                    status_code=403,
+                )
 
     def _authorize_identity(
         self,

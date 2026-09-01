@@ -327,8 +327,23 @@ The current slice has no authenticated producer and runs no plugin code.
 | Invalid replacement trust data destroys current authority | The replacement is loaded and strictly validated before the active in-memory store changes; failure returns a generic unavailable response |
 | Authentication work is requested without bound | Three bounded fixed-window counters cover valid challenge requests, session exchanges, and invalid Bearer attempts, returning `429` with `Retry-After` |
 | Forwarded-address metadata is mistaken for local caller identity | Rate controls are explicitly process-global and never trust `X-Forwarded-For` or claim per-client attribution |
-| Session-control responses are mistaken for durable audit | Logout, revocation, reload, and rejected authentication remain process-local control activity and are not represented as durable product-state audit events |
+| Session-control responses are mistaken for durable product audit | They never enter the product-state audit; Phase 15 adds only a separate bounded best-effort security-event journal |
 | Local lifecycle controls are mistaken for remote safety | Loopback bind and Host restrictions remain; no TLS, proxy trust, shared-host, LAN, internet, or production approval is claimed |
+
+## Addressed in the Phase 15 local API security-boundary slice
+
+| Threat | Current control |
+|---|---|
+| Unknown-length or misleading-length body bypasses the 4 MiB gate | Middleware counts actual ASGI body bytes before application parsing and rejects at the first byte over the limit |
+| Malformed challenge/session JSON bypasses endpoint rate limits | The fixed challenge/session counter is consumed before the body reaches Pydantic validation |
+| Security-control activity is confused with release-state history | `forgegate.api-security-event.v1` uses a separate table, contract, sequence, and query route; no event enters the candidate/project audit chain |
+| Bearer token or hostile payload is retained in security telemetry | Event fields allow only request ID, stable outcome code, optional public audit actor, and canonical session/trust-store target; signatures, bodies, tokens, private keys, arbitrary headers, and messages are absent |
+| Security-event queries expose cross-project activity | Only an active operator session covering every project in the current trust store can access `/v1/security-events` |
+| Event logging grows without an explicit bound | The journal has a configurable one-to-1,000,000 capacity and a 10,000-event default; page responses expose count, capacity, and saturation |
+| Full journal blocks logout or replaces the original auth failure | Recording is best-effort; saturation or store failure cannot undo a completed control or mask the original response |
+| Bounded telemetry is mistaken for a complete security/compliance audit | Documentation states no completeness, retention/export, trusted time, administrator resistance, distributed ordering, or compliance guarantee |
+| New schema silently invents historical security activity | Explicit v7-to-v8 migration creates an empty security table and fabricates no prior request/control events |
+| Application-layer limits are mistaken for remote denial-of-service protection | Loopback-only boundary remains; transport buffers, local privileged peers, TLS/proxy identity, per-client attribution, and distributed state remain out of scope |
 
 ## Deferred risks
 
@@ -344,7 +359,7 @@ The current slice has no authenticated producer and runs no plugin code.
 - TLS termination, reverse-proxy trust, hostile-local-user defense, managed
   online trust distribution, durable/distributed sessions or revocation, and
   per-client network rate controls;
-- durable rejected-authentication/session-control security-event audit and
-  authentication limits for malformed bodies rejected before endpoint logic;
-- an exact streaming request-body limiter for unknown-length/chunked HTTP
-  bodies; the current 4 MiB gate covers declared `Content-Length` only.
+- security-event retention/export, administrator-resistant tamper evidence,
+  completeness guarantees, and durable/distributed security-session state;
+- transport-layer request limiting before the ASGI server allocates an incoming
+  chunk; Phase 15 bounds application-retained bytes, not privileged local peers.

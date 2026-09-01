@@ -77,18 +77,18 @@ generic assembly boundary.
 ## Local transport controls and residual risk
 
 Both the socket bind value and each HTTP Host must identify localhost or a
-loopback IP. Non-loopback and wildcard values fail closed. Requests declaring
-more than 4 MiB through `Content-Length` reject before model validation. CORS is
-not enabled.
+loopback IP. Non-loopback and wildcard values fail closed. Phase 15 rejects
+actual request bodies above 4 MiB, including unknown-length/chunked input,
+before model validation. CORS is not enabled.
 
 These controls reduce accidental exposure and ordinary browser-origin access.
 Phase 13 authenticates a local key holder and authorizes exact projects, but it
 does not defend against a hostile local account, privileged packet observer, or
 memory reader. Phase 14 adds memory-only logout, scoped revocation, fixed-path
-trust reload, and global authentication request counters. The current body
-guard does not provide an exact streaming limit for unknown-length/chunked
-requests, and malformed authentication bodies fail before the Phase 14 endpoint
-counters. Any non-loopback, proxied, tunneled, shared, or production deployment
-remains prohibited until TLS/proxy trust, hostile-local-user defense, durable
-session/security-event state, per-client rate policy, and streaming-boundary
+trust reload, and global authentication request counters. Phase 15 adds the
+actual-byte body gate, pre-validation authentication counters, and a bounded
+separate security-event journal. Any non-loopback, proxied, tunneled, shared,
+or production deployment remains prohibited until TLS/proxy trust,
+hostile-local-user defense, durable/distributed session state, security-event
+retention/export, per-client rate policy, and transport-layer
 designs exist.

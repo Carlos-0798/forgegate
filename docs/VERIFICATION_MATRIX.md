@@ -11,7 +11,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — twenty-six document plus two artifact schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — twenty-eight document plus two artifact schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Analog Validation result Schema mirror | committed upstream-consumer contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
@@ -83,21 +83,23 @@
 | Session replay/expiry/capacity | one-time challenge, bounded memory, restart semantics | PASS — local host |
 | Session logout/operator revocation | token reuse, role, target scope, hidden-ID adversarial tests | PASS — memory-only local host |
 | Fixed-path trust-store reload | old/new scope, invalid input, challenge/session invalidation | PASS — explicit operator action; no managed online distribution |
-| Authentication request limits | challenge/session/failure fixed windows + retry header | PASS — process-global valid endpoint calls; malformed body NOT COVERED |
-| Durable authentication-control audit | rejected auth, logout, revocation, reload events | NOT IMPLEMENTED — product-state audit only |
+| Authentication request limits | challenge/session/failure fixed windows + retry header | PASS — process-global; challenge/session counters precede body validation |
+| API security-event journal | rejected auth, rate limits, logout, revocation, reload | PASS — bounded separate SQLite v8 log; best-effort, not compliance audit |
+| Security-event privacy and access | token/body/key absence + global operator query | PASS — local host, saturation disclosed |
 | Non-loopback/TLS API | transport, proxy, hostile-local-user controls | NOT IMPLEMENTED |
 | REST lifecycle transitions | expected revision + idempotent replay/conflict | PASS — local host |
 | REST evidence binding | strict nested assembly + immutable SQLite binding | PASS — local host |
 | REST bound-evidence evaluation | policy engine + atomic terminal transition | PASS — local host |
 | Release-track policy identity | mismatch rejection before terminal commit | PASS — local host |
 | REST attestation persistence | deterministic create/replay/conflict | PASS — database only |
-| HTTP Host and declared body length | loopback allowlist + 4 MiB Content-Length gate | PASS — local host |
+| HTTP Host and actual request body | loopback allowlist + 4 MiB declared/streamed byte gate | PASS — unknown-length/chunked test included |
 | Immutable project registration | model/store/idempotency/conflict tests | PASS — introduced in SQLite v4, retained in v6 |
 | Project CLI and REST readback | shared application + installed-wheel smoke | PASS — local host |
 | Transactional state-change audit | create/bind/transition/evaluate/attest tests | PASS — local host |
 | Audit cursor pagination and filters | bounded/empty/multi-page/adversarial tests | PASS — local host |
 | SQLite v1/v2/v3/v4/v5-to-v6 migration | audit/profile backfill and legacy-candidate tests | PASS — registration profiles only; no candidate-profile fabrication or duplicate audit |
 | Project/audit contract drift | five JSON Schemas + OpenAPI | PASS — byte checked |
+| API security-event contract drift | two JSON Schemas + OpenAPI query | PASS — byte checked and clean-wheel persisted |
 | Registered-project candidate authority | application/CLI/API/store tests | PASS — unregistered project and missing track fail closed |
 | Release-track normalization | underscore compatibility plus ambiguity tests | PASS — new candidate/policy identity is canonical hyphen form |
 | Project/candidate discovery | bounded page model, stable cursor, CLI/API, installed-wheel smoke | PASS — candidates are project-scoped |
@@ -109,7 +111,7 @@
 | Legacy candidate profile semantics | v5 migration and corruption tests | PASS — v1 remains readable with no fabricated binding |
 | Exact policy material | byte/hash/model/adversarial tests | PASS — local host, exact profile-authorized bytes retained |
 | Material-bound evaluation v2 | application/store/CLI/REST integration | PASS — material/profile/evidence/time bound atomically |
-| SQLite v1-v6-to-v7 migration | migration and legacy semantics | PASS — no historical policy material fabricated |
+| SQLite v1-v7-to-v8 migration | migration and legacy semantics | PASS — no historical policy/security event fabricated |
 | Path-free REST policy workflow | strict material request + retained readback | PASS — no client-selected server policy path |
 | Portable assurance document | strict model/Schema/cross-document identity tests | PASS — profile, evidence, material, evaluation, lifecycle, and attestation bound |
 | Content-addressed publication | exact replay/conflict/member/tamper tests | PASS — canonical JSON/Markdown/manifest bytes |
@@ -127,6 +129,6 @@
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
 
-See `reports/PHASE_14_LOCAL_SESSION_LIFECYCLE_ACCEPTANCE_REPORT.md`
+See `reports/PHASE_15_LOCAL_API_SECURITY_BOUNDARIES_ACCEPTANCE_REPORT.md`
 for the current exact local test and coverage result. Earlier acceptance
 reports remain historical records.

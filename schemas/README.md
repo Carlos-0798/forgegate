@@ -23,6 +23,13 @@ operator session revocation, and fixed-startup-path trust-store reload. These
 ephemeral process-control documents are not standalone configuration or durable
 audit Schemas and are therefore committed only inside the OpenAPI contract.
 
+Phase 15 adds `forgegate.api-security-event.v1.schema.json` and
+`forgegate.api-security-event-page.v1.schema.json` for the bounded, separate
+SQLite security-event journal and its stable-cursor query. The OpenAPI contract
+also exposes `GET /v1/security-events` to a global operator. These contracts
+exclude credentials and request payloads and do not turn the best-effort journal
+into a complete compliance audit.
+
 `forgegate.evidence-bundle-assembly.v1.schema.json` describes the audited
 envelope around a candidate-bound evidence bundle and its collection receipts.
 It is accepted by configuration validation and policy evaluation without

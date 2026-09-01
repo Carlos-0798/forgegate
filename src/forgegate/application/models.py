@@ -22,6 +22,7 @@ from forgegate.domain.models import (
 )
 from forgegate.policy import PolicyMaterial
 from forgegate.policy.models import PolicyEvaluationDocument
+from forgegate.security_events import ApiSecurityEventType
 
 
 class CandidateCreateCommand(StrictModel):
@@ -83,6 +84,12 @@ class AuditEventQuery(StrictModel):
     limit: int = Field(default=100, ge=1, le=200)
     project_id: str | None = Field(default=None, pattern=SLUG_PATTERN)
     candidate_id: str | None = Field(default=None, pattern=r"^cand-[0-9a-f]{24}$")
+
+
+class ApiSecurityEventQuery(StrictModel):
+    after_sequence: int = Field(default=0, ge=0)
+    limit: int = Field(default=100, ge=1, le=200)
+    event_type: ApiSecurityEventType | None = None
 
 
 class CandidateHistoryView(StrictModel):
@@ -168,6 +175,7 @@ def _timezone_aware(value: datetime, field_name: str) -> datetime:
 
 
 __all__ = [
+    "ApiSecurityEventQuery",
     "AuditEventQuery",
     "CandidateAdvanceCommand",
     "CandidateAttestCommand",

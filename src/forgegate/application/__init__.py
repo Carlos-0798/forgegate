@@ -1,4 +1,5 @@
 from forgegate.application.models import (
+    ApiSecurityEventQuery,
     AuditEventQuery,
     CandidateAdvanceCommand,
     CandidateAttestCommand,
@@ -16,6 +17,7 @@ from forgegate.application.models import (
 from forgegate.application.service import CandidateApplication
 
 __all__ = [
+    "ApiSecurityEventQuery",
     "AuditEventQuery",
     "CandidateAdvanceCommand",
     "CandidateApplication",

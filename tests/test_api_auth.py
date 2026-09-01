@@ -719,6 +719,41 @@ def test_authentication_rate_limits_are_bounded_and_return_retry_after(tmp_path:
     assert limited.json()["error"]["code"] == "API_AUTH_RATE_LIMITED"
 
 
+def test_authentication_endpoint_limits_precede_body_validation(tmp_path: Path) -> None:
+    authenticator = ApiAuthenticator(
+        TEST_TRUST_STORE,
+        challenge_rate_limit=1,
+        session_rate_limit=1,
+    )
+    app = create_api_app(tmp_path / "malformed-rate.db", authenticator=authenticator)
+    with TestClient(app, base_url="http://127.0.0.1") as client:
+        first_challenge = client.post(
+            "/v1/auth/challenges",
+            content=b"{",
+            headers={"Content-Type": "application/json"},
+        )
+        limited_challenge = client.post(
+            "/v1/auth/challenges",
+            content=b"{",
+            headers={"Content-Type": "application/json"},
+        )
+        first_session = client.post(
+            "/v1/auth/sessions",
+            content=b"{",
+            headers={"Content-Type": "application/json"},
+        )
+        limited_session = client.post(
+            "/v1/auth/sessions",
+            content=b"{",
+            headers={"Content-Type": "application/json"},
+        )
+
+    assert first_challenge.status_code == first_session.status_code == 422
+    assert limited_challenge.status_code == limited_session.status_code == 429
+    assert limited_challenge.json()["error"]["code"] == "API_AUTH_RATE_LIMITED"
+    assert limited_session.headers["Retry-After"] == "60"
+
+
 def test_session_exchange_rate_limit_precedes_signature_work() -> None:
     authenticator = ApiAuthenticator(TEST_TRUST_STORE, session_rate_limit=1)
     challenge = authenticator.issue_challenge(

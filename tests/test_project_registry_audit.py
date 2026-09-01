@@ -304,6 +304,7 @@ def test_v3_migration_backfills_complete_audit_chain(
 
     with sqlite3.connect(repository.database_path) as connection:
         connection.execute("PRAGMA foreign_keys = OFF")
+        connection.execute("DROP TABLE api_security_events")
         connection.execute("DROP TRIGGER candidates_policy_material_requirement_guard_update")
         connection.execute("DROP TABLE candidate_policy_materials")
         connection.execute("ALTER TABLE candidates DROP COLUMN policy_material_required")

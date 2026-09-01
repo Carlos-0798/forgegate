@@ -155,6 +155,157 @@
         "title": "ApiErrorResponse",
         "type": "object"
       },
+      "ApiSecurityEvent": {
+        "additionalProperties": false,
+        "description": "Minimal API-control event; intentionally separate from product-state audit.",
+        "properties": {
+          "actor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AuditActor"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "event_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Event Id",
+            "type": "string"
+          },
+          "event_type": {
+            "$ref": "#/components/schemas/ApiSecurityEventType"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "outcome_code": {
+            "pattern": "^[A-Z][A-Z0-9_]{2,127}$",
+            "title": "Outcome Code",
+            "type": "string"
+          },
+          "request_id": {
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$",
+            "title": "Request Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.api-security-event.v1",
+            "default": "forgegate.api-security-event.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 1.0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "target_id": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Id"
+          },
+          "target_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SecurityEventTargetType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "event_id",
+          "sequence",
+          "event_type",
+          "occurred_at",
+          "request_id",
+          "outcome_code"
+        ],
+        "title": "ApiSecurityEvent",
+        "type": "object"
+      },
+      "ApiSecurityEventPage": {
+        "additionalProperties": false,
+        "properties": {
+          "capacity": {
+            "minimum": 1.0,
+            "title": "Capacity",
+            "type": "integer"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/ApiSecurityEvent"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "next_after_sequence": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next After Sequence"
+          },
+          "recorded_count": {
+            "minimum": 0.0,
+            "title": "Recorded Count",
+            "type": "integer"
+          },
+          "saturated": {
+            "title": "Saturated",
+            "type": "boolean"
+          },
+          "schema_version": {
+            "const": "forgegate.api-security-event-page.v1",
+            "default": "forgegate.api-security-event-page.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "events",
+          "has_more",
+          "capacity",
+          "recorded_count",
+          "saturated"
+        ],
+        "title": "ApiSecurityEventPage",
+        "type": "object"
+      },
+      "ApiSecurityEventType": {
+        "enum": [
+          "authentication.rejected",
+          "authentication.rate-limited",
+          "session.logged-out",
+          "session.revoked",
+          "trust-store.reloaded"
+        ],
+        "title": "ApiSecurityEventType",
+        "type": "string"
+      },
       "ApiSessionCreateRequest": {
         "additionalProperties": false,
         "properties": {
@@ -1445,8 +1596,8 @@
             "type": "string"
           },
           "store_schema": {
-            "const": "forgegate.candidate-store.v7",
-            "default": "forgegate.candidate-store.v7",
+            "const": "forgegate.candidate-store.v8",
+            "default": "forgegate.candidate-store.v8",
             "title": "Store Schema",
             "type": "string"
           }
@@ -2666,6 +2817,14 @@
         "title": "RuleEvaluation",
         "type": "object"
       },
+      "SecurityEventTargetType": {
+        "enum": [
+          "session",
+          "trust_store"
+        ],
+        "title": "SecurityEventTargetType",
+        "type": "string"
+      },
       "SigningIdentity": {
         "additionalProperties": false,
         "properties": {
@@ -2733,7 +2892,7 @@
   "info": {
     "summary": "Local release-assurance project and candidate API",
     "title": "ForgeGate Local API",
-    "version": "0.1.0.dev21"
+    "version": "0.1.0.dev22"
   },
   "openapi": "3.1.0",
   "paths": {
@@ -6081,6 +6240,173 @@
         "summary": "Revise Project Profile Endpoint",
         "tags": [
           "projects"
+        ]
+      }
+    },
+    "/v1/security-events": {
+      "get": {
+        "operationId": "queryApiSecurityEvents",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "after_sequence",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "After Sequence",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "event_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ApiSecurityEventType"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Event Type"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSecurityEventPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Invalid request"
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication required or invalid"
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authenticated identity is not authorized"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate resource not found"
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request conflicts with durable state"
+          },
+          "413": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Request body exceeds local API limit"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Strict request validation failed"
+          },
+          "429": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Authentication rate limit exceeded"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Fail-closed internal error"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiErrorResponse"
+                }
+              }
+            },
+            "description": "Candidate store unavailable"
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "summary": "Query Api Security Events Endpoint",
+        "tags": [
+          "security"
         ]
       }
     }

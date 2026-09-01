@@ -386,6 +386,7 @@ def test_v6_migration_does_not_fabricate_historical_policy_material(
     database = application.repository.database_path
     with sqlite3.connect(database) as connection:
         connection.execute("PRAGMA foreign_keys = OFF")
+        connection.execute("DROP TABLE api_security_events")
         connection.execute("DROP TRIGGER candidates_policy_material_requirement_guard_update")
         connection.execute("DROP TABLE candidate_policy_materials")
         connection.execute("ALTER TABLE candidates DROP COLUMN policy_material_required")

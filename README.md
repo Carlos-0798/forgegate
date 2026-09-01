@@ -8,7 +8,7 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 14 local session lifecycle and abuse controls implemented;
+**Phase 15 local API security boundaries implemented;
 not production-ready.**
 
 This private-development checkpoint provides a working Python 3.12 CLI and an
@@ -56,6 +56,9 @@ current immutable project profile -> profile-bound release candidate
                               |
                               v
  logout / scoped revocation / fixed-path trust reload / bounded rate controls
+                              |
+                              v
+ streamed body cap + separate bounded API security-event journal
 ```
 
 The core remains domain-neutral. Analog Validation Studio is consumed only
@@ -66,8 +69,8 @@ collector rather than a runtime or hardware dependency.
 
 | Gate | Result | Evidence level |
 |---|---|---|
-| Python tests | 649 passed, 1 skipped because Windows symlink creation was unavailable | Local host test |
-| Branch-aware coverage | 97.83% across 6,232 statements and 1,642 branches | Local host test |
+| Python tests | 656 passed, 1 skipped because Windows symlink creation was unavailable | Local host test |
+| Branch-aware coverage | 97.48% across 6,453 statements and 1,708 branches | Local host test |
 | Static quality gates | Ruff, formatting, and strict mypy passed | Local host test |
 | Contracts | JSON Schema and OpenAPI drift checks passed | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
@@ -103,6 +106,10 @@ collector rather than a runtime or hardware dependency.
 - Session logout, project-covering operator revocation, and fixed-startup-path
   trust reload are explicit memory-only controls. Process-global fixed-window
   authentication limits do not claim per-client network attribution.
+- API security-control telemetry is a separate append-only SQLite v8 journal,
+  bounded at 10,000 events by default and globally operator-readable. It stores
+  no token, signature, body, private key, or arbitrary header and is not the
+  release-state audit chain or a complete compliance log.
 - Upstream AFE or future MSP430 results retain their original evidence level;
   ForgeGate does not relabel software or replay evidence as physical proof.
 
@@ -145,7 +152,7 @@ Implemented and host-verified in this checkpoint:
 - mandatory policy-evaluation binding for PASS/FAIL/REVIEW terminal states;
 - stateless `candidate create` and `candidate transition` CLI previews with
   committed structural and evaluation-bound Golden outputs;
-- a local SQLite v7 candidate/project store with WAL, FULL synchronous durability,
+- a local SQLite v8 candidate/project store with WAL, FULL synchronous durability,
   foreign keys, exact application/schema identity, and explicit transactions;
 - canonical append-only candidate snapshots and transition events with an
   optimistic current-revision pointer and immutable idempotency responses;
@@ -265,7 +272,17 @@ Implemented and host-verified in this checkpoint:
 - bounded fixed-window controls for valid challenge requests, session
   exchanges, and invalid Bearer attempts with `429` and `Retry-After`;
 - lifecycle/reload/rate OpenAPI contracts, adversarial tests, and installed
-  wheel smoke without durable session-control audit or remote-use claims.
+  wheel smoke without remote-use claims.
+- actual ASGI request-byte accounting up to the 4 MiB limit even when no
+  `Content-Length` is supplied, plus challenge/session rate accounting before
+  strict body-model validation;
+- strict content-addressed `forgegate.api-security-event.v1` and bounded page
+  contracts in a separate append-only SQLite table, explicit v7-to-v8
+  migration, global-operator query API, saturation disclosure, privacy tests,
+  and clean-wheel persistence smoke;
+- best-effort retention of authentication rejection/rate-limit events and
+  successful logout, scoped revocation, and trust reload, without changing the
+  in-memory session or loopback-only deployment boundary.
 
 
 </details>
@@ -313,12 +330,13 @@ committed copy can be regenerated with:
 ```
 
 This API authenticates local callers and applies exact role/project authority,
-supports self-logout, scoped operator revocation, and explicit fixed-path trust
-reload, but has no TLS, remote deployment approval, hostile-local-user defense,
-durable/distributed sessions, managed online revocation, or trusted time. The
-process-global rate counters do not cover malformed bodies rejected before
-endpoint execution. It is not approved for LAN, internet, shared-host, or
-production deployment.
+supports self-logout, scoped operator revocation, explicit fixed-path trust
+reload, parsing-independent authentication endpoint limits, and an actual
+4 MiB request-byte cap. Global operators can inspect the separate bounded
+`GET /v1/security-events` journal. The API still has no TLS, remote deployment
+approval, hostile-local-user defense, durable/distributed sessions, managed
+online revocation, or trusted time. It is not approved for LAN, internet,
+shared-host, or production deployment.
 
 Register and read one immutable project profile, then query its local audit
 events:
@@ -618,14 +636,13 @@ Not implemented yet:
 
 - non-loopback or TLS-protected API deployment;
 - HTTP artifact collection or filesystem publication;
-- rejected-request audit ingestion, audit export/retention, plugin execution,
-  or product-level GitHub integration;
+- complete rejected-request ingestion, security/audit export and retention,
+  plugin execution, or product-level GitHub integration;
 - database-file authorization, backup/repair, managed or hardware-backed key
   custody, managed online revocation, durable/distributed session authority,
-  durable authentication-control audit, trusted timestamps, or CI workload
-  identity federation;
+  trusted timestamps, or CI workload identity federation;
 - TLS/reverse-proxy trust, hostile-local-user defense, per-client network rate
-  controls, or rate limiting for malformed authentication request bodies;
+  controls, distributed rate state, or administrator-resistant logging;
 - MSP430 compatibility collection, AFE/MSP430 runtime integration, or any
   hardware operation;
 - production deployment or public release.
@@ -641,18 +658,20 @@ that identity for a short-lived authenticated loopback API session and records
 the successful API actor, but does not authenticate source artifacts or protect
 the database from its administrator. Phase 14 adds memory-only logout,
 project-scoped revocation, fixed-path trust reload, and bounded global
-authentication counters; it does not make the service remotely safe. SHA-256
-is not producer authentication.
+authentication counters. Phase 15 adds an exact received-byte cap,
+pre-validation endpoint counters, and a bounded separate API security-event
+journal; it still does not make the service remotely safe or create a complete
+compliance record. SHA-256 is not producer authentication.
 The MSP430 controller may later expose a separate versioned artifact for
 another optional collector.
 
 ## Roadmap
 
-The Phase 14 local MVP adds explicit session termination, constrained trust
-reload, and bounded authentication request controls without weakening the
-loopback-only service boundary. TLS, reverse-proxy identity, hostile-local-user
-defenses, durable security-event/session state, and managed key lifecycle must
-still be designed and verified before any non-loopback deployment. MSP430
+The Phase 15 local MVP adds parsing-independent request limits and a bounded,
+separate security-control event journal without weakening the loopback-only
+service boundary. TLS, reverse-proxy identity, hostile-local-user defenses,
+durable/distributed session state, security-event retention/export, and managed
+key lifecycle must still be designed and verified before any non-loopback deployment. MSP430
 compatibility remains gated on a separately frozen public result contract. See
 [docs/ROADMAP.md](docs/ROADMAP.md) for acceptance-level tasks.
 

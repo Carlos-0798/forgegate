@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from datetime import datetime
 from pathlib import Path
 
 from forgegate import __version__
 from forgegate.application.models import (
+    ApiSecurityEventQuery,
     AuditEventQuery,
     CandidateAdvanceCommand,
     CandidateAttestCommand,
@@ -51,6 +53,12 @@ from forgegate.projects import (
     RegisteredProject,
     RegisteredProjectPage,
     profile_id,
+)
+from forgegate.security_events import (
+    ApiSecurityEvent,
+    ApiSecurityEventPage,
+    ApiSecurityEventType,
+    SecurityEventTargetType,
 )
 
 DECISION_STATUS = {
@@ -128,6 +136,34 @@ class CandidateApplication:
             limit=query.limit,
             project_id=query.project_id,
             candidate_id=query.candidate_id,
+        )
+
+    def record_api_security_event(
+        self,
+        *,
+        event_type: ApiSecurityEventType,
+        occurred_at: datetime,
+        request_id: str,
+        outcome_code: str,
+        actor: AuditActor | None = None,
+        target_type: SecurityEventTargetType | None = None,
+        target_id: str | None = None,
+    ) -> ApiSecurityEvent:
+        return self.repository.append_api_security_event(
+            event_type=event_type,
+            occurred_at=occurred_at,
+            request_id=request_id,
+            outcome_code=outcome_code,
+            actor=actor,
+            target_type=target_type,
+            target_id=target_id,
+        )
+
+    def query_api_security_events(self, query: ApiSecurityEventQuery) -> ApiSecurityEventPage:
+        return self.repository.api_security_events(
+            after_sequence=query.after_sequence,
+            limit=query.limit,
+            event_type=query.event_type,
         )
 
     @staticmethod

@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.1.0.dev22 — 2026-08-31
+
+- Added a separate append-only SQLite v8 API security-event journal for
+  rejected authentication, authentication rate limits, logout, session
+  revocation, and trust-store reload without retaining tokens, signatures,
+  request bodies, private keys, or arbitrary headers.
+- Added bounded stable-cursor security-event queries restricted to an active
+  operator whose project scope covers the complete current trust store;
+  responses expose capacity, count, and saturation.
+- Moved challenge/session request limiting ahead of body-model validation so
+  malformed attempts consume the same fixed process-global endpoint budget.
+- Enforced the 4 MiB request ceiling against actual ASGI bytes, including
+  requests without `Content-Length`, while retaining the early declared-length
+  rejection.
+- Added v1-v7-to-v8 migration, append-only/capacity/privacy/adversarial tests,
+  two standalone JSON Schemas, OpenAPI coverage, and clean-wheel persistence
+  smoke. The log remains best-effort and is not claimed as a compliance audit.
+
 ## 0.1.0.dev21 — 2026-08-31
 
 - Added authenticated self-logout and exact operator session revocation with

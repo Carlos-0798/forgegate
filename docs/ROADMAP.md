@@ -192,6 +192,27 @@
   exchanges, and invalid Bearer authentication with explicit retry guidance.
 - [x] Commit OpenAPI, adversarial lifecycle/reload/rate tests, architecture and
   security documentation, and clean-installed-wheel smoke.
-- [ ] Design TLS, proxy identity, hostile-local-user defense, durable security
-  event audit, malformed-body throttling, and durable/distributed sessions
-  before considering any non-loopback deployment.
+- [ ] Design TLS, proxy identity, hostile-local-user defense, complete durable
+  security audit, and durable/distributed sessions before considering any
+  non-loopback deployment. Phase 15 addresses only the local malformed-request
+  budget and bounded best-effort journal portions.
+
+## Phase 15 — local API security boundaries
+
+- [x] Enforce the 4 MiB limit against actual ASGI request bytes, including
+  bodies without `Content-Length`, before application parsing.
+- [x] Count challenge/session requests before strict body-model validation so
+  malformed authentication JSON cannot bypass the existing fixed windows.
+- [x] Define a minimal content-addressed API security-event contract separate
+  from the release/project audit chain and free of tokens, signatures, request
+  bodies, private keys, and arbitrary headers.
+- [x] Add a bounded append-only SQLite v8 security-event journal with explicit
+  v7 migration, visible saturation, and stable cursor pages.
+- [x] Record authentication rejections/rate limits and successful logout,
+  scoped revocation, and fixed-path trust reload on a best-effort basis; require
+  global operator authority for REST queries.
+- [x] Commit JSON Schemas/OpenAPI, migration/privacy/abuse tests, architecture
+  and security documentation, and installed-wheel persistence smoke.
+- [ ] Define retention/export operations, durable/distributed sessions and rate
+  state, TLS/proxy identity, hostile-local-user controls, and
+  administrator-resistant logging before any non-loopback deployment.

@@ -222,6 +222,7 @@ def test_v5_migration_backfills_registration_profiles_without_fabricating_candid
     repository.create(legacy, idempotency_key="candidate:create:legacy-v5")
     with sqlite3.connect(repository.database_path) as connection:
         connection.execute("PRAGMA foreign_keys = OFF")
+        connection.execute("DROP TABLE api_security_events")
         connection.execute("DROP TRIGGER candidates_policy_material_requirement_guard_update")
         connection.execute("DROP TABLE candidate_policy_materials")
         connection.execute("ALTER TABLE candidates DROP COLUMN policy_material_required")

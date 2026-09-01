@@ -4,8 +4,9 @@ import re
 import uuid
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated
+from typing import Annotated, Literal
 
 from fastapi import Depends, FastAPI, Header, Query, Request, status
 from fastapi import Path as ApiPath
@@ -14,6 +15,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import ValidationError
 from starlette.middleware.base import RequestResponseEndpoint
 from starlette.responses import JSONResponse, Response
+from starlette.types import Message
 
 from forgegate import __version__
 from forgegate.api.auth import (
@@ -29,6 +31,7 @@ from forgegate.api.auth import (
 )
 from forgegate.api.models import ApiError, ApiErrorResponse, HealthResponse
 from forgegate.application import (
+    ApiSecurityEventQuery,
     AuditEventQuery,
     CandidateAdvanceCommand,
     CandidateApplication,
@@ -61,6 +64,11 @@ from forgegate.projects import (
     ProjectProfileRevision,
     RegisteredProject,
     RegisteredProjectPage,
+)
+from forgegate.security_events import (
+    ApiSecurityEventPage,
+    ApiSecurityEventType,
+    SecurityEventTargetType,
 )
 
 REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
@@ -95,7 +103,9 @@ def authenticated_principal_dependency(
     authorization = (
         f"{credentials.scheme} {credentials.credentials}" if credentials is not None else None
     )
-    return authenticator.authenticate(authorization)
+    principal = authenticator.authenticate(authorization)
+    request.state.authenticated_principal = principal
+    return principal
 
 
 def create_api_app(
@@ -146,6 +156,47 @@ def create_api_app(
         require_project(principal, candidate.project_id, write=write)
         return candidate
 
+    def record_security_event(
+        request: Request,
+        *,
+        event_type: ApiSecurityEventType,
+        occurred_at: datetime,
+        outcome_code: str,
+        actor: ApiPrincipal | None = None,
+        target_type: SecurityEventTargetType | None = None,
+        target_id: str | None = None,
+    ) -> None:
+        """Best-effort bounded telemetry; security controls never depend on this journal."""
+        try:
+            candidate_application.record_api_security_event(
+                event_type=event_type,
+                occurred_at=occurred_at,
+                request_id=_request_id(request),
+                outcome_code=outcome_code,
+                actor=actor.audit_actor() if actor is not None else None,
+                target_type=target_type,
+                target_id=target_id,
+            )
+        except (CandidateStoreError, ValidationError):
+            # The separate journal is explicitly bounded and non-compliance telemetry.
+            # A saturated/unavailable journal must not undo a completed session control
+            # or replace the original authentication failure.
+            return
+
+    def record_authentication_error(request: Request, exc: ApiAuthenticationError) -> None:
+        principal = getattr(request.state, "authenticated_principal", None)
+        record_security_event(
+            request,
+            event_type=(
+                ApiSecurityEventType.AUTHENTICATION_RATE_LIMITED
+                if exc.status_code == status.HTTP_429_TOO_MANY_REQUESTS
+                else ApiSecurityEventType.AUTHENTICATION_REJECTED
+            ),
+            occurred_at=datetime.now(UTC),
+            outcome_code=exc.code,
+            actor=principal if isinstance(principal, ApiPrincipal) else None,
+        )
+
     @app.middleware("http")
     async def correlation_id_middleware(
         request: Request,
@@ -194,6 +245,26 @@ def create_api_app(
                     "request body exceeds the 4 MiB local API limit",
                     request_id,
                 )
+        if authenticator is not None and request.method == "POST":
+            endpoint_kind: Literal["challenge", "session"] | None = None
+            if request.url.path == "/v1/auth/challenges":
+                endpoint_kind = "challenge"
+            elif request.url.path == "/v1/auth/sessions":
+                endpoint_kind = "session"
+            if endpoint_kind is not None:
+                try:
+                    authenticator.consume_endpoint_request(endpoint_kind)
+                except ApiAuthenticationError as exc:
+                    record_authentication_error(request, exc)
+                    return _authentication_error_response(exc, request_id)
+                request.state.auth_endpoint_rate_checked = True
+        if not await _buffer_request_body(request, MAX_REQUEST_BODY_BYTES):
+            return _error_response(
+                status.HTTP_413_CONTENT_TOO_LARGE,
+                "API_BODY_TOO_LARGE",
+                "request body exceeds the 4 MiB local API limit",
+                request_id,
+            )
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
         return response
@@ -215,17 +286,8 @@ def create_api_app(
         request: Request,
         exc: ApiAuthenticationError,
     ) -> JSONResponse:
-        response = _error_response(
-            exc.status_code,
-            exc.code,
-            _error_message(exc.code, str(exc)),
-            _request_id(request),
-        )
-        if exc.status_code == status.HTTP_401_UNAUTHORIZED:
-            response.headers["WWW-Authenticate"] = "Bearer"
-        if exc.retry_after_seconds is not None:
-            response.headers["Retry-After"] = str(exc.retry_after_seconds)
-        return response
+        record_authentication_error(request, exc)
+        return _authentication_error_response(exc, _request_id(request))
 
     @app.exception_handler(CandidateLifecycleError)
     async def candidate_lifecycle_error_handler(
@@ -286,14 +348,20 @@ def create_api_app(
         tags=["authentication"],
         responses=ERROR_RESPONSES,
     )
-    def create_auth_challenge_endpoint(command: ApiChallengeRequest) -> ApiAuthChallenge:
+    def create_auth_challenge_endpoint(
+        request: Request,
+        command: ApiChallengeRequest,
+    ) -> ApiAuthChallenge:
         if authenticator is None:
             raise ApiAuthenticationError(
                 "API_AUTHENTICATOR_UNAVAILABLE",
                 "runtime authenticator is unavailable",
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
-        return authenticator.issue_challenge(command)
+        return authenticator.issue_challenge(
+            command,
+            endpoint_rate_checked=bool(getattr(request.state, "auth_endpoint_rate_checked", False)),
+        )
 
     @app.post(
         "/v1/auth/sessions",
@@ -303,14 +371,20 @@ def create_api_app(
         tags=["authentication"],
         responses=ERROR_RESPONSES,
     )
-    def create_auth_session_endpoint(command: ApiSessionCreateRequest) -> ApiSessionResponse:
+    def create_auth_session_endpoint(
+        request: Request,
+        command: ApiSessionCreateRequest,
+    ) -> ApiSessionResponse:
         if authenticator is None:
             raise ApiAuthenticationError(
                 "API_AUTHENTICATOR_UNAVAILABLE",
                 "runtime authenticator is unavailable",
                 status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
-        return authenticator.create_session(command)
+        return authenticator.create_session(
+            command,
+            endpoint_rate_checked=bool(getattr(request.state, "auth_endpoint_rate_checked", False)),
+        )
 
     @app.delete(
         "/v1/auth/session",
@@ -320,10 +394,21 @@ def create_api_app(
         responses=ERROR_RESPONSES,
     )
     def logout_auth_session_endpoint(
+        request: Request,
         principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
     ) -> ApiSessionRevocationResponse:
         assert authenticator is not None
-        return authenticator.logout(principal)
+        result = authenticator.logout(principal)
+        record_security_event(
+            request,
+            event_type=ApiSecurityEventType.SESSION_LOGGED_OUT,
+            occurred_at=result.revoked_at,
+            outcome_code="API_SESSION_LOGGED_OUT",
+            actor=principal,
+            target_type=SecurityEventTargetType.SESSION,
+            target_id=result.session_id,
+        )
+        return result
 
     @app.delete(
         "/v1/auth/sessions/{session_id}",
@@ -333,11 +418,22 @@ def create_api_app(
         responses=ERROR_RESPONSES,
     )
     def revoke_auth_session_endpoint(
+        request: Request,
         session_id: Annotated[str, ApiPath(pattern=r"^sess-[0-9a-f]{32}$")],
         principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
     ) -> ApiSessionRevocationResponse:
         assert authenticator is not None
-        return authenticator.revoke_session(principal, session_id)
+        result = authenticator.revoke_session(principal, session_id)
+        record_security_event(
+            request,
+            event_type=ApiSecurityEventType.SESSION_REVOKED,
+            occurred_at=result.revoked_at,
+            outcome_code="API_SESSION_REVOKED",
+            actor=principal,
+            target_type=SecurityEventTargetType.SESSION,
+            target_id=result.session_id,
+        )
+        return result
 
     @app.post(
         "/v1/auth/trust-store/reload",
@@ -347,10 +443,21 @@ def create_api_app(
         responses=ERROR_RESPONSES,
     )
     def reload_api_trust_store_endpoint(
+        request: Request,
         principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
     ) -> ApiTrustStoreReloadResponse:
         assert authenticator is not None
-        return authenticator.reload_trust_store(principal)
+        result = authenticator.reload_trust_store(principal)
+        record_security_event(
+            request,
+            event_type=ApiSecurityEventType.TRUST_STORE_RELOADED,
+            occurred_at=result.reloaded_at,
+            outcome_code="API_TRUST_STORE_RELOADED",
+            actor=principal,
+            target_type=SecurityEventTargetType.TRUST_STORE,
+            target_id=result.trust_store_id,
+        )
+        return result
 
     @app.post(
         "/v1/projects",
@@ -520,6 +627,29 @@ def create_api_app(
                 limit=limit,
                 project_id=project_id,
                 candidate_id=candidate_id,
+            )
+        )
+
+    @app.get(
+        "/v1/security-events",
+        response_model=ApiSecurityEventPage,
+        operation_id="queryApiSecurityEvents",
+        tags=["security"],
+        responses=ERROR_RESPONSES,
+    )
+    def query_api_security_events_endpoint(
+        principal: Annotated[ApiPrincipal, Depends(authenticated_principal_dependency)],
+        after_sequence: Annotated[int, Query(ge=0)] = 0,
+        limit: Annotated[int, Query(ge=1, le=200)] = 100,
+        event_type: ApiSecurityEventType | None = None,
+    ) -> ApiSecurityEventPage:
+        assert authenticator is not None
+        authenticator.require_global_security_audit(principal)
+        return candidate_application.query_api_security_events(
+            ApiSecurityEventQuery(
+                after_sequence=after_sequence,
+                limit=limit,
+                event_type=event_type,
             )
         )
 
@@ -716,6 +846,54 @@ def _error_response(status_code: int, code: str, message: str, request_id: str) 
         content=payload,
         headers={"X-Request-ID": request_id},
     )
+
+
+def _authentication_error_response(
+    exc: ApiAuthenticationError,
+    request_id: str,
+) -> JSONResponse:
+    response = _error_response(
+        exc.status_code,
+        exc.code,
+        _error_message(exc.code, str(exc)),
+        request_id,
+    )
+    if exc.status_code == status.HTTP_401_UNAUTHORIZED:
+        response.headers["WWW-Authenticate"] = "Bearer"
+    if exc.retry_after_seconds is not None:
+        response.headers["Retry-After"] = str(exc.retry_after_seconds)
+    return response
+
+
+async def _buffer_request_body(request: Request, maximum_bytes: int) -> bool:
+    """Read and replay ASGI body chunks while enforcing the actual byte limit."""
+    messages: list[Message] = []
+    total = 0
+    while True:
+        message = await request.receive()
+        messages.append(message)
+        if message["type"] == "http.disconnect":
+            break
+        if message["type"] != "http.request":
+            continue
+        total += len(message.get("body", b""))
+        if total > maximum_bytes:
+            return False
+        if not message.get("more_body", False):
+            break
+
+    index = 0
+
+    async def replay_receive() -> Message:
+        nonlocal index
+        if index < len(messages):
+            message = messages[index]
+            index += 1
+            return message
+        return {"type": "http.request", "body": b"", "more_body": False}
+
+    request._receive = replay_receive
+    return True
 
 
 def _error_message(code: str, rendered: str) -> str:

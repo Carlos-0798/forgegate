@@ -75,6 +75,7 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_12_AUTHENTICATED_IDENTITY_FOUNDATION_ACCEPTANCE_REPORT.md",
     "reports/PHASE_13_AUTHENTICATED_LOCAL_API_ACCEPTANCE_REPORT.md",
     "reports/PHASE_14_LOCAL_SESSION_LIFECYCLE_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_15_LOCAL_API_SECURITY_BOUNDARIES_ACCEPTANCE_REPORT.md",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
@@ -100,6 +101,8 @@ REQUIRED_SDIST_PATHS = (
     "schemas/forgegate.audit-event.v1.schema.json",
     "schemas/forgegate.audit-event-page.v1.schema.json",
     "schemas/forgegate.audit-actor.v1.schema.json",
+    "schemas/forgegate.api-security-event.v1.schema.json",
+    "schemas/forgegate.api-security-event-page.v1.schema.json",
     "schemas/forgegate.openapi.v1.json",
     "schemas/forgegate.benchmark.v1.schema.json",
     "schemas/analog-validation.result-export.v1.schema.json",
@@ -334,6 +337,7 @@ def main() -> int:
             ("/v1/projects/{project_id}/revisions", "post"): "reviseProjectProfile",
             ("/v1/projects/{project_id}/candidates", "get"): "listProjectCandidates",
             ("/v1/audit-events", "get"): "queryAuditEvents",
+            ("/v1/security-events", "get"): "queryApiSecurityEvents",
             ("/v1/candidates/{candidate_id}/transitions", "post"): "advanceCandidate",
             ("/v1/candidates/{candidate_id}/evidence", "post"): "bindCandidateEvidence",
             ("/v1/candidates/{candidate_id}/evaluate", "post"): "evaluateCandidate",
@@ -871,6 +875,28 @@ def main() -> int:
                 str(trust_store_path),
                 str(identity_path),
                 str(private_key_path),
+            ],
+            cwd=root,
+        )
+        run(
+            [
+                str(python),
+                "-c",
+                (
+                    "import sys; from datetime import UTC, datetime; from pathlib import Path; "
+                    "from forgegate.candidates import SQLiteCandidateRepository; "
+                    "from forgegate.security_events import ApiSecurityEventType; "
+                    "repository=SQLiteCandidateRepository(Path(sys.argv[1]), "
+                    "security_event_capacity=1); repository.initialize(); "
+                    "event=repository.append_api_security_event("
+                    "event_type=ApiSecurityEventType.AUTHENTICATION_REJECTED, "
+                    "occurred_at=datetime(2026,8,31,22,0,tzinfo=UTC), "
+                    "request_id='release-smoke-request-01', "
+                    "outcome_code='API_SESSION_INVALID'); "
+                    "page=repository.api_security_events(); "
+                    "assert page.events == (event,) and page.saturated"
+                ),
+                str(root / "security-events.db"),
             ],
             cwd=root,
         )

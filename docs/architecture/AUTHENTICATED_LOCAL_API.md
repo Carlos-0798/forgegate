@@ -4,7 +4,9 @@
 
 Phase 13 adds caller authentication and project-scoped authorization to the
 existing local REST transport. Phase 14 adds explicit local session lifecycle,
-fixed-path trust reload, and bounded authentication request controls. Both
+fixed-path trust reload, and bounded authentication request controls. Phase 15
+adds parsing-independent request limits and a separate bounded security-event
+journal. These phases
 reuse the Phase 12 Ed25519 identity and external trust-store contracts; neither
 introduces passwords, a user database, remote identity federation, TLS
 termination, or non-loopback serving.
@@ -120,9 +122,9 @@ integer `Retry-After` value. A valid existing Bearer session is not blocked by
 the invalid-authentication counter.
 
 These limits do not trust `X-Forwarded-For` or claim per-user/per-process
-attribution; all local callers share the same service counters. Strict request
-models reject malformed challenge/session bodies before these endpoint-level
-counters run, so this is not a complete HTTP denial-of-service control.
+attribution; all local callers share the same service counters. Phase 15 counts
+challenge/session HTTP calls before strict body validation, including malformed
+JSON. This is still not a complete HTTP denial-of-service control.
 
 ## Residual boundary
 
@@ -131,9 +133,9 @@ values. Bearer traffic is not protected by TLS, so the design does not defend
 against a privileged local packet observer, hostile process under the same
 account, debugger, memory reader, or compromised host. There is no durable
 session or revocation store, distributed deployment, per-client network rate
-limiting, reverse-proxy trust, managed online trust distribution, durable
-authentication-control audit, or administrator-resistant protection.
+limiting, reverse-proxy trust, managed online trust distribution,
+security-event retention/completeness guarantee, or administrator-resistant protection.
 
-Trust-store custody/distribution remain external. Phase 14 is sufficient for
+Trust-store custody/distribution remain external. Phase 15 is sufficient for
 better controlled local integration testing, not for LAN, shared-host,
 internet, production, AFE runtime, or MSP430 access.
