@@ -2,13 +2,14 @@
 
 - Date: 2026-09-01
 - Version: 0.1.0.dev25
-- Stage: Phase 18 public execution-contract models locally verified; external
-  plugin import, runner, sandbox enforcement, and durable run storage absent
+- Stage: Phase 18 public execution-contract models locally and cross-platform
+  verified; external plugin import, runner, sandbox enforcement, and durable
+  run storage absent
 - Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, offline GitHub gating, bounded import-free plugin metadata discovery, and non-executing plugin run/protocol/state/result contracts; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
 - Remote/publication status: private `Carlos-0798/forgegate` synchronized
-  through the Phase 18 security-contract baseline; no public release, License, or
+  through the Phase 18 contract-model baseline; no public release, License, or
   LinkedIn publication authorized
 
 ## Implemented
@@ -356,11 +357,11 @@ artifact payload/replay export, and hardware access.
 - repository-external ForgeGate installation plus sample-plugin
   install/discover/uninstall independence smoke: PASS
 - Git Bash shell-script syntax check: PASS
-- latest completed GitHub Actions baseline: Phase 18 run 33566424223 PASS on
-  Windows, Ubuntu, and macOS; each platform completed `verify.py` with 699
-  tests and `release_smoke.py` for documentation/design commit
-  `3682361d9d3881ece12352048d2a5a19920bbae2`, and the dependent Ubuntu job passed
-  the real composite Action against the generic fixture
+- latest implementation GitHub Actions baseline: Phase 18 run 33569520396 PASS
+  on Windows, Ubuntu, and macOS; each platform completed `verify.py` over 706
+  collected tests and `release_smoke.py` for contract-model commit
+  `425038d363599d28fa33a4ae060441a6b0899c50`, and the dependent Ubuntu job
+  passed the real composite Action against the generic fixture
 - private GitHub synchronization: `main` pushed with noreply commit identity;
   repository visibility, default branch, About, and ten Topics read back
 

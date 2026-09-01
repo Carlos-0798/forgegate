@@ -9,11 +9,12 @@
 
 ## Outcome
 
-**LOCAL PASS for the Phase 18 public contract-model gate.** ForgeGate can now
+**PASS for the Phase 18 public contract-model gate.** ForgeGate can now
 construct, load, serialize, Schema-export, content-address, and replay-validate
-the documents that a future external-plugin broker must obey. No plugin entry
-point was imported, no subprocess was started, and no sandbox capability is
-claimed.
+the documents that a future external-plugin broker must obey. The same full
+verification and release smoke passed on Windows, Ubuntu, and macOS. No plugin
+entry point was imported, no subprocess was started, and no sandbox capability
+is claimed.
 
 ## Implemented contracts
 
@@ -57,11 +58,12 @@ validation path; this phase did not create output from external code.
 | JSON Schema drift | PASS — 35 document plus 2 artifact Schemas |
 | Public configuration loading | PASS — all four new document roots |
 | OpenAPI drift and existing examples | PASS |
+| Windows/Ubuntu/macOS CI | PASS — run [33569520396](https://github.com/Carlos-0798/forgegate/actions/runs/33569520396), commit `425038d363599d28fa33a4ae060441a6b0899c50` |
 
 The skipped tests require Windows symlink creation and are unrelated to plugin
-execution contracts. Cross-platform verification for this implementation slice
-is recorded only after the private GitHub workflow completes; prior CI does not
-prove these new models.
+execution contracts. Ubuntu and macOS exercised those paths. This CI proves the
+committed software verification and packaging commands ran on those hosts; it
+does not prove plugin execution, sandboxing, or production readiness.
 
 ## Remaining execution gates
 

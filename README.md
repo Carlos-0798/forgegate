@@ -85,7 +85,7 @@ collector rather than a runtime or hardware dependency.
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | Plugin discovery | 30 passed, 1 skipped; standalone wheel install/discover/uninstall passed | Local host test; code not loaded |
 | Plugin execution documents | 7 focused model/identity/chain/loader tests passed | Local host test; no process started |
-| GitHub Actions | Phase 18 documentation baseline passed `verify.py` and `release_smoke.py` on Windows, Ubuntu, and macOS; the generic composite Action smoke also passed | PASS — [run 33566424223](https://github.com/Carlos-0798/forgegate/actions/runs/33566424223) |
+| GitHub Actions | Phase 18 contract-model baseline passed `verify.py` and `release_smoke.py` on Windows, Ubuntu, and macOS; the generic composite Action smoke also passed | PASS — [run 33569520396](https://github.com/Carlos-0798/forgegate/actions/runs/33569520396) |
 | Hardware/device behavior | Not exercised by ForgeGate | Out of scope |
 
 ## Key design decisions

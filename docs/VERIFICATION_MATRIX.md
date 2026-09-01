@@ -19,7 +19,7 @@
 | mypy strict | package and verification tools | PASS |
 | Source distribution contents | manifest assertion | PASS |
 | Clean release installation | temporary sdist/wheel/venv smoke | PASS |
-| Windows/Linux/macOS CI | GitHub Actions | PASS — `verify.py` + `release_smoke.py`, Phase 18 run 33566424223 (`3682361`) |
+| Windows/Linux/macOS CI | GitHub Actions | PASS — `verify.py` + `release_smoke.py`, Phase 18 contract-model run 33569520396 (`425038d`) |
 | Artifact root and byte identity | unit/adversarial tests | PASS — local host |
 | Stable artifact read/change rejection | simulated metadata cases | PASS — local host |
 | Actual Windows symlink escape | privileged symlink fixture | NOT RUN — host disallowed symlink creation |
@@ -111,7 +111,7 @@
 | Plugin compatibility/failure isolation | compatible/incompatible/invalid/conflict cases | PASS — discovery metadata only; no runtime execution |
 | Plugin install/uninstall independence | standalone fixture wheel + clean ForgeGate wheel | PASS — local + three-platform clean-package smoke; no optional dependency retained |
 | Plugin execution security contract | exact upstream/license traceability + architecture/threat review | DESIGN PASS — protocol, permissions, isolation tiers, limits, errors, and audit semantics defined; no code loaded |
-| Plugin run-plan/protocol/transition/result contracts | model/identity/authority/chain/resource/Schema/loader tests | PASS — local host; 7 focused tests, four content-derived document Schemas, no process started |
+| Plugin run-plan/protocol/transition/result contracts | model/identity/authority/chain/resource/Schema/loader tests | PASS — local + three-platform CI; 7 focused tests, four content-derived document Schemas, no process started |
 | External plugin execution and audit | sandbox backend/permissions/timeouts/plugin_runs implementation | NOT IMPLEMENTED — no plugin callable is loaded |
 | Registered-project candidate authority | application/CLI/API/store tests | PASS — unregistered project and missing track fail closed |
 | Release-track normalization | underscore compatibility plus ambiguity tests | PASS — new candidate/policy identity is canonical hyphen form |
