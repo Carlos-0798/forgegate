@@ -56,8 +56,8 @@ temporary key.
 - OpenAPI 3.1 authentication/security contract: drift-checked
 - source distribution, wheel, clean-install challenge/sign/session and existing
   end-to-end release-assurance smoke: PASS
-- latest completed remote baseline before this implementation push: Phase 12
-  GitHub Actions run 33455212296 PASS on Windows, Ubuntu, and macOS
+- GitHub Actions run 33457321733 PASS on Windows, Ubuntu, and macOS for Phase
+  13 implementation commit `72dea57`
 
 ## Explicit limitations
 
