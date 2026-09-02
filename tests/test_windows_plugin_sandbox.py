@@ -114,7 +114,10 @@ def _successful_command(command: tuple[str, ...], _timeout: float) -> HostComman
     return HostCommandResult(0, json.dumps(payloads[key]).encode(), b"")
 
 
-def test_probe_fails_closed_for_non_windows_and_missing_runtime() -> None:
+def test_probe_fails_closed_for_non_windows_and_missing_runtime(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("forgegate.plugins.windows_sandbox.shutil.which", lambda _name: None)
     called = False
 
     def unexpected(_command: tuple[str, ...], _timeout: float) -> HostCommandResult:
