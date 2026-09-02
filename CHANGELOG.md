@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.1.0.dev26 — 2026-09-01
+
+- Selected a Windows-only rootless Podman/WSL2 backend direction and added a
+  strict content-derived sandbox capability report.
+- Added `forgegate plugins sandbox-status`, which fails closed for unsupported,
+  missing, unavailable, remote, non-WSL, or rootful runtime configurations
+  without importing a plugin or starting a container.
+- Added a shell-free digest-pinned Podman container-create specification with
+  read-only/private mounts, network/IPC/process denial, empty environment, and
+  CPU/memory/output controls.
+- The current host is readiness-blocked because WSL2 and Podman are absent;
+  external plugin execution remains prohibited until real Windows adversarial
+  verification, broker I/O, and durable run audit are complete.
+
 ## 0.1.0.dev25 — 2026-09-01
 
 - Added strict, content-derived Plugin API v1 run-plan, protocol-message,

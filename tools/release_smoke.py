@@ -44,6 +44,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/LOCAL_SESSION_LIFECYCLE.md",
     "docs/architecture/GITHUB_ACTIONS_GATE.md",
     "docs/architecture/PLUGIN_SDK_DISCOVERY.md",
+    "docs/architecture/WINDOWS_PLUGIN_SANDBOX.md",
     "examples/sample-python-api/artifacts/junit.xml",
     "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
@@ -88,6 +89,7 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_15_LOCAL_API_SECURITY_BOUNDARIES_ACCEPTANCE_REPORT.md",
     "reports/PHASE_16_GITHUB_ACTIONS_GATE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_17_PLUGIN_SDK_DISCOVERY_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_18_WINDOWS_SANDBOX_READINESS_REPORT.md",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
@@ -118,6 +120,7 @@ REQUIRED_SDIST_PATHS = (
     "schemas/forgegate.github-action-report.v1.schema.json",
     "schemas/forgegate.plugin-manifest.v1.schema.json",
     "schemas/forgegate.plugin-discovery.v1.schema.json",
+    "schemas/forgegate.windows-plugin-sandbox-capability.v1.schema.json",
     "schemas/forgegate.openapi.v1.json",
     "schemas/forgegate.benchmark.v1.schema.json",
     "schemas/analog-validation.result-export.v1.schema.json",
@@ -153,6 +156,7 @@ REQUIRED_SDIST_PATHS = (
     "tests/test_assurance_bundle.py",
     "tests/test_identity_signatures.py",
     "tests/test_plugins.py",
+    "tests/test_windows_plugin_sandbox.py",
 )
 FORBIDDEN_SDIST_PREFIXES = (
     "examples/plugin-sdk/sample-collector-plugin/build/",
@@ -271,6 +275,22 @@ def main() -> int:
         )
         if json.loads(empty_plugin_report.read_text(encoding="utf-8"))["total"] != 0:
             raise SystemExit("clean ForgeGate wheel unexpectedly discovered a plugin")
+        sandbox_report = root / "windows-sandbox-capability.json"
+        run_capture(
+            [str(python), "-m", "forgegate", "plugins", "sandbox-status"],
+            sandbox_report,
+            cwd=root,
+        )
+        sandbox_payload = json.loads(sandbox_report.read_text(encoding="utf-8"))
+        if (
+            sandbox_payload["external_plugin_execution"] != "PROHIBITED"
+            or sandbox_payload["advertised_isolation_tier"] != "NONE"
+        ):
+            raise SystemExit("installed sandbox probe advertised unverified execution")
+        run(
+            [str(python), "-m", "forgegate", "validate-config", str(sandbox_report)],
+            cwd=root,
+        )
         run(
             [
                 str(python),

@@ -1,0 +1,173 @@
+{
+  "$defs": {
+    "WindowsSandboxCapabilityReason": {
+      "enum": [
+        "NOT_WINDOWS",
+        "PODMAN_NOT_FOUND",
+        "PODMAN_COMMAND_FAILED",
+        "PODMAN_RESPONSE_INVALID",
+        "PODMAN_CONNECTION_NOT_LOCAL",
+        "PODMAN_PROVIDER_NOT_WSL2",
+        "PODMAN_RUNTIME_NOT_ROOTLESS",
+        "ADVERSARIAL_VERIFICATION_PENDING"
+      ],
+      "title": "WindowsSandboxCapabilityReason",
+      "type": "string"
+    },
+    "WindowsSandboxCapabilityStatus": {
+      "enum": [
+        "UNSUPPORTED_HOST",
+        "RUNTIME_MISSING",
+        "RUNTIME_UNAVAILABLE",
+        "RUNTIME_INCOMPATIBLE",
+        "READY_FOR_ADVERSARIAL_VERIFICATION"
+      ],
+      "title": "WindowsSandboxCapabilityStatus",
+      "type": "string"
+    },
+    "WindowsSandboxControl": {
+      "enum": [
+        "local-wsl2-machine",
+        "rootless-runtime",
+        "pinned-image",
+        "read-only-root",
+        "private-input-mount",
+        "bounded-private-output",
+        "network-deny",
+        "subprocess-deny",
+        "empty-environment",
+        "cpu-limit",
+        "memory-limit",
+        "total-timeout",
+        "bounded-log-capture",
+        "cleanup"
+      ],
+      "title": "WindowsSandboxControl",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Host probe only; this document never authorizes external plugin execution.",
+  "properties": {
+    "advertised_isolation_tier": {
+      "const": "NONE",
+      "default": "NONE",
+      "title": "Advertised Isolation Tier",
+      "type": "string"
+    },
+    "backend": {
+      "const": "windows-podman-wsl2",
+      "default": "windows-podman-wsl2",
+      "title": "Backend",
+      "type": "string"
+    },
+    "backend_contract_version": {
+      "const": "1.0.0",
+      "default": "1.0.0",
+      "title": "Backend Contract Version",
+      "type": "string"
+    },
+    "capability_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Capability Id",
+      "type": "string"
+    },
+    "external_plugin_execution": {
+      "const": "PROHIBITED",
+      "default": "PROHIBITED",
+      "title": "External Plugin Execution",
+      "type": "string"
+    },
+    "host_architecture": {
+      "maxLength": 32,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._-]+$",
+      "title": "Host Architecture",
+      "type": "string"
+    },
+    "host_os": {
+      "maxLength": 32,
+      "minLength": 1,
+      "pattern": "^[A-Za-z0-9._-]+$",
+      "title": "Host Os",
+      "type": "string"
+    },
+    "issue_code": {
+      "const": "PLUGIN_ISOLATION_UNAVAILABLE",
+      "default": "PLUGIN_ISOLATION_UNAVAILABLE",
+      "title": "Issue Code",
+      "type": "string"
+    },
+    "local_transport": {
+      "title": "Local Transport",
+      "type": "boolean"
+    },
+    "observed_controls": {
+      "items": {
+        "$ref": "#/$defs/WindowsSandboxControl"
+      },
+      "title": "Observed Controls",
+      "type": "array"
+    },
+    "reason": {
+      "$ref": "#/$defs/WindowsSandboxCapabilityReason"
+    },
+    "required_controls": {
+      "items": {
+        "$ref": "#/$defs/WindowsSandboxControl"
+      },
+      "title": "Required Controls",
+      "type": "array"
+    },
+    "rootless_runtime": {
+      "title": "Rootless Runtime",
+      "type": "boolean"
+    },
+    "runtime_name": {
+      "const": "podman",
+      "default": "podman",
+      "title": "Runtime Name",
+      "type": "string"
+    },
+    "runtime_version": {
+      "anyOf": [
+        {
+          "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+(?:[-+][0-9A-Za-z.-]+)?$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Runtime Version"
+    },
+    "schema_version": {
+      "const": "forgegate.windows-plugin-sandbox-capability.v1",
+      "default": "forgegate.windows-plugin-sandbox-capability.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "$ref": "#/$defs/WindowsSandboxCapabilityStatus"
+    },
+    "wsl2_provider": {
+      "title": "Wsl2 Provider",
+      "type": "boolean"
+    }
+  },
+  "required": [
+    "capability_id",
+    "host_os",
+    "host_architecture",
+    "status",
+    "reason",
+    "rootless_runtime",
+    "local_transport",
+    "wsl2_provider",
+    "required_controls",
+    "observed_controls"
+  ],
+  "title": "WindowsSandboxCapabilityReport",
+  "type": "object"
+}

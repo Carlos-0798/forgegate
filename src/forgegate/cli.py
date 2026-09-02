@@ -91,7 +91,11 @@ from forgegate.identity import (
     verify_assurance_signature,
 )
 from forgegate.network import validated_loopback_host
-from forgegate.plugins import PluginDiscoveryError, discover_plugins
+from forgegate.plugins import (
+    PluginDiscoveryError,
+    discover_plugins,
+    probe_windows_podman_sandbox,
+)
 from forgegate.policy import PolicyMaterial, evaluate_policy
 from forgegate.policy.models import (
     PolicyEvaluation,
@@ -126,7 +130,7 @@ def doctor() -> None:
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
         "supported_artifact_schemas": sorted(ARTIFACT_SCHEMAS),
-        "phase": "phase18-plugin-execution-contract-models",
+        "phase": "phase18-windows-sandbox-readiness",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 
@@ -234,6 +238,13 @@ def plugins_list() -> None:
     except (PluginDiscoveryError, ValueError) as exc:
         typer.echo(f"ERROR: {exc}", err=True)
         raise typer.Exit(code=3) from exc
+    typer.echo(report.model_dump_json(indent=2))
+
+
+@plugins_app.command("sandbox-status")
+def plugins_sandbox_status() -> None:
+    """Probe Windows Podman/WSL2 readiness without executing plugin code."""
+    report = probe_windows_podman_sandbox()
     typer.echo(report.model_dump_json(indent=2))
 
 

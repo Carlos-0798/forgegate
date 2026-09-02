@@ -397,6 +397,21 @@ These are design requirements only. No external plugin process is currently
 started and no sandbox, grant, quota, or `plugin_runs` persistence claim is
 made.
 
+## Implemented in the Windows sandbox-readiness slice
+
+| Threat | Current control |
+|---|---|
+| Missing runtime silently downgrades isolation | Content-derived capability report returns `PLUGIN_ISOLATION_UNAVAILABLE`, execution `PROHIBITED`, and tier `NONE` |
+| Remote or privileged container runtime is mistaken for local rootless isolation | Probe requires exactly one default loopback SSH connection, a running WSL provider, and rootless Podman |
+| Plugin-controlled text injects host shell syntax | Builder returns a fixed argument tuple and invokes no shell; names, image digest, paths, and runner arguments are bounded |
+| Mutable image changes the sandbox payload | Builder accepts only an exact `@sha256:` OCI reference and disables pulling during create |
+| Host workspace or output is broadly writable | Only separate broker-owned non-reparse input/control roots are mounted read-only; output is a bounded private tmpfs |
+| Readiness is mistaken for verified isolation | Every capability report retains `PROHIBITED`/`NONE`; actual hostile-container verification is still mandatory |
+
+The current Windows host has no WSL2/Podman runtime, so these controls prove
+only fail-closed probing and command construction. They do not prove OCI
+isolation or authorize external plugin execution.
+
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;

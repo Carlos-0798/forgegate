@@ -1,11 +1,11 @@
 # Project status
 
 - Date: 2026-09-01
-- Version: 0.1.0.dev25
-- Stage: Phase 18 public execution-contract models locally and cross-platform
-  verified; external plugin import, runner, sandbox enforcement, and durable
-  run storage absent
-- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, offline GitHub gating, bounded import-free plugin metadata discovery, and non-executing plugin run/protocol/state/result contracts; not production-ready
+- Version: 0.1.0.dev26
+- Stage: Phase 18 Windows sandbox readiness/code gate implemented; WSL2/Podman
+  hostile-runtime verification, plugin runner, broker, and durable run storage
+  remain absent
+- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, offline GitHub gating, bounded import-free plugin metadata discovery, non-executing plugin contracts, and a fail-closed Windows sandbox prerequisite probe; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
 - Remote/publication status: private `Carlos-0798/forgegate` synchronized
@@ -289,6 +289,16 @@
 - public configuration loading, four generated JSON Schemas, Schema drift
   checks, and adversarial identity/authority/state/resource tests for those
   documents without importing or starting plugin code.
+- content-derived `forgegate.windows-plugin-sandbox-capability.v1` reports that
+  retain execution `PROHIBITED` and isolation tier `NONE` for every probe;
+- bounded `plugins sandbox-status` inspection requiring Windows, exactly one
+  default local-loopback Podman connection, a running WSL provider, and a
+  rootless runtime before reporting readiness for adversarial verification;
+- shell-free, digest-pinned Podman create arguments with no network, isolated
+  IPC, read-only root, dropped capabilities, no-new-privileges, PID/memory/CPU
+  limits, non-root identity, read-only broker inputs, and bounded private tmpfs;
+- fail-closed tests for missing/failed/malformed/remote/rootful/non-WSL runtime
+  states and unsafe image/name/path/plan/resource inputs; no container started.
 
 ## Designed, not implemented
 
@@ -296,8 +306,9 @@
   untrusted plugin, content-addressed inputs, and core-authored audit;
 - out-of-process runner and broker implementation for the modeled bounded
   protocol and broker-owned input/output handling;
-- operating-system enforcement for the modeled deny-by-default permissions,
-  `SANDBOXED` isolation tier, and mandatory resource limits;
+- actual Windows WSL2/Podman hostile-fixture enforcement for the modeled
+  deny-by-default permissions, `SANDBOXED` isolation tier, and mandatory
+  resource limits;
 - durable append-only run storage, crash recovery, and idempotent replay over
   the implemented transition/result contracts;
 - exact upstream reference review with three shallow external clones and two
@@ -310,7 +321,7 @@ defense, managed online revocation, durable/distributed sessions, per-client
 network rate controls, distributed rate state, HTTP artifact collection and
 file publication, complete rejected-request/warning ingestion, security/audit
 export/retention, administrator-resistant logging,
-external plugin execution, sandbox backend, permission/resource enforcement,
+external plugin execution, verified sandbox backend, permission/resource enforcement,
 and durable run-audit implementation,
 custom GitHub Checks/PR annotations/API writes,
 managed/encrypted/hardware-backed key custody, trusted timestamps, online
@@ -326,8 +337,8 @@ artifact payload/replay export, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 703 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 96.59% across 7,315 statements and 1,982 branches
+- pytest: 715 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 96.26% across 7,588 statements and 2,074 branches
 - Plugin execution contract focus: 7 passed across plan authority, protocol
   sequencing, legal transitions, terminal replay, resource limits, JSON
   loading, and content-derived identity; no process started
@@ -351,9 +362,12 @@ artifact payload/replay export, and hardware access.
   and 138 branches
 - committed JSON Schema and OpenAPI drift checks: PASS
 - project/policy/candidate/transition example documents: VALID
-- thirty-five canonical versioned document Schemas plus Benchmark and Analog
+- thirty-six canonical versioned document Schemas plus Benchmark and Analog
   Validation artifact Schemas: drift-checked and parsed
 - complete sdist manifest and ForgeGate/sample-plugin wheel builds: PASS
+- Windows sandbox readiness focus: 12 passed across probe failure isolation,
+  content identity, rootless/local/WSL requirements, command controls, public
+  loading, and CLI behavior; current host remains `RUNTIME_MISSING`
 - repository-external ForgeGate installation plus sample-plugin
   install/discover/uninstall independence smoke: PASS
 - Git Bash shell-script syntax check: PASS
@@ -395,3 +409,5 @@ acceptance are recorded in
 `reports/PHASE_18_ENVIRONMENT_REFERENCE_AND_EXECUTION_CONTRACT_REPORT.md`.
 The implemented public model slice is recorded separately in
 `reports/PHASE_18_PLUGIN_EXECUTION_CONTRACT_MODELS_ACCEPTANCE_REPORT.md`.
+The Windows-only readiness gate and administrator boundary are recorded in
+`reports/PHASE_18_WINDOWS_SANDBOX_READINESS_REPORT.md`.

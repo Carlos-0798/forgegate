@@ -21,6 +21,7 @@ local clone. The reference area is not part of this repository.
 | [pluggy](https://github.com/pytest-dev/pluggy) | `4821148db2f4c6daa62ad8bdcae2918ecf27a731` | MIT | shallow clone | explicit hook specification/implementation validation and API evolution |
 | [Open Policy Agent](https://github.com/open-policy-agent/opa) | `88c2ee0cdc9087ab1c3f09b95fa2b9ba5c8f69f5` | Apache-2.0 | not cloned | policy decision separated from enforcement and application I/O |
 | [OpenSSF Scorecard](https://github.com/ossf/scorecard) | `d1fab88f54636ff366076edfc5c239f97b3c8e66` | Apache-2.0 | not cloned | check-specific results, evidence-aware claims, least-privilege CI review |
+| [Podman](https://github.com/containers/podman) | `3a2e1c7e9c15a218768206af59ab2974271ebf4f` (`v5.8.3`) | Apache-2.0 | not cloned | rootless Windows/WSL2 OCI runtime, network/filesystem/process/resource isolation flags |
 
 The revisions above identify the exact snapshots inspected on 2026-09-01.
 They are not dependency pins and ForgeGate does not automatically update them.
@@ -36,6 +37,9 @@ They are not dependency pins and ForgeGate does not automatically update them.
   general security or release claim.
 - Retain exact upstream revision and license metadata for reproducible design
   review.
+- Use a local rootless WSL2 Podman machine as the initial Windows-only sandbox
+  candidate; require a digest-pinned image and adversarial host proof before
+  advertising the backend.
 
 These ideas are implemented only as the design decisions in
 [`PLUGIN_EXECUTION_SECURITY_CONTRACT.md`](../architecture/PLUGIN_EXECUTION_SECURITY_CONTRACT.md).
@@ -55,9 +59,9 @@ runtime integration is claimed.
   interoperability tests, and terminology review.
 - **Automatic upstream scoring:** Scorecard heuristics are useful review input,
   but a score does not replace ForgeGate's artifact-bound verification.
-- **Immediate sandbox dependency:** Docker, a VM, or an OS-specific sandbox was
-  not installed. The execution contract requires an enforcing backend to prove
-  its capabilities before external code can run.
+- **Unverified runtime as a sandbox:** WSL2 and Podman are not installed on the
+  current host. Capability probing and command construction do not authorize
+  execution; the backend must prove every required denial and resource limit.
 - **Source reuse or vendoring:** no third-party implementation code is imported;
   any future reuse requires an explicit dependency/license review.
 

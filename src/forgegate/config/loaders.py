@@ -23,6 +23,7 @@ from forgegate.plugins import (
     PluginRunPlan,
     PluginRunResult,
     PluginRunTransition,
+    WindowsSandboxCapabilityReport,
 )
 from forgegate.policy import PolicyMaterial
 from forgegate.policy.models import PolicyEvaluation, ProfileAuthorizedPolicyEvaluation
@@ -58,6 +59,7 @@ type SupportedConfig = (
     | PluginProtocolMessage
     | PluginRunTransition
     | PluginRunResult
+    | WindowsSandboxCapabilityReport
 )
 
 SCHEMA_MODELS: dict[str, type[SupportedConfig]] = {
@@ -87,6 +89,7 @@ SCHEMA_MODELS: dict[str, type[SupportedConfig]] = {
     "forgegate.plugin-protocol-message.v1": PluginProtocolMessage,
     "forgegate.plugin-run-transition.v1": PluginRunTransition,
     "forgegate.plugin-run-result.v1": PluginRunResult,
+    "forgegate.windows-plugin-sandbox-capability.v1": WindowsSandboxCapabilityReport,
 }
 
 

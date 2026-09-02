@@ -35,12 +35,30 @@ from forgegate.plugins.models import (
     create_plugin_manifest,
 )
 from forgegate.plugins.service import PluginDiscoveryError, discover_plugins
+from forgegate.plugins.windows_sandbox import (
+    WINDOWS_PODMAN_BACKEND,
+    WINDOWS_PODMAN_BACKEND_VERSION,
+    WINDOWS_SANDBOX_PROBE_IMAGE,
+    HostCommandResult,
+    WindowsSandboxCapabilityReason,
+    WindowsSandboxCapabilityReport,
+    WindowsSandboxCapabilityStatus,
+    WindowsSandboxControl,
+    WindowsSandboxError,
+    build_windows_podman_create_command,
+    create_windows_sandbox_capability_report,
+    probe_windows_podman_sandbox,
+)
 
 __all__ = [
     "PLUGIN_API_VERSION",
     "PLUGIN_ENTRY_POINT_GROUP",
     "PLUGIN_PROTOCOL_VERSION",
+    "WINDOWS_PODMAN_BACKEND",
+    "WINDOWS_PODMAN_BACKEND_VERSION",
+    "WINDOWS_SANDBOX_PROBE_IMAGE",
     "DiscoveredPlugin",
+    "HostCommandResult",
     "PluginCapability",
     "PluginDiscoveryError",
     "PluginDiscoveryIssue",
@@ -62,6 +80,12 @@ __all__ = [
     "PluginRunSubject",
     "PluginRunTransition",
     "PluginValidatedOutput",
+    "WindowsSandboxCapabilityReason",
+    "WindowsSandboxCapabilityReport",
+    "WindowsSandboxCapabilityStatus",
+    "WindowsSandboxControl",
+    "WindowsSandboxError",
+    "build_windows_podman_create_command",
     "create_plugin_discovery_report",
     "create_plugin_manifest",
     "create_plugin_protocol_message",
@@ -69,6 +93,8 @@ __all__ = [
     "create_plugin_run_result",
     "create_plugin_run_transition",
     "create_plugin_validated_output",
+    "create_windows_sandbox_capability_report",
     "discover_plugins",
     "plugin_output_set_id",
+    "probe_windows_podman_sandbox",
 ]

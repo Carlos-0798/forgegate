@@ -43,6 +43,12 @@ Phase 18 adds `forgegate.plugin-run-plan.v1.schema.json`,
 authority, bounded-message, state-chain, and validated-result documents. They
 do not provide a runner, sandbox, permission enforcement, or durable run store.
 
+The Windows readiness slice adds
+`forgegate.windows-plugin-sandbox-capability.v1.schema.json`. It records a
+sanitized, content-derived Podman/WSL2 host probe while mandatory fields keep
+external plugin execution `PROHIBITED` and the advertised isolation tier
+`NONE`. Runtime readiness is not adversarial sandbox verification.
+
 `forgegate.evidence-bundle-assembly.v1.schema.json` describes the audited
 envelope around a candidate-bound evidence bundle and its collection receipts.
 It is accepted by configuration validation and policy evaluation without

@@ -266,7 +266,12 @@
   same-process third-party plugin execution.
 - [x] Implement strict run-plan, protocol-message, transition, and result
   models with JSON Schemas and content-derived identities.
-- [ ] Implement and adversarially verify a `SANDBOXED` backend on each platform
-  that will be advertised as supporting external plugins.
+- [x] Select a Windows-only rootless Podman/WSL2 backend, implement a strict
+  capability report, and build a fail-closed digest-pinned container-create
+  specification without executing plugin code.
+- [ ] Enable WSL2/Podman and adversarially verify the backend on the actual
+  Windows host before advertising `SANDBOXED` or executing external plugins.
+- [ ] Keep Linux/macOS external-plugin backends explicitly unsupported unless
+  the owner later expands the intended deployment platforms.
 - [ ] Implement append-only `plugin_runs`, crash recovery, broker-owned staged
   inputs, output re-registration, and clean-wheel hostile-fixture tests.
