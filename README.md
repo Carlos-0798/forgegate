@@ -8,8 +8,9 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 18 Windows sandbox readiness gate implemented; this host still lacks
-WSL2/Podman, so plugin execution remains prohibited; not production-ready.**
+**Phase 19 Windows sandbox controls verified with ForgeGate-owned hostile
+fixtures; production external-plugin execution remains prohibited; not
+production-ready.**
 
 This private-development checkpoint provides a working Python 3.12 CLI and an
 Ed25519-authenticated, project-authorized, loopback-only REST API. Its strongest
@@ -70,7 +71,7 @@ current immutable project profile -> profile-bound release candidate
  approved authority -> content-addressed run/protocol/state/result documents
                               |
                               v
-   Windows Podman/WSL2 capability probe -> prohibited until hostile proof
+ Windows Podman/WSL2 hostile control proof -> production broker still required
 ```
 
 The core remains domain-neutral. Analog Validation Studio is consumed only
@@ -81,14 +82,15 @@ collector rather than a runtime or hardware dependency.
 
 | Gate | Result | Evidence level |
 |---|---|---|
-| Python tests | 715 passed, 3 skipped because Windows symlink creation was unavailable | Local host test |
-| Branch-aware coverage | 96.26% across 7,588 statements and 2,074 branches | Local host test |
-| Static quality gates | Ruff, formatting, and strict mypy passed | Local host test |
+| Python tests | 723 passed, 3 skipped because Windows symlink creation was unavailable | Local host test |
+| Branch-aware coverage | 96.23% across 7,601 statements and 2,082 branches | Local host test |
+| Static quality gates | Ruff, formatting, and strict mypy passed across 67 source/tool files | Local host test |
 | Contracts | 36 document and 2 artifact JSON Schemas plus OpenAPI passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | Plugin discovery | 30 passed, 1 skipped; standalone wheel install/discover/uninstall passed | Local host test; code not loaded |
 | Plugin execution documents | 7 focused model/identity/chain/loader tests passed | Local host test; no process started |
-| Windows sandbox readiness | 12 focused probe/model/command/CLI tests passed; current host reports `RUNTIME_MISSING` | Local host code test; execution remains `PROHIBITED`, tier `NONE` |
+| Windows sandbox readiness | 20 focused probe/model/command/verifier tests passed; Podman client/server 5.8.6 match | Local host test; execution remains `PROHIBITED`, tier `NONE` |
+| Windows sandbox enforcement | All 14 required controls passed fixed hostile fixtures; [raw evidence](reports/PHASE_19_WINDOWS_SANDBOX_LIVE_EVIDENCE.json) | Live local WSL2/Podman test; not an external-plugin or production-broker test |
 | GitHub Actions | Phase 18 contract-model baseline passed `verify.py` and `release_smoke.py` on Windows, Ubuntu, and macOS; the generic composite Action smoke also passed | PASS — [run 33569520396](https://github.com/Carlos-0798/forgegate/actions/runs/33569520396) |
 | Hardware/device behavior | Not exercised by ForgeGate | Out of scope |
 
@@ -133,8 +135,9 @@ collector rather than a runtime or hardware dependency.
   imports entry-point modules, and reports compatibility separately from code
   execution or publisher trust.
 - Initial external-plugin isolation is scoped to a Windows host using a local
-  rootless Podman/WSL2 machine. Readiness never becomes a sandbox claim until
-  hostile filesystem/network/process/environment/resource tests pass.
+  rootless Podman/WSL2 machine. Low-level controls passed fixed hostile
+  fixtures, but no external plugin may run until the production broker,
+  protocol, output validation, and durable audit path are implemented.
 - Upstream AFE or future MSP430 results retain their original evidence level;
   ForgeGate does not relabel software or replay evidence as physical proof.
 
@@ -326,9 +329,10 @@ Implemented and host-verified in this checkpoint:
   result contracts with exact manifest authority, `SANDBOXED`-only planning,
   resource limits, stable issues, and complete state-chain validation; these
   are public documents, not an execution or isolation implementation.
-- a content-derived Windows Podman/WSL2 capability report plus a strict,
-  shell-free, digest-pinned container-create specification; the current host
-  reports the runtime missing and the implementation starts no container.
+- a content-derived Windows Podman/WSL2 capability report, strict shell-free
+  digest-pinned container-create specification, and development-only live
+  verifier whose 14 required controls passed ForgeGate-owned hostile fixtures;
+  the production path still starts no external plugin.
 
 
 </details>
@@ -365,8 +369,16 @@ container:
 .\.venv\Scripts\python.exe -m forgegate plugins sandbox-status
 ```
 
-`READY_FOR_ADVERSARIAL_VERIFICATION` is still non-executable readiness. Only a
-later committed hostile-runtime verification may change the advertised tier.
+`READY_FOR_ADVERSARIAL_VERIFICATION` is still non-executable readiness. On a
+prepared developer host, rerun the fixed hostile fixtures with:
+
+```powershell
+.\.venv\Scripts\python.exe tools\verify_windows_sandbox_live.py
+```
+
+Even a passing development report keeps external execution `PROHIBITED` and
+the advertised tier `NONE`; only the later production broker gate may change
+those claims.
 
 Start the local API against an existing or new local candidate database:
 
@@ -720,8 +732,9 @@ Not implemented yet:
 - non-loopback or TLS-protected API deployment;
 - HTTP artifact collection or filesystem publication;
 - complete rejected-request ingestion, security/audit export and retention,
-  verified Windows sandbox enforcement, external plugin execution, broker I/O, durable
-  `plugin_runs`, or custom GitHub Checks/PR annotations/API integration;
+  production Windows broker/runner authorization, external plugin execution,
+  broker I/O, durable `plugin_runs`, or custom GitHub Checks/PR annotations/API
+  integration;
 - database-file authorization, backup/repair, managed or hardware-backed key
   custody, managed online revocation, durable/distributed session authority,
   trusted timestamps, or CI workload identity federation;
@@ -758,9 +771,10 @@ durable-store controls and still loads no plugin code. See
 [`docs/architecture/PLUGIN_EXECUTION_SECURITY_CONTRACT.md`](docs/architecture/PLUGIN_EXECUTION_SECURITY_CONTRACT.md)
 and the exact upstream review in
 [`docs/research/OPEN_SOURCE_REFERENCE_REVIEW.md`](docs/research/OPEN_SOURCE_REFERENCE_REVIEW.md).
-The Windows readiness slice adds only a rootless Podman/WSL2 capability gate
-and fail-closed container specification. The actual host lacks both components,
-so the report remains `PLUGIN_ISOLATION_UNAVAILABLE`; see
+Phase 19 installs and pins the local Windows runtime, requires matching client
+and server versions, and exercises the low-level controls with fixed hostile
+fixtures. This is not the production broker, protocol, output-schema, or
+durable-audit path, so external plugins remain prohibited; see
 [`docs/architecture/WINDOWS_PLUGIN_SANDBOX.md`](docs/architecture/WINDOWS_PLUGIN_SANDBOX.md).
 SHA-256 is not producer authentication.
 The MSP430 controller may later expose a separate versioned artifact for
@@ -771,9 +785,10 @@ another optional collector.
 Phase 17 adds a strict Plugin API v1 manifest and import-free installed
 entry-point discovery with explicit compatibility and conflict reporting.
 Phase 18 freezes the security contract and implements its public content-
-addressed documents plus the non-executing Windows sandbox readiness gate. WSL2
-and Podman hostile verification, the runner, broker I/O, and durable run records
-remain separate implementation work. Custom GitHub API
+addressed documents plus the non-executing Windows sandbox readiness gate.
+Phase 19 verifies the Windows low-level sandbox controls with fixed hostile
+fixtures. The production runner, broker I/O, schema validation, and durable run
+records remain separate implementation work. Custom GitHub API
 writes, annotations, signed CI provenance, OIDC, and artifact upload also
 remain separate. TLS, reverse-proxy identity, hostile-local-user defenses,
 durable/distributed session state, security-event retention/export, and managed

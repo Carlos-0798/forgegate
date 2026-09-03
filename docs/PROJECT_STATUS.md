@@ -1,15 +1,15 @@
 # Project status
 
-- Date: 2026-09-01
-- Version: 0.1.0.dev26
-- Stage: Phase 18 Windows sandbox readiness/code gate implemented; WSL2/Podman
-  hostile-runtime verification, plugin runner, broker, and durable run storage
-  remain absent
-- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, offline GitHub gating, bounded import-free plugin metadata discovery, non-executing plugin contracts, and a fail-closed Windows sandbox prerequisite probe; not production-ready
+- Date: 2026-09-03
+- Version: 0.1.0.dev27
+- Stage: Phase 19 Windows low-level sandbox controls verified with fixed hostile
+  fixtures; production plugin runner, broker, schema validation, and durable run
+  storage remain absent
+- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, offline GitHub gating, bounded import-free plugin metadata discovery, non-executing plugin contracts, and a live-tested Windows sandbox control harness; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
 - Remote/publication status: private `Carlos-0798/forgegate` synchronized
-  through the Phase 18 contract-model baseline; no public release, License, or
+  through the Phase 18 baseline before this checkpoint; no public release, License, or
   LinkedIn publication authorized
 
 ## Implemented
@@ -293,12 +293,18 @@
   retain execution `PROHIBITED` and isolation tier `NONE` for every probe;
 - bounded `plugins sandbox-status` inspection requiring Windows, exactly one
   default local-loopback Podman connection, a running WSL provider, and a
-  rootless runtime before reporting readiness for adversarial verification;
+  rootless runtime with matching client/server versions before reporting
+  readiness for adversarial verification;
 - shell-free, digest-pinned Podman create arguments with no network, isolated
   IPC, read-only root, dropped capabilities, no-new-privileges, PID/memory/CPU
   limits, non-root identity, read-only broker inputs, and bounded private tmpfs;
-- fail-closed tests for missing/failed/malformed/remote/rootful/non-WSL runtime
-  states and unsafe image/name/path/plan/resource inputs; no container started.
+- fail-closed tests for missing/failed/malformed/version-mismatched/remote/
+  rootful/non-WSL runtime states and unsafe image/name/path/plan/resource inputs;
+- a development-only hostile verifier whose fixed fixtures passed all 14
+  required filesystem, network, process, environment, resource, output, log,
+  image, runtime, and cleanup controls on Podman/WSL2 5.8.6;
+- exact raw live evidence with no host path, username, email, token, key, or
+  hardware data; external execution remains `PROHIBITED` and tier `NONE`.
 
 ## Designed, not implemented
 
@@ -306,9 +312,8 @@
   untrusted plugin, content-addressed inputs, and core-authored audit;
 - out-of-process runner and broker implementation for the modeled bounded
   protocol and broker-owned input/output handling;
-- actual Windows WSL2/Podman hostile-fixture enforcement for the modeled
-  deny-by-default permissions, `SANDBOXED` isolation tier, and mandatory
-  resource limits;
+- production Windows broker/runner integration over the modeled protocol,
+  grants, output validation, and `SANDBOXED` authorization gate;
 - durable append-only run storage, crash recovery, and idempotent replay over
   the implemented transition/result contracts;
 - exact upstream reference review with three shallow external clones and two
@@ -321,8 +326,8 @@ defense, managed online revocation, durable/distributed sessions, per-client
 network rate controls, distributed rate state, HTTP artifact collection and
 file publication, complete rejected-request/warning ingestion, security/audit
 export/retention, administrator-resistant logging,
-external plugin execution, verified sandbox backend, permission/resource enforcement,
-and durable run-audit implementation,
+external plugin execution, production broker-backed sandbox authorization,
+output-schema/race validation, and durable run-audit implementation,
 custom GitHub Checks/PR annotations/API writes,
 managed/encrypted/hardware-backed key custody, trusted timestamps, online
 revocation, CI workload identity federation, database authorization,
@@ -337,8 +342,8 @@ artifact payload/replay export, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 715 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 96.26% across 7,588 statements and 2,074 branches
+- pytest: 723 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 96.23% across 7,601 statements and 2,082 branches
 - Plugin execution contract focus: 7 passed across plan authority, protocol
   sequencing, legal transitions, terminal replay, resource limits, JSON
   loading, and content-derived identity; no process started
@@ -365,9 +370,13 @@ artifact payload/replay export, and hardware access.
 - thirty-six canonical versioned document Schemas plus Benchmark and Analog
   Validation artifact Schemas: drift-checked and parsed
 - complete sdist manifest and ForgeGate/sample-plugin wheel builds: PASS
-- Windows sandbox readiness focus: 12 passed across probe failure isolation,
-  content identity, rootless/local/WSL requirements, command controls, public
-  loading, and CLI behavior; current host remains `RUNTIME_MISSING`
+- Windows sandbox focus: 20 passed across probe failure isolation, client/server
+  identity, rootless/local/WSL requirements, command controls, strict verifier
+  JSON/output handling, public loading, and CLI behavior
+- Windows hostile-runtime controls: 14/14 PASS with Podman client/server 5.8.6;
+  raw report ID
+  `sha256:5296f70996ff9928d54557fb97c2e667f15ccdd67ff989b85b518260cb3db38d`;
+  fixed ForgeGate fixtures only, no external plugin or hardware action
 - repository-external ForgeGate installation plus sample-plugin
   install/discover/uninstall independence smoke: PASS
 - Git Bash shell-script syntax check: PASS
@@ -411,3 +420,6 @@ The implemented public model slice is recorded separately in
 `reports/PHASE_18_PLUGIN_EXECUTION_CONTRACT_MODELS_ACCEPTANCE_REPORT.md`.
 The Windows-only readiness gate and administrator boundary are recorded in
 `reports/PHASE_18_WINDOWS_SANDBOX_READINESS_REPORT.md`.
+Phase 19 live control evidence and its remaining production boundary are
+recorded in `reports/PHASE_19_WINDOWS_SANDBOX_LIVE_EVIDENCE.json` and
+`reports/PHASE_19_WINDOWS_SANDBOX_LIVE_VERIFICATION_REPORT.md`.

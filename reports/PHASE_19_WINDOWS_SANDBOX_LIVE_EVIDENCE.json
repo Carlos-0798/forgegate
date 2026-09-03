@@ -1,0 +1,268 @@
+{
+  "advertised_isolation_tier": "NONE",
+  "backend": "windows-podman-wsl2",
+  "backend_contract_version": "1.0.0",
+  "backend_enforcement_verified": true,
+  "capability_id": "sha256:76ec67e7ae6faf81283e3fc40a0ab97f4d59b53128e5122f081d2997d39e090a",
+  "case_results": [
+    {
+      "cleanup_verified": true,
+      "elapsed_ms": 1703,
+      "exit_code": 137,
+      "fixture_completed": true,
+      "name": "composite",
+      "oom_killed": false,
+      "output_files": [
+        {
+          "bytes": 218,
+          "path": "results.json",
+          "sha256": "b69d52160c61e4bcf6acc5b659bf923cc6d714b1c03e3383f2bd84dd6e3532f9"
+        }
+      ],
+      "output_issue": null,
+      "output_total_bytes": 218,
+      "stderr_bytes": 0,
+      "stderr_overflow": false,
+      "stderr_preview": "",
+      "stdout_bytes": 0,
+      "stdout_overflow": false,
+      "stdout_preview": "",
+      "timed_out": false
+    },
+    {
+      "cleanup_verified": true,
+      "elapsed_ms": 625,
+      "exit_code": 137,
+      "fixture_completed": false,
+      "name": "memory",
+      "oom_killed": true,
+      "output_files": [],
+      "output_issue": null,
+      "output_total_bytes": 0,
+      "stderr_bytes": 0,
+      "stderr_overflow": false,
+      "stderr_preview": "",
+      "stdout_bytes": 0,
+      "stdout_overflow": false,
+      "stdout_preview": "",
+      "timed_out": false
+    },
+    {
+      "cleanup_verified": true,
+      "elapsed_ms": 1657,
+      "exit_code": 137,
+      "fixture_completed": false,
+      "name": "cpu",
+      "oom_killed": false,
+      "output_files": [],
+      "output_issue": null,
+      "output_total_bytes": 0,
+      "stderr_bytes": 0,
+      "stderr_overflow": false,
+      "stderr_preview": "",
+      "stdout_bytes": 0,
+      "stdout_overflow": false,
+      "stdout_preview": "",
+      "timed_out": false
+    },
+    {
+      "cleanup_verified": true,
+      "elapsed_ms": 1969,
+      "exit_code": 137,
+      "fixture_completed": false,
+      "name": "wall",
+      "oom_killed": false,
+      "output_files": [],
+      "output_issue": null,
+      "output_total_bytes": 0,
+      "stderr_bytes": 0,
+      "stderr_overflow": false,
+      "stderr_preview": "",
+      "stdout_bytes": 0,
+      "stdout_overflow": false,
+      "stdout_preview": "",
+      "timed_out": true
+    },
+    {
+      "cleanup_verified": true,
+      "elapsed_ms": 1375,
+      "exit_code": 137,
+      "fixture_completed": true,
+      "name": "output",
+      "oom_killed": false,
+      "output_files": [
+        {
+          "bytes": 4096,
+          "path": "large.bin",
+          "sha256": "a2e659dacb4691e887ac0139f8893d04764ee197d70fb73d3190d56113d18e3e"
+        }
+      ],
+      "output_issue": "output-bytes",
+      "output_total_bytes": 4096,
+      "stderr_bytes": 0,
+      "stderr_overflow": false,
+      "stderr_preview": "",
+      "stdout_bytes": 20,
+      "stdout_overflow": false,
+      "stdout_preview": "output-limit-denied\n",
+      "timed_out": false
+    },
+    {
+      "cleanup_verified": true,
+      "elapsed_ms": 1266,
+      "exit_code": 137,
+      "fixture_completed": true,
+      "name": "file-count",
+      "oom_killed": false,
+      "output_files": [
+        {
+          "bytes": 1,
+          "path": "0.txt",
+          "sha256": "2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881"
+        },
+        {
+          "bytes": 1,
+          "path": "1.txt",
+          "sha256": "2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881"
+        },
+        {
+          "bytes": 1,
+          "path": "2.txt",
+          "sha256": "2d711642b726b04401627ca9fbac32f5c8530fb1903cc4db02258717921a4881"
+        }
+      ],
+      "output_issue": "file-count",
+      "output_total_bytes": 3,
+      "stderr_bytes": 0,
+      "stderr_overflow": false,
+      "stderr_preview": "",
+      "stdout_bytes": 0,
+      "stdout_overflow": false,
+      "stdout_preview": "",
+      "timed_out": false
+    },
+    {
+      "cleanup_verified": true,
+      "elapsed_ms": 875,
+      "exit_code": 137,
+      "fixture_completed": false,
+      "name": "stdout",
+      "oom_killed": false,
+      "output_files": [],
+      "output_issue": null,
+      "output_total_bytes": 0,
+      "stderr_bytes": 143,
+      "stderr_overflow": false,
+      "stderr_preview": "Error: unable to start container ffad11d34884c0cb0a2a5a17e5ff026729d17a6ba1dd08f51330b3bbdd3f2191: write /dev/stdout: The pipe has been ended.\n",
+      "stdout_bytes": 1024,
+      "stdout_overflow": true,
+      "stdout_preview": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "timed_out": false
+    },
+    {
+      "cleanup_verified": true,
+      "elapsed_ms": 814,
+      "exit_code": 137,
+      "fixture_completed": false,
+      "name": "stderr",
+      "oom_killed": false,
+      "output_files": [],
+      "output_issue": null,
+      "output_total_bytes": 0,
+      "stderr_bytes": 1024,
+      "stderr_overflow": true,
+      "stderr_preview": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+      "stdout_bytes": 0,
+      "stdout_overflow": false,
+      "stdout_preview": "",
+      "timed_out": false
+    }
+  ],
+  "checks": [
+    {
+      "control": "bounded-log-capture",
+      "passed": true
+    },
+    {
+      "control": "bounded-private-output",
+      "passed": true
+    },
+    {
+      "control": "cleanup",
+      "passed": true
+    },
+    {
+      "control": "cpu-limit",
+      "passed": true
+    },
+    {
+      "control": "empty-environment",
+      "passed": true
+    },
+    {
+      "control": "local-wsl2-machine",
+      "passed": true
+    },
+    {
+      "control": "memory-limit",
+      "passed": true
+    },
+    {
+      "control": "network-deny",
+      "passed": true
+    },
+    {
+      "control": "pinned-image",
+      "passed": true
+    },
+    {
+      "control": "private-input-mount",
+      "passed": true
+    },
+    {
+      "control": "read-only-root",
+      "passed": true
+    },
+    {
+      "control": "rootless-runtime",
+      "passed": true
+    },
+    {
+      "control": "subprocess-deny",
+      "passed": true
+    },
+    {
+      "control": "total-timeout",
+      "passed": true
+    }
+  ],
+  "composite_observations": {
+    "environment_keys": [
+      "FORGEGATE_RUN_PLAN_ID",
+      "LC_CTYPE"
+    ],
+    "host_read_denied": true,
+    "input_read": true,
+    "input_write_denied": true,
+    "lc_ctype": "C.UTF-8",
+    "network_denied": true,
+    "root_write_denied": true,
+    "subprocess_denied": true
+  },
+  "external_plugin_execution": "PROHIBITED",
+  "finished_at": "2026-09-03T19:41:07.631362Z",
+  "host_architecture": "AMD64",
+  "host_os": "Windows",
+  "image": "docker.io/library/python@sha256:fd95fa221297a88e1cf49c55ec1828edd7c5a428187e67b5d1805692d11588db",
+  "image_id": "sha256:acf8897bf01a3a0ea273a50a58fc10b6317a3e360bd29aa7c9246a54d7c63e88",
+  "limitations": [
+    "WSL automatically mounts Windows drives inside the Podman machine.",
+    "Only ForgeGate-owned hostile fixtures were executed.",
+    "Production plugin broker, protocol, output schema validation, and durable audit remain pending."
+  ],
+  "report_format": "forgegate-development.windows-sandbox-live-verification.v1",
+  "runtime_client_version": "5.8.6",
+  "runtime_server_version": "5.8.6",
+  "started_at": "2026-09-03T19:40:46.235843Z",
+  "verification_id": "sha256:5296f70996ff9928d54557fb97c2e667f15ccdd67ff989b85b518260cb3db38d"
+}

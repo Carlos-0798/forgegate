@@ -378,7 +378,7 @@ The current slice has no authenticated producer and runs no plugin code.
 | Installation location leaks through reports | Retain only sanitized distribution, entry-point, fixed relative manifest, and contract fields; omit resolved filesystem paths |
 | Fixture discovery is mistaken for plugin execution | Import-hostile standalone fixture proves metadata discovery only and reports `NOT_LOADED` |
 
-## Defined in the Phase 18 plugin execution contract, not yet enforced
+## Defined in the Phase 18 contract, not yet enforced in production
 
 | Threat | Required future control |
 |---|---|
@@ -393,9 +393,9 @@ The current slice has no authenticated producer and runs no plugin code.
 | Failure text leaks secrets or local paths | Persist bounded stable issue codes and sanitized metadata; exclude raw stderr, environment, and absolute paths from durable audit |
 | Platform silently weakens isolation | Record backend/tier and fail with `PLUGIN_ISOLATION_UNAVAILABLE` or `PLUGIN_PERMISSION_UNENFORCEABLE` instead of falling back |
 
-These are design requirements only. No external plugin process is currently
-started and no sandbox, grant, quota, or `plugin_runs` persistence claim is
-made.
+No external plugin process is currently started and no production grant,
+broker, output-schema, or `plugin_runs` persistence claim is made. Phase 19
+tests the low-level sandbox controls only with ForgeGate-owned fixtures.
 
 ## Implemented in the Windows sandbox-readiness slice
 
@@ -403,23 +403,28 @@ made.
 |---|---|
 | Missing runtime silently downgrades isolation | Content-derived capability report returns `PLUGIN_ISOLATION_UNAVAILABLE`, execution `PROHIBITED`, and tier `NONE` |
 | Remote or privileged container runtime is mistaken for local rootless isolation | Probe requires exactly one default loopback SSH connection, a running WSL provider, and rootless Podman |
+| Incompatible client and machine silently weaken behavior | Probe requires exact safe client/server versions and rejects mismatches with `PODMAN_VERSION_MISMATCH` |
 | Plugin-controlled text injects host shell syntax | Builder returns a fixed argument tuple and invokes no shell; names, image digest, paths, and runner arguments are bounded |
 | Mutable image changes the sandbox payload | Builder accepts only an exact `@sha256:` OCI reference and disables pulling during create |
 | Host workspace or output is broadly writable | Only separate broker-owned non-reparse input/control roots are mounted read-only; output is a bounded private tmpfs |
-| Readiness is mistaken for verified isolation | Every capability report retains `PROHIBITED`/`NONE`; actual hostile-container verification is still mandatory |
+| Readiness is mistaken for verified isolation | Every capability report retains `PROHIBITED`/`NONE`; a separate development verifier records hostile-container results |
+| Development proof is mistaken for production authorization | The passing report explicitly retains `PROHIBITED`/`NONE` and names the missing broker, protocol, schema, and durable-audit controls |
+| WSL machine drive exposure is mistaken for container access | Documentation records WSL's automatic drive mounts; a hostile fixture confirms `/mnt/c` is not mounted into the disposable container |
 
-The current Windows host has no WSL2/Podman runtime, so these controls prove
-only fail-closed probing and command construction. They do not prove OCI
-isolation or authorize external plugin execution.
+The current Windows host has a rootless WSL2 Podman 5.8.6 client/server pair.
+All 14 required low-level controls passed the fixed hostile fixtures recorded
+in `reports/PHASE_19_WINDOWS_SANDBOX_LIVE_EVIDENCE.json`. This does not prove
+the missing production broker/runner path and does not authorize external
+plugin execution.
 
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;
 - stronger filesystem race resistance than the current open-handle metadata
   stability check;
-- malicious plugin execution and subprocess isolation implementation; Phase 18
-  defines fail-closed requirements but Phase 17 still only validates bounded
-  manifests and never imports plugin code;
+- production malicious-plugin execution, broker/runner protocol enforcement,
+  output-schema/race validation, and durable run recovery; Phase 19 uses only
+  fixed ForgeGate-owned fixtures and never imports an installed plugin;
 - managed key generation/custody/rotation, encrypted keys, HSM/TPM/KMS support,
   trust-store distribution, online revocation, trusted timestamping, and CI
   workload identity federation;

@@ -7,12 +7,14 @@ host. The selected backend is a rootless Podman machine using WSL2 and Linux
 OCI containers. Linux and macOS host backends are deferred and are not
 advertised.
 
-This checkpoint implements capability probing and a fail-closed container
-creation specification. It does not execute a plugin. A probe result of
+This checkpoint implements capability probing, a fail-closed container
+creation specification, and a development-only hostile-fixture verifier. It
+does not execute an external plugin. A probe result of
 `READY_FOR_ADVERSARIAL_VERIFICATION` still records
 `external_plugin_execution=PROHIBITED` and `advertised_isolation_tier=NONE`.
-Only a later adversarial verification record may authorize the backend for a
-run plan.
+The passing development record does not authorize a production run plan because
+the broker, runner protocol, output-schema validation, and durable audit path
+remain absent.
 
 ## Why Podman on WSL2
 
@@ -22,8 +24,8 @@ supports Windows editions through a WSL2-backed, rootless Podman machine and is
 Apache-2.0 licensed. Rootless operation reduces the runtime's host authority;
 it does not make untrusted code safe by itself.
 
-The reviewed runtime baseline is Podman `v5.8.3` at commit
-`3a2e1c7e9c15a218768206af59ab2974271ebf4f`. The probe image is pinned to the
+The installed and reviewed runtime baseline is Podman `v5.8.6` at commit
+`a859fc66702c23e869c282c63e92d9b6cd264229`. The probe image is pinned to the
 multi-platform OCI digest
 `sha256:fd95fa221297a88e1cf49c55ec1828edd7c5a428187e67b5d1805692d11588db`.
 Neither runtime nor image is a ForgeGate Python dependency.
@@ -38,7 +40,8 @@ Neither runtime nor image is a ForgeGate Python dependency.
    information;
 4. require exactly one default SSH connection to loopback;
 5. require a running WSL machine provider; and
-6. require a rootless Podman runtime.
+6. require a rootless Podman runtime; and
+7. require the Podman client and machine server versions to match exactly.
 
 The content-derived
 `forgegate.windows-plugin-sandbox-capability.v1` report contains only sanitized
@@ -56,7 +59,9 @@ and bounded trusted runner arguments. It fixes these controls:
 - `network=none` and isolated IPC;
 - read-only root filesystem with implicit writable tmpfs disabled;
 - all Linux capabilities dropped and `no-new-privileges` enabled;
-- non-root UID/GID `65532`;
+- non-root UID `65532`, with container group `0` only so Podman-owned tmpfs
+  directories can remain group-private and writable after all capabilities are
+  dropped;
 - one-PID limit for the initial subprocess-deny contract;
 - hard memory and memory-plus-swap ceilings;
 - CPU-rate and inherited hard CPU-time limits;
@@ -64,27 +69,53 @@ and bounded trusted runner arguments. It fixes these controls:
 - bounded, private, no-exec tmpfs output and temporary directories;
 - digest-only images with pulling disabled; and
 - `/usr/bin/env -i` as the entry point so the trusted runner starts without an
-  inherited image environment.
+  inherited image environment. CPython deterministically adds only
+  `LC_CTYPE=C.UTF-8` beside the explicit run-plan ID.
 
 The builder returns an argument tuple and never invokes a shell. It does not
 mount a writable host output directory or the repository, workspace, user
 profile, database, Podman socket, device, token, or key.
 
-## Remaining proof gate
+Podman 5.8.6 rejects `uid=` and `gid=` options on `--tmpfs`. The verified
+specification therefore uses root-owned mode `0770` tmpfs mounts with the
+non-root process in group `0`; it does not make the directories world-writable
+or restore Linux capabilities. The output-byte fixture also demonstrates the
+filesystem's page-granularity behavior: the tmpfs rejected a 2 MiB write under
+a 1 KiB requested limit after one 4 KiB page, and the host verifier rejected
+the retrieved file against the exact 1 KiB plan limit.
 
-The following must pass on the actual Windows/WSL2/Podman host before the
-backend may advertise `SANDBOXED` or execute external code:
+## Development live verification
+
+On 2026-09-03, `tools/verify_windows_sandbox_live.py` ran only hard-coded,
+ForgeGate-owned fixtures against the local rootless WSL2 machine. Podman client
+and server were both 5.8.6. All 14 required controls passed:
 
 - input mutation and undeclared host-file reads fail;
 - root filesystem writes fail while only bounded private output succeeds;
 - network connection attempts fail;
 - child-process creation fails and the complete container is cleaned up;
-- the runner observes only the explicitly constructed environment;
+- the fixture observes only the explicitly constructed environment plus
+  CPython's deterministic locale variable;
 - CPU, memory, wall-clock, output bytes, output member count, stdout, and
   stderr limits terminate or reject hostile fixtures correctly;
-- a pinned trusted runner image starts and is inspected by exact digest; and
-- broker-side output copy, rehash, schema validation, race defense, and durable
-  run audit are implemented.
+- a pinned trusted runner image starts and is inspected by exact digest;
+- output is copied while the private tmpfs is still mounted, then re-counted
+  and rehashed by the development host verifier; and
+- every container is force-cleaned and confirmed absent.
 
-Until those checks pass, `PLUGIN_ISOLATION_UNAVAILABLE` is the only valid
-execution result. There is no subprocess-only fallback.
+The exact run record is
+[`PHASE_19_WINDOWS_SANDBOX_LIVE_EVIDENCE.json`](../../reports/PHASE_19_WINDOWS_SANDBOX_LIVE_EVIDENCE.json).
+Its `backend_enforcement_verified=true` claim applies only to those fixtures
+and controls. WSL automatically mounts Windows drives into the Podman machine;
+the test confirms those paths are not mounted into the disposable container,
+but this broader VM-level exposure remains a defense-in-depth limitation.
+
+## Remaining production gate
+
+Before external code may execute or the backend may advertise `SANDBOXED`,
+ForgeGate must implement the trusted runner and broker, enforce the versioned
+protocol, validate output schemas and filesystem race properties, re-register
+accepted artifacts, write append-only `plugin_runs`, and prove crash recovery
+in clean-wheel integration tests. Until then, external execution remains
+`PROHIBITED`, the advertised tier remains `NONE`, and there is no
+subprocess-only fallback.

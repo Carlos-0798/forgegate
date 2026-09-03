@@ -269,9 +269,35 @@
 - [x] Select a Windows-only rootless Podman/WSL2 backend, implement a strict
   capability report, and build a fail-closed digest-pinned container-create
   specification without executing plugin code.
-- [ ] Enable WSL2/Podman and adversarially verify the backend on the actual
-  Windows host before advertising `SANDBOXED` or executing external plugins.
-- [ ] Keep Linux/macOS external-plugin backends explicitly unsupported unless
+- [x] Enable WSL2/Podman and adversarially verify the low-level backend controls
+  on the actual Windows host without advertising `SANDBOXED` or executing an
+  external plugin.
+- [x] Keep Linux/macOS external-plugin backends explicitly unsupported unless
   the owner later expands the intended deployment platforms.
-- [ ] Implement append-only `plugin_runs`, crash recovery, broker-owned staged
-  inputs, output re-registration, and clean-wheel hostile-fixture tests.
+
+## Phase 19 — Windows sandbox live control verification
+
+- [x] Install official Podman 5.8.6 and create a dedicated local rootless WSL2
+  machine without device passthrough.
+- [x] Require matching Podman client/server versions and fail closed on a
+  mismatch.
+- [x] Adapt the private tmpfs specification to Podman 5.8.6 without a
+  world-writable output or restored Linux capabilities.
+- [x] Add a development-only verifier with fixed filesystem, host-path,
+  network, subprocess, environment, memory, CPU, wall-time, output, log, and
+  cleanup attacks.
+- [x] Copy tmpfs output before container shutdown, then re-count and rehash it;
+  retain exact raw run evidence without host paths or secrets.
+- [x] Pass all 14 required low-level controls while retaining external
+  execution `PROHIBITED` and advertised isolation tier `NONE`.
+
+## Phase 20 — production external-plugin broker
+
+- [ ] Implement the trusted runner and broker over the frozen protocol without
+  importing external code into the ForgeGate core process.
+- [ ] Stage broker-owned immutable inputs and re-register accepted output after
+  exact member, byte, digest, schema, and race validation.
+- [ ] Persist append-only `plugin_runs`, terminal errors, cleanup results,
+  idempotent replay, and crash recovery.
+- [ ] Add clean-wheel end-to-end hostile fixture tests through the production
+  API before advertising `SANDBOXED` or executing any installed plugin.

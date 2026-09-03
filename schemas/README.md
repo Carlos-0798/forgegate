@@ -47,7 +47,9 @@ The Windows readiness slice adds
 `forgegate.windows-plugin-sandbox-capability.v1.schema.json`. It records a
 sanitized, content-derived Podman/WSL2 host probe while mandatory fields keep
 external plugin execution `PROHIBITED` and the advertised isolation tier
-`NONE`. Runtime readiness is not adversarial sandbox verification.
+`NONE`. Phase 19 adds exact client/server version reporting and mismatch
+rejection. Runtime readiness and the separate development hostile-fixture
+report are not production external-plugin authorization.
 
 `forgegate.evidence-bundle-assembly.v1.schema.json` describes the audited
 envelope around a candidate-bound evidence bundle and its collection receipts.

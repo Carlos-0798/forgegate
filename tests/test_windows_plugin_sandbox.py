@@ -85,6 +85,7 @@ def _ready_report() -> WindowsSandboxCapabilityReport:
         host_os="Windows",
         host_architecture="AMD64",
         runtime_version="5.8.3",
+        server_runtime_version="5.8.3",
         status=WindowsSandboxCapabilityStatus.READY_FOR_ADVERSARIAL_VERIFICATION,
         reason=WindowsSandboxCapabilityReason.ADVERSARIAL_VERIFICATION_PENDING,
         rootless_runtime=True,
@@ -100,7 +101,10 @@ def _ready_report() -> WindowsSandboxCapabilityReport:
 def _successful_command(command: tuple[str, ...], _timeout: float) -> HostCommandResult:
     key = tuple(command[1:3])
     payloads: dict[tuple[str, ...], object] = {
-        ("version", "--format"): {"Client": {"Version": "5.8.3"}},
+        ("version", "--format"): {
+            "Client": {"Version": "5.8.3"},
+            "Server": {"Version": "5.8.3"},
+        },
         ("system", "connection"): [
             {
                 "Name": "podman-machine-default",
@@ -156,6 +160,7 @@ def test_probe_accepts_only_local_rootless_running_wsl2() -> None:
     assert report.status is WindowsSandboxCapabilityStatus.READY_FOR_ADVERSARIAL_VERIFICATION
     assert report.reason is WindowsSandboxCapabilityReason.ADVERSARIAL_VERIFICATION_PENDING
     assert report.runtime_version == "5.8.3"
+    assert report.server_runtime_version == "5.8.3"
     assert set(report.observed_controls) == {
         WindowsSandboxControl.LOCAL_WSL2_MACHINE,
         WindowsSandboxControl.ROOTLESS_RUNTIME,
@@ -259,7 +264,11 @@ def test_probe_rejects_timeout_oversized_stderr_and_invalid_version() -> None:
 
     def invalid_version(command: tuple[str, ...], timeout: float) -> HostCommandResult:
         if command[1] == "version":
-            return HostCommandResult(0, b'{"Client":{"Version":"latest"}}', b"")
+            return HostCommandResult(
+                0,
+                b'{"Client":{"Version":"latest"},"Server":{"Version":"5.8.3"}}',
+                b"",
+            )
         return _successful_command(command, timeout)
 
     incompatible = probe_windows_podman_sandbox(
@@ -269,6 +278,28 @@ def test_probe_rejects_timeout_oversized_stderr_and_invalid_version() -> None:
         command_runner=invalid_version,
     )
     assert incompatible.reason is WindowsSandboxCapabilityReason.PODMAN_RESPONSE_INVALID
+
+
+def test_probe_rejects_client_server_version_mismatch() -> None:
+    def mismatched_version(command: tuple[str, ...], timeout: float) -> HostCommandResult:
+        if command[1] == "version":
+            return HostCommandResult(
+                0,
+                b'{"Client":{"Version":"5.8.3"},"Server":{"Version":"5.8.6"}}',
+                b"",
+            )
+        return _successful_command(command, timeout)
+
+    incompatible = probe_windows_podman_sandbox(
+        platform_name="Windows",
+        architecture="AMD64",
+        podman_executable="podman.exe",
+        command_runner=mismatched_version,
+    )
+    assert incompatible.status is WindowsSandboxCapabilityStatus.RUNTIME_INCOMPATIBLE
+    assert incompatible.reason is WindowsSandboxCapabilityReason.PODMAN_VERSION_MISMATCH
+    assert incompatible.runtime_version == "5.8.3"
+    assert incompatible.server_runtime_version == "5.8.6"
 
 
 def test_capability_report_rejects_missing_extra_or_unavailable_control_claims() -> None:
@@ -282,6 +313,10 @@ def test_capability_report_rejects_missing_extra_or_unavailable_control_claims()
     extra = {**payload, "observed_controls": [*payload["observed_controls"], "network-deny"]}
     with pytest.raises(ValidationError, match="only local WSL2 and rootless"):
         WindowsSandboxCapabilityReport.model_validate(extra)
+
+    mismatched = {**payload, "server_runtime_version": "5.8.6"}
+    with pytest.raises(ValidationError, match="matching versions"):
+        WindowsSandboxCapabilityReport.model_validate(mismatched)
 
     unavailable = create_windows_sandbox_capability_report(
         host_os="Windows",
@@ -327,7 +362,8 @@ def test_create_command_contains_enforcement_controls_and_no_writable_host_outpu
         "--memory=268435456",
         "--memory-swap=268435456",
         "--ulimit=cpu=30:30",
-        "--user=65532:65532",
+        "--user=65532:0",
+        "--workdir=/tmp",
         "--entrypoint=/usr/bin/env",
         "-i",
         f"FORGEGATE_RUN_PLAN_ID={plan.run_plan_id}",
@@ -336,6 +372,9 @@ def test_create_command_contains_enforcement_controls_and_no_writable_host_outpu
     assert "destination=/forgegate/input,ro=true" in rendered
     assert "destination=/forgegate/control,ro=true" in rendered
     assert "/forgegate/output:rw,noexec,nosuid,nodev" in rendered
+    assert "mode=0770" in rendered
+    assert "uid=65532" not in rendered
+    assert "gid=65532" not in rendered
     assert "destination=/forgegate/output" not in rendered
 
 

@@ -51,6 +51,7 @@ class WindowsSandboxCapabilityReason(StrEnum):
     PODMAN_NOT_FOUND = "PODMAN_NOT_FOUND"
     PODMAN_COMMAND_FAILED = "PODMAN_COMMAND_FAILED"
     PODMAN_RESPONSE_INVALID = "PODMAN_RESPONSE_INVALID"
+    PODMAN_VERSION_MISMATCH = "PODMAN_VERSION_MISMATCH"
     PODMAN_CONNECTION_NOT_LOCAL = "PODMAN_CONNECTION_NOT_LOCAL"
     PODMAN_PROVIDER_NOT_WSL2 = "PODMAN_PROVIDER_NOT_WSL2"
     PODMAN_RUNTIME_NOT_ROOTLESS = "PODMAN_RUNTIME_NOT_ROOTLESS"
@@ -90,6 +91,7 @@ class WindowsSandboxCapabilityReport(StrictModel):
     host_architecture: str = Field(min_length=1, max_length=32, pattern=r"^[A-Za-z0-9._-]+$")
     runtime_name: Literal["podman"] = "podman"
     runtime_version: str | None = Field(default=None, pattern=SAFE_RUNTIME_VERSION_PATTERN)
+    server_runtime_version: str | None = Field(default=None, pattern=SAFE_RUNTIME_VERSION_PATTERN)
     status: WindowsSandboxCapabilityStatus
     reason: WindowsSandboxCapabilityReason
     rootless_runtime: bool
@@ -124,8 +126,12 @@ class WindowsSandboxCapabilityReport(StrictModel):
         if ready:
             if self.reason is not WindowsSandboxCapabilityReason.ADVERSARIAL_VERIFICATION_PENDING:
                 raise ValueError("ready Windows sandbox runtime must remain verification-pending")
-            if self.runtime_version is None:
-                raise ValueError("ready Windows sandbox runtime requires a version")
+            if self.runtime_version is None or self.server_runtime_version is None:
+                raise ValueError(
+                    "ready Windows sandbox runtime requires client and server versions"
+                )
+            if self.runtime_version != self.server_runtime_version:
+                raise ValueError("ready Windows sandbox runtime requires matching versions")
             if not (self.rootless_runtime and self.local_transport and self.wsl2_provider):
                 raise ValueError("ready Windows sandbox runtime requires local rootless WSL2")
             expected_observed = {
@@ -237,19 +243,30 @@ def probe_windows_podman_sandbox(
                 reason=WindowsSandboxCapabilityReason.PODMAN_RESPONSE_INVALID,
             )
 
-    runtime_version = _podman_version(documents["version"])
-    if runtime_version is None:
+    runtime_versions = _podman_versions(documents["version"])
+    if runtime_versions is None:
         return create_windows_sandbox_capability_report(
             host_os=host_os,
             host_architecture=host_architecture,
             status=WindowsSandboxCapabilityStatus.RUNTIME_INCOMPATIBLE,
             reason=WindowsSandboxCapabilityReason.PODMAN_RESPONSE_INVALID,
         )
+    runtime_version, server_runtime_version = runtime_versions
+    if runtime_version != server_runtime_version:
+        return create_windows_sandbox_capability_report(
+            host_os=host_os,
+            host_architecture=host_architecture,
+            runtime_version=runtime_version,
+            server_runtime_version=server_runtime_version,
+            status=WindowsSandboxCapabilityStatus.RUNTIME_INCOMPATIBLE,
+            reason=WindowsSandboxCapabilityReason.PODMAN_VERSION_MISMATCH,
+        )
     if not _default_connection_is_local(documents["connection"]):
         return create_windows_sandbox_capability_report(
             host_os=host_os,
             host_architecture=host_architecture,
             runtime_version=runtime_version,
+            server_runtime_version=server_runtime_version,
             status=WindowsSandboxCapabilityStatus.RUNTIME_INCOMPATIBLE,
             reason=WindowsSandboxCapabilityReason.PODMAN_CONNECTION_NOT_LOCAL,
         )
@@ -258,6 +275,7 @@ def probe_windows_podman_sandbox(
             host_os=host_os,
             host_architecture=host_architecture,
             runtime_version=runtime_version,
+            server_runtime_version=server_runtime_version,
             status=WindowsSandboxCapabilityStatus.RUNTIME_INCOMPATIBLE,
             reason=WindowsSandboxCapabilityReason.PODMAN_PROVIDER_NOT_WSL2,
         )
@@ -266,6 +284,7 @@ def probe_windows_podman_sandbox(
             host_os=host_os,
             host_architecture=host_architecture,
             runtime_version=runtime_version,
+            server_runtime_version=server_runtime_version,
             status=WindowsSandboxCapabilityStatus.RUNTIME_INCOMPATIBLE,
             reason=WindowsSandboxCapabilityReason.PODMAN_RUNTIME_NOT_ROOTLESS,
         )
@@ -273,6 +292,7 @@ def probe_windows_podman_sandbox(
         host_os=host_os,
         host_architecture=host_architecture,
         runtime_version=runtime_version,
+        server_runtime_version=server_runtime_version,
         status=WindowsSandboxCapabilityStatus.READY_FOR_ADVERSARIAL_VERIFICATION,
         reason=WindowsSandboxCapabilityReason.ADVERSARIAL_VERIFICATION_PENDING,
         rootless_runtime=True,
@@ -292,6 +312,7 @@ def create_windows_sandbox_capability_report(
     status: WindowsSandboxCapabilityStatus,
     reason: WindowsSandboxCapabilityReason,
     runtime_version: str | None = None,
+    server_runtime_version: str | None = None,
     rootless_runtime: bool = False,
     local_transport: bool = False,
     wsl2_provider: bool = False,
@@ -304,6 +325,7 @@ def create_windows_sandbox_capability_report(
         "host_architecture": _safe_host_value(host_architecture, "unknown"),
         "runtime_name": "podman",
         "runtime_version": runtime_version,
+        "server_runtime_version": server_runtime_version,
         "status": status,
         "reason": reason,
         "rootless_runtime": rootless_runtime,
@@ -385,6 +407,8 @@ def build_windows_podman_create_command(
     temporary_bytes = min(16 * 1024 * 1024, max(1024 * 1024, limits.memory_bytes // 8))
     input_mount = _bind_mount(input_root, "/forgegate/input")
     control_mount = _bind_mount(control_root, "/forgegate/control")
+    # Podman 5.8.6 rejects uid/gid in --tmpfs. Keep the process non-root and
+    # capability-free, but use its root group with mode 0770 root-owned tmpfs.
     return (
         str(executable),
         "create",
@@ -402,19 +426,16 @@ def build_windows_podman_create_command(
         f"--memory-swap={limits.memory_bytes}",
         "--cpus=1.0",
         f"--ulimit=cpu={cpu_seconds}:{cpu_seconds}",
-        "--user=65532:65532",
-        "--workdir=/forgegate/work",
+        "--user=65532:0",
+        "--workdir=/tmp",
         "--mount",
         input_mount,
         "--mount",
         control_mount,
         "--tmpfs",
-        (
-            "/forgegate/output:rw,noexec,nosuid,nodev,mode=0700,uid=65532,gid=65532,"
-            f"size={limits.output_bytes}"
-        ),
+        (f"/forgegate/output:rw,noexec,nosuid,nodev,mode=0770,size={limits.output_bytes}"),
         "--tmpfs",
-        (f"/tmp:rw,noexec,nosuid,nodev,mode=0700,uid=65532,gid=65532,size={temporary_bytes}"),
+        (f"/tmp:rw,noexec,nosuid,nodev,mode=0770,size={temporary_bytes}"),
         "--entrypoint=/usr/bin/env",
         image,
         "-i",
@@ -433,16 +454,22 @@ def _run_host_command(command: tuple[str, ...], timeout_seconds: float) -> HostC
     return HostCommandResult(completed.returncode, completed.stdout, completed.stderr)
 
 
-def _podman_version(document: Any) -> str | None:
+def _podman_versions(document: Any) -> tuple[str, str] | None:
     if not isinstance(document, Mapping):
         return None
     client = _mapping_value(document, "client")
-    if not isinstance(client, Mapping):
+    server = _mapping_value(document, "server")
+    if not isinstance(client, Mapping) or not isinstance(server, Mapping):
         return None
-    value = _mapping_value(client, "version")
-    if not isinstance(value, str) or re.fullmatch(SAFE_RUNTIME_VERSION_PATTERN, value) is None:
+    client_value = _mapping_value(client, "version")
+    server_value = _mapping_value(server, "version")
+    if not isinstance(client_value, str) or not isinstance(server_value, str):
         return None
-    return value
+    if re.fullmatch(SAFE_RUNTIME_VERSION_PATTERN, client_value) is None:
+        return None
+    if re.fullmatch(SAFE_RUNTIME_VERSION_PATTERN, server_value) is None:
+        return None
+    return client_value, server_value
 
 
 def _default_connection_is_local(document: Any) -> bool:

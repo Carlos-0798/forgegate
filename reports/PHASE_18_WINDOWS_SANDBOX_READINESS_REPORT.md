@@ -1,5 +1,9 @@
 # Phase 18 Windows sandbox readiness report
 
+> Historical checkpoint: the WSL2/Podman owner action below was completed on
+> 2026-09-03. Live results are recorded in
+> `PHASE_19_WINDOWS_SANDBOX_LIVE_VERIFICATION_REPORT.md`.
+
 - Date: 2026-09-01 (America/New_York)
 - Version: 0.1.0.dev26
 - Scope: Windows-only external-plugin sandbox capability gate and container

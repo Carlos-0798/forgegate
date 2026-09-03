@@ -64,13 +64,16 @@ Phase 17 adds manifest-only Python entry-point discovery. A compatible result
 means only that a content-derived manifest targets Plugin API v1; it does not
 authenticate a publisher or approve code execution. Missing, malformed,
 incompatible, and conflicting metadata is reported but never loaded. External
-plugin execution, sandboxing, permission enforcement, secrets, subprocesses,
-network access, and durable plugin-run audit remain unimplemented.
+plugin execution, production broker/runner authorization, permission grants,
+secrets, and durable plugin-run audit remain unimplemented.
 
-The Windows sandbox-readiness slice adds a fail-closed Podman/WSL2 capability
-probe and container-create specification. A ready runtime still reports
-external execution `PROHIBITED` and isolation tier `NONE` until actual hostile
-container tests prove filesystem, network, child-process, environment, CPU,
-memory, output, timeout, log, and cleanup controls. The current host has no WSL2
-or Podman runtime, so `PLUGIN_ISOLATION_UNAVAILABLE` remains mandatory. There
-is no subprocess-only fallback.
+The Windows sandbox slices add a fail-closed Podman/WSL2 capability probe,
+container-create specification, and development-only hostile-fixture verifier.
+All 14 low-level controls passed fixed ForgeGate-owned fixtures on a matching
+rootless Podman 5.8.6 client/server pair. This is not a test of an installed
+external plugin or the missing production broker/protocol/output-validation/
+durable-audit path. External execution therefore remains `PROHIBITED`, the
+advertised isolation tier remains `NONE`, and there is no subprocess-only
+fallback. WSL's automatic machine-level Windows-drive mounts remain a documented
+defense-in-depth limitation even though the disposable container test could not
+read `/mnt/c`.

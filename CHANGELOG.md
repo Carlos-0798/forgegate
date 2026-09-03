@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.0.dev27 — 2026-09-03
+
+- Installed and verified a dedicated rootless Podman/WSL2 5.8.6 machine for
+  Windows development, while retaining external execution `PROHIBITED` and the
+  advertised isolation tier `NONE`.
+- Added exact client/server version matching and a stable mismatch reason to
+  the Windows capability gate.
+- Added a development-only hostile-fixture verifier covering all 14 required
+  filesystem, network, process, environment, resource, output, log, image,
+  runtime, and cleanup controls, plus a path- and secret-free raw run record.
+- Corrected Podman 5.8.6 tmpfs ownership options and output retrieval timing;
+  output is copied while the private tmpfs is mounted, then re-counted and
+  rehashed before container cleanup.
+- Added focused strict-JSON, image-identity, output-bound, version-mismatch, and
+  command regression tests. The production broker, runner protocol,
+  output-schema/race validation, and durable `plugin_runs` remain deferred.
+
 ## 0.1.0.dev26 — 2026-09-01
 
 - Selected a Windows-only rootless Podman/WSL2 backend direction and added a

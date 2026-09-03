@@ -9,7 +9,7 @@ recursive-include examples/plugin-sdk *.toml *.py
 prune examples/plugin-sdk/sample-collector-plugin/build
 prune examples/plugin-sdk/sample-collector-plugin/src/forgegate_sample_collector_plugin.egg-info
 recursive-include requirements *.txt
-recursive-include reports *.md
+recursive-include reports *.md *.json
 recursive-include schemas *.json *.md
 recursive-include tests *.py *.json *.md
 recursive-include tools *.py *.ps1 *.sh
