@@ -59,6 +59,7 @@ The content-addressed, path-free record is
 | Existing core assurance/authentication chain | PASS |
 | Installed standalone plugin chain | PASS - 18/18 local Windows controls |
 | Clean package uninstall | PASS |
+| Hosted cross-platform CI | PASS - run 33811734474 on Windows, Ubuntu, and macOS plus generic Action smoke |
 
 ## Residual limits
 

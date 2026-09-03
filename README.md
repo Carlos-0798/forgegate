@@ -97,7 +97,7 @@ collector rather than a runtime or hardware dependency.
 | Windows production plugin broker | All 13 broker-level checks passed through the installed generic fixture, including replay/readback and cleanup; [raw evidence](reports/PHASE_20_WINDOWS_PLUGIN_BROKER_LIVE_EVIDENCE.json) | Live local WSL2/Podman test; exact run tier `SANDBOXED`, output remains `unsigned_local`/`declared` |
 | Operator plugin evidence chain | Run, replay, failure, path-free queries, collection, assembly, and policy handoff covered by the Windows Alpha gate | Local host test plus pinned Windows live fixture only |
 | Project initialization | `forgegate init` creates a strict generic template and refuses overwrite; clean-wheel install/init/uninstall is covered | Local host test |
-| GitHub Actions | Phase 20 baseline passed `verify.py` and `release_smoke.py` on Windows, Ubuntu, and macOS; the generic composite Action smoke also passed | PASS — [run 33807749743](https://github.com/Carlos-0798/forgegate/actions/runs/33807749743); live Podman fixtures remain local-only evidence |
+| GitHub Actions | Windows Alpha passed `verify.py` and `release_smoke.py` on Windows, Ubuntu, and macOS; the generic composite Action smoke also passed | PASS — [run 33811734474](https://github.com/Carlos-0798/forgegate/actions/runs/33811734474); live Podman fixtures remain local-only evidence |
 | Hardware/device behavior | Not exercised by ForgeGate | Out of scope |
 
 ## Key design decisions

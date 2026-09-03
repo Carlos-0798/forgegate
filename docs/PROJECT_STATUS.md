@@ -11,8 +11,8 @@
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
 - Remote/publication status: private `Carlos-0798/forgegate` synchronized
-  through the Phase 20 implementation and deterministic recovery-test fix;
-  Phase 21/22 synchronization is pending this checkpoint's final CI result;
+  through the Phase 21/22 Windows Alpha implementation at `f7552eb`; CI run
+  33811734474 passed Windows, Ubuntu, macOS, and the generic Action smoke;
   no public release, License, or
   LinkedIn publication authorized
 
@@ -411,10 +411,10 @@ artifact payload/replay export, and hardware access.
 - repository-external ForgeGate installation plus sample-plugin
   install/discover/uninstall independence smoke: PASS
 - Git Bash shell-script syntax check: PASS
-- latest implementation GitHub Actions baseline: Phase 20 run 33807749743 PASS
-  on Windows, Ubuntu, and macOS; each platform completed `verify.py` over 746
-  collected tests and `release_smoke.py` for checkpoint commit
-  `fb7e376f54098d36b4dd179fb3cb79511271135b`, and the dependent Ubuntu job
+- latest implementation GitHub Actions baseline: Windows Alpha run 33811734474
+  PASS on Windows, Ubuntu, and macOS; each platform completed `verify.py` over
+  763 collected tests and `release_smoke.py` for checkpoint commit
+  `f7552eb21d3aa4634067d52dc6457b961a40cf86`, and the dependent Ubuntu job
   passed the real composite Action against the generic fixture; the local
   Podman hostile fixtures were not run or claimed by hosted CI
 - private GitHub synchronization: `main` pushed with noreply commit identity;

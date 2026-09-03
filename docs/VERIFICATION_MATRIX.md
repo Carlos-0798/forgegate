@@ -19,7 +19,7 @@
 | mypy strict | package and verification tools | PASS |
 | Source distribution contents | manifest assertion | PASS |
 | Clean release installation | temporary sdist/wheel/venv smoke | PASS |
-| Windows/Linux/macOS CI | GitHub Actions | PASS — `verify.py` + `release_smoke.py`, Phase 20 run 33807749743 (`fb7e376`); live Podman fixtures not run in hosted CI |
+| Windows/Linux/macOS CI | GitHub Actions | PASS — `verify.py` + `release_smoke.py`, Windows Alpha run 33811734474 (`f7552eb`) plus generic Action smoke; live Podman fixtures not run in hosted CI |
 | Artifact root and byte identity | unit/adversarial tests | PASS — local host |
 | Stable artifact read/change rejection | simulated metadata cases | PASS — local host |
 | Actual Windows symlink escape | privileged symlink fixture | NOT RUN — host disallowed symlink creation |

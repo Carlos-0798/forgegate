@@ -50,6 +50,7 @@ assembly compatibility.
 | Schema and OpenAPI drift | PASS - 41 document plus 2 artifact Schemas |
 | Windows CLI run/replay/show/page/collect chain | PASS - local clean-wheel test |
 | Evidence assembly and policy handoff | PASS - local clean-wheel test |
+| Hosted cross-platform CI | PASS - run 33811734474 on Windows, Ubuntu, and macOS plus generic Action smoke |
 
 ## Evidence boundary
 
