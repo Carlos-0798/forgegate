@@ -9,7 +9,7 @@
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
 - Remote/publication status: private `Carlos-0798/forgegate` synchronized
-  through the Phase 18 baseline before this checkpoint; no public release, License, or
+  through the Phase 19 implementation baseline; no public release, License, or
   LinkedIn publication authorized
 
 ## Implemented
@@ -380,11 +380,12 @@ artifact payload/replay export, and hardware access.
 - repository-external ForgeGate installation plus sample-plugin
   install/discover/uninstall independence smoke: PASS
 - Git Bash shell-script syntax check: PASS
-- latest implementation GitHub Actions baseline: Phase 18 run 33569520396 PASS
-  on Windows, Ubuntu, and macOS; each platform completed `verify.py` over 706
-  collected tests and `release_smoke.py` for contract-model commit
-  `425038d363599d28fa33a4ae060441a6b0899c50`, and the dependent Ubuntu job
-  passed the real composite Action against the generic fixture
+- latest implementation GitHub Actions baseline: Phase 19 run 33798778977 PASS
+  on Windows, Ubuntu, and macOS; each platform completed `verify.py` over 726
+  collected tests and `release_smoke.py` for implementation commit
+  `c8385c7498ab30d61bda1b6d37ac181e1cef1fff`, and the dependent Ubuntu job
+  passed the real composite Action against the generic fixture; the local
+  Podman hostile fixtures were not run or claimed by hosted CI
 - private GitHub synchronization: `main` pushed with noreply commit identity;
   repository visibility, default branch, About, and ten Topics read back
 

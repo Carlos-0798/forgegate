@@ -91,7 +91,7 @@ collector rather than a runtime or hardware dependency.
 | Plugin execution documents | 7 focused model/identity/chain/loader tests passed | Local host test; no process started |
 | Windows sandbox readiness | 20 focused probe/model/command/verifier tests passed; Podman client/server 5.8.6 match | Local host test; execution remains `PROHIBITED`, tier `NONE` |
 | Windows sandbox enforcement | All 14 required controls passed fixed hostile fixtures; [raw evidence](reports/PHASE_19_WINDOWS_SANDBOX_LIVE_EVIDENCE.json) | Live local WSL2/Podman test; not an external-plugin or production-broker test |
-| GitHub Actions | Phase 18 contract-model baseline passed `verify.py` and `release_smoke.py` on Windows, Ubuntu, and macOS; the generic composite Action smoke also passed | PASS — [run 33569520396](https://github.com/Carlos-0798/forgegate/actions/runs/33569520396) |
+| GitHub Actions | Phase 19 baseline passed `verify.py` and `release_smoke.py` on Windows, Ubuntu, and macOS; the generic composite Action smoke also passed | PASS — [run 33798778977](https://github.com/Carlos-0798/forgegate/actions/runs/33798778977); live Podman fixtures remain local-only evidence |
 | Hardware/device behavior | Not exercised by ForgeGate | Out of scope |
 
 ## Key design decisions

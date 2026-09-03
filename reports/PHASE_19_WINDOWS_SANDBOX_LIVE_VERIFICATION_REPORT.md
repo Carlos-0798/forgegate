@@ -96,6 +96,7 @@ not prove actual Podman behavior.
 | mypy strict | PASS — 67 source/tool files |
 | Schema and OpenAPI drift | PASS |
 | dev27 sdist/wheel clean-install smoke | PASS |
+| Hosted cross-platform CI | PASS — run 33798778977 at implementation commit `c8385c7`; live Podman fixtures not run in hosted CI |
 
 ## Residual risks and next gate
 
