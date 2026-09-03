@@ -8,9 +8,9 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 20 Windows production plugin broker verified with a ForgeGate-owned
-generic hostile-control fixture; broader third-party support remains limited;
-not production-ready.**
+**Windows Alpha `0.1.0a1`: Phase 21 operator plugin evidence workflow and
+Phase 22 initialization/delivery chain implemented; broader third-party support
+remains limited and the product is not production-ready.**
 
 This private-development checkpoint provides a working Python 3.12 CLI and an
 Ed25519-authenticated, project-authorized, loopback-only REST API. Its strongest
@@ -72,6 +72,9 @@ current immutable project profile -> profile-bound release candidate
                               |
                               v
  Windows Podman/WSL2 control proof -> brokered plugin run -> validated output
+                              |
+                              v
+ path-free run audit -> low-trust collection -> ordinary evidence assembly
 ```
 
 The core remains domain-neutral. Analog Validation Studio is consumed only
@@ -82,16 +85,18 @@ collector rather than a runtime or hardware dependency.
 
 | Gate | Result | Evidence level |
 |---|---|---|
-| Python tests | 743 passed, 3 skipped because Windows symlink creation was unavailable | Local host test |
-| Branch-aware coverage | 95.12% across 8,270 statements and 2,276 branches | Local host test |
-| Static quality gates | Ruff, formatting, and strict mypy passed across 71 source/tool files | Local host test |
-| Contracts | 38 document and 2 artifact JSON Schemas plus OpenAPI passed drift checks | Local host test |
+| Python tests | 760 passed, 3 skipped because Windows symlink creation was unavailable | Local host test |
+| Branch-aware coverage | 95.06% across 8,706 statements and 2,424 branches | Local host test |
+| Static quality gates | Ruff, formatting, and strict mypy passed across 73 source/tool files | Local host test |
+| Contracts | 41 document and 2 artifact JSON Schemas plus OpenAPI passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | Plugin discovery | 30 passed, 1 skipped; standalone wheel install/discover/uninstall passed | Local host test; code not loaded |
 | Plugin execution documents | 8 focused model/identity/chain/loader tests passed | Local host test; model-only checks start no process |
 | Windows sandbox readiness | 20 focused probe/model/command/verifier tests passed; Podman client/server 5.8.6 match | Local host test; execution remains `PROHIBITED`, tier `NONE` |
 | Windows sandbox enforcement | All 14 required controls passed fixed hostile fixtures; [raw evidence](reports/PHASE_19_WINDOWS_SANDBOX_LIVE_EVIDENCE.json) | Live local WSL2/Podman test; not an external-plugin or production-broker test |
 | Windows production plugin broker | All 13 broker-level checks passed through the installed generic fixture, including replay/readback and cleanup; [raw evidence](reports/PHASE_20_WINDOWS_PLUGIN_BROKER_LIVE_EVIDENCE.json) | Live local WSL2/Podman test; exact run tier `SANDBOXED`, output remains `unsigned_local`/`declared` |
+| Operator plugin evidence chain | Run, replay, failure, path-free queries, collection, assembly, and policy handoff covered by the Windows Alpha gate | Local host test plus pinned Windows live fixture only |
+| Project initialization | `forgegate init` creates a strict generic template and refuses overwrite; clean-wheel install/init/uninstall is covered | Local host test |
 | GitHub Actions | Phase 20 baseline passed `verify.py` and `release_smoke.py` on Windows, Ubuntu, and macOS; the generic composite Action smoke also passed | PASS — [run 33807749743](https://github.com/Carlos-0798/forgegate/actions/runs/33807749743); live Podman fixtures remain local-only evidence |
 | Hardware/device behavior | Not exercised by ForgeGate | Out of scope |
 
@@ -340,6 +345,11 @@ Implemented and host-verified in this checkpoint:
   inputs without host import, validate `START`/`READY`/`RESULT`, re-read tmpfs
   output twice, enforce low-trust evidence schemas, atomically re-register
   accepted bytes, and retain append-only receipt/replay/recovery state.
+- `plugins run/show/runs/collect` for explicit Windows operator authority,
+  path-free durable reads, and revalidated low-trust collection projection;
+- `forgegate init` for a strict no-overwrite generic project/policy template;
+- a clean-wheel Windows Alpha acceptance chain covering install through
+  uninstall, core release assurance, and the live generic plugin workflow.
 
 
 </details>
@@ -350,6 +360,7 @@ Implemented and host-verified in this checkpoint:
 .\tools\setup_environment.ps1
 .\.venv\Scripts\python.exe tools\verify.py
 .\.venv\Scripts\python.exe tools\release_smoke.py
+.\.venv\Scripts\python.exe -m forgegate init work\sample-project
 ```
 
 On Linux/macOS, run `./tools/setup_environment.sh`. The checked direct
@@ -394,6 +405,25 @@ installing its standalone wheel:
 
 A successful receipt advertises `SANDBOXED` only for that exact run and retains
 the produced evidence as `unsigned_local`/`declared`.
+
+Run the installed compatible collector, query its path-free audit record, and
+project successful output into the ordinary collection boundary:
+
+```powershell
+forgegate plugins run example.forgegate-sample-collector `
+  --input inputs/synthetic.json=application/json `
+  --grant artifact-read --grant filesystem-write `
+  --sandbox-evidence reports\PHASE_19_WINDOWS_SANDBOX_LIVE_EVIDENCE.json `
+  --idempotency-key sample:run:1 --planned-at 2026-09-03T20:00:00Z
+
+forgegate plugins show .forgegate\plugin-runs.db <run-plan-id>
+forgegate plugins runs .forgegate\plugin-runs.db
+forgegate plugins collect .forgegate\plugin-runs.db <run-plan-id>
+```
+
+The run and collection commands require exact local paths, but their JSON
+documents disclose only logical subjects and content identities. Save the
+collection JSON beneath the same artifact root before `assemble-evidence`.
 
 Start the local API against an existing or new local candidate database:
 
@@ -747,7 +777,7 @@ Not implemented yet:
 - non-loopback or TLS-protected API deployment;
 - HTTP artifact collection or filesystem publication;
 - complete rejected-request ingestion, security/audit export and retention,
-  direct CLI/REST plugin-run endpoints, general third-party/native/dependency-
+  REST plugin-run endpoints, general third-party/native/dependency-
   rich plugin support, publisher trust, or custom GitHub Checks/PR annotations/
   API integration;
 - database-file authorization, backup/repair, managed or hardware-backed key
@@ -781,8 +811,9 @@ does not authenticate a publisher, load a callable, grant permissions, isolate
 a subprocess, or create durable plugin-run audit evidence.
 Phase 18 implemented strict public documents for run authority, protocol
 messages, legal transitions, stable failure classes, bounded validated outputs,
-and terminal replay without loading plugin code. Phase 20 now consumes those
-documents in the Windows broker. See
+and terminal replay without loading plugin code. Phase 20 consumes those
+documents in the Windows broker, and Phase 21 exposes the broker through an
+explicit operator CLI plus the ordinary collection boundary. See
 [`docs/architecture/PLUGIN_EXECUTION_SECURITY_CONTRACT.md`](docs/architecture/PLUGIN_EXECUTION_SECURITY_CONTRACT.md)
 and the exact upstream review in
 [`docs/research/OPEN_SOURCE_REFERENCE_REVIEW.md`](docs/research/OPEN_SOURCE_REFERENCE_REVIEW.md).
@@ -794,7 +825,9 @@ recovery, then executes the installed generic fixture through that path; see
 [`docs/architecture/WINDOWS_PLUGIN_SANDBOX.md`](docs/architecture/WINDOWS_PLUGIN_SANDBOX.md).
 The run-specific success does not establish publisher trust, general
 third-party compatibility, or physical/hardware verification. See also
-[`docs/architecture/PRODUCTION_PLUGIN_BROKER.md`](docs/architecture/PRODUCTION_PLUGIN_BROKER.md).
+[`docs/architecture/PRODUCTION_PLUGIN_BROKER.md`](docs/architecture/PRODUCTION_PLUGIN_BROKER.md),
+[`docs/architecture/PLUGIN_OPERATOR_WORKFLOW.md`](docs/architecture/PLUGIN_OPERATOR_WORKFLOW.md),
+and [`docs/architecture/WINDOWS_ALPHA_DELIVERY.md`](docs/architecture/WINDOWS_ALPHA_DELIVERY.md).
 SHA-256 is not producer authentication.
 The MSP430 controller may later expose a separate versioned artifact for
 another optional collector.
@@ -808,8 +841,10 @@ addressed documents plus the non-executing Windows sandbox readiness gate.
 Phase 19 verifies the Windows low-level sandbox controls with fixed hostile
 fixtures. Phase 20 executes the standalone generic fixture through the
 Windows production broker and verifies low-trust output registration plus
-durable replay/recovery semantics. Publisher trust, broad plugin packaging,
-and direct CLI/REST execution remain separate work. Custom GitHub API
+durable replay/recovery semantics. Phase 21 exposes the authorized operator
+run/query/collect workflow, and Phase 22 packages that path as a private,
+clean-installable Windows Alpha. Publisher trust, broad plugin packaging,
+and direct plugin REST execution remain separate work. Custom GitHub API
 writes, annotations, signed CI provenance, OIDC, and artifact upload also
 remain separate. TLS, reverse-proxy identity, hostile-local-user defenses,
 durable/distributed session state, security-event retention/export, and managed

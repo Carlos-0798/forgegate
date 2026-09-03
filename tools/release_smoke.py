@@ -48,6 +48,8 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/PLUGIN_EXECUTION_SECURITY_CONTRACT.md",
     "docs/architecture/WINDOWS_PLUGIN_SANDBOX.md",
     "docs/architecture/PRODUCTION_PLUGIN_BROKER.md",
+    "docs/architecture/PLUGIN_OPERATOR_WORKFLOW.md",
+    "docs/architecture/WINDOWS_ALPHA_DELIVERY.md",
     "examples/sample-python-api/artifacts/junit.xml",
     "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
@@ -97,6 +99,9 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_19_WINDOWS_SANDBOX_LIVE_VERIFICATION_REPORT.md",
     "reports/PHASE_20_PRODUCTION_PLUGIN_BROKER_ACCEPTANCE_REPORT.md",
     "reports/PHASE_20_WINDOWS_PLUGIN_BROKER_LIVE_EVIDENCE.json",
+    "reports/PHASE_21_PLUGIN_OPERATOR_WORKFLOW_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_22_WINDOWS_ALPHA_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_22_WINDOWS_ALPHA_LIVE_EVIDENCE.json",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
@@ -133,11 +138,16 @@ REQUIRED_SDIST_PATHS = (
     "schemas/forgegate.plugin-run-result.v1.schema.json",
     "schemas/forgegate.plugin-output.v1.schema.json",
     "schemas/forgegate.plugin-run-receipt.v1.schema.json",
+    "schemas/forgegate.plugin-run-record.v1.schema.json",
+    "schemas/forgegate.plugin-run-page.v1.schema.json",
+    "schemas/forgegate.initialization-report.v1.schema.json",
     "schemas/forgegate.windows-plugin-sandbox-capability.v1.schema.json",
     "schemas/forgegate.openapi.v1.json",
     "schemas/forgegate.benchmark.v1.schema.json",
     "schemas/analog-validation.result-export.v1.schema.json",
     "tests/test_models.py",
+    "tests/test_bootstrap.py",
+    "tests/test_plugin_workflow.py",
     "tests/golden/junit_summary.json",
     "tests/golden/benchmark_metrics.json",
     "tests/golden/analog_validation_result.json",
@@ -153,6 +163,7 @@ REQUIRED_SDIST_PATHS = (
     "tests/golden/release_attestation_pass.md",
     "tests/golden/sarif_summary.json",
     "tools/verify.py",
+    "tools/verify_windows_alpha.ps1",
     "tests/test_candidate_lifecycle.py",
     "tests/test_candidate_store.py",
     "tests/test_candidate_store_cli.py",
@@ -407,6 +418,37 @@ def main(
                 "assert version('forgegate') == forgegate.__version__",
             ],
             cwd=root,
+        )
+        initialized_project = root / "initialized-project"
+        initialization_report = root / "initialization-report.json"
+        run_capture(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "init",
+                str(initialized_project),
+                "--project-id",
+                "release-smoke",
+                "--project-name",
+                "Release Smoke",
+            ],
+            initialization_report,
+            cwd=root,
+        )
+        for initialized_document in (
+            initialization_report,
+            initialized_project / "forgegate.yaml",
+            initialized_project / "policies/pull-request.yaml",
+        ):
+            run(
+                [str(python), "-m", "forgegate", "validate-config", str(initialized_document)],
+                cwd=root,
+            )
+        run(
+            [str(python), "-m", "forgegate", "init", str(initialized_project)],
+            cwd=root,
+            expected_returncode=3,
         )
         assembly_root = root / "assembly-inputs"
         artifact_directory = assembly_root / "artifacts"
@@ -1337,6 +1379,18 @@ def main(
             cwd=root,
         )
 
+        run(
+            [str(python), "-m", "pip", "uninstall", "--yes", "forgegate"],
+            cwd=root,
+        )
+        run(
+            [
+                str(python),
+                "-c",
+                "import importlib.util; assert importlib.util.find_spec('forgegate') is None",
+            ],
+            cwd=root,
+        )
         print(f"\nwheel sha256={sha256(wheel)}", flush=True)
         print(f"sdist sha256={sha256(sdist)}", flush=True)
         print("ForgeGate release smoke: PASS", flush=True)

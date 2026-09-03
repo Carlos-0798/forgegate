@@ -37,6 +37,7 @@ from forgegate.assurance import (
     verify_assurance_bundle,
 )
 from forgegate.attestations import AttestationPublishError, publish_attestation_bundle
+from forgegate.bootstrap import InitializationError, initialize_project
 from forgegate.candidates import (
     CandidateDocument,
     CandidateLifecycleError,
@@ -93,8 +94,16 @@ from forgegate.identity import (
 from forgegate.network import validated_loopback_host
 from forgegate.plugins import (
     PluginDiscoveryError,
+    PluginPermission,
+    PluginRunState,
+    PluginRunStoreError,
+    PluginWorkflowError,
+    collect_plugin_evidence,
     discover_plugins,
+    execute_operator_plugin_run,
+    list_plugin_runs,
     probe_windows_podman_sandbox,
+    read_plugin_run,
 )
 from forgegate.policy import PolicyMaterial, evaluate_policy
 from forgegate.policy.models import (
@@ -130,9 +139,32 @@ def doctor() -> None:
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
         "supported_artifact_schemas": sorted(ARTIFACT_SCHEMAS),
-        "phase": "phase20-production-plugin-broker",
+        "phase": "phase22-windows-alpha",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
+
+
+@app.command("init")
+def init_project(
+    target: Annotated[Path, typer.Argument(file_okay=False)] = Path("."),
+    project_id: Annotated[str, typer.Option("--project-id")] = "sample-project",
+    project_name: Annotated[str, typer.Option("--project-name")] = "Sample Project",
+    repository: Annotated[str | None, typer.Option("--repository")] = None,
+    default_branch: Annotated[str, typer.Option("--default-branch")] = "main",
+) -> None:
+    """Create a strict generic project template without overwriting existing files."""
+    try:
+        report = initialize_project(
+            target,
+            project_id=project_id,
+            project_name=project_name,
+            repository=repository,
+            default_branch=default_branch,
+        )
+    except (InitializationError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(report.model_dump_json(indent=2))
 
 
 @app.command("validate-config")
@@ -246,6 +278,127 @@ def plugins_sandbox_status() -> None:
     """Probe Windows Podman/WSL2 readiness without executing plugin code."""
     report = probe_windows_podman_sandbox()
     typer.echo(report.model_dump_json(indent=2))
+
+
+@plugins_app.command("run")
+def plugins_run(
+    plugin_id: Annotated[str, typer.Argument()],
+    input_specs: Annotated[
+        list[str],
+        typer.Option("--input", help="Repeat PATH=MEDIA_TYPE; PATH is relative to --root."),
+    ],
+    grants: Annotated[list[PluginPermission], typer.Option("--grant")],
+    sandbox_evidence: Annotated[
+        Path, typer.Option("--sandbox-evidence", exists=True, dir_okay=False, readable=True)
+    ],
+    idempotency_key: Annotated[str, typer.Option("--idempotency-key")],
+    planned_at: Annotated[str, typer.Option("--planned-at")],
+    database: Annotated[Path, typer.Option("--database")] = Path(".forgegate/plugin-runs.db"),
+    root: Annotated[Path, typer.Option("--root", file_okay=False)] = Path("."),
+    work_root: Annotated[Path, typer.Option("--work-root", file_okay=False)] = Path(
+        ".forgegate/plugin-work"
+    ),
+    accepted_output_root: Annotated[
+        Path, typer.Option("--accepted-output-root", file_okay=False)
+    ] = Path(".forgegate/plugin-output"),
+    input_schema: Annotated[str | None, typer.Option("--input-schema")] = None,
+    podman: Annotated[Path | None, typer.Option("--podman", dir_okay=False)] = None,
+) -> None:
+    """Run one compatible collector through the verified Windows broker."""
+    try:
+        inputs = _parse_plugin_input_specs(input_specs)
+        receipt = execute_operator_plugin_run(
+            plugin_id=plugin_id,
+            input_schema=input_schema,
+            input_media_types=inputs,
+            approved_permissions=tuple(grants),
+            artifact_root=root,
+            database_path=database,
+            work_root=work_root,
+            accepted_output_root=accepted_output_root,
+            sandbox_evidence_path=sandbox_evidence,
+            idempotency_key=idempotency_key,
+            planned_at=datetime.fromisoformat(planned_at.replace("Z", "+00:00")),
+            podman_executable=podman,
+        )
+    except (PluginWorkflowError, PluginRunStoreError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(receipt.model_dump_json(indent=2))
+    if receipt.result.status is not PluginRunState.SUCCEEDED:
+        raise typer.Exit(code=3)
+
+
+@plugins_app.command("show")
+def plugins_show(
+    database: Annotated[Path, typer.Argument()],
+    run_plan_id: Annotated[str, typer.Argument()],
+) -> None:
+    """Read one path-free durable plugin run and its receipt."""
+    try:
+        record = read_plugin_run(database, run_plan_id)
+    except (PluginRunStoreError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(record.model_dump_json(indent=2))
+
+
+@plugins_app.command("runs")
+def plugins_runs(
+    database: Annotated[Path, typer.Argument()],
+    after: Annotated[str | None, typer.Option("--after")] = None,
+    limit: Annotated[int, typer.Option("--limit", min=1, max=100)] = 100,
+) -> None:
+    """List a bounded path-free page from the separate plugin-run store."""
+    try:
+        page = list_plugin_runs(database, after_run_plan_id=after, limit=limit)
+    except (PluginRunStoreError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(page.model_dump_json(indent=2))
+
+
+@plugins_app.command("collect")
+def plugins_collect(
+    database: Annotated[Path, typer.Argument()],
+    run_plan_id: Annotated[str, typer.Argument()],
+    root: Annotated[Path, typer.Option("--root", file_okay=False)] = Path("."),
+    accepted_output_root: Annotated[
+        Path, typer.Option("--accepted-output-root", file_okay=False)
+    ] = Path(".forgegate/plugin-output"),
+) -> None:
+    """Project a successful broker receipt into the audited collection boundary."""
+    try:
+        result = collect_plugin_evidence(
+            database,
+            run_plan_id,
+            artifact_root=root,
+            accepted_output_root=accepted_output_root,
+        )
+    except (
+        ArtifactError,
+        PluginWorkflowError,
+        PluginRunStoreError,
+        ValidationError,
+        ValueError,
+    ) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    _emit_collection(result)
+
+
+def _parse_plugin_input_specs(values: list[str]) -> dict[str, str]:
+    if not values:
+        raise ValueError("at least one --input PATH=MEDIA_TYPE is required")
+    parsed: dict[str, str] = {}
+    for value in values:
+        path, separator, media_type = value.partition("=")
+        if not separator or not path.strip() or not media_type.strip():
+            raise ValueError("each --input must use PATH=MEDIA_TYPE")
+        if path in parsed:
+            raise ValueError("plugin input paths must be unique")
+        parsed[path] = media_type
+    return parsed
 
 
 @identity_app.command("derive")

@@ -1,15 +1,18 @@
 # Project status
 
 - Date: 2026-09-03
-- Version: 0.1.0.dev28
-- Stage: Phase 20 Windows production external-plugin broker verified with an
-  installed ForgeGate-owned generic fixture, broker-owned I/O, strict output
-  validation, cleanup, and durable replay/recovery
-- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, offline GitHub gating, bounded import-free plugin metadata discovery, and a live-tested Windows-only brokered plugin path; not production-ready
+- Version: 0.1.0a1
+- Stage: Phase 21 operator plugin evidence workflow and Phase 22 private
+  Windows Alpha delivery candidate implemented
+- Product maturity: testable Windows Alpha with generic initialization,
+  local CLI/API release-assurance flow, software-peer collection, audited
+  aggregation, durable lifecycle binding, offline GitHub gating, and a
+  live-tested Windows-only brokered plugin path; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
 - Remote/publication status: private `Carlos-0798/forgegate` synchronized
   through the Phase 20 implementation and deterministic recovery-test fix;
+  Phase 21/22 synchronization is pending this checkpoint's final CI result;
   no public release, License, or
   LinkedIn publication authorized
 
@@ -320,15 +323,28 @@
 - Phase 20 live production-path verification through the installed standalone
   generic fixture: 13/13 broker controls passed, exact run tier `SANDBOXED`,
   output retained as `unsigned_local`/`declared`, hardware not accessed.
+- operator-facing `plugins run/show/runs/collect` commands with exact manifest,
+  input, grant, planning-time, and idempotency authority;
+- strict content-derived path-free plugin run records and stable cursor pages,
+  with terminal failures printed before exit code `3` and retained for query;
+- broker-output revalidation into the existing `CollectionResult` boundary,
+  including accepted-member/digest/schema/identity checks and re-registration
+  of original input bytes without evidence trust promotion;
+- `forgegate init` with a strict generic JUnit/coverage/SARIF/benchmark project,
+  pull-request policy, deterministic path-free receipt, and refusal to
+  overwrite existing configuration;
+- clean-wheel Windows Alpha verification covering install, init, core
+  assurance chain, live plugin CLI success/replay/failure/query/collect/
+  assembly/policy flow, sample-plugin independence, and uninstall.
 
 ## Designed, not implemented
 
 - publisher signatures/trust, remote plugin acquisition, automatic install,
   and an independent production plugin repository;
 - native-extension and separately packaged plugin-dependency support;
-- Linux/macOS execution backends and direct CLI/REST plugin-run endpoints;
-- automatic conversion of validated plugin output into candidate-bound release
-  evidence or a release decision.
+- Linux/macOS execution backends and REST plugin-run endpoints;
+- automatic promotion of validated plugin output into a candidate-bound release
+  decision; the new collection projection remains an explicit separate step.
 
 ## Not implemented
 
@@ -353,8 +369,8 @@ artifact payload/replay export, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 743 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.12% across 8,270 statements and 2,276 branches
+- pytest: 760 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.06% across 8,706 statements and 2,424 branches
 - Plugin execution contract focus: 8 passed across plan authority, protocol
   sequencing, legal transitions, terminal replay, resource limits, JSON
   loading, and content-derived identity; no process started
@@ -378,7 +394,7 @@ artifact payload/replay export, and hardware access.
   and 138 branches
 - committed JSON Schema and OpenAPI drift checks: PASS
 - project/policy/candidate/transition example documents: VALID
-- thirty-eight canonical versioned document Schemas plus Benchmark and Analog
+- forty-one canonical versioned document Schemas plus Benchmark and Analog
   Validation artifact Schemas: drift-checked and parsed
 - complete sdist manifest and ForgeGate/sample-plugin wheel builds: PASS
 - Windows sandbox focus: 20 passed across probe failure isolation, client/server
@@ -442,3 +458,8 @@ recorded in `reports/PHASE_19_WINDOWS_SANDBOX_LIVE_EVIDENCE.json` and
 Phase 20 implementation and live production-path acceptance are recorded in
 `reports/PHASE_20_PRODUCTION_PLUGIN_BROKER_ACCEPTANCE_REPORT.md` and
 `reports/PHASE_20_WINDOWS_PLUGIN_BROKER_LIVE_EVIDENCE.json`.
+Phase 21 operator workflow acceptance is recorded in
+`reports/PHASE_21_PLUGIN_OPERATOR_WORKFLOW_ACCEPTANCE_REPORT.md`.
+Phase 22 packaging and live Windows Alpha acceptance are recorded in
+`reports/PHASE_22_WINDOWS_ALPHA_ACCEPTANCE_REPORT.md` and
+`reports/PHASE_22_WINDOWS_ALPHA_LIVE_EVIDENCE.json`.

@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.0a1 — 2026-09-03
+
+- Added the Windows operator plugin workflow with exact discovery-to-plan
+  authority, explicit inputs/grants, durable success/failure/replay receipts,
+  and path-free single-run and cursor-page queries.
+- Added revalidation of broker-accepted output into the existing audited
+  collection boundary without promoting `unsigned_local` / `declared`
+  evidence.
+- Added `forgegate init`, which creates and strictly validates a generic four-
+  collector project and pull-request policy template without overwriting
+  existing files.
+- Upgraded the clean-wheel Windows acceptance chain to cover installation,
+  initialization, core evidence/decision paths, live CLI plugin success,
+  replay, failure, collection, assembly, policy evaluation, and uninstall.
+- This is a private Windows Alpha test candidate, not a public release,
+  production-deployment approval, or hardware-verification claim.
+
 ## 0.1.0.dev28 — 2026-09-03
 
 - Added the Windows production external-plugin broker and standard-library

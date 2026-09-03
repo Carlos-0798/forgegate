@@ -115,6 +115,9 @@
 | Windows sandbox capability gate | host/runtime probe, client/server identity, command-construction adversarial tests | PASS — 20 focused tests; local rootless WSL2 Podman client/server 5.8.6 match; execution `PROHIBITED`, tier `NONE` |
 | Windows Podman/WSL2 low-level enforcement | fixed hostile container tests for filesystem/network/process/environment/resources/cleanup | PASS — all 14 controls in development report `sha256:5296f70996ff9928d54557fb97c2e667f15ccdd67ff989b85b518260cb3db38d`; external code not tested |
 | External plugin execution and audit | production broker/runner/protocol/output validation/plugin_runs implementation | PASS — installed ForgeGate-owned generic fixture; 13/13 local broker controls, exact replay/readback, cleanup, and run-specific `SANDBOXED`; output remains `unsigned_local`/`declared` |
+| Operator plugin run CLI | exact installed collector + explicit inputs/grants/time/idempotency | PASS — success, exact replay, and durable failed receipt; Windows-only local host |
+| Path-free plugin audit queries | record + stable cursor page models and CLI | PASS — no database/work/output/container/install/host path in returned documents |
+| Plugin output to collection boundary | receipt/member/hash/schema/input revalidation + assembly | PASS — ordinary `CollectionResult`; trust remains `unsigned_local`/`declared` |
 | General third-party plugin trust/compatibility | publisher provenance + diverse hostile packages | NOT ESTABLISHED — pure-Python fixed fixture only; native/dependency-rich packages and remote acquisition unsupported |
 | Registered-project candidate authority | application/CLI/API/store tests | PASS — unregistered project and missing track fail closed |
 | Release-track normalization | underscore compatibility plus ambiguity tests | PASS — new candidate/policy identity is canonical hyphen form |
@@ -144,7 +147,9 @@
 | HTTP artifact loading/file publication | no loader/output path; nested metadata is not dereferenced | OUT OF SCOPE |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
+| Generic project initialization | clean-wheel `forgegate init`, strict model validation, overwrite rejection | PASS — path-free receipt; no hardware requested |
+| Windows Alpha install-to-uninstall chain | full verification + clean wheel + core assurance + live plugin CLI | PASS — 18/18 retained controls; local Windows acceptance only, not a public release or production claim |
 
-See `reports/PHASE_16_GITHUB_ACTIONS_GATE_ACCEPTANCE_REPORT.md`
-for the current exact local test and coverage result. Earlier acceptance
+See `reports/PHASE_22_WINDOWS_ALPHA_ACCEPTANCE_REPORT.md` for the current exact
+local test, coverage, package, and Windows chain result. Earlier acceptance
 reports remain historical records.

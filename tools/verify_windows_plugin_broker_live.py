@@ -3,29 +3,18 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import subprocess
+import sys
 import tempfile
-from datetime import UTC, datetime
-from importlib import metadata
+from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
 
+from forgegate.assembly import EvidenceBundleAssembly
 from forgegate.canonical import canonical_json
-from forgegate.plugins import (
-    PLUGIN_ENTRY_POINT_GROUP,
-    WINDOWS_PODMAN_BACKEND,
-    WINDOWS_PODMAN_BACKEND_VERSION,
-    PluginBrokerRequest,
-    PluginDiscoveryStatus,
-    PluginExecutionTarget,
-    PluginPermission,
-    PluginResourceLimits,
-    PluginRunState,
-    PluginRunSubject,
-    SQLitePluginRunRepository,
-    WindowsPluginBroker,
-    create_plugin_run_plan,
-    discover_plugins,
-)
+from forgegate.collectors import CollectionResult
+from forgegate.plugins import PluginRunPage, PluginRunReceipt, PluginRunRecord, PluginRunState
+from forgegate.policy.models import PolicyEvaluation
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 PLUGIN_DISTRIBUTION = "forgegate-sample-collector-plugin"
@@ -37,125 +26,201 @@ class LiveBrokerVerificationError(RuntimeError):
     pass
 
 
-def _installed_distribution() -> metadata.Distribution:
-    matches: list[metadata.Distribution] = []
-    for distribution in metadata.distributions():
-        try:
-            if distribution.metadata.get("Name") == PLUGIN_DISTRIBUTION:
-                matches.append(distribution)
-        except Exception:
-            continue
-    if len(matches) != 1:
-        raise LiveBrokerVerificationError(
-            "install exactly one forgegate-sample-collector-plugin distribution"
-        )
-    return matches[0]
-
-
-def _target(distribution: metadata.Distribution) -> PluginExecutionTarget:
-    report = discover_plugins((distribution,))
-    if report.total != 1 or report.plugins[0].status is not PluginDiscoveryStatus.COMPATIBLE:
-        raise LiveBrokerVerificationError("sample plugin is not compatible")
-    plugin = report.plugins[0]
-    if plugin.plugin_id != PLUGIN_ID or plugin.manifest is None:
-        raise LiveBrokerVerificationError("unexpected sample plugin identity")
-    entry_points = [
-        item
-        for item in distribution.entry_points
-        if item.group == PLUGIN_ENTRY_POINT_GROUP and item.name == PLUGIN_ID
-    ]
-    if len(entry_points) != 1:
-        raise LiveBrokerVerificationError("sample plugin entry point is ambiguous")
-    return PluginExecutionTarget(
-        distribution_name=str(distribution.metadata["Name"]),
-        distribution_version=str(distribution.version),
-        entry_point_name=PLUGIN_ID,
-        entry_point_value=entry_points[0].value,
-        manifest=plugin.manifest,
+def _run_cli(command: list[str], *, cwd: Path, expected: int = 0) -> str:
+    completed = subprocess.run(
+        [sys.executable, "-m", "forgegate", *command],
+        cwd=cwd,
+        check=False,
+        capture_output=True,
+        text=True,
     )
+    if completed.returncode != expected:
+        raise LiveBrokerVerificationError(
+            f"CLI command returned {completed.returncode}, expected {expected}: "
+            + " ".join(command[:3])
+        )
+    return completed.stdout
+
+
+def _path_free(root: Path, *payloads: str) -> bool:
+    forbidden = str(root).replace("\\", "/").casefold()
+    return all(forbidden not in payload.replace("\\", "/").casefold() for payload in payloads)
 
 
 def verify_live_broker(
     *, evidence_path: Path = DEFAULT_EVIDENCE, podman: Path | None = None
 ) -> dict[str, Any]:
-    distribution = _installed_distribution()
-    target = _target(distribution)
     started_at = datetime.now(UTC)
+    planned_at = started_at.isoformat().replace("+00:00", "Z")
     input_payload = canonical_json(
         {
-            "collected_at": started_at.isoformat().replace("+00:00", "Z"),
+            "collected_at": planned_at,
             "commit_sha": "a" * 40,
         }
     ).encode("utf-8")
-    subject = PluginRunSubject(
-        name="inputs/synthetic.json",
-        media_type="application/json",
-        digest="sha256:" + hashlib.sha256(input_payload).hexdigest(),
-        size_bytes=len(input_payload),
-    )
-    permissions = (PluginPermission.ARTIFACT_READ, PluginPermission.FILESYSTEM_WRITE)
-    plan = create_plugin_run_plan(
-        target=target,
-        input_schema="example.sample-input.v1",
-        inputs=(subject,),
-        expected_output_evidence_kinds=("sample.metric",),
-        approved_permissions=permissions,
-        enforced_permissions=permissions,
-        enforcement_backend=WINDOWS_PODMAN_BACKEND,
-        enforcement_backend_version=WINDOWS_PODMAN_BACKEND_VERSION,
-        resource_limits=PluginResourceLimits(
-            startup_timeout_ms=10_000,
-            total_timeout_ms=30_000,
-            cpu_time_ms=10_000,
-            memory_bytes=134_217_728,
-            output_bytes=1_048_576,
-            file_count=8,
-            stdout_bytes=65_536,
-            stderr_bytes=65_536,
-        ),
-        planned_at=started_at,
-    )
     with tempfile.TemporaryDirectory(prefix="forgegate-live-broker-") as raw_root:
         root = Path(raw_root)
         artifacts = root / "artifacts"
-        work = root / "work"
-        outputs = root / "outputs"
-        for directory in (artifacts, work, outputs):
-            directory.mkdir()
-        (artifacts / "synthetic.json").write_bytes(input_payload)
-        repository = SQLitePluginRunRepository(root / "plugin-runs.db")
-        receipt = WindowsPluginBroker(repository, distributions=(distribution,)).execute(
-            PluginBrokerRequest(
-                plan=plan,
-                artifact_root=artifacts,
-                input_paths={subject.name: "synthetic.json"},
-                work_root=work,
-                accepted_output_root=outputs,
-                sandbox_evidence_path=evidence_path,
-                idempotency_key="phase20:live-sample:v1",
-                podman_executable=podman,
-            )
+        state = root / "state"
+        work = state / "work"
+        outputs = state / "outputs"
+        database = state / "plugin-runs.db"
+        input_path = artifacts / "inputs/synthetic.json"
+        input_path.parent.mkdir(parents=True)
+        input_path.write_bytes(input_payload)
+
+        run_command = [
+            "plugins",
+            "run",
+            PLUGIN_ID,
+            "--input",
+            "inputs/synthetic.json=application/json",
+            "--grant",
+            "artifact-read",
+            "--grant",
+            "filesystem-write",
+            "--sandbox-evidence",
+            str(evidence_path.resolve(strict=True)),
+            "--idempotency-key",
+            "phase21:windows-alpha:success",
+            "--planned-at",
+            planned_at,
+            "--database",
+            str(database),
+            "--root",
+            str(artifacts),
+            "--work-root",
+            str(work),
+            "--accepted-output-root",
+            str(outputs),
+        ]
+        if podman is not None:
+            run_command.extend(("--podman", str(podman.resolve(strict=True))))
+        first_text = _run_cli(run_command, cwd=root)
+        replay_text = _run_cli(run_command, cwd=root)
+        receipt = PluginRunReceipt.model_validate_json(first_text)
+        replay = PluginRunReceipt.model_validate_json(replay_text)
+        if receipt.result.status is not PluginRunState.SUCCEEDED or receipt != replay:
+            raise LiveBrokerVerificationError("operator CLI run or exact replay did not succeed")
+        run_plan_id = receipt.result.run_plan.run_plan_id
+
+        record_text = _run_cli(["plugins", "show", str(database), run_plan_id], cwd=root)
+        record = PluginRunRecord.model_validate_json(record_text)
+        page_text = _run_cli(
+            ["plugins", "runs", str(database), "--limit", "100"],
+            cwd=root,
         )
-        replay = WindowsPluginBroker(repository, distributions=(distribution,)).execute(
-            PluginBrokerRequest(
-                plan=plan,
-                artifact_root=artifacts,
-                input_paths={subject.name: "synthetic.json"},
-                work_root=work,
-                accepted_output_root=outputs,
-                sandbox_evidence_path=evidence_path,
-                idempotency_key="phase20:live-sample:v1",
-                podman_executable=podman,
-            )
+        page = PluginRunPage.model_validate_json(page_text)
+        collection_text = _run_cli(
+            [
+                "plugins",
+                "collect",
+                str(database),
+                run_plan_id,
+                "--root",
+                str(artifacts),
+                "--accepted-output-root",
+                str(outputs),
+            ],
+            cwd=root,
         )
-        if receipt != replay or receipt.result.status is not PluginRunState.SUCCEEDED:
-            issue = receipt.result.issue.code.value if receipt.result.issue is not None else "NONE"
-            raise LiveBrokerVerificationError(
-                f"production broker run or replay did not succeed: {issue}"
-            )
+        collection = CollectionResult.model_validate_json(collection_text)
+        collection_path = artifacts / "plugin.collection.json"
+        collection_path.write_text(collection_text, encoding="utf-8", newline="\n")
+        generated_at = (started_at + timedelta(minutes=1)).isoformat().replace("+00:00", "Z")
+        assembly_text = _run_cli(
+            [
+                "assemble-evidence",
+                "plugin.collection.json",
+                "--root",
+                str(artifacts),
+                "--commit",
+                "a" * 40,
+                "--generated-at",
+                generated_at,
+            ],
+            cwd=root,
+        )
+        assembly = EvidenceBundleAssembly.model_validate_json(assembly_text)
+        assembly_path = artifacts / "plugin.assembly.json"
+        assembly_path.write_text(assembly_text, encoding="utf-8", newline="\n")
+        policy_path = root / "plugin-policy.yaml"
+        policy_path.write_text(
+            """schema_version: forgegate.policy.v1
+name: plugin-smoke
+rules:
+  - id: plugin-output-present
+    claim: plugin.output-present
+    evidence_kind: sample.metric
+    aggregation: count
+    operator: greater_than_or_equal
+    expected: 1
+    mandatory: true
+    require_presence: true
+    on_missing: REVIEW
+    minimum_trust: unsigned_local
+    minimum_verification: declared
+""",
+            encoding="utf-8",
+            newline="\n",
+        )
+        evaluation_text = _run_cli(
+            [
+                "evaluate-policy",
+                str(policy_path),
+                str(assembly_path),
+                "--evaluated-at",
+                generated_at,
+            ],
+            cwd=root,
+        )
+        evaluation = PolicyEvaluation.model_validate_json(evaluation_text)
+
+        tampered_evidence = root / "tampered-sandbox-evidence.json"
+        raw_evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+        raw_evidence["verification_id"] = "sha256:" + "0" * 64
+        tampered_evidence.write_text(
+            json.dumps(raw_evidence, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+            newline="\n",
+        )
+        failed_time = (started_at + timedelta(seconds=1)).isoformat().replace("+00:00", "Z")
+        failed_command = list(run_command)
+        failed_command[failed_command.index("--sandbox-evidence") + 1] = str(tampered_evidence)
+        failed_command[failed_command.index("--idempotency-key") + 1] = (
+            "phase21:windows-alpha:failure"
+        )
+        failed_command[failed_command.index("--planned-at") + 1] = failed_time
+        failed_text = _run_cli(failed_command, cwd=root, expected=3)
+        failed = PluginRunReceipt.model_validate_json(failed_text)
+        failed_record_text = _run_cli(
+            ["plugins", "show", str(database), failed.result.run_plan.run_plan_id],
+            cwd=root,
+        )
+        failed_record = PluginRunRecord.model_validate_json(failed_record_text)
+        _run_cli(
+            [
+                "plugins",
+                "collect",
+                str(database),
+                failed.result.run_plan.run_plan_id,
+                "--root",
+                str(artifacts),
+                "--accepted-output-root",
+                str(outputs),
+            ],
+            cwd=root,
+            expected=3,
+        )
+        final_page_text = _run_cli(
+            ["plugins", "runs", str(database), "--limit", "100"],
+            cwd=root,
+        )
+        final_page = PluginRunPage.model_validate_json(final_page_text)
+
         accepted = tuple(outputs.rglob("*.json"))
         if len(accepted) != 1:
-            raise LiveBrokerVerificationError("broker did not register exactly one output")
+            raise LiveBrokerVerificationError("broker did not register exactly one accepted output")
         output = json.loads(accepted[0].read_bytes())
         observations = output["evidence"]["value"]
         checks = {
@@ -173,18 +238,31 @@ def verify_live_broker(
             "cleanup_verified": receipt.cleanup.container_removed
             and receipt.cleanup.staging_removed,
             "durable_replay_exact": replay.receipt_id == receipt.receipt_id,
+            "durable_store_readback": record.receipt == receipt,
+            "path_free_queries": _path_free(
+                root,
+                first_text,
+                replay_text,
+                record_text,
+                page_text,
+                final_page_text,
+            ),
+            "collection_boundary": collection.evidence == assembly.bundle.evidence,
             "low_trust_output": output["evidence"]["trust"] == "unsigned_local"
             and output["evidence"]["verification_level"] == "declared",
+            "policy_chain_pass": evaluation.decision.value == "PASS",
+            "failed_run_persisted": failed.result.status is PluginRunState.ERROR
+            and failed_record.receipt == failed,
+            "run_page_complete": len(final_page.runs) == 2 and len(page.runs) == 1,
         }
-        store_snapshot = repository.get(plan.run_plan_id)
-        checks["durable_store_readback"] = store_snapshot.receipt == receipt
+
     report: dict[str, Any] = {
-        "report_format": "forgegate.windows-production-plugin-broker-verification.v1",
+        "report_format": "forgegate.windows-alpha-plugin-chain-verification.v1",
         "started_at": started_at.isoformat().replace("+00:00", "Z"),
         "finished_at": datetime.now(UTC).isoformat().replace("+00:00", "Z"),
         "plugin_distribution": PLUGIN_DISTRIBUTION,
         "plugin_id": PLUGIN_ID,
-        "run_plan_id": plan.run_plan_id,
+        "run_plan_id": receipt.result.run_plan.run_plan_id,
         "receipt": receipt.model_dump(mode="json"),
         "checks": [{"control": name, "passed": passed} for name, passed in sorted(checks.items())],
         "production_broker_verified": all(checks.values()),
@@ -195,6 +273,7 @@ def verify_live_broker(
             "The executed plugin is the ForgeGate-owned generic package fixture.",
             "The accepted evidence remains unsigned_local and declared.",
             "Linux and macOS external-plugin execution remain unsupported.",
+            "A PASS decision here covers only the generic plugin-chain smoke policy.",
         ],
     }
     report["verification_id"] = (
@@ -205,7 +284,7 @@ def verify_live_broker(
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Execute the installed generic plugin through the production Windows broker."
+        description="Execute the installed generic plugin through the Windows Alpha CLI chain."
     )
     parser.add_argument("--sandbox-evidence", type=Path, default=DEFAULT_EVIDENCE)
     parser.add_argument("--podman", type=Path)
@@ -217,7 +296,7 @@ def main() -> int:
             podman=arguments.podman,
         )
     except (LiveBrokerVerificationError, ValueError, OSError) as exc:
-        print(f"Windows production plugin broker verification: ERROR ({exc})")
+        print(f"Windows Alpha plugin-chain verification: ERROR ({exc})")
         return 2
     rendered = json.dumps(report, indent=2, sort_keys=True, ensure_ascii=False) + "\n"
     if arguments.output is not None:

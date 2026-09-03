@@ -572,6 +572,102 @@ class PluginRunReceipt(StrictModel):
         return self
 
 
+class PluginRunRecord(StrictModel):
+    """Path-free read model for one durable plugin run."""
+
+    schema_version: Literal["forgegate.plugin-run-record.v1"] = "forgegate.plugin-run-record.v1"
+    record_id: str = Field(pattern=FINGERPRINT_PATTERN)
+    run_plan: PluginRunPlan
+    transitions: tuple[PluginRunTransition, ...] = Field(min_length=1, max_length=4)
+    receipt: PluginRunReceipt | None = None
+
+    @model_validator(mode="after")
+    def record_chain_and_identity_hold(self) -> PluginRunRecord:
+        if self.transitions[0].from_state is not None:
+            raise ValueError("plugin run record must begin with an initial transition")
+        for index, transition in enumerate(self.transitions):
+            if transition.run_plan_id != self.run_plan.run_plan_id or transition.sequence != index:
+                raise ValueError("plugin run record transition does not match its plan")
+            if index:
+                previous = self.transitions[index - 1]
+                if (
+                    transition.previous_transition_id != previous.transition_id
+                    or transition.from_state is not previous.to_state
+                    or transition.occurred_at < previous.occurred_at
+                ):
+                    raise ValueError("plugin run record transition chain is invalid")
+        terminal = self.transitions[-1].to_state.value in TERMINAL_RUN_STATES
+        if self.receipt is None:
+            if terminal:
+                raise ValueError("terminal plugin run record requires its receipt")
+        elif (
+            self.receipt.result.run_plan != self.run_plan
+            or self.receipt.result.transitions != self.transitions
+        ):
+            raise ValueError("plugin run record receipt does not match its durable state")
+        if self.record_id != sha256_fingerprint(_run_record_identity(self)):
+            raise ValueError("record_id does not match plugin run record content")
+        return self
+
+
+class PluginRunSummary(StrictModel):
+    """Bounded path-free index entry; full receipts remain available through show."""
+
+    run_plan_id: str = Field(pattern=FINGERPRINT_PATTERN)
+    plugin_id: str = Field(pattern=PLUGIN_ID_PATTERN)
+    plugin_version: str
+    state: PluginRunState
+    planned_at: datetime
+    receipt_id: str | None = Field(default=None, pattern=FINGERPRINT_PATTERN)
+    issue: PluginRunIssueCode | None = None
+    output_count: int = Field(ge=0, le=4_096)
+    accepted_outputs_registered: bool
+
+    @model_validator(mode="after")
+    def terminal_shape_is_consistent(self) -> PluginRunSummary:
+        terminal = self.state.value in TERMINAL_RUN_STATES
+        if terminal != (self.receipt_id is not None):
+            raise ValueError("terminal plugin run summary requires exactly one receipt ID")
+        if self.state is PluginRunState.SUCCEEDED:
+            if self.issue is not None or not self.accepted_outputs_registered:
+                raise ValueError("successful plugin run summary is inconsistent")
+        elif terminal and (self.issue is None or self.accepted_outputs_registered):
+            raise ValueError("failed plugin run summary is inconsistent")
+        elif not terminal and (
+            self.issue is not None or self.output_count or self.accepted_outputs_registered
+        ):
+            raise ValueError("incomplete plugin run summary contains terminal fields")
+        return self
+
+
+class PluginRunPage(StrictModel):
+    """Stable run-plan-ID cursor page over the separate plugin audit store."""
+
+    schema_version: Literal["forgegate.plugin-run-page.v1"] = "forgegate.plugin-run-page.v1"
+    page_id: str = Field(pattern=FINGERPRINT_PATTERN)
+    query_after_run_plan_id: str | None = Field(default=None, pattern=FINGERPRINT_PATTERN)
+    next_after_run_plan_id: str | None = Field(default=None, pattern=FINGERPRINT_PATTERN)
+    limit: int = Field(ge=1, le=100)
+    runs: tuple[PluginRunSummary, ...] = Field(max_length=100)
+
+    @model_validator(mode="after")
+    def page_order_and_identity_hold(self) -> PluginRunPage:
+        ids = [item.run_plan_id for item in self.runs]
+        if ids != sorted(ids) or len(ids) != len(set(ids)):
+            raise ValueError("plugin run page entries must be unique and ordered")
+        if self.query_after_run_plan_id is not None and any(
+            item <= self.query_after_run_plan_id for item in ids
+        ):
+            raise ValueError("plugin run page contains an entry before its cursor")
+        if self.next_after_run_plan_id is not None and (
+            not ids or self.next_after_run_plan_id != ids[-1]
+        ):
+            raise ValueError("plugin run page next cursor is invalid")
+        if self.page_id != sha256_fingerprint(_run_page_identity(self)):
+            raise ValueError("page_id does not match plugin run page content")
+        return self
+
+
 def create_plugin_run_plan(
     *,
     target: PluginExecutionTarget,
@@ -747,6 +843,48 @@ def create_plugin_run_receipt(
     )
 
 
+def create_plugin_run_record(
+    *,
+    run_plan: PluginRunPlan,
+    transitions: tuple[PluginRunTransition, ...],
+    receipt: PluginRunReceipt | None,
+) -> PluginRunRecord:
+    candidate = PluginRunRecord.model_construct(
+        record_id="sha256:" + "0" * 64,
+        run_plan=run_plan,
+        transitions=transitions,
+        receipt=receipt,
+    )
+    return PluginRunRecord.model_validate(
+        {
+            **candidate.model_dump(mode="json"),
+            "record_id": sha256_fingerprint(_run_record_identity(candidate)),
+        }
+    )
+
+
+def create_plugin_run_page(
+    *,
+    runs: tuple[PluginRunSummary, ...],
+    query_after_run_plan_id: str | None,
+    next_after_run_plan_id: str | None,
+    limit: int,
+) -> PluginRunPage:
+    candidate = PluginRunPage.model_construct(
+        page_id="sha256:" + "0" * 64,
+        query_after_run_plan_id=query_after_run_plan_id,
+        next_after_run_plan_id=next_after_run_plan_id,
+        limit=limit,
+        runs=runs,
+    )
+    return PluginRunPage.model_validate(
+        {
+            **candidate.model_dump(mode="json"),
+            "page_id": sha256_fingerprint(_run_page_identity(candidate)),
+        }
+    )
+
+
 def plugin_output_set_id(outputs: tuple[PluginValidatedOutput, ...]) -> str:
     ordered = tuple(
         sorted(outputs, key=lambda item: (item.subject.name, item.subject.digest, item.evidence_id))
@@ -782,6 +920,14 @@ def _run_result_identity(result: PluginRunResult) -> dict[str, object]:
 
 def _run_receipt_identity(receipt: PluginRunReceipt) -> dict[str, object]:
     return receipt.model_dump(mode="json", exclude={"schema_version", "receipt_id"})
+
+
+def _run_record_identity(record: PluginRunRecord) -> dict[str, object]:
+    return record.model_dump(mode="json", exclude={"schema_version", "record_id"})
+
+
+def _run_page_identity(page: PluginRunPage) -> dict[str, object]:
+    return page.model_dump(mode="json", exclude={"schema_version", "page_id"})
 
 
 __all__ = [

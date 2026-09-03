@@ -4,6 +4,7 @@ from forgegate.assembly import EvidenceBundleAssembly
 from forgegate.assurance import AssuranceBundle, AssuranceBundleManifest
 from forgegate.attestations import ReleaseAttestation
 from forgegate.audit import AuditActor, AuditEvent, AuditEventPage
+from forgegate.bootstrap import InitializationReport
 from forgegate.candidates import CandidateEvidenceBinding
 from forgegate.candidates.models import (
     CandidateTransition,
@@ -22,8 +23,10 @@ from forgegate.plugins import (
     PluginManifest,
     PluginOutputDocument,
     PluginProtocolMessage,
+    PluginRunPage,
     PluginRunPlan,
     PluginRunReceipt,
+    PluginRunRecord,
     PluginRunResult,
     PluginRunTransition,
     WindowsSandboxCapabilityReport,
@@ -45,6 +48,7 @@ SCHEMAS: dict[str, type[BaseModel]] = {
     "forgegate.signing-identity.v1": SigningIdentity,
     "forgegate.trust-store.v1": TrustStore,
     "forgegate.project.v1": ProjectConfig,
+    "forgegate.initialization-report.v1": InitializationReport,
     "forgegate.policy.v1": PolicyConfig,
     "forgegate.evidence-bundle.v1": EvidenceBundle,
     "forgegate.evidence-bundle-assembly.v1": EvidenceBundleAssembly,
@@ -71,6 +75,8 @@ SCHEMAS: dict[str, type[BaseModel]] = {
     "forgegate.plugin-manifest.v1": PluginManifest,
     "forgegate.plugin-discovery.v1": PluginDiscoveryReport,
     "forgegate.plugin-run-plan.v1": PluginRunPlan,
+    "forgegate.plugin-run-record.v1": PluginRunRecord,
+    "forgegate.plugin-run-page.v1": PluginRunPage,
     "forgegate.plugin-output.v1": PluginOutputDocument,
     "forgegate.plugin-protocol-message.v1": PluginProtocolMessage,
     "forgegate.plugin-run-transition.v1": PluginRunTransition,

@@ -304,11 +304,26 @@
 
 ## Phase 21 — operator-facing plugin evidence workflow
 
-- [ ] Add a bounded Windows CLI that creates an exact run plan from one
+- [x] Add a bounded Windows CLI that creates an exact run plan from one
   compatible installed collector plus explicit input subjects and grants.
-- [ ] Add path-free run/receipt query commands over the separate plugin-run
+- [x] Add path-free run/receipt query commands over the separate plugin-run
   store without exposing raw plugin output or host/container paths.
-- [ ] Convert broker-validated output into the existing audited collection
+- [x] Convert broker-validated output into the existing audited collection
   boundary so it can enter evidence assembly without trust promotion.
-- [ ] Prove failed, replayed, and successful CLI runs through clean-wheel tests
+- [x] Prove failed, replayed, and successful CLI runs through clean-wheel tests
   while retaining explicit Windows-only and no-hardware behavior.
+
+## Phase 22 — private Windows Alpha delivery candidate
+
+- [x] Add `forgegate init` with a strict generic four-collector project and
+  policy template plus a no-overwrite publication contract.
+- [x] Validate initialization from a clean wheel and retain a path-free,
+  content-addressed initialization receipt.
+- [x] Exercise the established core collection, assembly, decision,
+  attestation, portable verification, and GitHub gate chain in a clean
+  environment.
+- [x] Exercise live Windows CLI plugin success, exact replay, persisted
+  failure, path-free queries, low-trust collection, evidence assembly, and a
+  sample-policy PASS through the pinned Podman/WSL2 fixture.
+- [x] Verify sample-plugin independence and ForgeGate uninstall, then complete
+  the security, privacy, claim, and delivery-document audit.

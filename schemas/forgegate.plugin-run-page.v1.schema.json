@@ -1,0 +1,170 @@
+{
+  "$defs": {
+    "PluginRunIssueCode": {
+      "enum": [
+        "PLUGIN_PLAN_INVALID",
+        "PLUGIN_PERMISSION_DENIED",
+        "PLUGIN_PERMISSION_UNENFORCEABLE",
+        "PLUGIN_ISOLATION_UNAVAILABLE",
+        "PLUGIN_START_FAILED",
+        "PLUGIN_PROTOCOL_INVALID",
+        "PLUGIN_TIMEOUT",
+        "PLUGIN_RESOURCE_LIMIT",
+        "PLUGIN_EXIT_ERROR",
+        "PLUGIN_OUTPUT_INVALID",
+        "PLUGIN_AUDIT_FAILED",
+        "PLUGIN_CLEANUP_FAILED",
+        "PLUGIN_CANCELLED"
+      ],
+      "title": "PluginRunIssueCode",
+      "type": "string"
+    },
+    "PluginRunState": {
+      "enum": [
+        "PLANNED",
+        "STARTING",
+        "RUNNING",
+        "SUCCEEDED",
+        "ERROR",
+        "CANCELLED"
+      ],
+      "title": "PluginRunState",
+      "type": "string"
+    },
+    "PluginRunSummary": {
+      "additionalProperties": false,
+      "description": "Bounded path-free index entry; full receipts remain available through show.",
+      "properties": {
+        "accepted_outputs_registered": {
+          "title": "Accepted Outputs Registered",
+          "type": "boolean"
+        },
+        "issue": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PluginRunIssueCode"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "output_count": {
+          "maximum": 4096,
+          "minimum": 0,
+          "title": "Output Count",
+          "type": "integer"
+        },
+        "planned_at": {
+          "format": "date-time",
+          "title": "Planned At",
+          "type": "string"
+        },
+        "plugin_id": {
+          "pattern": "^[a-z][a-z0-9]*(?:[.-][a-z0-9][a-z0-9-]*){1,7}$",
+          "title": "Plugin Id",
+          "type": "string"
+        },
+        "plugin_version": {
+          "title": "Plugin Version",
+          "type": "string"
+        },
+        "receipt_id": {
+          "anyOf": [
+            {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Receipt Id"
+        },
+        "run_plan_id": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Run Plan Id",
+          "type": "string"
+        },
+        "state": {
+          "$ref": "#/$defs/PluginRunState"
+        }
+      },
+      "required": [
+        "run_plan_id",
+        "plugin_id",
+        "plugin_version",
+        "state",
+        "planned_at",
+        "output_count",
+        "accepted_outputs_registered"
+      ],
+      "title": "PluginRunSummary",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Stable run-plan-ID cursor page over the separate plugin audit store.",
+  "properties": {
+    "limit": {
+      "maximum": 100,
+      "minimum": 1,
+      "title": "Limit",
+      "type": "integer"
+    },
+    "next_after_run_plan_id": {
+      "anyOf": [
+        {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Next After Run Plan Id"
+    },
+    "page_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Page Id",
+      "type": "string"
+    },
+    "query_after_run_plan_id": {
+      "anyOf": [
+        {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "type": "string"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null,
+      "title": "Query After Run Plan Id"
+    },
+    "runs": {
+      "items": {
+        "$ref": "#/$defs/PluginRunSummary"
+      },
+      "maxItems": 100,
+      "title": "Runs",
+      "type": "array"
+    },
+    "schema_version": {
+      "const": "forgegate.plugin-run-page.v1",
+      "default": "forgegate.plugin-run-page.v1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "page_id",
+    "limit",
+    "runs"
+  ],
+  "title": "PluginRunPage",
+  "type": "object"
+}

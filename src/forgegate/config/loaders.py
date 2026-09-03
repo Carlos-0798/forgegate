@@ -6,6 +6,7 @@ from pydantic import ValidationError
 from forgegate.assembly import EvidenceBundleAssembly
 from forgegate.assurance import AssuranceBundle, AssuranceBundleManifest
 from forgegate.attestations import ReleaseAttestation
+from forgegate.bootstrap import InitializationReport
 from forgegate.candidates import CandidateEvidenceBinding
 from forgegate.candidates.models import (
     CandidateTransition,
@@ -20,7 +21,10 @@ from forgegate.plugins import (
     PluginDiscoveryReport,
     PluginManifest,
     PluginProtocolMessage,
+    PluginRunPage,
     PluginRunPlan,
+    PluginRunReceipt,
+    PluginRunRecord,
     PluginRunResult,
     PluginRunTransition,
     WindowsSandboxCapabilityReport,
@@ -34,6 +38,7 @@ from forgegate.projects import ProjectProfileRevision
 MAX_CONFIG_BYTES = 4 * 1024 * 1024
 type SupportedConfig = (
     ProjectConfig
+    | InitializationReport
     | PolicyConfig
     | EvidenceBundle
     | EvidenceBundleAssembly
@@ -56,6 +61,9 @@ type SupportedConfig = (
     | PluginManifest
     | PluginDiscoveryReport
     | PluginRunPlan
+    | PluginRunRecord
+    | PluginRunPage
+    | PluginRunReceipt
     | PluginProtocolMessage
     | PluginRunTransition
     | PluginRunResult
@@ -64,6 +72,7 @@ type SupportedConfig = (
 
 SCHEMA_MODELS: dict[str, type[SupportedConfig]] = {
     "forgegate.project.v1": ProjectConfig,
+    "forgegate.initialization-report.v1": InitializationReport,
     "forgegate.policy.v1": PolicyConfig,
     "forgegate.evidence-bundle.v1": EvidenceBundle,
     "forgegate.evidence-bundle-assembly.v1": EvidenceBundleAssembly,
@@ -86,6 +95,9 @@ SCHEMA_MODELS: dict[str, type[SupportedConfig]] = {
     "forgegate.plugin-manifest.v1": PluginManifest,
     "forgegate.plugin-discovery.v1": PluginDiscoveryReport,
     "forgegate.plugin-run-plan.v1": PluginRunPlan,
+    "forgegate.plugin-run-record.v1": PluginRunRecord,
+    "forgegate.plugin-run-page.v1": PluginRunPage,
+    "forgegate.plugin-run-receipt.v1": PluginRunReceipt,
     "forgegate.plugin-protocol-message.v1": PluginProtocolMessage,
     "forgegate.plugin-run-transition.v1": PluginRunTransition,
     "forgegate.plugin-run-result.v1": PluginRunResult,

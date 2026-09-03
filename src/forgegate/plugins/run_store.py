@@ -246,6 +246,43 @@ class SQLitePluginRunRepository:
         finally:
             connection.close()
 
+    def page(
+        self,
+        *,
+        after_run_plan_id: str | None = None,
+        limit: int = 100,
+    ) -> tuple[tuple[PluginRunSnapshot, ...], str | None]:
+        """Return a stable path-free cursor page ordered by content-derived plan ID."""
+
+        if not 1 <= limit <= 100:
+            raise PluginRunStoreError("PLUGIN_PLAN_INVALID", "run page limit must be 1..100")
+        if (
+            after_run_plan_id is not None
+            and re.fullmatch(r"sha256:[0-9a-f]{64}", after_run_plan_id) is None
+        ):
+            raise PluginRunStoreError("PLUGIN_PLAN_INVALID", "run page cursor is invalid")
+        connection = self._connect()
+        try:
+            self._validate_store(connection)
+            if after_run_plan_id is None:
+                rows = connection.execute(
+                    "SELECT run_plan_id FROM plugin_run_plans ORDER BY run_plan_id LIMIT ?",
+                    (limit + 1,),
+                ).fetchall()
+            else:
+                rows = connection.execute(
+                    "SELECT run_plan_id FROM plugin_run_plans WHERE run_plan_id > ? "
+                    "ORDER BY run_plan_id LIMIT ?",
+                    (after_run_plan_id, limit + 1),
+                ).fetchall()
+            has_more = len(rows) > limit
+            selected = rows[:limit]
+            snapshots = tuple(self._load_snapshot(connection, row[0]) for row in selected)
+            next_cursor = snapshots[-1].plan.run_plan_id if has_more and snapshots else None
+            return snapshots, next_cursor
+        finally:
+            connection.close()
+
     def _load_snapshot(self, connection: sqlite3.Connection, run_plan_id: str) -> PluginRunSnapshot:
         row = connection.execute(
             "SELECT plan_json FROM plugin_run_plans WHERE run_plan_id = ?", (run_plan_id,)

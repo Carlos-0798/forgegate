@@ -1,0 +1,380 @@
+{
+  "advertised_isolation_tier": "SANDBOXED",
+  "checks": [
+    {
+      "control": "cleanup_verified",
+      "passed": true
+    },
+    {
+      "control": "collection_boundary",
+      "passed": true
+    },
+    {
+      "control": "double_snapshot_validated",
+      "passed": true
+    },
+    {
+      "control": "durable_replay_exact",
+      "passed": true
+    },
+    {
+      "control": "durable_store_readback",
+      "passed": true
+    },
+    {
+      "control": "environment_sanitized",
+      "passed": true
+    },
+    {
+      "control": "failed_run_persisted",
+      "passed": true
+    },
+    {
+      "control": "host_read_denied",
+      "passed": true
+    },
+    {
+      "control": "input_read",
+      "passed": true
+    },
+    {
+      "control": "input_write_denied",
+      "passed": true
+    },
+    {
+      "control": "low_trust_output",
+      "passed": true
+    },
+    {
+      "control": "network_denied",
+      "passed": true
+    },
+    {
+      "control": "path_free_queries",
+      "passed": true
+    },
+    {
+      "control": "policy_chain_pass",
+      "passed": true
+    },
+    {
+      "control": "protocol_complete",
+      "passed": true
+    },
+    {
+      "control": "root_write_denied",
+      "passed": true
+    },
+    {
+      "control": "run_page_complete",
+      "passed": true
+    },
+    {
+      "control": "subprocess_denied",
+      "passed": true
+    }
+  ],
+  "evidence_level": "LOCAL_HOST_TEST",
+  "finished_at": "2026-09-03T22:01:16.987371Z",
+  "forgegate_installation": "CLEAN_WHEEL",
+  "hardware_access": "NOT_PERFORMED",
+  "limitations": [
+    "The executed plugin is the ForgeGate-owned generic package fixture.",
+    "The accepted evidence remains unsigned_local and declared.",
+    "Linux and macOS external-plugin execution remain unsupported.",
+    "A PASS decision here covers only the generic plugin-chain smoke policy."
+  ],
+  "plugin_distribution": "forgegate-sample-collector-plugin",
+  "plugin_id": "example.forgegate-sample-collector",
+  "production_broker_verified": true,
+  "receipt": {
+    "accepted_outputs_registered": true,
+    "cleanup": {
+      "container_removed": true,
+      "staging_removed": true
+    },
+    "execution": {
+      "completion_observed": true,
+      "elapsed_ms": 4312,
+      "exit_code": null,
+      "oom_killed": false,
+      "ready_observed": true,
+      "runner_started": true,
+      "stderr_bytes": 0,
+      "stderr_truncated": false,
+      "stdout_bytes": 0,
+      "stdout_truncated": false
+    },
+    "protocol_messages": [
+      {
+        "direction": "CORE_TO_PLUGIN",
+        "issue": null,
+        "kind": "START",
+        "message_id": "sha256:1f8f0110365da473efb373ac56c8bac165b89b020b7829a6e515045209753668",
+        "output_set_id": null,
+        "protocol_version": "1",
+        "run_plan": {
+          "approved_permissions": [
+            "artifact-read",
+            "filesystem-write"
+          ],
+          "capability": "collector",
+          "declared_permissions": [
+            "artifact-read",
+            "filesystem-write"
+          ],
+          "enforced_permissions": [
+            "artifact-read",
+            "filesystem-write"
+          ],
+          "enforcement_backend": "windows-podman-wsl2",
+          "enforcement_backend_version": "1.0.0",
+          "environment_policy": "sanitized-empty",
+          "expected_output_evidence_kinds": [
+            "sample.metric"
+          ],
+          "input_policy": "broker-private-read-only",
+          "input_schema": "example.sample-input.v1",
+          "inputs": [
+            {
+              "digest": "sha256:7e4bb0fd68d0ae5b1c1988b0265e87cb51267ee0157d6346120c79f5ade2bc82",
+              "media_type": "application/json",
+              "name": "inputs/synthetic.json",
+              "size_bytes": 102
+            }
+          ],
+          "isolation_tier": "SANDBOXED",
+          "network_policy": "deny",
+          "planned_at": "2026-09-03T22:01:02.174338Z",
+          "resource_limits": {
+            "cpu_time_ms": 30000,
+            "file_count": 64,
+            "memory_bytes": 268435456,
+            "output_bytes": 67108864,
+            "process_count": 1,
+            "startup_timeout_ms": 5000,
+            "stderr_bytes": 1048576,
+            "stdout_bytes": 1048576,
+            "total_timeout_ms": 60000
+          },
+          "run_plan_id": "sha256:e679ad1deaeb93efd0201e724b3faa7e1cfac2491a4a2e63b92ce7f7632b2e40",
+          "schema_version": "forgegate.plugin-run-plan.v1",
+          "subprocess_policy": "deny",
+          "target": {
+            "distribution_name": "forgegate-sample-collector-plugin",
+            "distribution_version": "0.2.0",
+            "entry_point_name": "example.forgegate-sample-collector",
+            "entry_point_value": "forgegate_sample_collector.runtime:plugin",
+            "manifest": {
+              "capabilities": [
+                "collector"
+              ],
+              "description": "Generic isolated collector fixture for broker verification.",
+              "display_name": "ForgeGate Sample Collector",
+              "forgegate_api_version": "1",
+              "input_schemas": [
+                "example.sample-input.v1"
+              ],
+              "manifest_id": "sha256:c74c3744c021831c6cbb723233a07d6fd5b3f6a022822a9a729edf5d4dc0daae",
+              "output_evidence_kinds": [
+                "sample.metric"
+              ],
+              "permissions": [
+                "artifact-read",
+                "filesystem-write"
+              ],
+              "plugin_id": "example.forgegate-sample-collector",
+              "plugin_version": "0.2.0",
+              "schema_version": "forgegate.plugin-manifest.v1"
+            }
+          }
+        },
+        "run_plan_id": "sha256:e679ad1deaeb93efd0201e724b3faa7e1cfac2491a4a2e63b92ce7f7632b2e40",
+        "schema_version": "forgegate.plugin-protocol-message.v1",
+        "sequence": 0
+      },
+      {
+        "direction": "PLUGIN_TO_CORE",
+        "issue": null,
+        "kind": "READY",
+        "message_id": "sha256:73bf9f1c54f6fee837cf2f56acd7a47dfa1d56fcaa8ec7142cfdaaebccb55b45",
+        "output_set_id": null,
+        "protocol_version": "1",
+        "run_plan": null,
+        "run_plan_id": "sha256:e679ad1deaeb93efd0201e724b3faa7e1cfac2491a4a2e63b92ce7f7632b2e40",
+        "schema_version": "forgegate.plugin-protocol-message.v1",
+        "sequence": 1
+      },
+      {
+        "direction": "PLUGIN_TO_CORE",
+        "issue": null,
+        "kind": "RESULT",
+        "message_id": "sha256:c46825b8bd4b038bcc72c892832368375312b5fade9d250aaf6916f9a7887c19",
+        "output_set_id": "sha256:8e8dacba9d24da5d9c8de02210b21347b435eb8f4108fb23982990a4a874e6da",
+        "protocol_version": "1",
+        "run_plan": null,
+        "run_plan_id": "sha256:e679ad1deaeb93efd0201e724b3faa7e1cfac2491a4a2e63b92ce7f7632b2e40",
+        "schema_version": "forgegate.plugin-protocol-message.v1",
+        "sequence": 2
+      }
+    ],
+    "receipt_id": "sha256:45259d795b395ff83a7486b532e8c359e059640c12fb2b552a0d1628298c037c",
+    "recovered_after_interruption": false,
+    "result": {
+      "issue": null,
+      "output_set_id": "sha256:8e8dacba9d24da5d9c8de02210b21347b435eb8f4108fb23982990a4a874e6da",
+      "result_id": "sha256:e5e1e3a1f459bed0ba8525475d7226f07d8660a4e4de08e0bf7fbf1cf8ef142a",
+      "run_plan": {
+        "approved_permissions": [
+          "artifact-read",
+          "filesystem-write"
+        ],
+        "capability": "collector",
+        "declared_permissions": [
+          "artifact-read",
+          "filesystem-write"
+        ],
+        "enforced_permissions": [
+          "artifact-read",
+          "filesystem-write"
+        ],
+        "enforcement_backend": "windows-podman-wsl2",
+        "enforcement_backend_version": "1.0.0",
+        "environment_policy": "sanitized-empty",
+        "expected_output_evidence_kinds": [
+          "sample.metric"
+        ],
+        "input_policy": "broker-private-read-only",
+        "input_schema": "example.sample-input.v1",
+        "inputs": [
+          {
+            "digest": "sha256:7e4bb0fd68d0ae5b1c1988b0265e87cb51267ee0157d6346120c79f5ade2bc82",
+            "media_type": "application/json",
+            "name": "inputs/synthetic.json",
+            "size_bytes": 102
+          }
+        ],
+        "isolation_tier": "SANDBOXED",
+        "network_policy": "deny",
+        "planned_at": "2026-09-03T22:01:02.174338Z",
+        "resource_limits": {
+          "cpu_time_ms": 30000,
+          "file_count": 64,
+          "memory_bytes": 268435456,
+          "output_bytes": 67108864,
+          "process_count": 1,
+          "startup_timeout_ms": 5000,
+          "stderr_bytes": 1048576,
+          "stdout_bytes": 1048576,
+          "total_timeout_ms": 60000
+        },
+        "run_plan_id": "sha256:e679ad1deaeb93efd0201e724b3faa7e1cfac2491a4a2e63b92ce7f7632b2e40",
+        "schema_version": "forgegate.plugin-run-plan.v1",
+        "subprocess_policy": "deny",
+        "target": {
+          "distribution_name": "forgegate-sample-collector-plugin",
+          "distribution_version": "0.2.0",
+          "entry_point_name": "example.forgegate-sample-collector",
+          "entry_point_value": "forgegate_sample_collector.runtime:plugin",
+          "manifest": {
+            "capabilities": [
+              "collector"
+            ],
+            "description": "Generic isolated collector fixture for broker verification.",
+            "display_name": "ForgeGate Sample Collector",
+            "forgegate_api_version": "1",
+            "input_schemas": [
+              "example.sample-input.v1"
+            ],
+            "manifest_id": "sha256:c74c3744c021831c6cbb723233a07d6fd5b3f6a022822a9a729edf5d4dc0daae",
+            "output_evidence_kinds": [
+              "sample.metric"
+            ],
+            "permissions": [
+              "artifact-read",
+              "filesystem-write"
+            ],
+            "plugin_id": "example.forgegate-sample-collector",
+            "plugin_version": "0.2.0",
+            "schema_version": "forgegate.plugin-manifest.v1"
+          }
+        }
+      },
+      "schema_version": "forgegate.plugin-run-result.v1",
+      "status": "SUCCEEDED",
+      "transitions": [
+        {
+          "from_state": null,
+          "issue": null,
+          "occurred_at": "2026-09-03T22:01:02.174338Z",
+          "output_set_id": null,
+          "previous_transition_id": null,
+          "protocol_message_id": null,
+          "run_plan_id": "sha256:e679ad1deaeb93efd0201e724b3faa7e1cfac2491a4a2e63b92ce7f7632b2e40",
+          "schema_version": "forgegate.plugin-run-transition.v1",
+          "sequence": 0,
+          "to_state": "PLANNED",
+          "transition_id": "sha256:54d81cc84b1d0618ad10e859f007e1c8d80dbb1f6f11dd35ecf8f322517e253a"
+        },
+        {
+          "from_state": "PLANNED",
+          "issue": null,
+          "occurred_at": "2026-09-03T22:01:06.912140Z",
+          "output_set_id": null,
+          "previous_transition_id": "sha256:54d81cc84b1d0618ad10e859f007e1c8d80dbb1f6f11dd35ecf8f322517e253a",
+          "protocol_message_id": "sha256:1f8f0110365da473efb373ac56c8bac165b89b020b7829a6e515045209753668",
+          "run_plan_id": "sha256:e679ad1deaeb93efd0201e724b3faa7e1cfac2491a4a2e63b92ce7f7632b2e40",
+          "schema_version": "forgegate.plugin-run-transition.v1",
+          "sequence": 1,
+          "to_state": "STARTING",
+          "transition_id": "sha256:a72331b0625d70a8de706c57d42dd59480f209f6e1e73529124c7e2d5dfed7d6"
+        },
+        {
+          "from_state": "STARTING",
+          "issue": null,
+          "occurred_at": "2026-09-03T22:01:08.454225Z",
+          "output_set_id": null,
+          "previous_transition_id": "sha256:a72331b0625d70a8de706c57d42dd59480f209f6e1e73529124c7e2d5dfed7d6",
+          "protocol_message_id": "sha256:73bf9f1c54f6fee837cf2f56acd7a47dfa1d56fcaa8ec7142cfdaaebccb55b45",
+          "run_plan_id": "sha256:e679ad1deaeb93efd0201e724b3faa7e1cfac2491a4a2e63b92ce7f7632b2e40",
+          "schema_version": "forgegate.plugin-run-transition.v1",
+          "sequence": 2,
+          "to_state": "RUNNING",
+          "transition_id": "sha256:8453f9b601a630b3db9345a9fae89929e368dc36519794991771ee5642a7035c"
+        },
+        {
+          "from_state": "RUNNING",
+          "issue": null,
+          "occurred_at": "2026-09-03T22:01:11.251536Z",
+          "output_set_id": "sha256:8e8dacba9d24da5d9c8de02210b21347b435eb8f4108fb23982990a4a874e6da",
+          "previous_transition_id": "sha256:8453f9b601a630b3db9345a9fae89929e368dc36519794991771ee5642a7035c",
+          "protocol_message_id": "sha256:c46825b8bd4b038bcc72c892832368375312b5fade9d250aaf6916f9a7887c19",
+          "run_plan_id": "sha256:e679ad1deaeb93efd0201e724b3faa7e1cfac2491a4a2e63b92ce7f7632b2e40",
+          "schema_version": "forgegate.plugin-run-transition.v1",
+          "sequence": 3,
+          "to_state": "SUCCEEDED",
+          "transition_id": "sha256:17dee4f653f614dff463bf7d0cac03e52202556a0ada3b1a282d3fde89db5ac5"
+        }
+      ],
+      "validated_outputs": [
+        {
+          "evidence_id": "plugin.sample.sandbox",
+          "evidence_kind": "sample.metric",
+          "output_id": "sha256:ebae03019fe0fdd12c2965a9e3ca282145bbee67a06e447d01646eadb1ddf73b",
+          "subject": {
+            "digest": "sha256:6a41e8f12d183e2167c89112531cf162bf69926821d5c49b66a5ca100ab3fb3f",
+            "media_type": "application/vnd.forgegate.plugin-output+json",
+            "name": "evidence/plugin.sample.sandbox.json",
+            "size_bytes": 1105
+          },
+          "validation": "CORE_REHASHED_AND_SCHEMA_VALIDATED"
+        }
+      ]
+    },
+    "schema_version": "forgegate.plugin-run-receipt.v1"
+  },
+  "report_format": "forgegate.windows-alpha-plugin-chain-verification.v1",
+  "run_plan_id": "sha256:e679ad1deaeb93efd0201e724b3faa7e1cfac2491a4a2e63b92ce7f7632b2e40",
+  "started_at": "2026-09-03T22:01:02.174338Z",
+  "verification_id": "sha256:97e99613c63f7bd168849c83a66923a9fd505a1632c3bd3f02b17aa399eca1f6"
+}
