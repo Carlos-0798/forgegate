@@ -354,7 +354,7 @@ artifact payload/replay export, and hardware access.
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
 - pytest: 743 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.28% across 8,270 statements and 2,276 branches
+- branch-aware coverage: 95.12% across 8,270 statements and 2,276 branches
 - Plugin execution contract focus: 8 passed across plan authority, protocol
   sequencing, legal transitions, terminal replay, resource limits, JSON
   loading, and content-derived identity; no process started

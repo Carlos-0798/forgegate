@@ -72,6 +72,10 @@ ForgeGate wheel plus the independently built sample-plugin wheel.
 4. Windows read-only staged files initially prevented directory deletion. The
    broker cleanup handler restores only delete-required write permission and
    verifies the complete staging root is absent.
+5. The first Phase 20 hosted run exposed a recovery unit test that implicitly
+   depended on the local Windows Podman installation. Recovery tests now inject
+   deterministic cleanup outcomes; the live verifier still exercises the real
+   Podman cleanup path.
 
 These corrections are retained because metadata discovery and low-level
 container tests alone did not prove the full installed-plugin path.
@@ -85,7 +89,7 @@ container tests alone did not prove the full installed-plugin path.
 | Committed live-report validation | PASS — 1 test |
 | Production broker controls | PASS — 13/13 |
 | Full pytest | PASS — 743 passed, 3 Windows-symlink skips |
-| Branch-aware package coverage | PASS — 95.28% across 8,270 statements and 2,276 branches |
+| Branch-aware package coverage | PASS — 95.12% across 8,270 statements and 2,276 branches |
 | Ruff lint and format | PASS |
 | mypy strict | PASS |
 | Schema and OpenAPI drift | PASS — 38 document plus 2 artifact Schemas |

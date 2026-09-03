@@ -83,7 +83,7 @@ collector rather than a runtime or hardware dependency.
 | Gate | Result | Evidence level |
 |---|---|---|
 | Python tests | 743 passed, 3 skipped because Windows symlink creation was unavailable | Local host test |
-| Branch-aware coverage | 95.28% across 8,270 statements and 2,276 branches | Local host test |
+| Branch-aware coverage | 95.12% across 8,270 statements and 2,276 branches | Local host test |
 | Static quality gates | Ruff, formatting, and strict mypy passed across 71 source/tool files | Local host test |
 | Contracts | 38 document and 2 artifact JSON Schemas plus OpenAPI passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |

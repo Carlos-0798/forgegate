@@ -418,7 +418,10 @@ def test_store_is_append_only_and_idempotency_conflicts(tmp_path: Path) -> None:
         connection.execute("DELETE FROM plugin_run_plans")
 
 
-def test_interrupted_run_is_closed_as_error_without_reexecution(tmp_path: Path) -> None:
+def test_interrupted_run_is_closed_as_error_without_reexecution(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("forgegate.plugins.broker._remove_abandoned_container", lambda *_args: True)
     executor, calls = _executor()
     broker = _broker(tmp_path, executor)
     request = _request(tmp_path, _plan())
@@ -439,12 +442,15 @@ def test_interrupted_run_is_closed_as_error_without_reexecution(tmp_path: Path) 
     assert calls == []
 
 
-def test_interrupted_run_reports_cleanup_failure(tmp_path: Path) -> None:
+def test_interrupted_run_reports_cleanup_failure(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        "forgegate.plugins.broker._remove_abandoned_container", lambda *_args: False
+    )
     executor, calls = _executor()
     broker = _broker(tmp_path, executor)
-    request = replace(
-        _request(tmp_path, _plan()), podman_executable=tmp_path / "missing-podman.exe"
-    )
+    request = _request(tmp_path, _plan())
     planned = create_plugin_run_transition(
         run_plan_id=request.plan.run_plan_id,
         sequence=0,
