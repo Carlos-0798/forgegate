@@ -8,6 +8,7 @@ import re
 import shutil
 import stat
 import subprocess
+import tarfile
 import tempfile
 import threading
 import time
@@ -21,6 +22,7 @@ from typing import Any, BinaryIO
 from pydantic import ValidationError
 
 from forgegate.artifacts import ArtifactError, ArtifactRegistry
+from forgegate.bounded_parsing import enforce_json_structure_limits
 from forgegate.canonical import canonical_json
 from forgegate.plugins.execution_models import (
     PluginCleanupResult,
@@ -59,6 +61,8 @@ from forgegate.plugins.windows_sandbox import (
 MAX_PLUGIN_PACKAGE_BYTES = 16 * 1024 * 1024
 MAX_PLUGIN_PACKAGE_FILES = 2_048
 MAX_MANAGEMENT_BYTES = 2 * 1024 * 1024
+MAX_MANAGEMENT_NODES = 100_000
+MAX_MANAGEMENT_DEPTH = 64
 PLUGIN_OUTPUT_MEDIA_TYPE = "application/vnd.forgegate.plugin-output+json"
 CONTAINER_PREFIX = "forgegate-"
 NATIVE_SUFFIXES = frozenset({".dll", ".dylib", ".exe", ".pyd", ".so"})
@@ -490,8 +494,12 @@ def _prepare_staging(
     control_root.mkdir(mode=0o700)
     _stage_inputs(request.plan, request.artifact_root, request.input_paths, input_root)
     _stage_plugin(request.plan, control_root / "plugin", distributions)
-    source = Path(__file__).with_name("_trusted_runner.py")
-    _write_exclusive(control_root / "trusted_runner.py", _read_regular(source, 512 * 1024))
+    for source_name, target_name in (
+        ("_trusted_runner.py", "trusted_runner.py"),
+        ("_trusted_exporter.py", "trusted_exporter.py"),
+    ):
+        source = Path(__file__).with_name(source_name)
+        _write_exclusive(control_root / target_name, _read_regular(source, 512 * 1024))
     return input_root, control_root
 
 
@@ -853,7 +861,9 @@ def _execute_windows_container(
                         oom_killed = bool(state.get("OOMKilled") or state.get("oomKilled"))
             if oom_killed:
                 issue = PluginRunIssueCode.PLUGIN_RESOURCE_LIMIT
-    except (OSError, subprocess.SubprocessError, ValueError, PluginBrokerError):
+    except PluginBrokerError as exc:
+        issue = exc.code
+    except (OSError, subprocess.SubprocessError, ValueError):
         issue = PluginRunIssueCode.PLUGIN_START_FAILED
     finally:
         if process is not None and process.poll() is None:
@@ -925,18 +935,217 @@ def _copy_container_file(
 def _copy_container_tree(
     podman: Path, container_name: str, destination: Path, plan: PluginRunPlan
 ) -> Mapping[str, bytes]:  # pragma: no cover - exercised by Windows live verification
-    destination.mkdir()
-    result = _run_command(
-        (str(podman), "cp", f"{container_name}:/forgegate/output/.", str(destination)),
-        timeout=10,
-        require_success=False,
-    )
-    if result[0] != 0:
-        raise PluginBrokerError(
-            PluginRunIssueCode.PLUGIN_OUTPUT_INVALID, "cannot copy broker-owned output"
+    archive_path = destination.with_suffix(".tar")
+    content_limit = plan.resource_limits.output_bytes + MAX_MANAGEMENT_BYTES
+    entry_limit = plan.resource_limits.file_count + 8
+    archive_limit = content_limit + entry_limit * 4096
+    try:
+        _stream_container_archive(
+            podman,
+            container_name,
+            archive_path,
+            max_archive_bytes=archive_limit,
+            max_content_bytes=content_limit,
+            max_entries=entry_limit,
+            timeout=10,
         )
-    limit = plan.resource_limits.output_bytes + MAX_MANAGEMENT_BYTES
-    return _read_tree(destination, limit)
+        return _read_container_archive(
+            archive_path,
+            max_bytes=content_limit,
+            max_entries=entry_limit,
+        )
+    finally:
+        archive_path.unlink(missing_ok=True)
+
+
+def _stream_container_archive(
+    podman: Path,
+    container_name: str,
+    destination: Path,
+    *,
+    max_archive_bytes: int,
+    max_content_bytes: int,
+    max_entries: int,
+    timeout: float,
+) -> None:  # pragma: no cover - exercised by Windows live verification
+    descriptor = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    stderr = bytearray()
+    archive_overflow = threading.Event()
+    stderr_overflow = threading.Event()
+    process: subprocess.Popen[bytes] | None = None
+    try:
+        with os.fdopen(descriptor, "wb") as archive:
+            process = subprocess.Popen(
+                [
+                    str(podman),
+                    "exec",
+                    container_name,
+                    "/usr/local/bin/python",
+                    "-I",
+                    "-S",
+                    "/forgegate/control/trusted_exporter.py",
+                    str(max_content_bytes),
+                    str(max_entries),
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            assert process.stdout is not None and process.stderr is not None
+            readers = (
+                threading.Thread(
+                    target=_copy_stream_to_file,
+                    args=(process.stdout, max_archive_bytes, archive, archive_overflow),
+                    daemon=True,
+                ),
+                threading.Thread(
+                    target=_copy_stream,
+                    args=(process.stderr, MAX_MANAGEMENT_BYTES, stderr, stderr_overflow),
+                    daemon=True,
+                ),
+            )
+            for reader in readers:
+                reader.start()
+            deadline = time.monotonic() + timeout
+            while process.poll() is None:
+                if archive_overflow.is_set() or stderr_overflow.is_set():
+                    process.kill()
+                    break
+                if time.monotonic() >= deadline:
+                    process.kill()
+                    break
+                time.sleep(0.02)
+            try:
+                return_code = process.wait(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                return_code = process.wait(timeout=5)
+            for reader in readers:
+                reader.join(timeout=2)
+            archive.flush()
+        if archive_overflow.is_set():
+            raise PluginBrokerError(
+                PluginRunIssueCode.PLUGIN_RESOURCE_LIMIT,
+                "plugin output archive exceeds its bounded transfer limit",
+            )
+        if stderr_overflow.is_set() or return_code != 0:
+            raise PluginBrokerError(
+                PluginRunIssueCode.PLUGIN_OUTPUT_INVALID,
+                "cannot read broker-owned output archive",
+            )
+    except OSError as exc:
+        raise PluginBrokerError(
+            PluginRunIssueCode.PLUGIN_OUTPUT_INVALID,
+            "cannot read broker-owned output archive",
+        ) from exc
+    finally:
+        if process is not None and process.poll() is None:
+            process.kill()
+            process.wait(timeout=5)
+
+
+def _copy_stream_to_file(
+    stream: BinaryIO,
+    limit: int,
+    destination: BinaryIO,
+    overflow: threading.Event,
+) -> None:  # pragma: no cover - exercised by Windows live verification
+    observed = 0
+    try:
+        while chunk := os.read(stream.fileno(), 64 * 1024):
+            remaining = max(0, limit - observed)
+            destination.write(chunk[:remaining])
+            observed += len(chunk[:remaining])
+            if len(chunk) > remaining:
+                overflow.set()
+                return
+    finally:
+        stream.close()
+
+
+def _read_container_archive(
+    path: Path,
+    *,
+    max_bytes: int,
+    max_entries: int,
+) -> Mapping[str, bytes]:
+    result: dict[str, bytes] = {}
+    total = 0
+    entries = 0
+    try:
+        with tarfile.open(path, mode="r:*") as archive:
+            for member in archive:
+                entries += 1
+                if entries > max_entries:
+                    raise PluginBrokerError(
+                        PluginRunIssueCode.PLUGIN_RESOURCE_LIMIT,
+                        "plugin output archive exceeds its entry limit",
+                    )
+                name = member.name.replace("\\", "/")
+                while name.startswith("./"):
+                    name = name[2:]
+                name = name.rstrip("/")
+                if name in {"", "."}:
+                    if not member.isdir():
+                        raise PluginBrokerError(
+                            PluginRunIssueCode.PLUGIN_OUTPUT_INVALID,
+                            "plugin output archive root is invalid",
+                        )
+                    continue
+                parts = name.split("/")
+                if any(part in {"", ".", ".."} for part in parts):
+                    raise PluginBrokerError(
+                        PluginRunIssueCode.PLUGIN_OUTPUT_INVALID,
+                        "plugin output archive contains an unsafe path",
+                    )
+                if member.isdir():
+                    if name not in {"protocol", "evidence"}:
+                        raise PluginBrokerError(
+                            PluginRunIssueCode.PLUGIN_OUTPUT_INVALID,
+                            "plugin output archive contains an unexpected directory",
+                        )
+                    continue
+                if not member.isreg():
+                    raise PluginBrokerError(
+                        PluginRunIssueCode.PLUGIN_OUTPUT_INVALID,
+                        "plugin output archive contains a non-regular member",
+                    )
+                if name not in {"protocol/ready.json", "protocol/terminal.json"} and not (
+                    len(parts) == 2 and parts[0] == "evidence"
+                ):
+                    raise PluginBrokerError(
+                        PluginRunIssueCode.PLUGIN_OUTPUT_INVALID,
+                        "plugin output archive contains an unexpected member",
+                    )
+                if name in result:
+                    raise PluginBrokerError(
+                        PluginRunIssueCode.PLUGIN_OUTPUT_INVALID,
+                        "plugin output archive contains a duplicate member",
+                    )
+                total += member.size
+                if member.size < 0 or total > max_bytes:
+                    raise PluginBrokerError(
+                        PluginRunIssueCode.PLUGIN_RESOURCE_LIMIT,
+                        "plugin output archive exceeds its byte limit",
+                    )
+                source = archive.extractfile(member)
+                if source is None:
+                    raise PluginBrokerError(
+                        PluginRunIssueCode.PLUGIN_OUTPUT_INVALID,
+                        "plugin output archive member cannot be read",
+                    )
+                content = source.read(member.size + 1)
+                if len(content) != member.size:
+                    raise PluginBrokerError(
+                        PluginRunIssueCode.PLUGIN_OUTPUT_INVALID,
+                        "plugin output archive member size is invalid",
+                    )
+                result[name] = content
+    except (OSError, tarfile.TarError) as exc:
+        raise PluginBrokerError(
+            PluginRunIssueCode.PLUGIN_OUTPUT_INVALID,
+            "plugin output archive is invalid",
+        ) from exc
+    return result
 
 
 def _read_tree(root: Path, max_bytes: int) -> Mapping[str, bytes]:
@@ -980,6 +1189,11 @@ def _load_json_file(path: Path, max_bytes: int) -> Any:
 def _load_json_bytes(content: bytes) -> Any:
     if len(content) > MAX_MANAGEMENT_BYTES or b"\x00" in content:
         raise ValueError("JSON exceeds its boundary")
+    enforce_json_structure_limits(
+        content,
+        max_nodes=MAX_MANAGEMENT_NODES,
+        max_depth=MAX_MANAGEMENT_DEPTH,
+    )
 
     def pairs(items: list[tuple[str, Any]]) -> dict[str, Any]:
         result: dict[str, Any] = {}

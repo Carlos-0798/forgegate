@@ -149,7 +149,11 @@
 | Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
 | Generic project initialization | clean-wheel `forgegate init`, strict model validation, overwrite rejection | PASS — path-free receipt; no hardware requested |
 | Windows Alpha install-to-uninstall chain | full verification + clean wheel + core assurance + live plugin CLI | PASS — 18/18 retained controls; local Windows acceptance only, not a public release or production claim |
+| Structured-input pre-materialization bounds | JSON token, XML event, and YAML event adversarial tests | PASS — byte plus node/element/depth limits; duplicate YAML keys rejected |
+| Plugin output pre-materialization bounds | trusted in-container exporter plus bounded host archive inspection | PASS — clean-wheel live dual snapshots; no archive extraction |
+| Development dependency advisory audit | constrained pip/pytest bootstrap plus `pip-audit` | PASS — no known advisory in resolved registry dependencies; editable local project excluded |
+| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.01% exceeds exact 95.00% threshold |
 
-See `reports/PHASE_22_WINDOWS_ALPHA_ACCEPTANCE_REPORT.md` for the current exact
-local test, coverage, package, and Windows chain result. Earlier acceptance
-reports remain historical records.
+See `reports/SOFTWARE_INTEGRITY_INTERACTION_AUDIT_2026-09-03.md` for the current
+exact local test, coverage, package, security, and Windows interaction result.
+Earlier acceptance reports remain historical records.

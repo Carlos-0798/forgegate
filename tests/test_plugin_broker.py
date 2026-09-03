@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import sqlite3
 import sys
+import tarfile
 from collections.abc import Callable, Mapping
 from dataclasses import replace
 from datetime import UTC, datetime, timedelta
@@ -44,6 +46,12 @@ from forgegate.plugins import (
     create_plugin_validated_output,
     create_windows_sandbox_capability_report,
     plugin_output_set_id,
+)
+from forgegate.plugins.broker import (
+    _load_json_bytes,
+    _load_json_file,
+    _read_container_archive,
+    _read_tree,
 )
 from forgegate.plugins.execution_models import (
     PluginProtocolDirection,
@@ -608,3 +616,164 @@ def test_receipt_rejects_unregistered_success_and_message_reordering(tmp_path: P
     payload["protocol_messages"] = list(reversed(payload["protocol_messages"]))
     with pytest.raises(ValidationError, match="sequence order"):
         PluginRunReceipt.model_validate(payload)
+
+
+def _write_tar(path: Path, members: list[tuple[tarfile.TarInfo, bytes]]) -> None:
+    with tarfile.open(path, "w") as archive:
+        for member, content in members:
+            archive.addfile(member, io.BytesIO(content) if member.isreg() else None)
+
+
+def _tar_file(name: str, content: bytes) -> tuple[tarfile.TarInfo, bytes]:
+    member = tarfile.TarInfo(name)
+    member.size = len(content)
+    return member, content
+
+
+def test_broker_archive_reader_accepts_only_bounded_protocol_and_evidence(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "output.tar"
+    directory = tarfile.TarInfo("protocol/")
+    directory.type = tarfile.DIRTYPE
+    _write_tar(
+        path,
+        [
+            (directory, b""),
+            _tar_file("protocol/ready.json", b"ready"),
+            _tar_file("protocol/terminal.json", b"terminal"),
+            _tar_file("evidence/result.json", b"result"),
+        ],
+    )
+    assert _read_container_archive(path, max_bytes=64, max_entries=4) == {
+        "protocol/ready.json": b"ready",
+        "protocol/terminal.json": b"terminal",
+        "evidence/result.json": b"result",
+    }
+
+
+def test_broker_archive_reader_normalizes_dot_prefix_and_root_directory(tmp_path: Path) -> None:
+    path = tmp_path / "prefixed.tar"
+    root = tarfile.TarInfo("./")
+    root.type = tarfile.DIRTYPE
+    _write_tar(path, [(root, b""), _tar_file("./evidence/result.json", b"result")])
+    assert _read_container_archive(path, max_bytes=64, max_entries=2) == {
+        "evidence/result.json": b"result"
+    }
+
+
+def test_broker_archive_reader_enforces_entry_limit_before_extraction(tmp_path: Path) -> None:
+    path = tmp_path / "many.tar"
+    _write_tar(
+        path,
+        [
+            _tar_file("protocol/ready.json", b"ready"),
+            _tar_file("protocol/terminal.json", b"terminal"),
+        ],
+    )
+    with pytest.raises(PluginBrokerError) as captured:
+        _read_container_archive(path, max_bytes=64, max_entries=1)
+    assert captured.value.code is PluginRunIssueCode.PLUGIN_RESOURCE_LIMIT
+
+
+def test_broker_archive_reader_rejects_invalid_root_directory_and_duplicates(
+    tmp_path: Path,
+) -> None:
+    invalid_root = tmp_path / "invalid-root.tar"
+    _write_tar(invalid_root, [_tar_file("./", b"x")])
+    with pytest.raises(PluginBrokerError) as captured:
+        _read_container_archive(invalid_root, max_bytes=64, max_entries=2)
+    assert captured.value.code is PluginRunIssueCode.PLUGIN_OUTPUT_INVALID
+
+    duplicate = tmp_path / "duplicate.tar"
+    _write_tar(
+        duplicate,
+        [
+            _tar_file("evidence/result.json", b"first"),
+            _tar_file("evidence/result.json", b"second"),
+        ],
+    )
+    with pytest.raises(PluginBrokerError) as captured:
+        _read_container_archive(duplicate, max_bytes=64, max_entries=2)
+    assert captured.value.code is PluginRunIssueCode.PLUGIN_OUTPUT_INVALID
+
+
+def test_broker_archive_reader_rejects_unexpected_directory_and_byte_excess(
+    tmp_path: Path,
+) -> None:
+    unexpected = tmp_path / "unexpected-directory.tar"
+    directory = tarfile.TarInfo("nested/")
+    directory.type = tarfile.DIRTYPE
+    _write_tar(unexpected, [(directory, b"")])
+    with pytest.raises(PluginBrokerError) as captured:
+        _read_container_archive(unexpected, max_bytes=64, max_entries=2)
+    assert captured.value.code is PluginRunIssueCode.PLUGIN_OUTPUT_INVALID
+
+    excessive = tmp_path / "excessive.tar"
+    _write_tar(excessive, [_tar_file("evidence/result.json", b"too-large")])
+    with pytest.raises(PluginBrokerError) as captured:
+        _read_container_archive(excessive, max_bytes=2, max_entries=2)
+    assert captured.value.code is PluginRunIssueCode.PLUGIN_RESOURCE_LIMIT
+
+
+def test_broker_archive_reader_rejects_invalid_archive(tmp_path: Path) -> None:
+    path = tmp_path / "invalid.tar"
+    path.write_bytes(b"not a tar archive")
+    with pytest.raises(PluginBrokerError) as captured:
+        _read_container_archive(path, max_bytes=64, max_entries=2)
+    assert captured.value.code is PluginRunIssueCode.PLUGIN_OUTPUT_INVALID
+
+
+def test_broker_json_loader_enforces_structure_and_scalar_rules(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr("forgegate.plugins.broker.MAX_MANAGEMENT_NODES", 1)
+    with pytest.raises(ValueError, match="node limit"):
+        _load_json_bytes(b"[0]")
+    monkeypatch.setattr("forgegate.plugins.broker.MAX_MANAGEMENT_NODES", 100_000)
+    with pytest.raises(ValueError, match="duplicate JSON key"):
+        _load_json_bytes(b'{"key":1,"key":2}')
+    with pytest.raises(ValueError, match="non-finite JSON number"):
+        _load_json_bytes(b"NaN")
+
+
+def test_broker_reads_registered_tree_and_enforces_aggregate_bytes(tmp_path: Path) -> None:
+    root = tmp_path / "registered"
+    (root / "protocol").mkdir(parents=True)
+    (root / "protocol" / "ready.json").write_bytes(b"ready")
+    (root / "terminal.json").write_bytes(b"done")
+    assert _read_tree(root, 9) == {
+        "protocol/ready.json": b"ready",
+        "terminal.json": b"done",
+    }
+    with pytest.raises(PluginBrokerError) as captured:
+        _read_tree(root, 8)
+    assert captured.value.code is PluginRunIssueCode.PLUGIN_RESOURCE_LIMIT
+
+
+def test_broker_loads_bounded_json_file(tmp_path: Path) -> None:
+    path = tmp_path / "document.json"
+    path.write_bytes(b'{"key":"value"}')
+    assert _load_json_file(path, 64) == {"key": "value"}
+
+
+@pytest.mark.parametrize(
+    ("name", "member_type"),
+    [
+        ("../escape", tarfile.REGTYPE),
+        ("unexpected/file", tarfile.REGTYPE),
+        ("evidence/link", tarfile.SYMTYPE),
+    ],
+)
+def test_broker_archive_reader_rejects_unsafe_or_special_members(
+    tmp_path: Path, name: str, member_type: bytes
+) -> None:
+    path = tmp_path / "unsafe.tar"
+    member = tarfile.TarInfo(name)
+    member.type = member_type
+    if member.isreg():
+        member.size = 1
+    _write_tar(path, [(member, b"x")])
+    with pytest.raises(PluginBrokerError) as captured:
+        _read_container_archive(path, max_bytes=64, max_entries=4)
+    assert captured.value.code is PluginRunIssueCode.PLUGIN_OUTPUT_INVALID

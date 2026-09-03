@@ -11,7 +11,9 @@
 
 Configuration and evidence files are untrusted input. Local users, CI metadata,
 future plugins, and remote artifact locations are separate trust domains.
-The current slice has no authenticated producer and runs no plugin code.
+The current slice has no authenticated evidence producer. Plugin discovery imports
+no plugin code; an explicitly authorized plugin run executes selected code only
+through the Windows rootless Podman/WSL2 production broker described below.
 
 ## Addressed in Phase 0
 

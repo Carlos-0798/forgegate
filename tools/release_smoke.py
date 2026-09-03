@@ -102,6 +102,8 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_21_PLUGIN_OPERATOR_WORKFLOW_ACCEPTANCE_REPORT.md",
     "reports/PHASE_22_WINDOWS_ALPHA_ACCEPTANCE_REPORT.md",
     "reports/PHASE_22_WINDOWS_ALPHA_LIVE_EVIDENCE.json",
+    "reports/SOFTWARE_INTEGRITY_INTERACTION_AUDIT_2026-09-03.md",
+    "reports/SOFTWARE_INTEGRITY_INTERACTION_LIVE_EVIDENCE.json",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
@@ -294,6 +296,20 @@ def main(
         environment = root / "clean-environment"
         venv.EnvBuilder(with_pip=True, clear=False).create(environment)
         python = clean_python(environment)
+        run(
+            [
+                str(python),
+                "-m",
+                "pip",
+                "install",
+                "--disable-pip-version-check",
+                "--upgrade",
+                "-c",
+                str(REPOSITORY_ROOT / "requirements/dev-constraints.txt"),
+                "pip",
+            ],
+            cwd=root,
+        )
         run(
             [
                 str(python),

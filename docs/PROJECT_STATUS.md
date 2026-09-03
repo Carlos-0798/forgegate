@@ -369,8 +369,8 @@ artifact payload/replay export, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 760 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.06% across 8,706 statements and 2,424 branches
+- pytest: 780 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.01% across 8,959 statements and 2,520 branches
 - Plugin execution contract focus: 8 passed across plan authority, protocol
   sequencing, legal transitions, terminal replay, resource limits, JSON
   loading, and content-derived identity; no process started
@@ -463,3 +463,8 @@ Phase 21 operator workflow acceptance is recorded in
 Phase 22 packaging and live Windows Alpha acceptance are recorded in
 `reports/PHASE_22_WINDOWS_ALPHA_ACCEPTANCE_REPORT.md` and
 `reports/PHASE_22_WINDOWS_ALPHA_LIVE_EVIDENCE.json`.
+The post-Alpha software integrity, interaction, dependency, and clean-wheel
+review is recorded in
+`reports/SOFTWARE_INTEGRITY_INTERACTION_AUDIT_2026-09-03.md`, with its latest
+18-control clean-wheel Podman record in
+`reports/SOFTWARE_INTEGRITY_INTERACTION_LIVE_EVIDENCE.json`.

@@ -75,7 +75,9 @@ def _message(
 
 def _write_terminal(message: dict[str, Any]) -> None:
     _write_exclusive(PROTOCOL_ROOT / "terminal.json", _canonical_bytes(message))
-    time.sleep(3600)
+    # Keep the container alive briefly so the host can run the trusted exporter.
+    # A finite grace period avoids leaving an orphan alive after a broker crash.
+    time.sleep(30)
 
 
 def _fail(run_plan_id: str, code: str, *, sequence: int) -> None:

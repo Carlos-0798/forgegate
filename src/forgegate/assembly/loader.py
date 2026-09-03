@@ -6,6 +6,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from forgegate.artifacts import ArtifactError, ArtifactRegistry, RegisteredArtifact
+from forgegate.bounded_parsing import StructureLimitError, enforce_json_structure_limits
 from forgegate.collectors.base import CollectionResult
 
 from .models import COLLECTION_RESULT_MEDIA_TYPE
@@ -41,6 +42,19 @@ class CollectionResultLoader:
             source_path,
             media_type=COLLECTION_RESULT_MEDIA_TYPE,
         )
+        try:
+            enforce_json_structure_limits(
+                artifact.content,
+                max_nodes=self._max_nodes,
+                max_depth=self._max_depth,
+            )
+        except StructureLimitError as exc:
+            code = (
+                "COLLECTION_RESULT_NODE_LIMIT"
+                if exc.kind == "node"
+                else "COLLECTION_RESULT_DEPTH_LIMIT"
+            )
+            raise CollectionResultLoadError(code, str(exc)) from exc
         root = _load_json(artifact)
         self._enforce_tree_limits(root)
         if not isinstance(root, dict):

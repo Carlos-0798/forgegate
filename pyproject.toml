@@ -23,7 +23,7 @@ dev = [
   "build>=1.2,<2",
   "httpx2>=2.12,<3",
   "mypy>=1.14,<2",
-  "pytest>=8.3,<9",
+  "pytest>=9.0.3,<10",
   "pytest-cov>=6,<7",
   "ruff>=0.9,<1",
   "types-PyYAML>=6.0.12",
@@ -45,12 +45,14 @@ source = ["forgegate"]
 omit = [
   "src/forgegate/__main__.py",
   # Executed only inside the pinned Podman image; covered by committed live evidence.
+  "src/forgegate/plugins/_trusted_exporter.py",
   "src/forgegate/plugins/_trusted_runner.py",
 ]
 
 [tool.coverage.report]
 show_missing = true
 skip_covered = false
+precision = 2
 fail_under = 95
 
 [tool.ruff]

@@ -2,6 +2,15 @@
 
 ## 0.1.0a1 — 2026-09-03
 
+- Added bounded JSON/XML/YAML structural preflights, strict duplicate-key YAML
+  loading, stable configuration reads, and adversarial resource tests before
+  parser materialization.
+- Replaced recursive host extraction of plugin output with a bounded trusted
+  in-container exporter and independent no-extraction host archive validation;
+  the clean-wheel Windows path passes both output snapshots and all 18 retained
+  interaction controls.
+- Updated constrained development tooling after dependency advisories and made
+  the 95% branch-coverage gate enforce two-decimal precision.
 - Added the Windows operator plugin workflow with exact discovery-to-plan
   authority, explicit inputs/grants, durable success/failure/replay receipts,
   and path-free single-run and cursor-page queries.

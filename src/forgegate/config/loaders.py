@@ -1,3 +1,5 @@
+import os
+import stat
 from pathlib import Path
 
 import yaml
@@ -7,6 +9,7 @@ from forgegate.assembly import EvidenceBundleAssembly
 from forgegate.assurance import AssuranceBundle, AssuranceBundleManifest
 from forgegate.attestations import ReleaseAttestation
 from forgegate.bootstrap import InitializationReport
+from forgegate.bounded_parsing import StructureLimitError, enforce_yaml_structure_limits
 from forgegate.candidates import CandidateEvidenceBinding
 from forgegate.candidates.models import (
     CandidateTransition,
@@ -36,6 +39,8 @@ from forgegate.projects import ProjectProfileRevision
 # A policy-material envelope can contain one 1 MiB policy twice: exact base64
 # bytes plus its strict parsed document. Match the local REST request boundary.
 MAX_CONFIG_BYTES = 4 * 1024 * 1024
+MAX_CONFIG_NODES = 250_000
+MAX_CONFIG_DEPTH = 64
 type SupportedConfig = (
     ProjectConfig
     | InitializationReport
@@ -110,16 +115,48 @@ class ConfigLoadError(ValueError):
 
 
 def load_config(path: Path) -> SupportedConfig:
+    requested = path.expanduser()
+    if requested.is_symlink() or not requested.is_file():
+        raise ConfigLoadError("cannot access configuration: path must be a regular file")
+    descriptor: int | None = None
     try:
-        size = path.stat().st_size
+        descriptor = os.open(requested, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
+        with os.fdopen(descriptor, "rb") as handle:
+            descriptor = None
+            before = os.fstat(handle.fileno())
+            if not stat.S_ISREG(before.st_mode):
+                raise ConfigLoadError("cannot access configuration: path must be a regular file")
+            if before.st_size > MAX_CONFIG_BYTES:
+                raise ConfigLoadError(f"configuration exceeds {MAX_CONFIG_BYTES} byte limit")
+            payload = handle.read(MAX_CONFIG_BYTES + 1)
+            after = os.fstat(handle.fileno())
+    except ConfigLoadError:
+        raise
     except OSError as exc:
         raise ConfigLoadError(f"cannot access configuration: {exc}") from exc
-    if size > MAX_CONFIG_BYTES:
+    finally:
+        if descriptor is not None:
+            os.close(descriptor)
+    if len(payload) > MAX_CONFIG_BYTES:
         raise ConfigLoadError(f"configuration exceeds {MAX_CONFIG_BYTES} byte limit")
+    if (
+        before.st_size != after.st_size
+        or before.st_mtime_ns != after.st_mtime_ns
+        or len(payload) != before.st_size
+    ):
+        raise ConfigLoadError("configuration changed while being read")
 
     try:
-        raw = yaml.safe_load(path.read_text(encoding="utf-8"))
-    except (OSError, UnicodeError, yaml.YAMLError) as exc:
+        text = payload.decode("utf-8", errors="strict")
+        enforce_yaml_structure_limits(
+            text,
+            max_nodes=MAX_CONFIG_NODES,
+            max_depth=MAX_CONFIG_DEPTH,
+        )
+        raw = yaml.load(text, Loader=_UniqueKeySafeLoader)
+    except StructureLimitError as exc:
+        raise ConfigLoadError(str(exc)) from exc
+    except (UnicodeError, yaml.YAMLError, RecursionError) as exc:
         raise ConfigLoadError(f"cannot parse configuration: {exc}") from exc
 
     if not isinstance(raw, dict):
@@ -134,3 +171,41 @@ def load_config(path: Path) -> SupportedConfig:
         return model.model_validate(raw)
     except ValidationError as exc:
         raise ConfigLoadError(str(exc)) from exc
+
+
+class _UniqueKeySafeLoader(yaml.SafeLoader):
+    pass
+
+
+def _construct_unique_mapping(
+    loader: _UniqueKeySafeLoader,
+    node: yaml.MappingNode,
+    deep: bool = False,
+) -> dict[object, object]:
+    mapping: dict[object, object] = {}
+    for key_node, value_node in node.value:
+        key = loader.construct_object(key_node, deep=deep)
+        try:
+            duplicate = key in mapping
+        except TypeError as exc:
+            raise yaml.constructor.ConstructorError(
+                "while constructing a mapping",
+                node.start_mark,
+                "found an unhashable key",
+                key_node.start_mark,
+            ) from exc
+        if duplicate:
+            raise yaml.constructor.ConstructorError(
+                "while constructing a mapping",
+                node.start_mark,
+                f"found duplicate key: {key!r}",
+                key_node.start_mark,
+            )
+        mapping[key] = loader.construct_object(value_node, deep=deep)
+    return mapping
+
+
+_UniqueKeySafeLoader.add_constructor(
+    yaml.resolver.BaseResolver.DEFAULT_MAPPING_TAG,
+    _construct_unique_mapping,
+)

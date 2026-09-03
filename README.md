@@ -85,9 +85,9 @@ collector rather than a runtime or hardware dependency.
 
 | Gate | Result | Evidence level |
 |---|---|---|
-| Python tests | 760 passed, 3 skipped because Windows symlink creation was unavailable | Local host test |
-| Branch-aware coverage | 95.06% across 8,706 statements and 2,424 branches | Local host test |
-| Static quality gates | Ruff, formatting, and strict mypy passed across 73 source/tool files | Local host test |
+| Python tests | 780 passed, 3 skipped because Windows symlink creation was unavailable | Local host test |
+| Branch-aware coverage | 95.01% across 8,959 statements and 2,520 branches | Local host test |
+| Static quality gates | Ruff, formatting, and strict mypy passed across 75 source/tool files | Local host test |
 | Contracts | 41 document and 2 artifact JSON Schemas plus OpenAPI passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | Plugin discovery | 30 passed, 1 skipped; standalone wheel install/discover/uninstall passed | Local host test; code not loaded |
@@ -95,6 +95,7 @@ collector rather than a runtime or hardware dependency.
 | Windows sandbox readiness | 20 focused probe/model/command/verifier tests passed; Podman client/server 5.8.6 match | Local host test; execution remains `PROHIBITED`, tier `NONE` |
 | Windows sandbox enforcement | All 14 required controls passed fixed hostile fixtures; [raw evidence](reports/PHASE_19_WINDOWS_SANDBOX_LIVE_EVIDENCE.json) | Live local WSL2/Podman test; not an external-plugin or production-broker test |
 | Windows production plugin broker | All 13 broker-level checks passed through the installed generic fixture, including replay/readback and cleanup; [raw evidence](reports/PHASE_20_WINDOWS_PLUGIN_BROKER_LIVE_EVIDENCE.json) | Live local WSL2/Podman test; exact run tier `SANDBOXED`, output remains `unsigned_local`/`declared` |
+| Integrity and interaction audit | Structured-input and plugin-output bounds corrected; clean-wheel Windows chain passed 18/18 controls; [audit](reports/SOFTWARE_INTEGRITY_INTERACTION_AUDIT_2026-09-03.md) and [evidence](reports/SOFTWARE_INTEGRITY_INTERACTION_LIVE_EVIDENCE.json) | Local Windows Alpha only; no hardware or production claim |
 | Operator plugin evidence chain | Run, replay, failure, path-free queries, collection, assembly, and policy handoff covered by the Windows Alpha gate | Local host test plus pinned Windows live fixture only |
 | Project initialization | `forgegate init` creates a strict generic template and refuses overwrite; clean-wheel install/init/uninstall is covered | Local host test |
 | GitHub Actions | Windows Alpha passed `verify.py` and `release_smoke.py` on Windows, Ubuntu, and macOS; the generic composite Action smoke also passed | PASS — [run 33811734474](https://github.com/Carlos-0798/forgegate/actions/runs/33811734474); live Podman fixtures remain local-only evidence |

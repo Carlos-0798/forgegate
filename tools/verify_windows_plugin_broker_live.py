@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -35,9 +36,20 @@ def _run_cli(command: list[str], *, cwd: Path, expected: int = 0) -> str:
         text=True,
     )
     if completed.returncode != expected:
+        issue_code = None
+        try:
+            payload = json.loads(completed.stdout)
+            issue_code = payload.get("result", {}).get("issue", {}).get("code")
+        except (json.JSONDecodeError, AttributeError):
+            pass
+        if issue_code is None:
+            match = re.search(r"\bPLUGIN_[A-Z_]+\b", completed.stdout + completed.stderr)
+            issue_code = match.group(0) if match is not None else None
+        detail = f" ({issue_code})" if isinstance(issue_code, str) else ""
         raise LiveBrokerVerificationError(
             f"CLI command returned {completed.returncode}, expected {expected}: "
             + " ".join(command[:3])
+            + detail
         )
     return completed.stdout
 

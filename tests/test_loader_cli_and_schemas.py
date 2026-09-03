@@ -5,7 +5,7 @@ import pytest
 from typer.testing import CliRunner
 
 from forgegate.cli import app
-from forgegate.config import ConfigLoadError, load_config
+from forgegate.config import ConfigLoadError, load_config, loaders
 from forgegate.config.loaders import MAX_CONFIG_BYTES
 from forgegate.schema_registry import ARTIFACT_SCHEMAS, SCHEMAS, schema_filename
 
@@ -59,6 +59,40 @@ def test_invalid_yaml_fails_closed(tmp_path: Path) -> None:
     path = tmp_path / "invalid.yaml"
     path.write_text("schema_version: [unterminated\n", encoding="utf-8")
     with pytest.raises(ConfigLoadError, match="cannot parse configuration"):
+        load_config(path)
+
+
+def test_duplicate_yaml_keys_fail_closed(tmp_path: Path) -> None:
+    path = tmp_path / "duplicate.yaml"
+    path.write_text(
+        "schema_version: forgegate.project.v1\nschema_version: forgegate.policy.v1\n",
+        encoding="utf-8",
+    )
+    with pytest.raises(ConfigLoadError, match="duplicate key"):
+        load_config(path)
+
+
+def test_loader_rejects_unhashable_yaml_key(tmp_path: Path) -> None:
+    path = tmp_path / "unhashable.yaml"
+    path.write_text("? [one, two]\n: value\n", encoding="utf-8")
+    with pytest.raises(ConfigLoadError, match="unhashable key"):
+        load_config(path)
+
+
+def test_loader_rejects_invalid_utf8(tmp_path: Path) -> None:
+    path = tmp_path / "invalid-utf8.yaml"
+    path.write_bytes(b"schema_version: \xff")
+    with pytest.raises(ConfigLoadError, match="cannot parse configuration"):
+        load_config(path)
+
+
+def test_loader_applies_yaml_structure_limit_before_construction(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    path = tmp_path / "structured.yaml"
+    path.write_text("schema_version: forgegate.unknown.v1\n", encoding="utf-8")
+    monkeypatch.setattr(loaders, "MAX_CONFIG_NODES", 1)
+    with pytest.raises(ConfigLoadError, match="node limit"):
         load_config(path)
 
 

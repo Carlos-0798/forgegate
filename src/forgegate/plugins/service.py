@@ -11,6 +11,7 @@ from typing import Any
 from pydantic import ValidationError
 
 from forgegate.artifacts import ArtifactError, ArtifactRegistry
+from forgegate.bounded_parsing import StructureLimitError, enforce_json_structure_limits
 
 from .models import (
     PLUGIN_API_VERSION,
@@ -178,6 +179,19 @@ def _discover_entry_point(
         artifact = ArtifactRegistry(root, max_bytes=max_manifest_bytes).register(
             manifest_path, media_type="application/vnd.forgegate.plugin-manifest+json"
         )
+        try:
+            enforce_json_structure_limits(
+                artifact.content,
+                max_nodes=max_manifest_nodes,
+                max_depth=max_manifest_depth,
+            )
+        except StructureLimitError as exc:
+            code = (
+                "PLUGIN_MANIFEST_NODE_LIMIT"
+                if exc.kind == "node"
+                else "PLUGIN_MANIFEST_DEPTH_LIMIT"
+            )
+            raise PluginDiscoveryError(code, str(exc)) from exc
         raw = _strict_json(artifact.content)
         _enforce_tree_limits(raw, max_nodes=max_manifest_nodes, max_depth=max_manifest_depth)
         if not isinstance(raw, dict):

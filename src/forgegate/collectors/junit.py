@@ -10,6 +10,7 @@ from typing import Any
 from pydantic import Field, field_validator
 
 from forgegate.artifacts import ArtifactError, ArtifactRegistry, RegisteredArtifact
+from forgegate.bounded_parsing import StructureLimitError, enforce_xml_structure_limits
 from forgegate.collectors.base import (
     CollectionIssue,
     CollectionResult,
@@ -143,6 +144,22 @@ class JUnitCollector:
                 "JUNIT_FORBIDDEN_DECLARATION",
                 "DOCTYPE and ENTITY declarations are forbidden",
             )
+        try:
+            enforce_xml_structure_limits(
+                content,
+                max_elements=self._max_elements,
+                max_depth=self._max_depth,
+            )
+        except StructureLimitError as exc:
+            if exc.kind == "element":
+                raise JUnitParseError(
+                    "JUNIT_ELEMENT_LIMIT",
+                    f"JUnit XML exceeds {self._max_elements} element limit",
+                ) from exc
+            raise JUnitParseError(
+                "JUNIT_DEPTH_LIMIT",
+                f"JUnit XML exceeds {self._max_depth} depth limit",
+            ) from exc
         try:
             root = ET.fromstring(content)
         except ET.ParseError as exc:

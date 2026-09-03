@@ -9,6 +9,7 @@ from typing import Any
 from pydantic import Field, field_validator
 
 from forgegate.artifacts import ArtifactError, ArtifactRegistry, RegisteredArtifact
+from forgegate.bounded_parsing import StructureLimitError, enforce_json_structure_limits
 from forgegate.collectors.base import (
     CollectionIssue,
     CollectionResult,
@@ -186,6 +187,15 @@ class SarifCollector:
     def _parse(
         self, content: bytes
     ) -> tuple[list[SarifFinding], list[SarifTool], list[CollectionIssue]]:
+        try:
+            enforce_json_structure_limits(
+                content,
+                max_nodes=self._max_nodes,
+                max_depth=self._max_depth,
+            )
+        except StructureLimitError as exc:
+            code = "SARIF_NODE_LIMIT" if exc.kind == "node" else "SARIF_DEPTH_LIMIT"
+            raise SarifParseError(code, str(exc)) from exc
         root = _load_json(content)
         self._enforce_tree_limits(root)
         document = _mapping(root, code="SARIF_ROOT_INVALID", location="$")

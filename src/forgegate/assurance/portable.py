@@ -15,10 +15,13 @@ from forgegate.assurance.models import (
     AssuranceBundleManifest,
     create_assurance_manifest,
 )
+from forgegate.bounded_parsing import enforce_json_structure_limits
 
 ASSURANCE_BUNDLE_FILES = frozenset({"README.md", "assurance-bundle.json", "manifest.json"})
 MAX_ASSURANCE_JSON_BYTES = 16 * 1024 * 1024
 MAX_ASSURANCE_AUXILIARY_BYTES = 64 * 1024
+MAX_ASSURANCE_JSON_NODES = 500_000
+MAX_ASSURANCE_JSON_DEPTH = 64
 
 
 class AssuranceBundleError(RuntimeError):
@@ -285,6 +288,11 @@ def _read_regular_file(path: Path, limit: int) -> bytes:
 
 def _strict_json(payload: bytes) -> dict[str, Any]:
     try:
+        enforce_json_structure_limits(
+            payload,
+            max_nodes=MAX_ASSURANCE_JSON_NODES,
+            max_depth=MAX_ASSURANCE_JSON_DEPTH,
+        )
         text = payload.decode("utf-8")
         value = json.loads(
             text,

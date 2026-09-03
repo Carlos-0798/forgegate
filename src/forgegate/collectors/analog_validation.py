@@ -10,6 +10,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, ConfigDict, Field, ValidationError, field_validator, model_validator
 
 from forgegate.artifacts import ArtifactError, ArtifactRegistry, RegisteredArtifact
+from forgegate.bounded_parsing import StructureLimitError, enforce_json_structure_limits
 from forgegate.collectors.base import (
     CollectionIssue,
     CollectionResult,
@@ -509,6 +510,15 @@ class AnalogValidationResultCollector:
                 "AFE_RESULT_SIZE_LIMIT",
                 f"result export exceeds the {MAX_AFE_RESULT_BYTES} byte contract limit",
             )
+        try:
+            enforce_json_structure_limits(
+                artifact.content,
+                max_nodes=self._max_nodes,
+                max_depth=self._max_depth,
+            )
+        except StructureLimitError as exc:
+            code = "AFE_RESULT_NODE_LIMIT" if exc.kind == "node" else "AFE_RESULT_DEPTH_LIMIT"
+            raise AnalogValidationParseError(code, str(exc)) from exc
         root = _load_json(artifact.content)
         self._enforce_tree_limits(root)
         if not isinstance(root, dict):
