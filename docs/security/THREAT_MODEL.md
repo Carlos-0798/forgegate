@@ -378,24 +378,24 @@ The current slice has no authenticated producer and runs no plugin code.
 | Installation location leaks through reports | Retain only sanitized distribution, entry-point, fixed relative manifest, and contract fields; omit resolved filesystem paths |
 | Fixture discovery is mistaken for plugin execution | Import-hostile standalone fixture proves metadata discovery only and reports `NOT_LOADED` |
 
-## Defined in the Phase 18 contract, not yet enforced in production
+## Implemented in the Phase 20 Windows production-plugin broker
 
-| Threat | Required future control |
+| Threat | Current control |
 |---|---|
-| Compatible metadata is mistaken for execution approval | Require a separate content-derived run plan that binds one capability, exact manifest, immutable inputs, grants, limits, and backend |
-| Untrusted plugin compromises the core process | Prohibit in-process hooks and require a disposable runner behind a broker; `NONE` and `PROCESS_ONLY` tiers cannot run untrusted external plugins |
-| Declared permissions become ambient authority | Enforce `enforced <= approved <= declared`, deny by default, and fail before start if the backend cannot prove the grant set |
-| Plugin reads workspace/database/keys/tokens | Supply only broker-created handles or private staged copies; sanitize environment and deny arbitrary filesystem, database, secret, and device access |
-| Plugin reaches the network or starts helpers | Require sandbox-enforced network and process denial plus bounded process-count cleanup |
-| Plugin exhausts time, memory, CPU, disk, or logs | Enforce startup/total timeouts and CPU, memory, output-byte, file-count, process-count, and captured-log limits |
-| Plugin forges successful evidence | Treat output as a proposal; broker/core re-read, rehash, member-check, and schema-validate it before creating separate evidence |
-| Crash or leftover files imply success | Core-authored append-only transitions; recovery may close an abandoned run only as `ERROR` and must discard unvalidated output |
-| Failure text leaks secrets or local paths | Persist bounded stable issue codes and sanitized metadata; exclude raw stderr, environment, and absolute paths from durable audit |
-| Platform silently weakens isolation | Record backend/tier and fail with `PLUGIN_ISOLATION_UNAVAILABLE` or `PLUGIN_PERMISSION_UNENFORCEABLE` instead of falling back |
+| Compatible metadata is mistaken for execution approval | A separate content-derived run plan binds one capability, exact manifest, immutable inputs, grants, limits, and backend; discovery remains `NOT_LOADED` |
+| Untrusted plugin compromises the core process | Core never imports the entry point; a standard-library trusted runner loads one staged pure-Python package only inside the disposable container |
+| Declared permissions become ambient authority | Run-plan validation enforces `enforced <= approved <= declared`, exact initial grants, deny policies, and `SANDBOXED` only |
+| Plugin reads workspace/database/keys/tokens | Broker stages only exact content-addressed input and control roots; no workspace, database, key, token, socket, device, or writable host output is mounted |
+| Plugin reaches the network or starts helpers | Podman enforces `network=none`, one PID, dropped capabilities, and complete container cleanup |
+| Plugin exhausts time, memory, CPU, disk, or logs | Broker/container enforce startup/total time, CPU, memory, output-byte, file-count, process-count, and captured-log limits |
+| Plugin forges successful evidence | Output is low-trust only; broker copies it twice, rejects races/extra members, rehashes it, validates the strict schema and input lineage, then atomically registers accepted bytes |
+| Crash or leftover files imply success | Core-authored append-only transitions and terminal receipts; recovery closes an abandoned run only as `ERROR` and never accepts leftover output |
+| Failure text leaks secrets or local paths | Durable audit retains stable issue codes, bounded counts, and cleanup booleans; raw stderr, environment, paths, and container IDs are excluded |
+| Platform silently weakens isolation | Current capability/image must match the exact Phase 19 evidence; failure returns a stable isolation/enforcement error with no weaker fallback |
 
-No external plugin process is currently started and no production grant,
-broker, output-schema, or `plugin_runs` persistence claim is made. Phase 19
-tests the low-level sandbox controls only with ForgeGate-owned fixtures.
+The Phase 20 local test started the installed ForgeGate-owned generic plugin
+through this production path and passed 13/13 broker checks. That does not
+authenticate its publisher or establish general third-party compatibility.
 
 ## Implemented in the Windows sandbox-readiness slice
 
@@ -412,19 +412,19 @@ tests the low-level sandbox controls only with ForgeGate-owned fixtures.
 | WSL machine drive exposure is mistaken for container access | Documentation records WSL's automatic drive mounts; a hostile fixture confirms `/mnt/c` is not mounted into the disposable container |
 
 The current Windows host has a rootless WSL2 Podman 5.8.6 client/server pair.
-All 14 required low-level controls passed the fixed hostile fixtures recorded
-in `reports/PHASE_19_WINDOWS_SANDBOX_LIVE_EVIDENCE.json`. This does not prove
-the missing production broker/runner path and does not authorize external
-plugin execution.
+All 14 required low-level controls passed the fixed Phase 19 hostile fixtures.
+Phase 20 then passed 13/13 production-broker controls through the installed
+generic plugin. Each successful receipt is scoped to its exact run plan and
+retains plugin evidence as `unsigned_local`/`declared`.
 
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;
 - stronger filesystem race resistance than the current open-handle metadata
   stability check;
-- production malicious-plugin execution, broker/runner protocol enforcement,
-  output-schema/race validation, and durable run recovery; Phase 19 uses only
-  fixed ForgeGate-owned fixtures and never imports an installed plugin;
+- publisher-authenticated or generalized third-party malicious-plugin support,
+  native extensions, separately packaged dependencies, remote acquisition,
+  automatic installation, and Linux/macOS execution backends;
 - managed key generation/custody/rotation, encrypted keys, HSM/TPM/KMS support,
   trust-store distribution, online revocation, trusted timestamping, and CI
   workload identity federation;

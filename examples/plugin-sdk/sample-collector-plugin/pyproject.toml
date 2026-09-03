@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "forgegate-sample-collector-plugin"
-version = "0.1.0"
-description = "Import-hostile manifest-only fixture for ForgeGate plugin discovery"
+version = "0.2.0"
+description = "Generic isolated collector fixture for ForgeGate plugin discovery and execution"
 readme = "README.md"
 requires-python = ">=3.12"
 

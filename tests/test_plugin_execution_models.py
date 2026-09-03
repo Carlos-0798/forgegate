@@ -251,6 +251,64 @@ def test_run_plan_rejects_unenforceable_authority_and_unsafe_subject_names() -> 
         PluginRunPlan.model_validate({**valid.model_dump(mode="json"), "inputs": []})
 
 
+def test_contract_rejects_ambiguous_or_incoherent_authority_fields() -> None:
+    with pytest.raises(ValidationError, match="shorter than startup"):
+        PluginResourceLimits(startup_timeout_ms=200, total_timeout_ms=100)
+    with pytest.raises(ValidationError, match="CPU limit"):
+        PluginResourceLimits(startup_timeout_ms=100, total_timeout_ms=200, cpu_time_ms=300)
+    with pytest.raises(ValidationError, match="unsupported characters"):
+        input_subject(name="inputs/not allowed.json")
+
+    target = execution_target()
+    with pytest.raises(ValidationError, match="entry-point name"):
+        PluginExecutionTarget(
+            **(target.model_dump(mode="python") | {"entry_point_name": "example.other"})
+        )
+    incompatible_manifest = create_plugin_manifest(
+        plugin_id=PLUGIN_ID,
+        display_name="Sandbox Collector",
+        description="Generic execution-contract test plugin.",
+        plugin_version="1.2.3",
+        forgegate_api_version="2",
+        capabilities=(PluginCapability.COLLECTOR,),
+        input_schemas=("example.generic-input.v1",),
+        permissions=(PluginPermission.ARTIFACT_READ, PluginPermission.FILESYSTEM_WRITE),
+        output_evidence_kinds=("test.metric",),
+    )
+    with pytest.raises(ValidationError, match="current ForgeGate API"):
+        PluginExecutionTarget(
+            distribution_name="forgegate-sandbox-collector",
+            distribution_version="1.2.3",
+            entry_point_name=PLUGIN_ID,
+            entry_point_value="sandbox_collector.runtime:plugin",
+            manifest=incompatible_manifest,
+        )
+
+    payload = run_plan().model_dump(mode="json")
+    mutations = (
+        ({"approved_permissions": ["artifact-read", "artifact-read"]}, "duplicates"),
+        ({"expected_output_evidence_kinds": ["test.metric", "test.metric"]}, "duplicates"),
+        ({"expected_output_evidence_kinds": ["not dotted"]}, "dotted identifiers"),
+        ({"inputs": [payload["inputs"][0], payload["inputs"][0]]}, "duplicates"),
+        ({"input_schema": "example.other.v1"}, "input schema"),
+        ({"expected_output_evidence_kinds": ["other.metric"]}, "output kinds"),
+        ({"declared_permissions": ["artifact-read"]}, "match the manifest"),
+        ({"approved_permissions": ["artifact-read", "filesystem-write", "network"]}, "exceed"),
+        ({"enforced_permissions": ["artifact-read"]}, "enforced exactly"),
+        (
+            {
+                "approved_permissions": ["artifact-read"],
+                "enforced_permissions": ["artifact-read"],
+            },
+            "brokered read and write",
+        ),
+        ({"planned_at": "2026-09-01T12:00:00"}, "UTC offset"),
+    )
+    for mutation, message in mutations:
+        with pytest.raises(ValidationError, match=message):
+            PluginRunPlan.model_validate(payload | mutation)
+
+
 def test_protocol_messages_are_strict_and_content_addressed() -> None:
     plan = run_plan()
     start = create_plugin_protocol_message(

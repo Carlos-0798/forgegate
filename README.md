@@ -8,9 +8,9 @@ versioned release policies, and generate auditable release decisions.
 
 ## Current status
 
-**Phase 19 Windows sandbox controls verified with ForgeGate-owned hostile
-fixtures; production external-plugin execution remains prohibited; not
-production-ready.**
+**Phase 20 Windows production plugin broker verified with a ForgeGate-owned
+generic hostile-control fixture; broader third-party support remains limited;
+not production-ready.**
 
 This private-development checkpoint provides a working Python 3.12 CLI and an
 Ed25519-authenticated, project-authorized, loopback-only REST API. Its strongest
@@ -71,7 +71,7 @@ current immutable project profile -> profile-bound release candidate
  approved authority -> content-addressed run/protocol/state/result documents
                               |
                               v
- Windows Podman/WSL2 hostile control proof -> production broker still required
+ Windows Podman/WSL2 control proof -> brokered plugin run -> validated output
 ```
 
 The core remains domain-neutral. Analog Validation Studio is consumed only
@@ -82,15 +82,16 @@ collector rather than a runtime or hardware dependency.
 
 | Gate | Result | Evidence level |
 |---|---|---|
-| Python tests | 723 passed, 3 skipped because Windows symlink creation was unavailable | Local host test |
-| Branch-aware coverage | 96.23% across 7,601 statements and 2,082 branches | Local host test |
-| Static quality gates | Ruff, formatting, and strict mypy passed across 67 source/tool files | Local host test |
-| Contracts | 36 document and 2 artifact JSON Schemas plus OpenAPI passed drift checks | Local host test |
+| Python tests | 743 passed, 3 skipped because Windows symlink creation was unavailable | Local host test |
+| Branch-aware coverage | 95.28% across 8,270 statements and 2,276 branches | Local host test |
+| Static quality gates | Ruff, formatting, and strict mypy passed across 71 source/tool files | Local host test |
+| Contracts | 38 document and 2 artifact JSON Schemas plus OpenAPI passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | Plugin discovery | 30 passed, 1 skipped; standalone wheel install/discover/uninstall passed | Local host test; code not loaded |
-| Plugin execution documents | 7 focused model/identity/chain/loader tests passed | Local host test; no process started |
+| Plugin execution documents | 8 focused model/identity/chain/loader tests passed | Local host test; model-only checks start no process |
 | Windows sandbox readiness | 20 focused probe/model/command/verifier tests passed; Podman client/server 5.8.6 match | Local host test; execution remains `PROHIBITED`, tier `NONE` |
 | Windows sandbox enforcement | All 14 required controls passed fixed hostile fixtures; [raw evidence](reports/PHASE_19_WINDOWS_SANDBOX_LIVE_EVIDENCE.json) | Live local WSL2/Podman test; not an external-plugin or production-broker test |
+| Windows production plugin broker | All 13 broker-level checks passed through the installed generic fixture, including replay/readback and cleanup; [raw evidence](reports/PHASE_20_WINDOWS_PLUGIN_BROKER_LIVE_EVIDENCE.json) | Live local WSL2/Podman test; exact run tier `SANDBOXED`, output remains `unsigned_local`/`declared` |
 | GitHub Actions | Phase 19 baseline passed `verify.py` and `release_smoke.py` on Windows, Ubuntu, and macOS; the generic composite Action smoke also passed | PASS — [run 33798778977](https://github.com/Carlos-0798/forgegate/actions/runs/33798778977); live Podman fixtures remain local-only evidence |
 | Hardware/device behavior | Not exercised by ForgeGate | Out of scope |
 
@@ -134,10 +135,12 @@ collector rather than a runtime or hardware dependency.
 - Plugin discovery reads only distribution-listed bounded manifests, never
   imports entry-point modules, and reports compatibility separately from code
   execution or publisher trust.
-- Initial external-plugin isolation is scoped to a Windows host using a local
-  rootless Podman/WSL2 machine. Low-level controls passed fixed hostile
-  fixtures, but no external plugin may run until the production broker,
-  protocol, output validation, and durable audit path are implemented.
+- Initial external-plugin execution is scoped to a Windows host using a local
+  rootless Podman/WSL2 machine. The production broker authorizes only exact run
+  plans against the verified capability/image, owns all I/O, preserves the
+  bounded protocol, and records immutable replayable receipts. This does not
+  authenticate publishers or generalize support beyond the tested pure-Python
+  fixture.
 - Upstream AFE or future MSP430 results retain their original evidence level;
   ForgeGate does not relabel software or replay evidence as physical proof.
 
@@ -332,7 +335,11 @@ Implemented and host-verified in this checkpoint:
 - a content-derived Windows Podman/WSL2 capability report, strict shell-free
   digest-pinned container-create specification, and development-only live
   verifier whose 14 required controls passed ForgeGate-owned hostile fixtures;
-  the production path still starts no external plugin.
+  the readiness report itself remains non-executable.
+- a Windows production broker and disposable trusted runner that stage exact
+  inputs without host import, validate `START`/`READY`/`RESULT`, re-read tmpfs
+  output twice, enforce low-trust evidence schemas, atomically re-register
+  accepted bytes, and retain append-only receipt/replay/recovery state.
 
 
 </details>
@@ -376,9 +383,17 @@ prepared developer host, rerun the fixed hostile fixtures with:
 .\.venv\Scripts\python.exe tools\verify_windows_sandbox_live.py
 ```
 
-Even a passing development report keeps external execution `PROHIBITED` and
-the advertised tier `NONE`; only the later production broker gate may change
-those claims.
+The readiness report itself always keeps external execution `PROHIBITED` and
+tier `NONE`. To rerun the separately authorized production-broker fixture after
+installing its standalone wheel:
+
+```powershell
+.\.venv\Scripts\python.exe tools\verify_windows_plugin_broker_live.py `
+  --sandbox-evidence reports\PHASE_19_WINDOWS_SANDBOX_LIVE_EVIDENCE.json
+```
+
+A successful receipt advertises `SANDBOXED` only for that exact run and retains
+the produced evidence as `unsigned_local`/`declared`.
 
 Start the local API against an existing or new local candidate database:
 
@@ -732,9 +747,9 @@ Not implemented yet:
 - non-loopback or TLS-protected API deployment;
 - HTTP artifact collection or filesystem publication;
 - complete rejected-request ingestion, security/audit export and retention,
-  production Windows broker/runner authorization, external plugin execution,
-  broker I/O, durable `plugin_runs`, or custom GitHub Checks/PR annotations/API
-  integration;
+  direct CLI/REST plugin-run endpoints, general third-party/native/dependency-
+  rich plugin support, publisher trust, or custom GitHub Checks/PR annotations/
+  API integration;
 - database-file authorization, backup/repair, managed or hardware-backed key
   custody, managed online revocation, durable/distributed session authority,
   trusted timestamps, or CI workload identity federation;
@@ -764,18 +779,22 @@ workload identity, source-artifact authentication, or GitHub API authority.
 Phase 17 adds only bounded import-free plugin metadata discovery; compatibility
 does not authenticate a publisher, load a callable, grant permissions, isolate
 a subprocess, or create durable plugin-run audit evidence.
-Phase 18 now implements strict public documents for run authority, protocol
+Phase 18 implemented strict public documents for run authority, protocol
 messages, legal transitions, stable failure classes, bounded validated outputs,
-and terminal replay. It implements none of the runner, sandbox, broker-I/O, or
-durable-store controls and still loads no plugin code. See
+and terminal replay without loading plugin code. Phase 20 now consumes those
+documents in the Windows broker. See
 [`docs/architecture/PLUGIN_EXECUTION_SECURITY_CONTRACT.md`](docs/architecture/PLUGIN_EXECUTION_SECURITY_CONTRACT.md)
 and the exact upstream review in
 [`docs/research/OPEN_SOURCE_REFERENCE_REVIEW.md`](docs/research/OPEN_SOURCE_REFERENCE_REVIEW.md).
 Phase 19 installs and pins the local Windows runtime, requires matching client
 and server versions, and exercises the low-level controls with fixed hostile
-fixtures. This is not the production broker, protocol, output-schema, or
-durable-audit path, so external plugins remain prohibited; see
+fixtures. Phase 20 adds the production broker/runner, low-trust output schema,
+double-read registration, append-only audit, exact replay, and interruption
+recovery, then executes the installed generic fixture through that path; see
 [`docs/architecture/WINDOWS_PLUGIN_SANDBOX.md`](docs/architecture/WINDOWS_PLUGIN_SANDBOX.md).
+The run-specific success does not establish publisher trust, general
+third-party compatibility, or physical/hardware verification. See also
+[`docs/architecture/PRODUCTION_PLUGIN_BROKER.md`](docs/architecture/PRODUCTION_PLUGIN_BROKER.md).
 SHA-256 is not producer authentication.
 The MSP430 controller may later expose a separate versioned artifact for
 another optional collector.
@@ -787,8 +806,10 @@ entry-point discovery with explicit compatibility and conflict reporting.
 Phase 18 freezes the security contract and implements its public content-
 addressed documents plus the non-executing Windows sandbox readiness gate.
 Phase 19 verifies the Windows low-level sandbox controls with fixed hostile
-fixtures. The production runner, broker I/O, schema validation, and durable run
-records remain separate implementation work. Custom GitHub API
+fixtures. Phase 20 executes the standalone generic fixture through the
+Windows production broker and verifies low-trust output registration plus
+durable replay/recovery semantics. Publisher trust, broad plugin packaging,
+and direct CLI/REST execution remain separate work. Custom GitHub API
 writes, annotations, signed CI provenance, OIDC, and artifact upload also
 remain separate. TLS, reverse-proxy identity, hostile-local-user defenses,
 durable/distributed session state, security-event retention/export, and managed

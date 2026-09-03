@@ -2,20 +2,21 @@
   "capabilities": [
     "collector"
   ],
-  "description": "Generic metadata-only collector fixture for import-free discovery.",
+  "description": "Generic isolated collector fixture for broker verification.",
   "display_name": "ForgeGate Sample Collector",
   "forgegate_api_version": "1",
   "input_schemas": [
     "example.sample-input.v1"
   ],
-  "manifest_id": "sha256:9fabefbbafc2956e0f20a31eeaa5edee650e3791d98786345f5e8f4a46198508",
+  "manifest_id": "sha256:c74c3744c021831c6cbb723233a07d6fd5b3f6a022822a9a729edf5d4dc0daae",
   "output_evidence_kinds": [
     "sample.metric"
   ],
   "permissions": [
-    "artifact-read"
+    "artifact-read",
+    "filesystem-write"
   ],
   "plugin_id": "example.forgegate-sample-collector",
-  "plugin_version": "0.1.0",
+  "plugin_version": "0.2.0",
   "schema_version": "forgegate.plugin-manifest.v1"
 }

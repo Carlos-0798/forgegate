@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import os
@@ -44,7 +45,9 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/LOCAL_SESSION_LIFECYCLE.md",
     "docs/architecture/GITHUB_ACTIONS_GATE.md",
     "docs/architecture/PLUGIN_SDK_DISCOVERY.md",
+    "docs/architecture/PLUGIN_EXECUTION_SECURITY_CONTRACT.md",
     "docs/architecture/WINDOWS_PLUGIN_SANDBOX.md",
+    "docs/architecture/PRODUCTION_PLUGIN_BROKER.md",
     "examples/sample-python-api/artifacts/junit.xml",
     "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
@@ -90,6 +93,10 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_16_GITHUB_ACTIONS_GATE_ACCEPTANCE_REPORT.md",
     "reports/PHASE_17_PLUGIN_SDK_DISCOVERY_ACCEPTANCE_REPORT.md",
     "reports/PHASE_18_WINDOWS_SANDBOX_READINESS_REPORT.md",
+    "reports/PHASE_19_WINDOWS_SANDBOX_LIVE_EVIDENCE.json",
+    "reports/PHASE_19_WINDOWS_SANDBOX_LIVE_VERIFICATION_REPORT.md",
+    "reports/PHASE_20_PRODUCTION_PLUGIN_BROKER_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_20_WINDOWS_PLUGIN_BROKER_LIVE_EVIDENCE.json",
     "requirements/dev-constraints.txt",
     "schemas/forgegate.project.v1.schema.json",
     "schemas/forgegate.policy-evaluation.v1.schema.json",
@@ -120,6 +127,12 @@ REQUIRED_SDIST_PATHS = (
     "schemas/forgegate.github-action-report.v1.schema.json",
     "schemas/forgegate.plugin-manifest.v1.schema.json",
     "schemas/forgegate.plugin-discovery.v1.schema.json",
+    "schemas/forgegate.plugin-run-plan.v1.schema.json",
+    "schemas/forgegate.plugin-protocol-message.v1.schema.json",
+    "schemas/forgegate.plugin-run-transition.v1.schema.json",
+    "schemas/forgegate.plugin-run-result.v1.schema.json",
+    "schemas/forgegate.plugin-output.v1.schema.json",
+    "schemas/forgegate.plugin-run-receipt.v1.schema.json",
     "schemas/forgegate.windows-plugin-sandbox-capability.v1.schema.json",
     "schemas/forgegate.openapi.v1.json",
     "schemas/forgegate.benchmark.v1.schema.json",
@@ -156,7 +169,13 @@ REQUIRED_SDIST_PATHS = (
     "tests/test_assurance_bundle.py",
     "tests/test_identity_signatures.py",
     "tests/test_plugins.py",
+    "tests/test_plugin_execution_models.py",
+    "tests/test_plugin_broker.py",
     "tests/test_windows_plugin_sandbox.py",
+    "tests/test_windows_sandbox_live_tool.py",
+    "tests/test_windows_plugin_broker_live_tool.py",
+    "tools/verify_windows_sandbox_live.py",
+    "tools/verify_windows_plugin_broker_live.py",
 )
 FORBIDDEN_SDIST_PREFIXES = (
     "examples/plugin-sdk/sample-collector-plugin/build/",
@@ -223,7 +242,15 @@ def verify_sdist(sdist: Path) -> None:
     print("\nSource distribution manifest: PASS", flush=True)
 
 
-def main() -> int:
+def main(
+    *,
+    windows_live_broker: bool = False,
+    live_output: Path | None = None,
+    sandbox_evidence: Path | None = None,
+    podman: Path | None = None,
+) -> int:
+    if windows_live_broker and (live_output is None or sandbox_evidence is None):
+        raise SystemExit("live broker smoke requires output and sandbox evidence paths")
     with tempfile.TemporaryDirectory(prefix="forgegate-release-") as temporary:
         root = Path(temporary)
         dist = root / "dist"
@@ -320,6 +347,39 @@ def main() -> int:
             [str(python), "-m", "forgegate", "validate-config", str(plugin_report)],
             cwd=root,
         )
+        if windows_live_broker:
+            assert live_output is not None and sandbox_evidence is not None
+            live_command = [
+                str(python),
+                str(REPOSITORY_ROOT / "tools/verify_windows_plugin_broker_live.py"),
+                "--sandbox-evidence",
+                str(sandbox_evidence.resolve(strict=True)),
+                "--output",
+                str(live_output.resolve(strict=False)),
+            ]
+            if podman is not None:
+                live_command.extend(("--podman", str(podman.resolve(strict=True))))
+            run(live_command, cwd=root)
+            live_report = json.loads(live_output.read_text(encoding="utf-8"))
+            live_report["forgegate_installation"] = "CLEAN_WHEEL"
+            live_report.pop("verification_id", None)
+            live_report["verification_id"] = (
+                "sha256:"
+                + hashlib.sha256(
+                    json.dumps(
+                        live_report,
+                        sort_keys=True,
+                        separators=(",", ":"),
+                        ensure_ascii=False,
+                        allow_nan=False,
+                    ).encode("utf-8")
+                ).hexdigest()
+            )
+            live_output.write_text(
+                json.dumps(live_report, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+                encoding="utf-8",
+                newline="\n",
+            )
         run(
             [
                 str(python),
@@ -1284,4 +1344,17 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    parser = argparse.ArgumentParser(description="Verify ForgeGate source and clean-wheel release")
+    parser.add_argument("--windows-live-broker", action="store_true")
+    parser.add_argument("--live-output", type=Path)
+    parser.add_argument("--sandbox-evidence", type=Path)
+    parser.add_argument("--podman", type=Path)
+    arguments = parser.parse_args()
+    raise SystemExit(
+        main(
+            windows_live_broker=arguments.windows_live_broker,
+            live_output=arguments.live_output,
+            sandbox_evidence=arguments.sandbox_evidence,
+            podman=arguments.podman,
+        )
+    )

@@ -40,8 +40,14 @@ Phase 18 adds `forgegate.plugin-run-plan.v1.schema.json`,
 `forgegate.plugin-protocol-message.v1.schema.json`,
 `forgegate.plugin-run-transition.v1.schema.json`, and
 `forgegate.plugin-run-result.v1.schema.json`. They freeze content-derived
-authority, bounded-message, state-chain, and validated-result documents. They
-do not provide a runner, sandbox, permission enforcement, or durable run store.
+authority, bounded-message, state-chain, and validated-result documents. Phase
+20 consumes them through the Windows broker.
+
+Phase 20 adds `forgegate.plugin-output.v1.schema.json` for canonical external
+plugin proposals constrained to `unsigned_local`/`declared` evidence and
+`forgegate.plugin-run-receipt.v1.schema.json` for the immutable protocol,
+execution, cleanup, registration, and terminal-result record. A valid document
+does not authenticate the plugin publisher or promote its evidence.
 
 The Windows readiness slice adds
 `forgegate.windows-plugin-sandbox-capability.v1.schema.json`. It records a
@@ -49,7 +55,8 @@ sanitized, content-derived Podman/WSL2 host probe while mandatory fields keep
 external plugin execution `PROHIBITED` and the advertised isolation tier
 `NONE`. Phase 19 adds exact client/server version reporting and mismatch
 rejection. Runtime readiness and the separate development hostile-fixture
-report are not production external-plugin authorization.
+report are not production external-plugin authorization by themselves. The
+Phase 20 broker separately requires their exact current match for each run.
 
 `forgegate.evidence-bundle-assembly.v1.schema.json` describes the audited
 envelope around a candidate-bound evidence bundle and its collection receipts.

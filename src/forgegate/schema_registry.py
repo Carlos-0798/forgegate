@@ -20,8 +20,10 @@ from forgegate.identity import AssuranceSignature, SigningIdentity, TrustStore
 from forgegate.plugins import (
     PluginDiscoveryReport,
     PluginManifest,
+    PluginOutputDocument,
     PluginProtocolMessage,
     PluginRunPlan,
+    PluginRunReceipt,
     PluginRunResult,
     PluginRunTransition,
     WindowsSandboxCapabilityReport,
@@ -69,9 +71,11 @@ SCHEMAS: dict[str, type[BaseModel]] = {
     "forgegate.plugin-manifest.v1": PluginManifest,
     "forgegate.plugin-discovery.v1": PluginDiscoveryReport,
     "forgegate.plugin-run-plan.v1": PluginRunPlan,
+    "forgegate.plugin-output.v1": PluginOutputDocument,
     "forgegate.plugin-protocol-message.v1": PluginProtocolMessage,
     "forgegate.plugin-run-transition.v1": PluginRunTransition,
     "forgegate.plugin-run-result.v1": PluginRunResult,
+    "forgegate.plugin-run-receipt.v1": PluginRunReceipt,
     "forgegate.windows-plugin-sandbox-capability.v1": WindowsSandboxCapabilityReport,
 }
 

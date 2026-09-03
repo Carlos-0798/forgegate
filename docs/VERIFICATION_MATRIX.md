@@ -11,7 +11,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — thirty-six document plus two artifact schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — thirty-eight document plus two artifact schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Analog Validation result Schema mirror | committed upstream-consumer contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
@@ -111,10 +111,11 @@
 | Plugin compatibility/failure isolation | compatible/incompatible/invalid/conflict cases | PASS — discovery metadata only; no runtime execution |
 | Plugin install/uninstall independence | standalone fixture wheel + clean ForgeGate wheel | PASS — local + three-platform clean-package smoke; no optional dependency retained |
 | Plugin execution security contract | exact upstream/license traceability + architecture/threat review | DESIGN PASS — protocol, permissions, isolation tiers, limits, errors, and audit semantics defined; no code loaded |
-| Plugin run-plan/protocol/transition/result contracts | model/identity/authority/chain/resource/Schema/loader tests | PASS — local + three-platform CI; 7 focused tests, four content-derived document Schemas, no process started |
+| Plugin run-plan/protocol/transition/result contracts | model/identity/authority/chain/resource/Schema/loader tests | PASS — local; 8 focused tests and six content-derived execution document Schemas; latest remote CI is Phase 19 |
 | Windows sandbox capability gate | host/runtime probe, client/server identity, command-construction adversarial tests | PASS — 20 focused tests; local rootless WSL2 Podman client/server 5.8.6 match; execution `PROHIBITED`, tier `NONE` |
 | Windows Podman/WSL2 low-level enforcement | fixed hostile container tests for filesystem/network/process/environment/resources/cleanup | PASS — all 14 controls in development report `sha256:5296f70996ff9928d54557fb97c2e667f15ccdd67ff989b85b518260cb3db38d`; external code not tested |
-| External plugin execution and audit | production broker/runner/protocol/output validation/plugin_runs implementation | NOT IMPLEMENTED — no installed plugin callable is loaded; execution remains `PROHIBITED`, tier `NONE` |
+| External plugin execution and audit | production broker/runner/protocol/output validation/plugin_runs implementation | PASS — installed ForgeGate-owned generic fixture; 13/13 local broker controls, exact replay/readback, cleanup, and run-specific `SANDBOXED`; output remains `unsigned_local`/`declared` |
+| General third-party plugin trust/compatibility | publisher provenance + diverse hostile packages | NOT ESTABLISHED — pure-Python fixed fixture only; native/dependency-rich packages and remote acquisition unsupported |
 | Registered-project candidate authority | application/CLI/API/store tests | PASS — unregistered project and missing track fail closed |
 | Release-track normalization | underscore compatibility plus ambiguity tests | PASS — new candidate/policy identity is canonical hyphen form |
 | Project/candidate discovery | bounded page model, stable cursor, CLI/API, installed-wheel smoke | PASS — candidates are project-scoped |

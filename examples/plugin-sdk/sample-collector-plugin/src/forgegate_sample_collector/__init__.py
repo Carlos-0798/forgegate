@@ -1,1 +1,1 @@
-raise RuntimeError("ForgeGate discovery must not import the sample plugin")
+"""Generic ForgeGate sample collector plugin."""

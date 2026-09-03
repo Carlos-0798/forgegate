@@ -7,14 +7,13 @@ host. The selected backend is a rootless Podman machine using WSL2 and Linux
 OCI containers. Linux and macOS host backends are deferred and are not
 advertised.
 
-This checkpoint implements capability probing, a fail-closed container
-creation specification, and a development-only hostile-fixture verifier. It
-does not execute an external plugin. A probe result of
+Phase 19 implemented capability probing, a fail-closed container creation
+specification, and a development-only hostile-fixture verifier. A probe result of
 `READY_FOR_ADVERSARIAL_VERIFICATION` still records
 `external_plugin_execution=PROHIBITED` and `advertised_isolation_tier=NONE`.
-The passing development record does not authorize a production run plan because
-the broker, runner protocol, output-schema validation, and durable audit path
-remain absent.
+The Phase 20 broker may authorize an exact production run only when that
+development record and the current runtime/image capability match. Readiness
+alone still grants no execution authority.
 
 ## Why Podman on WSL2
 
@@ -110,12 +109,21 @@ and controls. WSL automatically mounts Windows drives into the Podman machine;
 the test confirms those paths are not mounted into the disposable container,
 but this broader VM-level exposure remains a defense-in-depth limitation.
 
-## Remaining production gate
+## Phase 20 production use of the gate
 
-Before external code may execute or the backend may advertise `SANDBOXED`,
-ForgeGate must implement the trusted runner and broker, enforce the versioned
-protocol, validate output schemas and filesystem race properties, re-register
-accepted artifacts, write append-only `plugin_runs`, and prove crash recovery
-in clean-wheel integration tests. Until then, external execution remains
-`PROHIBITED`, the advertised tier remains `NONE`, and there is no
-subprocess-only fallback.
+The Windows broker now validates the exact Phase 19 evidence identity and every
+required control, reprobes the current rootless local runtime, and rechecks the
+pinned image before starting a run. Its successful receipt may advertise
+`SANDBOXED` for that exact execution. The `sandbox-status` capability report
+itself deliberately remains `PROHIBITED`/`NONE` because it is only a readiness
+probe.
+
+The production path enforces the protocol, double-snapshot output validation,
+atomic accepted-output registration, append-only `plugin_runs`, deterministic
+replay, interruption recovery, and cleanup. See
+[`PRODUCTION_PLUGIN_BROKER.md`](PRODUCTION_PLUGIN_BROKER.md) and the committed
+[`PHASE_20_WINDOWS_PLUGIN_BROKER_LIVE_EVIDENCE.json`](../../reports/PHASE_20_WINDOWS_PLUGIN_BROKER_LIVE_EVIDENCE.json).
+
+There is no subprocess-only fallback. Linux/macOS external-plugin execution,
+publisher trust, native/dependency-rich plugins, and generalized third-party
+compatibility remain unsupported.

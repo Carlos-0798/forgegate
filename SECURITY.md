@@ -6,9 +6,11 @@ control for a production release.
 Configuration and evidence loaders use strict schemas, bounded parsing, and
 safe YAML handling. Identity, signature, and plugin-manifest inputs use bounded
 strict JSON with duplicate-key and non-finite-number rejection. Plugin
-discovery reads installed metadata without importing or executing plugin code;
-requested permissions are not granted. The product does not load external
-plugin callables or evaluate executable policy expressions. The REST API uses
+discovery reads installed metadata without importing or executing plugin code.
+The separate Windows broker may execute an exactly planned pure-Python
+collector only inside the verified rootless Podman/WSL2 boundary; external
+code is never imported into the core process. The product does not evaluate
+executable policy expressions. The REST API uses
 one-time Ed25519 challenges, short-lived in-memory Bearer sessions, and exact
 role/project authorization, but must remain on a loopback address. It has no
 TLS or hostile-local-user defense and is not approved for LAN, shared-host, or
@@ -63,17 +65,26 @@ administrator-resistant storage. See `docs/security/THREAT_MODEL.md`.
 Phase 17 adds manifest-only Python entry-point discovery. A compatible result
 means only that a content-derived manifest targets Plugin API v1; it does not
 authenticate a publisher or approve code execution. Missing, malformed,
-incompatible, and conflicting metadata is reported but never loaded. External
-plugin execution, production broker/runner authorization, permission grants,
-secrets, and durable plugin-run audit remain unimplemented.
+incompatible, and conflicting metadata is reported but never loaded. Discovery
+still grants no permissions and never loads a callable.
 
 The Windows sandbox slices add a fail-closed Podman/WSL2 capability probe,
 container-create specification, and development-only hostile-fixture verifier.
 All 14 low-level controls passed fixed ForgeGate-owned fixtures on a matching
-rootless Podman 5.8.6 client/server pair. This is not a test of an installed
-external plugin or the missing production broker/protocol/output-validation/
-durable-audit path. External execution therefore remains `PROHIBITED`, the
-advertised isolation tier remains `NONE`, and there is no subprocess-only
-fallback. WSL's automatic machine-level Windows-drive mounts remain a documented
-defense-in-depth limitation even though the disposable container test could not
-read `/mnt/c`.
+rootless Podman 5.8.6 client/server pair. The Phase 20 production broker now
+requires that exact evidence plus a matching current runtime and image before
+starting an installed plugin. It stages only exact content-addressed inputs and
+pure-Python distribution files, enforces canonical protocol messages, validates
+tmpfs output twice, atomically re-registers accepted low-trust evidence, cleans
+the container/staging area, and retains an append-only terminal receipt with
+idempotent replay and fail-closed interruption recovery.
+
+The Phase 20 live test passed all 13 broker-level controls using only the
+ForgeGate-owned generic fixture. `SANDBOXED` applies to that exact authorized
+run; the readiness probe itself remains `PROHIBITED`/`NONE`. Accepted plugin
+evidence remains `unsigned_local` and `declared` and cannot directly change a
+candidate or release decision. Publisher authentication, native/dependency-rich
+plugins, generalized third-party compatibility, and Linux/macOS execution are
+not established. There is no subprocess-only fallback. WSL's automatic
+machine-level Windows-drive mounts remain a documented defense-in-depth
+limitation even though the disposable container test could not read `/mnt/c`.

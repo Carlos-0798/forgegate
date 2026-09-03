@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.1.0.dev28 — 2026-09-03
+
+- Added the Windows production external-plugin broker and standard-library
+  trusted runner without importing third-party entry points in the ForgeGate
+  core process.
+- Added strict low-trust plugin-output and immutable run-receipt contracts,
+  broker-owned content-addressed input staging, double-snapshot output
+  validation, atomic accepted-output registration, and cleanup enforcement.
+- Added a separate append-only SQLite plugin-run store with exact idempotent
+  replay and fail-closed interruption recovery.
+- Upgraded the standalone sample collector to a pure-Python hostile-control
+  fixture and executed it through the production broker on the verified local
+  rootless Podman/WSL2 backend; all 13 broker-level checks passed.
+- Added clean-wheel live-broker support to release smoke while retaining
+  `unsigned_local`/`declared` output, no hardware access, Windows-only execution,
+  and no publisher or general third-party trust claim.
+
 ## 0.1.0.dev27 — 2026-09-03
 
 - Installed and verified a dedicated rootless Podman/WSL2 5.8.6 machine for

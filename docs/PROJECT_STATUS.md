@@ -1,15 +1,16 @@
 # Project status
 
 - Date: 2026-09-03
-- Version: 0.1.0.dev27
-- Stage: Phase 19 Windows low-level sandbox controls verified with fixed hostile
-  fixtures; production plugin runner, broker, schema validation, and durable run
-  storage remain absent
-- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, offline GitHub gating, bounded import-free plugin metadata discovery, non-executing plugin contracts, and a live-tested Windows sandbox control harness; not production-ready
+- Version: 0.1.0.dev28
+- Stage: Phase 20 Windows production external-plugin broker verified with an
+  installed ForgeGate-owned generic fixture, broker-owned I/O, strict output
+  validation, cleanup, and durable replay/recovery
+- Product maturity: local CLI/API MVP with software-peer collection, audited aggregation, durable lifecycle binding, versioned project authority, offline GitHub gating, bounded import-free plugin metadata discovery, and a live-tested Windows-only brokered plugin path; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
 - Remote/publication status: private `Carlos-0798/forgegate` synchronized
-  through the Phase 19 implementation baseline; no public release, License, or
+  through the Phase 19 implementation baseline pending this checkpoint's sync;
+  no public release, License, or
   LinkedIn publication authorized
 
 ## Implemented
@@ -286,7 +287,7 @@
 - append-only-shaped `forgegate.plugin-run-transition.v1` legal state links and
   replay-validating `forgegate.plugin-run-result.v1` terminal documents with
   core-rehashed/schema-validated output identities;
-- public configuration loading, four generated JSON Schemas, Schema drift
+- public configuration loading, six generated JSON Schemas, Schema drift
   checks, and adversarial identity/authority/state/resource tests for those
   documents without importing or starting plugin code.
 - content-derived `forgegate.windows-plugin-sandbox-capability.v1` reports that
@@ -303,21 +304,31 @@
 - a development-only hostile verifier whose fixed fixtures passed all 14
   required filesystem, network, process, environment, resource, output, log,
   image, runtime, and cleanup controls on Podman/WSL2 5.8.6;
-- exact raw live evidence with no host path, username, email, token, key, or
-  hardware data; external execution remains `PROHIBITED` and tier `NONE`.
+- exact raw Phase 19 evidence with no host path, username, email, token, key, or
+  hardware data; the readiness report remains `PROHIBITED` and tier `NONE`.
+- standard-library trusted runner plus Windows production broker that never
+  imports external code into the ForgeGate core process;
+- exact distribution/version/entry-point/manifest matching, pure-Python package
+  staging, content-addressed read-only inputs, and shell-free pinned-container
+  execution;
+- canonical `START`/`READY`/`RESULT` enforcement, two-snapshot tmpfs validation,
+  strict `forgegate.plugin-output.v1`, input lineage checks, and atomic broker-
+  owned output registration;
+- separate append-only SQLite plugin-run v1 storage, immutable
+  `forgegate.plugin-run-receipt.v1`, exact replay without re-execution, and
+  fail-closed interruption recovery;
+- Phase 20 live production-path verification through the installed standalone
+  generic fixture: 13/13 broker controls passed, exact run tier `SANDBOXED`,
+  output retained as `unsigned_local`/`declared`, hardware not accessed.
 
 ## Designed, not implemented
 
-- external-plugin trust domains separating core, broker, disposable runner,
-  untrusted plugin, content-addressed inputs, and core-authored audit;
-- out-of-process runner and broker implementation for the modeled bounded
-  protocol and broker-owned input/output handling;
-- production Windows broker/runner integration over the modeled protocol,
-  grants, output validation, and `SANDBOXED` authorization gate;
-- durable append-only run storage, crash recovery, and idempotent replay over
-  the implemented transition/result contracts;
-- exact upstream reference review with three shallow external clones and two
-  source-only fixed revisions; no third-party source copied or dependency added.
+- publisher signatures/trust, remote plugin acquisition, automatic install,
+  and an independent production plugin repository;
+- native-extension and separately packaged plugin-dependency support;
+- Linux/macOS execution backends and direct CLI/REST plugin-run endpoints;
+- automatic conversion of validated plugin output into candidate-bound release
+  evidence or a release decision.
 
 ## Not implemented
 
@@ -325,9 +336,9 @@ Non-loopback/TLS API deployment, reverse-proxy trust, hostile-local-user
 defense, managed online revocation, durable/distributed sessions, per-client
 network rate controls, distributed rate state, HTTP artifact collection and
 file publication, complete rejected-request/warning ingestion, security/audit
-export/retention, administrator-resistant logging,
-external plugin execution, production broker-backed sandbox authorization,
-output-schema/race validation, and durable run-audit implementation,
+export/retention, administrator-resistant logging, generalized third-party
+plugin compatibility, publisher trust/provenance, native/dependency-rich
+plugins, Linux/macOS plugin execution,
 custom GitHub Checks/PR annotations/API writes,
 managed/encrypted/hardware-backed key custody, trusted timestamps, online
 revocation, CI workload identity federation, database authorization,
@@ -342,9 +353,9 @@ artifact payload/replay export, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 723 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 96.23% across 7,601 statements and 2,082 branches
-- Plugin execution contract focus: 7 passed across plan authority, protocol
+- pytest: 743 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.28% across 8,270 statements and 2,276 branches
+- Plugin execution contract focus: 8 passed across plan authority, protocol
   sequencing, legal transitions, terminal replay, resource limits, JSON
   loading, and content-derived identity; no process started
 - Plugin SDK discovery focus: 30 passed, 1 skipped; plugin package 99.27%
@@ -367,7 +378,7 @@ artifact payload/replay export, and hardware access.
   and 138 branches
 - committed JSON Schema and OpenAPI drift checks: PASS
 - project/policy/candidate/transition example documents: VALID
-- thirty-six canonical versioned document Schemas plus Benchmark and Analog
+- thirty-eight canonical versioned document Schemas plus Benchmark and Analog
   Validation artifact Schemas: drift-checked and parsed
 - complete sdist manifest and ForgeGate/sample-plugin wheel builds: PASS
 - Windows sandbox focus: 20 passed across probe failure isolation, client/server
@@ -377,6 +388,10 @@ artifact payload/replay export, and hardware access.
   raw report ID
   `sha256:5296f70996ff9928d54557fb97c2e667f15ccdd67ff989b85b518260cb3db38d`;
   fixed ForgeGate fixtures only, no external plugin or hardware action
+- Windows production plugin broker: 13/13 PASS through the installed generic
+  fixture, including isolation denials, complete protocol, two-snapshot output
+  validation, cleanup, durable readback, and exact no-reexecution replay; raw
+  Phase 20 report retained under `reports/`, no hardware action
 - repository-external ForgeGate installation plus sample-plugin
   install/discover/uninstall independence smoke: PASS
 - Git Bash shell-script syntax check: PASS
@@ -424,3 +439,6 @@ The Windows-only readiness gate and administrator boundary are recorded in
 Phase 19 live control evidence and its remaining production boundary are
 recorded in `reports/PHASE_19_WINDOWS_SANDBOX_LIVE_EVIDENCE.json` and
 `reports/PHASE_19_WINDOWS_SANDBOX_LIVE_VERIFICATION_REPORT.md`.
+Phase 20 implementation and live production-path acceptance are recorded in
+`reports/PHASE_20_PRODUCTION_PLUGIN_BROKER_ACCEPTANCE_REPORT.md` and
+`reports/PHASE_20_WINDOWS_PLUGIN_BROKER_LIVE_EVIDENCE.json`.

@@ -27,6 +27,7 @@
         "PLUGIN_EXIT_ERROR",
         "PLUGIN_OUTPUT_INVALID",
         "PLUGIN_AUDIT_FAILED",
+        "PLUGIN_CLEANUP_FAILED",
         "PLUGIN_CANCELLED"
       ],
       "title": "PluginRunIssueCode",

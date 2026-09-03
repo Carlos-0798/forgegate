@@ -1,10 +1,12 @@
 # ForgeGate sample collector plugin
 
-This is a standalone, metadata-only fixture for the ForgeGate Plugin SDK
-discovery boundary. Its package deliberately raises if imported: successful
-`forgegate plugins list` execution therefore demonstrates that discovery read
-the installed manifest without importing or executing plugin code.
+This is a standalone generic fixture for both the import-free ForgeGate Plugin
+SDK discovery boundary and the production Windows broker test. Discovery reads
+its manifest without importing the package. The broker later copies the exact
+installed package into a disposable Podman sandbox; ForgeGate Core never imports
+the entry point.
 
-The manifest declares a generic sample input and output. It does not collect
-real evidence, access a network or device, or provide AFE/MSP430 integration.
-Runtime loading and execution are intentionally not implemented in Phase 17.
+The callable consumes one synthetic JSON input and attempts fixed filesystem,
+host-path, network, subprocess, and environment probes. It reports only
+`unsigned_local` / `declared` fixture evidence and never accesses a device or
+provides AFE/MSP430 integration.

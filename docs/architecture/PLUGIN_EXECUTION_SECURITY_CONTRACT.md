@@ -2,11 +2,11 @@
 
 ## Status and boundary
 
-Phase 18 defines the contract that must exist before ForgeGate can execute an
-external plugin. The public contract models and JSON Schemas are implemented;
-the runner and operating-system controls are not. Phase 17 discovery remains
-import-free, every discovery result remains `execution=NOT_LOADED`, and
-ForgeGate still has no plugin runner or sandbox claim.
+Phase 18 defined the contract that had to exist before ForgeGate could execute
+an external plugin. Phase 20 now implements that contract for one Windows-only
+rootless Podman/WSL2 path. Phase 17 discovery remains import-free and every
+discovery result remains `execution=NOT_LOADED`; execution requires a separate
+approved run plan and broker call.
 
 The core rule is fail-closed: a valid manifest proves only that metadata is
 well-formed. It does not authenticate the publisher, approve a capability,
@@ -75,7 +75,7 @@ recompute content digests, validate every evidence schema, and only then create
 a separate ForgeGate collection record. A plugin cannot directly transition a
 candidate, evaluate policy, sign an assurance bundle, or write audit rows.
 
-The schema-only public surface now consists of:
+The public execution-document surface consists of:
 
 - `forgegate.plugin-run-plan.v1`, which binds the exact manifest, target,
   inputs, authority, isolation tier, policies, resource limits, and UTC time;
@@ -84,11 +84,17 @@ The schema-only public surface now consists of:
 - `forgegate.plugin-run-transition.v1`, which binds each legal state change to
   its predecessor and optional protocol message; and
 - `forgegate.plugin-run-result.v1`, which revalidates the complete terminal
-  chain and binds only core-rehashed, schema-validated output identities.
+  chain and binds only core-rehashed, schema-validated output identities;
+- `forgegate.plugin-output.v1`, the low-trust proposal written by the isolated
+  plugin; and
+- `forgegate.plugin-run-receipt.v1`, the immutable broker result binding
+  protocol messages, execution counters, cleanup, output registration, and the
+  complete terminal result.
 
 These documents can be constructed, serialized, Schema-checked, and replay-
-validated without loading a plugin. They do not prove that a backend enforced
-their requested controls.
+validated without loading a plugin. A receipt claims backend enforcement only
+for its exact authorized run; the committed Windows live report supplies the
+corresponding local-host evidence.
 
 ## Permissions and enforcement
 
@@ -134,7 +140,7 @@ tree and discard unvalidated output.
 
 ## Durable run audit
 
-The future append-only run record must distinguish:
+The append-only run record distinguishes:
 
 `PLANNED -> STARTING -> RUNNING -> SUCCEEDED | ERROR | CANCELLED`
 
@@ -175,21 +181,27 @@ decide how absence, error, or cancellation affects the release.
 
 ## Implementation gates
 
-External plugin execution remains prohibited until all of the following are
-implemented and verified:
+The initial Windows execution path is enabled because all of the following are
+implemented and verified for the fixed generic fixture:
 
 1. **implemented:** strict run-plan, protocol-message, transition, and result
    models plus JSON Schemas and content-derived identities;
-2. one cross-platform or explicitly platform-scoped `SANDBOXED` backend with
+2. **implemented:** one explicitly Windows-scoped `SANDBOXED` backend with
    denial tests for filesystem, network, child-process, environment, and
    resource escape;
-3. append-only durable run audit with crash recovery and deterministic replay;
-4. broker-side staged inputs and output re-registration with race defenses;
-5. clean-wheel install/discover/run/remove independence tests using a generic
+3. **implemented:** append-only durable run audit with crash recovery and
+   deterministic replay;
+4. **implemented:** broker-side staged inputs and output re-registration with
+   double-snapshot race defenses;
+5. **implemented:** clean-wheel install/discover/run/remove independence tests using a generic
    hostile fixture;
-6. documentation and reports that continue to separate discovery,
+6. **implemented:** documentation and reports that continue to separate discovery,
    compatibility, execution, validated software evidence, CI, and hardware.
 
 Publisher signatures and trust, remote plugin acquisition, automatic install,
 plugin repositories, and production-quality example publication are later
 decisions. None is implied by this contract.
+
+The implementation and its remaining pure-Python, Windows, and evidence-trust
+limits are detailed in
+[`PRODUCTION_PLUGIN_BROKER.md`](PRODUCTION_PLUGIN_BROKER.md).

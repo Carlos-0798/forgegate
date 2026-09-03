@@ -130,7 +130,7 @@ def doctor() -> None:
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
         "supported_artifact_schemas": sorted(ARTIFACT_SCHEMAS),
-        "phase": "phase18-windows-sandbox-readiness",
+        "phase": "phase20-production-plugin-broker",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
 

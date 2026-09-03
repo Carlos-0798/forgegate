@@ -293,11 +293,22 @@
 
 ## Phase 20 — production external-plugin broker
 
-- [ ] Implement the trusted runner and broker over the frozen protocol without
+- [x] Implement the trusted runner and broker over the frozen protocol without
   importing external code into the ForgeGate core process.
-- [ ] Stage broker-owned immutable inputs and re-register accepted output after
+- [x] Stage broker-owned immutable inputs and re-register accepted output after
   exact member, byte, digest, schema, and race validation.
-- [ ] Persist append-only `plugin_runs`, terminal errors, cleanup results,
+- [x] Persist append-only `plugin_runs`, terminal errors, cleanup results,
   idempotent replay, and crash recovery.
-- [ ] Add clean-wheel end-to-end hostile fixture tests through the production
-  API before advertising `SANDBOXED` or executing any installed plugin.
+- [x] Add clean-wheel end-to-end hostile fixture tests through the production
+  broker before advertising `SANDBOXED` for any installed-plugin run.
+
+## Phase 21 — operator-facing plugin evidence workflow
+
+- [ ] Add a bounded Windows CLI that creates an exact run plan from one
+  compatible installed collector plus explicit input subjects and grants.
+- [ ] Add path-free run/receipt query commands over the separate plugin-run
+  store without exposing raw plugin output or host/container paths.
+- [ ] Convert broker-validated output into the existing audited collection
+  boundary so it can enter evidence assembly without trust promotion.
+- [ ] Prove failed, replayed, and successful CLI runs through clean-wheel tests
+  while retaining explicit Windows-only and no-hardware behavior.

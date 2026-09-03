@@ -11,6 +11,101 @@
       "title": "PluginCapability",
       "type": "string"
     },
+    "PluginCleanupResult": {
+      "additionalProperties": false,
+      "description": "Cleanup proof without retaining a host path or container identifier.",
+      "properties": {
+        "container_removed": {
+          "title": "Container Removed",
+          "type": "boolean"
+        },
+        "staging_removed": {
+          "title": "Staging Removed",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "container_removed",
+        "staging_removed"
+      ],
+      "title": "PluginCleanupResult",
+      "type": "object"
+    },
+    "PluginExecutionSummary": {
+      "additionalProperties": false,
+      "description": "Bounded, path-free execution metadata retained by the broker.",
+      "properties": {
+        "completion_observed": {
+          "title": "Completion Observed",
+          "type": "boolean"
+        },
+        "elapsed_ms": {
+          "maximum": 900000,
+          "minimum": 0,
+          "title": "Elapsed Ms",
+          "type": "integer"
+        },
+        "exit_code": {
+          "anyOf": [
+            {
+              "maximum": 255,
+              "minimum": -255,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Exit Code"
+        },
+        "oom_killed": {
+          "default": false,
+          "title": "Oom Killed",
+          "type": "boolean"
+        },
+        "ready_observed": {
+          "title": "Ready Observed",
+          "type": "boolean"
+        },
+        "runner_started": {
+          "title": "Runner Started",
+          "type": "boolean"
+        },
+        "stderr_bytes": {
+          "maximum": 16777216,
+          "minimum": 0,
+          "title": "Stderr Bytes",
+          "type": "integer"
+        },
+        "stderr_truncated": {
+          "default": false,
+          "title": "Stderr Truncated",
+          "type": "boolean"
+        },
+        "stdout_bytes": {
+          "maximum": 16777216,
+          "minimum": 0,
+          "title": "Stdout Bytes",
+          "type": "integer"
+        },
+        "stdout_truncated": {
+          "default": false,
+          "title": "Stdout Truncated",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "runner_started",
+        "ready_observed",
+        "completion_observed",
+        "elapsed_ms",
+        "stdout_bytes",
+        "stderr_bytes"
+      ],
+      "title": "PluginExecutionSummary",
+      "type": "object"
+    },
     "PluginExecutionTarget": {
       "additionalProperties": false,
       "description": "Pinned metadata for a discovered plugin without importing its entry point.",
@@ -160,6 +255,90 @@
       ],
       "title": "PluginProtocolDirection",
       "type": "string"
+    },
+    "PluginProtocolMessage": {
+      "additionalProperties": false,
+      "description": "Strict, bounded message envelope for the future runner protocol.",
+      "properties": {
+        "direction": {
+          "$ref": "#/$defs/PluginProtocolDirection"
+        },
+        "issue": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PluginRunIssue"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "kind": {
+          "$ref": "#/$defs/PluginProtocolMessageKind"
+        },
+        "message_id": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Message Id",
+          "type": "string"
+        },
+        "output_set_id": {
+          "anyOf": [
+            {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output Set Id"
+        },
+        "protocol_version": {
+          "const": "1",
+          "default": "1",
+          "title": "Protocol Version",
+          "type": "string"
+        },
+        "run_plan": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PluginRunPlan"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "run_plan_id": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Run Plan Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "forgegate.plugin-protocol-message.v1",
+          "default": "forgegate.plugin-protocol-message.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "sequence": {
+          "maximum": 2,
+          "minimum": 0,
+          "title": "Sequence",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "message_id",
+        "run_plan_id",
+        "sequence",
+        "direction",
+        "kind"
+      ],
+      "title": "PluginProtocolMessage",
+      "type": "object"
     },
     "PluginProtocolMessageKind": {
       "enum": [
@@ -407,6 +586,91 @@
       "title": "PluginRunPlan",
       "type": "object"
     },
+    "PluginRunResult": {
+      "additionalProperties": false,
+      "description": "Terminal, replay-verifiable record of a plugin run state chain.",
+      "properties": {
+        "issue": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PluginRunIssue"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "output_set_id": {
+          "anyOf": [
+            {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output Set Id"
+        },
+        "result_id": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Result Id",
+          "type": "string"
+        },
+        "run_plan": {
+          "$ref": "#/$defs/PluginRunPlan"
+        },
+        "schema_version": {
+          "const": "forgegate.plugin-run-result.v1",
+          "default": "forgegate.plugin-run-result.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/PluginRunState"
+        },
+        "transitions": {
+          "items": {
+            "$ref": "#/$defs/PluginRunTransition"
+          },
+          "maxItems": 4,
+          "minItems": 2,
+          "title": "Transitions",
+          "type": "array"
+        },
+        "validated_outputs": {
+          "default": [],
+          "items": {
+            "$ref": "#/$defs/PluginValidatedOutput"
+          },
+          "maxItems": 4096,
+          "title": "Validated Outputs",
+          "type": "array"
+        }
+      },
+      "required": [
+        "result_id",
+        "run_plan",
+        "status",
+        "transitions"
+      ],
+      "title": "PluginRunResult",
+      "type": "object"
+    },
+    "PluginRunState": {
+      "enum": [
+        "PLANNED",
+        "STARTING",
+        "RUNNING",
+        "SUCCEEDED",
+        "ERROR",
+        "CANCELLED"
+      ],
+      "title": "PluginRunState",
+      "type": "string"
+    },
     "PluginRunSubject": {
       "additionalProperties": false,
       "description": "Broker-owned logical artifact presented to a plugin runner.",
@@ -442,88 +706,201 @@
       ],
       "title": "PluginRunSubject",
       "type": "object"
+    },
+    "PluginRunTransition": {
+      "additionalProperties": false,
+      "description": "One content-addressed transition in a plugin run state chain.",
+      "properties": {
+        "from_state": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PluginRunState"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "issue": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/PluginRunIssue"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "occurred_at": {
+          "format": "date-time",
+          "title": "Occurred At",
+          "type": "string"
+        },
+        "output_set_id": {
+          "anyOf": [
+            {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Output Set Id"
+        },
+        "previous_transition_id": {
+          "anyOf": [
+            {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Previous Transition Id"
+        },
+        "protocol_message_id": {
+          "anyOf": [
+            {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Protocol Message Id"
+        },
+        "run_plan_id": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Run Plan Id",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "forgegate.plugin-run-transition.v1",
+          "default": "forgegate.plugin-run-transition.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "sequence": {
+          "maximum": 3,
+          "minimum": 0,
+          "title": "Sequence",
+          "type": "integer"
+        },
+        "to_state": {
+          "$ref": "#/$defs/PluginRunState"
+        },
+        "transition_id": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Transition Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "transition_id",
+        "run_plan_id",
+        "sequence",
+        "from_state",
+        "to_state",
+        "occurred_at"
+      ],
+      "title": "PluginRunTransition",
+      "type": "object"
+    },
+    "PluginValidatedOutput": {
+      "additionalProperties": false,
+      "description": "Output accepted only after broker rehashing and core schema validation.",
+      "properties": {
+        "evidence_id": {
+          "pattern": "^[a-z][a-z0-9._-]{1,127}$",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "evidence_kind": {
+          "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z0-9_-]+)+$",
+          "title": "Evidence Kind",
+          "type": "string"
+        },
+        "output_id": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Output Id",
+          "type": "string"
+        },
+        "subject": {
+          "$ref": "#/$defs/PluginRunSubject"
+        },
+        "validation": {
+          "const": "CORE_REHASHED_AND_SCHEMA_VALIDATED",
+          "default": "CORE_REHASHED_AND_SCHEMA_VALIDATED",
+          "title": "Validation",
+          "type": "string"
+        }
+      },
+      "required": [
+        "output_id",
+        "subject",
+        "evidence_kind",
+        "evidence_id"
+      ],
+      "title": "PluginValidatedOutput",
+      "type": "object"
     }
   },
   "additionalProperties": false,
-  "description": "Strict, bounded message envelope for the future runner protocol.",
+  "description": "Self-validating terminal broker record persisted in plugin_runs.",
   "properties": {
-    "direction": {
-      "$ref": "#/$defs/PluginProtocolDirection"
+    "accepted_outputs_registered": {
+      "title": "Accepted Outputs Registered",
+      "type": "boolean"
     },
-    "issue": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/PluginRunIssue"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null
+    "cleanup": {
+      "$ref": "#/$defs/PluginCleanupResult"
     },
-    "kind": {
-      "$ref": "#/$defs/PluginProtocolMessageKind"
+    "execution": {
+      "$ref": "#/$defs/PluginExecutionSummary"
     },
-    "message_id": {
+    "protocol_messages": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/PluginProtocolMessage"
+      },
+      "maxItems": 3,
+      "title": "Protocol Messages",
+      "type": "array"
+    },
+    "receipt_id": {
       "pattern": "^sha256:[0-9a-f]{64}$",
-      "title": "Message Id",
+      "title": "Receipt Id",
       "type": "string"
     },
-    "output_set_id": {
-      "anyOf": [
-        {
-          "pattern": "^sha256:[0-9a-f]{64}$",
-          "type": "string"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null,
-      "title": "Output Set Id"
+    "recovered_after_interruption": {
+      "default": false,
+      "title": "Recovered After Interruption",
+      "type": "boolean"
     },
-    "protocol_version": {
-      "const": "1",
-      "default": "1",
-      "title": "Protocol Version",
-      "type": "string"
-    },
-    "run_plan": {
-      "anyOf": [
-        {
-          "$ref": "#/$defs/PluginRunPlan"
-        },
-        {
-          "type": "null"
-        }
-      ],
-      "default": null
-    },
-    "run_plan_id": {
-      "pattern": "^sha256:[0-9a-f]{64}$",
-      "title": "Run Plan Id",
-      "type": "string"
+    "result": {
+      "$ref": "#/$defs/PluginRunResult"
     },
     "schema_version": {
-      "const": "forgegate.plugin-protocol-message.v1",
-      "default": "forgegate.plugin-protocol-message.v1",
+      "const": "forgegate.plugin-run-receipt.v1",
+      "default": "forgegate.plugin-run-receipt.v1",
       "title": "Schema Version",
       "type": "string"
-    },
-    "sequence": {
-      "maximum": 2,
-      "minimum": 0,
-      "title": "Sequence",
-      "type": "integer"
     }
   },
   "required": [
-    "message_id",
-    "run_plan_id",
-    "sequence",
-    "direction",
-    "kind"
+    "receipt_id",
+    "result",
+    "execution",
+    "cleanup",
+    "accepted_outputs_registered"
   ],
-  "title": "PluginProtocolMessage",
+  "title": "PluginRunReceipt",
   "type": "object"
 }

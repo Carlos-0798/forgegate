@@ -8,7 +8,13 @@ from typing import Literal
 from pydantic import Field, field_validator, model_validator
 
 from forgegate.canonical import sha256_fingerprint
-from forgegate.domain.models import EVIDENCE_KIND_PATTERN, RULE_ID_PATTERN, StrictModel
+from forgegate.domain.enums import EvidenceTrust, VerificationLevel
+from forgegate.domain.models import (
+    EVIDENCE_KIND_PATTERN,
+    RULE_ID_PATTERN,
+    EvidenceRecord,
+    StrictModel,
+)
 from forgegate.plugins.models import (
     FINGERPRINT_PATTERN,
     PLUGIN_API_VERSION,
@@ -79,6 +85,7 @@ class PluginRunIssueCode(StrEnum):
     PLUGIN_EXIT_ERROR = "PLUGIN_EXIT_ERROR"
     PLUGIN_OUTPUT_INVALID = "PLUGIN_OUTPUT_INVALID"
     PLUGIN_AUDIT_FAILED = "PLUGIN_AUDIT_FAILED"
+    PLUGIN_CLEANUP_FAILED = "PLUGIN_CLEANUP_FAILED"
     PLUGIN_CANCELLED = "PLUGIN_CANCELLED"
 
 
@@ -343,6 +350,22 @@ class PluginRunTransition(StrictModel):
         return self
 
 
+class PluginOutputDocument(StrictModel):
+    """Untrusted plugin proposal revalidated by the ForgeGate core."""
+
+    schema_version: Literal["forgegate.plugin-output.v1"] = "forgegate.plugin-output.v1"
+    run_plan_id: str = Field(pattern=FINGERPRINT_PATTERN)
+    evidence: EvidenceRecord
+
+    @model_validator(mode="after")
+    def evidence_remains_low_trust(self) -> PluginOutputDocument:
+        if self.evidence.trust is not EvidenceTrust.UNSIGNED_LOCAL:
+            raise ValueError("external plugin output must remain unsigned_local")
+        if self.evidence.verification_level is not VerificationLevel.DECLARED:
+            raise ValueError("external plugin output must remain declared evidence")
+        return self
+
+
 class PluginValidatedOutput(StrictModel):
     """Output accepted only after broker rehashing and core schema validation."""
 
@@ -452,6 +475,100 @@ class PluginRunResult(StrictModel):
                 raise ValueError("non-success plugin result must match its terminal issue")
         if self.result_id != sha256_fingerprint(_run_result_identity(self)):
             raise ValueError("result_id does not match plugin run result content")
+        return self
+
+
+class PluginExecutionSummary(StrictModel):
+    """Bounded, path-free execution metadata retained by the broker."""
+
+    runner_started: bool
+    ready_observed: bool
+    completion_observed: bool
+    elapsed_ms: int = Field(ge=0, le=900_000)
+    exit_code: int | None = Field(default=None, ge=-255, le=255)
+    oom_killed: bool = False
+    stdout_bytes: int = Field(ge=0, le=16_777_216)
+    stderr_bytes: int = Field(ge=0, le=16_777_216)
+    stdout_truncated: bool = False
+    stderr_truncated: bool = False
+
+
+class PluginCleanupResult(StrictModel):
+    """Cleanup proof without retaining a host path or container identifier."""
+
+    container_removed: bool
+    staging_removed: bool
+
+
+class PluginRunReceipt(StrictModel):
+    """Self-validating terminal broker record persisted in plugin_runs."""
+
+    schema_version: Literal["forgegate.plugin-run-receipt.v1"] = "forgegate.plugin-run-receipt.v1"
+    receipt_id: str = Field(pattern=FINGERPRINT_PATTERN)
+    result: PluginRunResult
+    protocol_messages: tuple[PluginProtocolMessage, ...] = Field(default=(), max_length=3)
+    execution: PluginExecutionSummary
+    cleanup: PluginCleanupResult
+    accepted_outputs_registered: bool
+    recovered_after_interruption: bool = False
+
+    @field_validator("protocol_messages")
+    @classmethod
+    def messages_are_ordered_and_unique(
+        cls, value: tuple[PluginProtocolMessage, ...]
+    ) -> tuple[PluginProtocolMessage, ...]:
+        ordered = tuple(sorted(value, key=lambda item: item.sequence))
+        if value != ordered:
+            raise ValueError("plugin protocol messages must use sequence order")
+        if len({item.message_id for item in value}) != len(value):
+            raise ValueError("plugin protocol message IDs must be unique")
+        if len({item.sequence for item in value}) != len(value):
+            raise ValueError("plugin protocol message sequences must be unique")
+        return value
+
+    @model_validator(mode="after")
+    def receipt_chain_and_identity_hold(self) -> PluginRunReceipt:
+        plan_id = self.result.run_plan.run_plan_id
+        if any(message.run_plan_id != plan_id for message in self.protocol_messages):
+            raise ValueError("plugin receipt messages must match the run plan")
+        message_ids = {message.message_id for message in self.protocol_messages}
+        transition_message_ids = {
+            transition.protocol_message_id
+            for transition in self.result.transitions
+            if transition.protocol_message_id is not None
+        }
+        succeeded = self.result.status is PluginRunState.SUCCEEDED
+        if succeeded:
+            if message_ids != transition_message_ids:
+                raise ValueError("successful plugin receipt must retain every protocol message")
+            kinds = tuple(message.kind for message in self.protocol_messages)
+            expected = (
+                PluginProtocolMessageKind.START,
+                PluginProtocolMessageKind.READY,
+                PluginProtocolMessageKind.RESULT,
+            )
+            if kinds != expected:
+                raise ValueError("successful plugin receipt requires START, READY, RESULT")
+            if not (
+                self.execution.runner_started
+                and self.execution.ready_observed
+                and self.execution.completion_observed
+                and self.cleanup.container_removed
+                and self.cleanup.staging_removed
+                and self.accepted_outputs_registered
+            ):
+                raise ValueError(
+                    "successful plugin receipt requires complete execution and cleanup"
+                )
+            if self.recovered_after_interruption:
+                raise ValueError("recovered plugin run cannot be marked successful")
+        else:
+            if not message_ids.issubset(transition_message_ids):
+                raise ValueError("failed plugin receipt contains an unreferenced protocol message")
+            if self.accepted_outputs_registered:
+                raise ValueError("failed plugin receipt cannot register accepted output")
+        if self.receipt_id != sha256_fingerprint(_run_receipt_identity(self)):
+            raise ValueError("receipt_id does not match plugin run receipt content")
         return self
 
 
@@ -604,6 +721,32 @@ def create_plugin_run_result(
     )
 
 
+def create_plugin_run_receipt(
+    *,
+    result: PluginRunResult,
+    protocol_messages: tuple[PluginProtocolMessage, ...],
+    execution: PluginExecutionSummary,
+    cleanup: PluginCleanupResult,
+    accepted_outputs_registered: bool,
+    recovered_after_interruption: bool = False,
+) -> PluginRunReceipt:
+    candidate = PluginRunReceipt.model_construct(
+        receipt_id="sha256:" + "0" * 64,
+        result=result,
+        protocol_messages=protocol_messages,
+        execution=execution,
+        cleanup=cleanup,
+        accepted_outputs_registered=accepted_outputs_registered,
+        recovered_after_interruption=recovered_after_interruption,
+    )
+    return PluginRunReceipt.model_validate(
+        {
+            **candidate.model_dump(mode="json"),
+            "receipt_id": sha256_fingerprint(_run_receipt_identity(candidate)),
+        }
+    )
+
+
 def plugin_output_set_id(outputs: tuple[PluginValidatedOutput, ...]) -> str:
     ordered = tuple(
         sorted(outputs, key=lambda item: (item.subject.name, item.subject.digest, item.evidence_id))
@@ -637,10 +780,17 @@ def _run_result_identity(result: PluginRunResult) -> dict[str, object]:
     return result.model_dump(mode="json", exclude={"schema_version", "result_id"})
 
 
+def _run_receipt_identity(receipt: PluginRunReceipt) -> dict[str, object]:
+    return receipt.model_dump(mode="json", exclude={"schema_version", "receipt_id"})
+
+
 __all__ = [
     "PLUGIN_PROTOCOL_VERSION",
+    "PluginCleanupResult",
+    "PluginExecutionSummary",
     "PluginExecutionTarget",
     "PluginIsolationTier",
+    "PluginOutputDocument",
     "PluginProtocolDirection",
     "PluginProtocolMessage",
     "PluginProtocolMessageKind",
@@ -648,6 +798,7 @@ __all__ = [
     "PluginRunIssue",
     "PluginRunIssueCode",
     "PluginRunPlan",
+    "PluginRunReceipt",
     "PluginRunResult",
     "PluginRunState",
     "PluginRunSubject",
@@ -655,6 +806,7 @@ __all__ = [
     "PluginValidatedOutput",
     "create_plugin_protocol_message",
     "create_plugin_run_plan",
+    "create_plugin_run_receipt",
     "create_plugin_run_result",
     "create_plugin_run_transition",
     "create_plugin_validated_output",
