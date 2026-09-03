@@ -98,7 +98,7 @@ collector rather than a runtime or hardware dependency.
 | Integrity and interaction audit | Structured-input and plugin-output bounds corrected; clean-wheel Windows chain passed 18/18 controls; [audit](reports/SOFTWARE_INTEGRITY_INTERACTION_AUDIT_2026-09-03.md) and [evidence](reports/SOFTWARE_INTEGRITY_INTERACTION_LIVE_EVIDENCE.json) | Local Windows Alpha only; no hardware or production claim |
 | Operator plugin evidence chain | Run, replay, failure, path-free queries, collection, assembly, and policy handoff covered by the Windows Alpha gate | Local host test plus pinned Windows live fixture only |
 | Project initialization | `forgegate init` creates a strict generic template and refuses overwrite; clean-wheel install/init/uninstall is covered | Local host test |
-| GitHub Actions | Windows Alpha passed `verify.py` and `release_smoke.py` on Windows, Ubuntu, and macOS; the generic composite Action smoke also passed | PASS — [run 33811734474](https://github.com/Carlos-0798/forgegate/actions/runs/33811734474); live Podman fixtures remain local-only evidence |
+| GitHub Actions | Integrity checkpoint passed `verify.py` and `release_smoke.py` on Windows, Ubuntu, and macOS; the generic composite Action smoke also passed | PASS — [run 33816284445](https://github.com/Carlos-0798/forgegate/actions/runs/33816284445); live Podman fixtures remain local-only evidence |
 | Hardware/device behavior | Not exercised by ForgeGate | Out of scope |
 
 ## Key design decisions
