@@ -19,7 +19,7 @@
 | mypy strict | package and verification tools | PASS |
 | Source distribution contents | manifest assertion | PASS |
 | Clean release installation | temporary sdist/wheel/venv smoke | PASS |
-| Windows/Linux/macOS CI | GitHub Actions | PASS — `verify.py` + `release_smoke.py`, Phase 19 run 33798778977 (`c8385c7`); live Podman fixtures not run in hosted CI |
+| Windows/Linux/macOS CI | GitHub Actions | PASS — `verify.py` + `release_smoke.py`, Phase 20 run 33807749743 (`fb7e376`); live Podman fixtures not run in hosted CI |
 | Artifact root and byte identity | unit/adversarial tests | PASS — local host |
 | Stable artifact read/change rejection | simulated metadata cases | PASS — local host |
 | Actual Windows symlink escape | privileged symlink fixture | NOT RUN — host disallowed symlink creation |
@@ -111,7 +111,7 @@
 | Plugin compatibility/failure isolation | compatible/incompatible/invalid/conflict cases | PASS — discovery metadata only; no runtime execution |
 | Plugin install/uninstall independence | standalone fixture wheel + clean ForgeGate wheel | PASS — local + three-platform clean-package smoke; no optional dependency retained |
 | Plugin execution security contract | exact upstream/license traceability + architecture/threat review | DESIGN PASS — protocol, permissions, isolation tiers, limits, errors, and audit semantics defined; no code loaded |
-| Plugin run-plan/protocol/transition/result contracts | model/identity/authority/chain/resource/Schema/loader tests | PASS — local; 8 focused tests and six content-derived execution document Schemas; latest remote CI is Phase 19 |
+| Plugin run-plan/protocol/transition/result contracts | model/identity/authority/chain/resource/Schema/loader tests | PASS — local and Phase 20 remote CI; 8 focused tests and six content-derived execution document Schemas |
 | Windows sandbox capability gate | host/runtime probe, client/server identity, command-construction adversarial tests | PASS — 20 focused tests; local rootless WSL2 Podman client/server 5.8.6 match; execution `PROHIBITED`, tier `NONE` |
 | Windows Podman/WSL2 low-level enforcement | fixed hostile container tests for filesystem/network/process/environment/resources/cleanup | PASS — all 14 controls in development report `sha256:5296f70996ff9928d54557fb97c2e667f15ccdd67ff989b85b518260cb3db38d`; external code not tested |
 | External plugin execution and audit | production broker/runner/protocol/output validation/plugin_runs implementation | PASS — installed ForgeGate-owned generic fixture; 13/13 local broker controls, exact replay/readback, cleanup, and run-specific `SANDBOXED`; output remains `unsigned_local`/`declared` |

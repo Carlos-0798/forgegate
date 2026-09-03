@@ -95,7 +95,7 @@ container tests alone did not prove the full installed-plugin path.
 | Schema and OpenAPI drift | PASS — 38 document plus 2 artifact Schemas |
 | dev28 sdist/wheel plus standalone plugin wheel | PASS |
 | Clean-wheel production broker execution | PASS — local Windows Podman/WSL2 |
-| Hosted cross-platform CI | PENDING for this commit; latest baseline remains Phase 19 |
+| Hosted cross-platform CI | PASS — run 33807749743 on Windows, Ubuntu, and macOS plus the dependent generic Action smoke |
 
 ## Residual risks and next gate
 
