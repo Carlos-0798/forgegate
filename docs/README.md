@@ -8,7 +8,7 @@ analysis, compatibility contracts, and historical acceptance evidence.
 1. [Project status](PROJECT_STATUS.md) — current maturity and accepted baseline
 2. [Verification matrix](VERIFICATION_MATRIX.md) — evidence level for each capability
 3. [Roadmap](ROADMAP.md) — completed and remaining acceptance gates
-4. [Reproducible CLI walkthrough](DEMO.md) — small generic example with exact output
+4. [Reproducible interaction walkthrough](DEMO.md) — generic CLI/API examples with expected output
 5. [Security policy](../SECURITY.md) — supported scope and responsible reporting
 
 ## Product and trust model

@@ -19,7 +19,7 @@
 | mypy strict | package and verification tools | PASS |
 | Source distribution contents | manifest assertion | PASS |
 | Clean release installation | temporary sdist/wheel/venv smoke | PASS |
-| Windows/Linux/macOS CI | GitHub Actions | PASS — `verify.py` + `release_smoke.py`, integrity run 33816785584 (`5b146d8`) plus generic Action smoke; live Podman fixtures not run in hosted CI |
+| Windows/Linux/macOS CI | GitHub Actions | PASS — `verify.py` + `release_smoke.py`, merge run 33839976122 (`690123e`) plus generic Action smoke; live Podman fixtures not run in hosted CI |
 | Artifact root and byte identity | unit/adversarial tests | PASS — local host |
 | Stable artifact read/change rejection | simulated metadata cases | PASS — local host |
 | Actual Windows symlink escape | privileged symlink fixture | NOT RUN — host disallowed symlink creation |
@@ -78,6 +78,7 @@
 | Loopback-only API bind | IPv4/IPv6/localhost allowlist + external-address rejection | PASS — local host |
 | OpenAPI 3.1 contract | committed byte comparison + installed-wheel export | PASS — drift-checked |
 | Authenticated local API | Ed25519 challenge, Bearer session, trust recheck | PASS — local host, loopback only |
+| User interaction acceptance | deterministic CLI plus authenticated REST smoke | PASS — 33/33 expected outputs; ephemeral identity/database; Swagger/ReDoc deliberately return 404 |
 | API role/project authorization | producer/operator and cross-project adversarial tests | PASS — exact session scopes; producer read-only |
 | Authenticated audit actor | API write/readback, event identity, token absence | PASS — successful writes only |
 | Session replay/expiry/capacity | one-time challenge, bounded memory, restart semantics | PASS — local host |
@@ -103,7 +104,7 @@
 | GitHub Action report contract | model/identity/Schema/loader tests | PASS — content-derived v1 report; local host |
 | Portable bundle to CI commit binding | strict verifier + complete exact object ID | PASS — partial/invalid/mismatch rejected; local host |
 | GitHub Job Summary and outputs | escaping, truncation, size/path/adversarial tests | PASS — bounded append-only runner files; local host |
-| GitHub composite Action | committed generic fixture + real workflow job | PASS — private CI run 33816785584 (`5b146d8`) |
+| GitHub composite Action | committed generic fixture + real workflow job | PASS — private CI run 33839976122 (`690123e`) |
 | Installed GitHub gate | clean-wheel portable-bundle/summary/output/report smoke | PASS — local host |
 | Custom GitHub Checks/PR/API writes | token/permissions/OIDC design | NOT IMPLEMENTED — no token requested and no GitHub API called |
 | Plugin manifest contract | model/identity/Schema/loader/adversarial tests | PASS — bounded content-derived v1 metadata; local + private CI |
@@ -154,6 +155,8 @@
 | Development dependency advisory audit | constrained pip/pytest bootstrap plus `pip-audit` | PASS — no known advisory in resolved registry dependencies; editable local project excluded |
 | Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.01% exceeds exact 95.00% threshold |
 
-See `reports/SOFTWARE_INTEGRITY_INTERACTION_AUDIT_2026-09-03.md` for the current
-exact local test, coverage, package, security, and Windows interaction result.
-Earlier acceptance reports remain historical records.
+See `reports/INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md` for the latest
+expected-versus-actual CLI/API check and
+`reports/SOFTWARE_INTEGRITY_INTERACTION_AUDIT_2026-09-03.md` for the accepted
+security, dependency, package, and Windows plugin result. Earlier acceptance
+reports remain historical records.

@@ -60,17 +60,21 @@ dependency.
 |---|---|---|
 | Full Python suite | 780 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
 | Branch-aware coverage | 95.01% across 8,959 statements and 2,520 branches | Local host test |
-| Static quality | Ruff, formatting, and strict mypy passed across 75 source/tool files | Local host test |
+| Static quality | Ruff, formatting, and strict mypy passed across 76 source/tool files | Local host test |
 | Contracts | 41 document and 2 artifact JSON Schemas plus OpenAPI passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
+| User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
 | Windows plugin controls | 18/18 clean-wheel controls passed with the fixed pure-Python fixture | Live local WSL2/Podman test; no general publisher or plugin trust claim |
-| Cross-platform CI | `verify.py`, `release_smoke.py`, and the generic Action smoke passed | [GitHub Actions run 33816785584](https://github.com/Carlos-0798/forgegate/actions/runs/33816785584); hosted CI did not run live Podman fixtures |
+| Cross-platform CI | `verify.py`, `release_smoke.py`, and the generic Action smoke passed | [GitHub Actions run 33839976122](https://github.com/Carlos-0798/forgegate/actions/runs/33839976122); hosted CI did not run live Podman fixtures |
 | Hardware/device behavior | Not exercised by ForgeGate | Out of scope |
 
 See the [verification matrix](docs/VERIFICATION_MATRIX.md) for capability-level
-status and the [software integrity and interaction audit](reports/SOFTWARE_INTEGRITY_INTERACTION_AUDIT_2026-09-03.md)
-for the exact accepted checkpoint. Historical phase reports are retained under
-[`reports/`](reports/README.md) instead of being presented as current results.
+status, the [interaction acceptance report](reports/INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md)
+for expected-versus-actual samples, and the
+[software integrity and interaction audit](reports/SOFTWARE_INTEGRITY_INTERACTION_AUDIT_2026-09-03.md)
+for the accepted security/package checkpoint. Historical phase reports are
+retained under [`reports/`](reports/README.md) instead of being presented as
+current results.
 
 ## Key design decisions
 
@@ -98,6 +102,7 @@ documented Windows 11, WSL2, and rootless Podman environment.
 ```powershell
 .\tools\setup_environment.ps1
 .\.venv\Scripts\python.exe tools\verify.py
+.\.venv\Scripts\python.exe tools\interaction_smoke.py
 .\.venv\Scripts\python.exe tools\release_smoke.py
 .\.venv\Scripts\python.exe -m forgegate init work\sample-project
 ```
@@ -123,6 +128,13 @@ evidence label are retained in the [reproducible CLI walkthrough](docs/DEMO.md).
 
 Decision exits are stable: `0` PASS, `1` FAIL, `2` REVIEW, and `3` ERROR.
 ForgeGate does not run the build or authenticate evidence while evaluating it.
+
+The Alpha intentionally has no graphical dashboard. Its user-facing surfaces
+are the CLI and authenticated loopback REST API. Swagger UI and ReDoc are
+disabled; the committed, drift-checked OpenAPI contract is the API reference.
+`tools/interaction_smoke.py` verifies this boundary alongside real Ed25519
+session creation, authorization, idempotent replay, strict rejection, and all
+four decision exits without retaining its temporary key or database.
 
 For plugin inspection, API authentication, candidate persistence, bundle
 signing, and GitHub gate commands, use the [CLI and workflow guide](docs/DEMO.md)

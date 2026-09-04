@@ -29,6 +29,9 @@
 - Added contribution guidance plus evidence-aware Issue and pull-request
   templates, and extended the source-distribution gate to retain the new
   documentation assets while excluding local resume-handoff artifacts.
+- Added a 33-check expected-versus-actual interaction smoke for the complete
+  CLI decision exit contract and authenticated loopback REST boundary, and
+  integrated it into development and source-distribution verification.
 - This is a private Windows Alpha test candidate, not a public release,
   production-deployment approval, or hardware-verification claim.
 

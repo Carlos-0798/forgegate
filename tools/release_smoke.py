@@ -171,6 +171,7 @@ REQUIRED_SDIST_PATHS = (
     "tests/golden/release_attestation_pass.json",
     "tests/golden/release_attestation_pass.md",
     "tests/golden/sarif_summary.json",
+    "tools/interaction_smoke.py",
     "tools/verify.py",
     "tools/verify_windows_alpha.ps1",
     "tests/test_candidate_lifecycle.py",

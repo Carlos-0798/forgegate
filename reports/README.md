@@ -6,6 +6,7 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
+- [Interaction acceptance report](INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md)
 - [Software integrity and interaction audit](SOFTWARE_INTEGRITY_INTERACTION_AUDIT_2026-09-03.md)
 - [Latest clean-wheel Windows interaction evidence](SOFTWARE_INTEGRITY_INTERACTION_LIVE_EVIDENCE.json)
 - [Phase 22 Windows Alpha acceptance](PHASE_22_WINDOWS_ALPHA_ACCEPTANCE_REPORT.md)

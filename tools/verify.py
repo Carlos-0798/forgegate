@@ -63,6 +63,7 @@ def main() -> int:
         [python, "-m", "ruff", "format", "--check", "."],
         [python, "-m", "mypy", "src", "tools"],
         [python, "-m", "pytest", "--cov=forgegate", "--cov-branch"],
+        [python, "tools/interaction_smoke.py"],
         [
             python,
             "-m",

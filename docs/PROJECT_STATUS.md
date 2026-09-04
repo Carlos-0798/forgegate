@@ -1,6 +1,6 @@
 # Project status
 
-- Date: 2026-09-03
+- Date: 2026-09-04
 - Version: 0.1.0a1
 - Stage: Phase 21 operator plugin evidence workflow and Phase 22 private
   Windows Alpha delivery candidate implemented
@@ -11,7 +11,7 @@
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
 - Remote/publication status: private `Carlos-0798/forgegate` synchronized
-  through the documented integrity checkpoint at `5b146d8`; CI run 33816785584
+  through the presentation checkpoint at `690123e`; CI run 33839976122
   passed Windows, Ubuntu, macOS, and the generic Action smoke;
   no public release, License, or
   LinkedIn publication authorized
@@ -336,6 +336,10 @@
 - clean-wheel Windows Alpha verification covering install, init, core
   assurance chain, live plugin CLI success/replay/failure/query/collect/
   assembly/policy flow, sample-plugin independence, and uninstall.
+- deterministic interaction smoke covering project validation, all four CLI
+  decision/exit outcomes, API health/correlation, deliberate documentation-page
+  denial, authentication/authorization, exact replay/readback, and strict
+  request rejection with an ephemeral identity and database.
 
 ## Designed, not implemented
 
@@ -411,10 +415,10 @@ artifact payload/replay export, and hardware access.
 - repository-external ForgeGate installation plus sample-plugin
   install/discover/uninstall independence smoke: PASS
 - Git Bash shell-script syntax check: PASS
-- latest accepted GitHub Actions baseline: integrity run 33816785584
+- latest accepted GitHub Actions baseline: merge run 33839976122
   PASS on Windows, Ubuntu, and macOS; each platform completed `verify.py` over
   783 collected tests and `release_smoke.py` for checkpoint commit
-  `5b146d822dc20699db1efd79dac176aa27211d47`, and the dependent Ubuntu job
+  `690123efcba79a699f356a73a557f804a8267ec9`, and the dependent Ubuntu job
   passed the real composite Action against the generic fixture; the local
   Podman hostile fixtures were not run or claimed by hosted CI
 - private GitHub synchronization: `main` pushed with noreply commit identity;
@@ -468,3 +472,5 @@ review is recorded in
 `reports/SOFTWARE_INTEGRITY_INTERACTION_AUDIT_2026-09-03.md`, with its latest
 18-control clean-wheel Podman record in
 `reports/SOFTWARE_INTEGRITY_INTERACTION_LIVE_EVIDENCE.json`.
+The latest expected-versus-actual CLI/API verification and browser-tool limit
+are recorded in `reports/INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md`.
