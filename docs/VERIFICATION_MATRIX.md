@@ -79,6 +79,8 @@
 | OpenAPI 3.1 contract | committed byte comparison + installed-wheel export | PASS — drift-checked |
 | Authenticated local API | Ed25519 challenge, Bearer session, trust recheck | PASS — local host, loopback only |
 | User interaction acceptance | deterministic CLI plus authenticated REST smoke | PASS — 33/33 expected outputs; ephemeral identity/database; Swagger/ReDoc deliberately return 404 |
+| Local Web Dashboard design | architecture, UX requirements, threat model, acceptance matrix | DESIGN PASS — Phase 23 only; no UI code, asset, route, session, browser run, or screenshot |
+| Authenticated local Web Dashboard | clean wheel, adversarial automation, Edge/Chrome, keyboard, focus, and zoom evidence | NOT IMPLEMENTED |
 | API role/project authorization | producer/operator and cross-project adversarial tests | PASS — exact session scopes; producer read-only |
 | Authenticated audit actor | API write/readback, event identity, token absence | PASS — successful writes only |
 | Session replay/expiry/capacity | one-time challenge, bounded memory, restart semantics | PASS — local host |

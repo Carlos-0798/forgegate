@@ -129,12 +129,14 @@ evidence label are retained in the [reproducible CLI walkthrough](docs/DEMO.md).
 Decision exits are stable: `0` PASS, `1` FAIL, `2` REVIEW, and `3` ERROR.
 ForgeGate does not run the build or authenticate evidence while evaluating it.
 
-The Alpha intentionally has no graphical dashboard. Its user-facing surfaces
-are the CLI and authenticated loopback REST API. Swagger UI and ReDoc are
-disabled; the committed, drift-checked OpenAPI contract is the API reference.
-`tools/interaction_smoke.py` verifies this boundary alongside real Ed25519
-session creation, authorization, idempotent replay, strict rejection, and all
-four decision exits without retaining its temporary key or database.
+The current Alpha has no graphical dashboard. Its implemented user-facing
+surfaces are the CLI and authenticated loopback REST API. A same-origin local
+Dashboard is design-frozen for a later implementation phase; it is not yet an
+implemented or tested surface. Swagger UI and ReDoc are disabled; the committed,
+drift-checked OpenAPI contract is the API reference. `tools/interaction_smoke.py`
+verifies this implemented boundary alongside real Ed25519 session creation,
+authorization, idempotent replay, strict rejection, and all four decision exits
+without retaining its temporary key or database.
 
 For plugin inspection, API authentication, candidate persistence, bundle
 signing, and GitHub gate commands, use the [CLI and workflow guide](docs/DEMO.md)
@@ -161,6 +163,9 @@ and reporting instructions are documented in [SECURITY.md](SECURITY.md).
 
 - The authenticated API is loopback-only and has no TLS, reverse-proxy trust,
   hostile-local-user defense, or remote-deployment approval.
+- The local Web Dashboard currently has design, threat-model, and acceptance
+  requirements only; no page, browser session, Dashboard route, or browser test
+  has been implemented.
 - Sessions, authentication rate state, and trust-store distribution are not
   durable or distributed; time is caller/server supplied rather than trusted.
 - General third-party plugin trust is not established. Native extensions,
@@ -181,11 +186,13 @@ These constraints are product boundaries, not implied future results. See the
 
 The next maturity gates are:
 
-1. freeze a public MSP430 report contract before adding an optional collector;
-2. establish publisher provenance and broader hostile-plugin compatibility;
-3. design TLS/proxy identity, durable security state, retention/export, and
+1. implement and accept the narrow authenticated local Dashboard slice defined
+   in the [Dashboard architecture](docs/architecture/LOCAL_WEB_DASHBOARD.md);
+2. freeze a public MSP430 report contract before adding an optional collector;
+3. establish publisher provenance and broader hostile-plugin compatibility;
+4. design TLS/proxy identity, durable security state, retention/export, and
    managed key lifecycle before considering non-loopback deployment; and
-4. consider GitHub Checks, signed CI provenance, OIDC, and artifact publication
+5. consider GitHub Checks, signed CI provenance, OIDC, and artifact publication
    only as separately authorized integrations.
 
 Completed acceptance-level work and remaining tasks are tracked in

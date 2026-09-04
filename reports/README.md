@@ -6,6 +6,7 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
+- [Phase 23 local Web Dashboard design gate](PHASE_23_LOCAL_WEB_DASHBOARD_DESIGN_GATE.md) — design evidence only; no UI implementation
 - [Interaction acceptance report](INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md)
 - [Software integrity and interaction audit](SOFTWARE_INTEGRITY_INTERACTION_AUDIT_2026-09-03.md)
 - [Latest clean-wheel Windows interaction evidence](SOFTWARE_INTEGRITY_INTERACTION_LIVE_EVIDENCE.json)
@@ -27,6 +28,7 @@ publisher-provenance, or general third-party compatibility claims.
 | 20 | Brokered generic-plugin run and durable replay | [Acceptance report](PHASE_20_PRODUCTION_PLUGIN_BROKER_ACCEPTANCE_REPORT.md), [raw evidence](PHASE_20_WINDOWS_PLUGIN_BROKER_LIVE_EVIDENCE.json) |
 | 21 | Operator run/query/collect workflow | [Acceptance report](PHASE_21_PLUGIN_OPERATOR_WORKFLOW_ACCEPTANCE_REPORT.md) |
 | 22 | Clean-install Windows Alpha delivery chain | [Acceptance report](PHASE_22_WINDOWS_ALPHA_ACCEPTANCE_REPORT.md), [raw evidence](PHASE_22_WINDOWS_ALPHA_LIVE_EVIDENCE.json) |
+| 23 | Local Web Dashboard design gate | [Design report](PHASE_23_LOCAL_WEB_DASHBOARD_DESIGN_GATE.md); no UI implementation |
 
 `SANDBOXED` applies only to an exact accepted run. The generic fixture does not
 establish publisher trust, native-extension safety, arbitrary dependency

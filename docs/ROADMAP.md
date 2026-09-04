@@ -327,3 +327,33 @@
   sample-policy PASS through the pinned Podman/WSL2 fixture.
 - [x] Verify sample-plugin independence and ForgeGate uninstall, then complete
   the security, privacy, claim, and delivery-document audit.
+
+## Phase 23 — local Web Dashboard design gate
+
+- [x] Freeze a same-origin, loopback-only Dashboard architecture over the
+  existing authentication and application services.
+- [x] Define the browser/CLI activation boundary without exposing a private key
+  or raw API Bearer token to browser JavaScript.
+- [x] Define interaction states, evidence/status presentation, error recovery,
+  keyboard/zoom expectations, and explicit non-goals.
+- [x] Record the Dashboard threat model and automated plus manual Windows
+  acceptance matrix while preserving all current product limitations.
+
+Phase 23 is design evidence only. It implements no page, static asset bundle,
+browser session, Dashboard route, or browser test.
+
+## Phase 24 — authenticated local Dashboard vertical slice
+
+- [ ] Add `forgegate dashboard` with loopback-only startup, health readiness,
+  safe port handling, and clean-wheel packaged static assets.
+- [ ] Implement one-time companion CLI activation and a same-origin
+  cookie-authenticated BFF with exact Host/Origin and CSRF controls.
+- [ ] Implement Overview, Projects, and Candidates pages using the existing
+  application/domain services and bounded cursor contracts.
+- [ ] Prove candidate creation review, exact idempotent replay, changed-payload
+  conflict, stale-revision recovery, and safe refresh/back/forward behavior.
+- [ ] Complete adversarial-content, credential-exposure, role/scope, cache,
+  API-drift, Edge/Chrome, keyboard, focus, zoom, and clean-wheel acceptance.
+
+Evidence upload, policy execution, assurance export, plugin execution, session
+administration, and trust-store administration remain outside this slice.

@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Accepted the design-only gate for a same-origin, loopback-only local Web
+  Dashboard, including UX requirements, a browser authentication boundary,
+  threat model, and explicit automated/manual acceptance matrix. No Dashboard
+  page, route, browser session, static asset bundle, or UI test is implemented.
+
 ## 0.1.0a1 — 2026-09-03
 
 - Added bounded JSON/XML/YAML structural preflights, strict duplicate-key YAML

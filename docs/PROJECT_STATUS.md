@@ -2,8 +2,8 @@
 
 - Date: 2026-09-04
 - Version: 0.1.0a1
-- Stage: Phase 21 operator plugin evidence workflow and Phase 22 private
-  Windows Alpha delivery candidate implemented
+- Stage: Phase 22 private Windows Alpha delivery candidate implemented; Phase
+  23 local Web Dashboard design gate accepted with no UI implementation
 - Product maturity: testable Windows Alpha with generic initialization,
   local CLI/API release-assurance flow, software-peer collection, audited
   aggregation, durable lifecycle binding, offline GitHub gating, and a
@@ -343,6 +343,10 @@
 
 ## Designed, not implemented
 
+- same-origin, loopback-only local Web Dashboard architecture, companion CLI
+  activation, browser-for-frontend authentication boundary, UX requirements,
+  threat model, and acceptance matrix; Phase 24 will implement only the
+  Overview/Projects/Candidates vertical slice;
 - publisher signatures/trust, remote plugin acquisition, automatic install,
   and an independent production plugin repository;
 - native-extension and separately packaged plugin-dependency support;
@@ -352,7 +356,9 @@
 
 ## Not implemented
 
-Non-loopback/TLS API deployment, reverse-proxy trust, hostile-local-user
+graphical Dashboard pages, packaged frontend assets, browser sessions,
+Dashboard routes and browser interaction evidence; non-loopback/TLS API
+deployment, reverse-proxy trust, hostile-local-user
 defense, managed online revocation, durable/distributed sessions, per-client
 network rate controls, distributed rate state, HTTP artifact collection and
 file publication, complete rejected-request/warning ingestion, security/audit
@@ -474,3 +480,6 @@ review is recorded in
 `reports/SOFTWARE_INTEGRITY_INTERACTION_LIVE_EVIDENCE.json`.
 The latest expected-versus-actual CLI/API verification and browser-tool limit
 are recorded in `reports/INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md`.
+The Phase 23 local Dashboard architecture, UX, security, and acceptance design
+gate is recorded in `reports/PHASE_23_LOCAL_WEB_DASHBOARD_DESIGN_GATE.md`; it is
+design evidence only and does not replace the implemented CLI/API boundary.
