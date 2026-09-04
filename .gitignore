@@ -10,3 +10,4 @@ dist/
 build/
 *.egg-info/
 work/
+reports/forgegate-progress-resume-handoff-*/
