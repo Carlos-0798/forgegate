@@ -1,0 +1,63 @@
+name: Feature or engineering change
+description: Propose a bounded change with acceptance criteria and a verification plan.
+title: "feat: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: background
+    attributes:
+      label: Background
+      description: What problem or engineering risk motivates this change?
+    validations:
+      required: true
+  - type: textarea
+    id: goal
+    attributes:
+      label: Goal
+      description: State the intended user-visible or engineering outcome.
+    validations:
+      required: true
+  - type: textarea
+    id: non_goals
+    attributes:
+      label: Non-goals
+      description: What remains explicitly outside this proposal?
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List observable, testable completion conditions.
+      placeholder: |
+        - [ ] ...
+        - [ ] ...
+    validations:
+      required: true
+  - type: textarea
+    id: evidence_plan
+    attributes:
+      label: Verification and evidence plan
+      description: Which tests, builds, fixtures, or reviews will establish the result, and at what evidence level?
+    validations:
+      required: true
+  - type: dropdown
+    id: compatibility
+    attributes:
+      label: Cross-project compatibility impact
+      options:
+        - None; ForgeGate core only
+        - Analog Validation artifact contract
+        - Future MSP430 artifact contract
+        - Both optional compatibility boundaries
+        - Unknown; requires contract review
+    validations:
+      required: true
+  - type: checkboxes
+    id: authority
+    attributes:
+      label: Authority boundary
+      options:
+        - label: This proposal does not require hardware access, remote publication, or GitHub API mutation; otherwise those actions are called out for separate approval.
+          required: true

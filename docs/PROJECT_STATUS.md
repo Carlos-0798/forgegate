@@ -11,7 +11,7 @@
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
 - Remote/publication status: private `Carlos-0798/forgegate` synchronized
-  through the software-integrity checkpoint at `8a7f285`; CI run 33816284445
+  through the documented integrity checkpoint at `5b146d8`; CI run 33816785584
   passed Windows, Ubuntu, macOS, and the generic Action smoke;
   no public release, License, or
   LinkedIn publication authorized
@@ -309,7 +309,7 @@
   image, runtime, and cleanup controls on Podman/WSL2 5.8.6;
 - exact raw Phase 19 evidence with no host path, username, email, token, key, or
   hardware data; the readiness report remains `PROHIBITED` and tier `NONE`.
-- standard-library trusted runner plus Windows production broker that never
+- standard-library trusted runner plus Windows plugin broker that never
   imports external code into the ForgeGate core process;
 - exact distribution/version/entry-point/manifest matching, pure-Python package
   staging, content-addressed read-only inputs, and shell-free pinned-container
@@ -404,17 +404,17 @@ artifact payload/replay export, and hardware access.
   raw report ID
   `sha256:5296f70996ff9928d54557fb97c2e667f15ccdd67ff989b85b518260cb3db38d`;
   fixed ForgeGate fixtures only, no external plugin or hardware action
-- Windows production plugin broker: 13/13 PASS through the installed generic
+- brokered Windows plugin execution: 13/13 PASS through the installed generic
   fixture, including isolation denials, complete protocol, two-snapshot output
   validation, cleanup, durable readback, and exact no-reexecution replay; raw
   Phase 20 report retained under `reports/`, no hardware action
 - repository-external ForgeGate installation plus sample-plugin
   install/discover/uninstall independence smoke: PASS
 - Git Bash shell-script syntax check: PASS
-- latest implementation GitHub Actions baseline: integrity run 33816284445
+- latest accepted GitHub Actions baseline: integrity run 33816785584
   PASS on Windows, Ubuntu, and macOS; each platform completed `verify.py` over
   783 collected tests and `release_smoke.py` for checkpoint commit
-  `8a7f285a86ea88551f47cfd57b012465b8c508b0`, and the dependent Ubuntu job
+  `5b146d822dc20699db1efd79dac176aa27211d47`, and the dependent Ubuntu job
   passed the real composite Action against the generic fixture; the local
   Podman hostile fixtures were not run or claimed by hosted CI
 - private GitHub synchronization: `main` pushed with noreply commit identity;

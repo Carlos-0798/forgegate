@@ -11,7 +11,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — thirty-eight document plus two artifact schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — forty-one document plus two artifact schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Analog Validation result Schema mirror | committed upstream-consumer contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
@@ -19,7 +19,7 @@
 | mypy strict | package and verification tools | PASS |
 | Source distribution contents | manifest assertion | PASS |
 | Clean release installation | temporary sdist/wheel/venv smoke | PASS |
-| Windows/Linux/macOS CI | GitHub Actions | PASS — `verify.py` + `release_smoke.py`, Windows Alpha run 33811734474 (`f7552eb`) plus generic Action smoke; live Podman fixtures not run in hosted CI |
+| Windows/Linux/macOS CI | GitHub Actions | PASS — `verify.py` + `release_smoke.py`, integrity run 33816785584 (`5b146d8`) plus generic Action smoke; live Podman fixtures not run in hosted CI |
 | Artifact root and byte identity | unit/adversarial tests | PASS — local host |
 | Stable artifact read/change rejection | simulated metadata cases | PASS — local host |
 | Actual Windows symlink escape | privileged symlink fixture | NOT RUN — host disallowed symlink creation |
@@ -103,7 +103,7 @@
 | GitHub Action report contract | model/identity/Schema/loader tests | PASS — content-derived v1 report; local host |
 | Portable bundle to CI commit binding | strict verifier + complete exact object ID | PASS — partial/invalid/mismatch rejected; local host |
 | GitHub Job Summary and outputs | escaping, truncation, size/path/adversarial tests | PASS — bounded append-only runner files; local host |
-| GitHub composite Action | committed generic fixture + real workflow job | PASS — private CI run 33566424223 (`3682361`) |
+| GitHub composite Action | committed generic fixture + real workflow job | PASS — private CI run 33816785584 (`5b146d8`) |
 | Installed GitHub gate | clean-wheel portable-bundle/summary/output/report smoke | PASS — local host |
 | Custom GitHub Checks/PR/API writes | token/permissions/OIDC design | NOT IMPLEMENTED — no token requested and no GitHub API called |
 | Plugin manifest contract | model/identity/Schema/loader/adversarial tests | PASS — bounded content-derived v1 metadata; local + private CI |
@@ -114,7 +114,7 @@
 | Plugin run-plan/protocol/transition/result contracts | model/identity/authority/chain/resource/Schema/loader tests | PASS — local and Phase 20 remote CI; 8 focused tests and six content-derived execution document Schemas |
 | Windows sandbox capability gate | host/runtime probe, client/server identity, command-construction adversarial tests | PASS — 20 focused tests; local rootless WSL2 Podman client/server 5.8.6 match; execution `PROHIBITED`, tier `NONE` |
 | Windows Podman/WSL2 low-level enforcement | fixed hostile container tests for filesystem/network/process/environment/resources/cleanup | PASS — all 14 controls in development report `sha256:5296f70996ff9928d54557fb97c2e667f15ccdd67ff989b85b518260cb3db38d`; external code not tested |
-| External plugin execution and audit | production broker/runner/protocol/output validation/plugin_runs implementation | PASS — installed ForgeGate-owned generic fixture; 13/13 local broker controls, exact replay/readback, cleanup, and run-specific `SANDBOXED`; output remains `unsigned_local`/`declared` |
+| External plugin execution and audit | Windows broker/runner/protocol/output validation/plugin_runs implementation | PASS — installed ForgeGate-owned generic fixture; 13/13 local broker controls, exact replay/readback, cleanup, and run-specific `SANDBOXED`; output remains `unsigned_local`/`declared` |
 | Operator plugin run CLI | exact installed collector + explicit inputs/grants/time/idempotency | PASS — success, exact replay, and durable failed receipt; Windows-only local host |
 | Path-free plugin audit queries | record + stable cursor page models and CLI | PASS — no database/work/output/container/install/host path in returned documents |
 | Plugin output to collection boundary | receipt/member/hash/schema/input revalidation + assembly | PASS — ordinary `CollectionResult`; trust remains `unsigned_local`/`declared` |

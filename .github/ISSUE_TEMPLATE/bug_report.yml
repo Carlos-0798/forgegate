@@ -1,0 +1,76 @@
+name: Bug report
+description: Report reproducible incorrect behavior with an explicit evidence boundary.
+title: "bug: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Do not include credentials, tokens, personal data, private artifacts, or unredacted machine-specific paths. Security vulnerabilities belong in the private security-reporting channel.
+  - type: textarea
+    id: background
+    attributes:
+      label: Background
+      description: What workflow were you performing, and why does it matter?
+    validations:
+      required: true
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behavior
+      description: Describe what happened, including stable error codes where available.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: Describe the narrow behavior that should have occurred.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Provide sanitized commands, inputs, and ordered steps.
+      render: powershell
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: ForgeGate version or commit
+      placeholder: 0.1.0a1 or full commit ID
+    validations:
+      required: true
+  - type: dropdown
+    id: evidence
+    attributes:
+      label: Evidence level
+      description: Select the narrowest environment in which the behavior was reproduced.
+      options:
+        - Unit test
+        - Integration test
+        - Local host test
+        - Live local Podman/WSL2 fixture
+        - Hosted CI
+        - Not yet reproduced
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation evidence
+      description: Include exact commands, relevant sanitized output, and whether the result is repeatable.
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Submission checks
+      options:
+        - label: I removed secrets, personal data, and machine-specific absolute paths.
+          required: true
+        - label: I did not describe simulation, replay, CI, or host testing as hardware or production evidence.
+          required: true

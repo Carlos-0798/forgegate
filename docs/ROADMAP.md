@@ -291,7 +291,7 @@
 - [x] Pass all 14 required low-level controls while retaining external
   execution `PROHIBITED` and advertised isolation tier `NONE`.
 
-## Phase 20 — production external-plugin broker
+## Phase 20 — brokered Windows external-plugin execution
 
 - [x] Implement the trusted runner and broker over the frozen protocol without
   importing external code into the ForgeGate core process.

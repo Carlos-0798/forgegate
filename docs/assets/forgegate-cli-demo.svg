@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" role="img" aria-labelledby="title description">
+  <title id="title">ForgeGate Windows Alpha CLI transcript</title>
+  <desc id="description">A formatted excerpt of a real local configuration validation and deterministic PASS policy evaluation.</desc>
+  <rect width="1200" height="520" rx="20" fill="#0d1117"/>
+  <rect x="1" y="1" width="1198" height="58" rx="19" fill="#161b22" stroke="#30363d"/>
+  <path d="M1 40h1198v19H1z" fill="#161b22"/>
+  <circle cx="30" cy="30" r="7" fill="#ff7b72"/>
+  <circle cx="54" cy="30" r="7" fill="#d29922"/>
+  <circle cx="78" cy="30" r="7" fill="#3fb950"/>
+  <text x="600" y="36" text-anchor="middle" fill="#c9d1d9" font-family="Segoe UI, sans-serif" font-size="17" font-weight="600">PowerShell — ForgeGate Windows Alpha</text>
+
+  <g font-family="Consolas, 'Courier New', monospace" font-size="18">
+    <text x="34" y="98" fill="#79c0ff">PS&gt;</text>
+    <text x="78" y="98" fill="#f0f6fc">python -m forgegate validate-config</text>
+    <text x="78" y="128" fill="#f0f6fc">examples\sample-python-api\forgegate.yaml</text>
+    <text x="34" y="166" fill="#56d364">VALID forgegate.project.v1: examples\sample-python-api\forgegate.yaml</text>
+
+    <text x="34" y="218" fill="#79c0ff">PS&gt;</text>
+    <text x="78" y="218" fill="#f0f6fc">python -m forgegate evaluate-policy</text>
+    <text x="78" y="248" fill="#f0f6fc">examples\sample-python-api\policies\pull-request.yaml</text>
+    <text x="78" y="278" fill="#f0f6fc">examples\sample-python-api\evidence\pass-bundle.json</text>
+    <text x="78" y="308" fill="#f0f6fc">--evaluated-at 2026-08-30T21:00:00Z</text>
+
+    <text x="34" y="354" fill="#8b949e">{</text>
+    <text x="58" y="384" fill="#a5d6ff">"schema_version"</text>
+    <text x="252" y="384" fill="#8b949e">:</text>
+    <text x="276" y="384" fill="#a5d6ff">"forgegate.policy-evaluation.v1"</text>
+    <text x="58" y="414" fill="#a5d6ff">"decision"</text>
+    <text x="178" y="414" fill="#8b949e">:</text>
+    <text x="202" y="414" fill="#56d364" font-weight="700">"PASS"</text>
+    <text x="58" y="444" fill="#a5d6ff">"reason_code"</text>
+    <text x="214" y="444" fill="#8b949e">:</text>
+    <text x="238" y="444" fill="#a5d6ff">"RULE_SATISFIED"</text>
+    <text x="34" y="474" fill="#8b949e">}</text>
+  </g>
+
+  <text x="1166" y="500" text-anchor="end" fill="#8b949e" font-family="Segoe UI, sans-serif" font-size="14">LOCAL_HOST_TEST · reproduced 2026-09-03 · no hardware access</text>
+</svg>

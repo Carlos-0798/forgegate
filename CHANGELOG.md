@@ -23,6 +23,12 @@
 - Upgraded the clean-wheel Windows acceptance chain to cover installation,
   initialization, core evidence/decision paths, live CLI plugin success,
   replay, failure, collection, assembly, policy evaluation, and uninstall.
+- Reworked the repository landing page around recruiter-readable value,
+  architecture, verified outcomes, exact limitations, and a reproducible CLI
+  transcript while moving detailed navigation into documentation/report indexes.
+- Added contribution guidance plus evidence-aware Issue and pull-request
+  templates, and extended the source-distribution gate to retain the new
+  documentation assets while excluding local resume-handoff artifacts.
 - This is a private Windows Alpha test candidate, not a public release,
   production-deployment approval, or hardware-verification claim.
 
