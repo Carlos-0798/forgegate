@@ -125,12 +125,42 @@ workflow. The hosted jobs do not execute the local Podman/WSL2 hostile fixtures.
 Current results and exceptions belong in the
 [verification matrix](VERIFICATION_MATRIX.md), not in this walkthrough.
 
+## 5. Open the authenticated local Dashboard
+
+Prerequisite: an initialized database containing at least one registered
+project, plus an owner-managed `forgegate.trust-store.v1`, matching public
+identity document, and existing Ed25519 private key. Keep these files under an
+ignored local directory such as `work/`; never commit the private key.
+
+```powershell
+.\.venv\Scripts\forgegate.exe dashboard `
+  --database work\forgegate.db `
+  --trust-store work\trust-store.json
+```
+
+Open the printed loopback `/app/` URL, choose **Start local activation**, then
+approve its short code from a second terminal:
+
+```powershell
+.\.venv\Scripts\forgegate.exe dashboard-activate FG-ABCDE-FGHJK `
+  --identity work\operator-identity.json `
+  --private-key work\operator-private-key.pem `
+  --role operator `
+  --project sample-api
+```
+
+The page then exposes only the implemented Overview, Projects, and Candidates
+slice. Stop the first terminal process explicitly when finished. The current
+manual test boundary is retained in the
+[Dashboard acceptance matrix](DASHBOARD_ACCEPTANCE_MATRIX.md).
+
 ## Deeper workflows
 
 - [Candidate lifecycle](architecture/CANDIDATE_LIFECYCLE.md)
 - [Evidence assembly](architecture/EVIDENCE_BUNDLE_ASSEMBLY.md)
 - [Portable assurance bundles](architecture/PORTABLE_ASSURANCE_BUNDLES.md)
 - [Authenticated local API](architecture/AUTHENTICATED_LOCAL_API.md)
+- [Authenticated local Dashboard](architecture/LOCAL_WEB_DASHBOARD.md)
 - [GitHub Actions gate](architecture/GITHUB_ACTIONS_GATE.md)
 - [Windows plugin sandbox](architecture/WINDOWS_PLUGIN_SANDBOX.md)
 - [Plugin operator workflow](architecture/PLUGIN_OPERATOR_WORKFLOW.md)

@@ -2,12 +2,14 @@
 
 - Date: 2026-09-04
 - Version: 0.1.0a1
-- Stage: Phase 22 private Windows Alpha delivery candidate implemented; Phase
-  23 local Web Dashboard design gate accepted with no UI implementation
+- Stage: Phase 24 authenticated local Dashboard vertical slice implemented;
+  automated acceptance passed and the manual cross-browser exit gate remains
+  partially complete
 - Product maturity: testable Windows Alpha with generic initialization,
   local CLI/API release-assurance flow, software-peer collection, audited
   aggregation, durable lifecycle binding, offline GitHub gating, and a
-  live-tested Windows-only brokered plugin path; not production-ready
+  live-tested Windows-only brokered plugin path, and a narrow authenticated
+  local Dashboard; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
 - Remote/publication status: private `Carlos-0798/forgegate` synchronized
@@ -340,13 +342,27 @@
   decision/exit outcomes, API health/correlation, deliberate documentation-page
   denial, authentication/authorization, exact replay/readback, and strict
   request rejection with an ephemeral identity and database.
+- `forgegate dashboard` and `dashboard-activate` for explicit loopback service
+  startup and one-time CLI approval with no browser-held private key or raw
+  Bearer token;
+- same-origin `/app/` assets and `/app/api/` BFF with opaque HttpOnly,
+  SameSite=Strict sessions, exact Origin/Host and anti-CSRF checks, bounded
+  activation/session state, restrictive headers, and no persistent browser
+  storage or external runtime asset;
+- strict TypeScript Overview, Projects, and Candidates pages with immutable
+  candidate review/confirmation, exact role/scope enforcement, audit display,
+  explicit limitation/evidence labels, and visibly planned later workflows;
+- content-hashed deterministic frontend assets, canonical SHA-256 inventory,
+  source/wheel inclusion checks, locked build dependencies, and CI drift gates;
+- separate deterministic Dashboard BFF OpenAPI export with explicit operation
+  IDs, committed-byte drift detection, and installed-wheel comparison;
+- 38 focused Dashboard tests plus real Microsoft Edge keyboard operation and an
+  in-app-browser 390 px responsive/clean-console run using generic local data.
 
 ## Designed, not implemented
 
-- same-origin, loopback-only local Web Dashboard architecture, companion CLI
-  activation, browser-for-frontend authentication boundary, UX requirements,
-  threat model, and acceptance matrix; Phase 24 will implement only the
-  Overview/Projects/Candidates vertical slice;
+- later Dashboard evidence import, policy execution, assurance export, plugin
+  execution, session/trust administration, and revision-mutating workflows;
 - publisher signatures/trust, remote plugin acquisition, automatic install,
   and an independent production plugin repository;
 - native-extension and separately packaged plugin-dependency support;
@@ -356,9 +372,8 @@
 
 ## Not implemented
 
-graphical Dashboard pages, packaged frontend assets, browser sessions,
-Dashboard routes and browser interaction evidence; non-loopback/TLS API
-deployment, reverse-proxy trust, hostile-local-user
+full Dashboard Chrome/zoom/assistive-technology acceptance; non-loopback/TLS
+API deployment, reverse-proxy trust, hostile-local-user
 defense, managed online revocation, durable/distributed sessions, per-client
 network rate controls, distributed rate state, HTTP artifact collection and
 file publication, complete rejected-request/warning ingestion, security/audit
@@ -379,8 +394,14 @@ artifact payload/replay export, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 780 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.01% across 8,959 statements and 2,520 branches
+- pytest: 818 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.20% across 9,565 statements and 2,634 branches
+- Dashboard focus: 38 passed; 98.49% branch-aware coverage across 557
+  statements and 106 branches
+- Dashboard browser checkpoint: Microsoft Edge complete keyboard creation/read
+  path PASS; installed-wheel Edge read path PASS; in-app-browser 390 px
+  responsive and console check PASS; Chrome, exact zoom, and assistive
+  technology `NOT_RUN`
 - Plugin execution contract focus: 8 passed across plan authority, protocol
   sequencing, legal transitions, terminal replay, resource limits, JSON
   loading, and content-derived identity; no process started
@@ -402,7 +423,8 @@ artifact payload/replay export, and hardware access.
   branches
 - candidate evidence-binding/store focus: 71 passed; 100% across 526 statements
   and 138 branches
-- committed JSON Schema and OpenAPI drift checks: PASS
+- committed JSON Schema, direct API OpenAPI, and Dashboard BFF OpenAPI drift
+  checks: PASS
 - project/policy/candidate/transition example documents: VALID
 - forty-one canonical versioned document Schemas plus Benchmark and Analog
   Validation artifact Schemas: drift-checked and parsed
@@ -480,6 +502,7 @@ review is recorded in
 `reports/SOFTWARE_INTEGRITY_INTERACTION_LIVE_EVIDENCE.json`.
 The latest expected-versus-actual CLI/API verification and browser-tool limit
 are recorded in `reports/INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md`.
-The Phase 23 local Dashboard architecture, UX, security, and acceptance design
-gate is recorded in `reports/PHASE_23_LOCAL_WEB_DASHBOARD_DESIGN_GATE.md`; it is
-design evidence only and does not replace the implemented CLI/API boundary.
+The Phase 23 design gate remains recorded in
+`reports/PHASE_23_LOCAL_WEB_DASHBOARD_DESIGN_GATE.md`. The subsequent
+implementation and exact PASS/NOT_RUN boundaries are recorded in
+`reports/PHASE_24_AUTHENTICATED_LOCAL_DASHBOARD_ACCEPTANCE_REPORT.md`.

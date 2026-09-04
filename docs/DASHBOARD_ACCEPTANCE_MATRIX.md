@@ -2,9 +2,10 @@
 
 ## Status
 
-This matrix defines the gate for the planned local Web Dashboard. Every item is
-currently `NOT_IMPLEMENTED` unless it explicitly describes an existing CLI/API
-prerequisite. Design completion is not UI verification.
+This matrix defines the gate for the implemented narrow local Web Dashboard.
+The Phase 24 implementation and automated boundary are present, but the full
+manual cross-browser exit gate is not yet accepted. Design completion, unit
+coverage, clean packaging, and one browser run remain separate evidence.
 
 ## Phase 23 design gate
 
@@ -66,6 +67,43 @@ prerequisite. Design completion is not UI verification.
 Edge and Chrome on the supported Windows host are required. High contrast,
 screen reader, Remote Desktop, Firefox, macOS, and Linux are recorded separately
 as PASS, FAIL, or NOT_RUN; they are never inferred from Chromium automation.
+
+## 2026-09-04 execution record
+
+| ID | Result | Actual observation / remaining boundary |
+|---|---|---|
+| FGD-A01 | PASS | CLI loopback launch and `/app/` plus `/healthz` were exercised locally. |
+| FGD-A02 | PASS | Dashboard command reuses the established loopback allowlist; external/wildcard cases reject. |
+| FGD-A03 | PASS | Wheel/sdist inventory and clean install pass; Edge loaded the installed-wheel assets and authenticated read pages. |
+| FGD-A04 | PASS | Built assets contain no remote URL/runtime loader and the observed browser run made only loopback requests. |
+| FGD-A05–A10 | PASS | Header, Origin/Host, CSRF, activation success/replay/expiry/browser-binding tests pass. |
+| FGD-A11 | PASS | Structural/response checks and the inspected browser DOM/console exposed no key, Bearer token, signature, or persistent credential store. |
+| FGD-A12 | PARTIAL | Server logout/session-loss behavior passes automation; manual expiry and revocation UI runs are `NOT_RUN`. |
+| FGD-A13–A14 | PASS | Producer write/audit denial and exact project-scope enforcement pass. |
+| FGD-A15–A19 | PASS | Bounded service queries, exact detail/create/audit, replay, and changed-payload conflict pass automation; one reviewed create path passed in Edge. |
+| FGD-A20 | NOT_APPLICABLE | This slice exposes no revision-mutating command; stale-revision UI becomes mandatory with the first such command. |
+| FGD-A21 | PASS | Edge refresh/back/forward retained three rows and issued no observed duplicate mutation. |
+| FGD-A22 | PASS | Dynamic values use text-node APIs only; executable HTML APIs/storage/service-worker/eval patterns are rejected by a committed asset test and CSP. |
+| FGD-A23 | PARTIAL | Stable safe problem rendering exists and backend statuses are tested; every status has not been browser-driven. |
+| FGD-A24–A25 | PASS | UI separates request/candidate/decision/hardware/limitations and holds one bounded project/candidate page without persistent caches. |
+| FGD-A26 | PASS | A separate generated Dashboard BFF OpenAPI document has explicit operation IDs, committed-byte drift checks, and installed-wheel comparison. |
+| FGD-A27 | PASS | Full verification and clean release smoke pass at this checkpoint. |
+| FGD-M01 | PASS | Initial loading and unauthenticated activation frame rendered without a blank/unfinished state. |
+| FGD-M02 | PASS | Microsoft Edge keyboard-only path covered activation, project/candidate navigation, review, confirmation, detail, and audit. |
+| FGD-M03 | PARTIAL | Logical initial/dialog focus passed; complete focus containment, Escape, and invoking-control return are `NOT_RUN`. |
+| FGD-M04 | NOT_RUN | Exact 100/125/150/175/200% browser zoom matrix was not executed. |
+| FGD-M05 | PARTIAL | Loading, empty, and ordinary DRAFT data passed; full error and bounded-large-data visual states remain `NOT_RUN`. |
+| FGD-M06 | NOT_RUN | Manual session-expiry comprehension was not executed. |
+| FGD-M07 | NOT_APPLICABLE | No revision-mutating UI exists in this slice. |
+| FGD-M08 | PASS | Detail view visibly distinguished request completion, DRAFT, `NOT_EVALUATED`, and hardware `NOT_PERFORMED`. |
+| FGD-M09 | PASS | CLI and page copy require explicit service shutdown; closing a tab makes no shutdown claim. |
+| FGD-M10 | NOT_RUN | The generic-data Dashboard was visually inspected, but no portfolio screenshot is retained. |
+
+Additional environments: Microsoft Edge PASS for the recorded core path and
+installed-wheel read path;
+in-app browser PASS at a 390 × 844 viewport with no page-level horizontal
+overflow and no console warning/error. Chrome, high contrast, screen reader,
+Remote Desktop, Firefox, macOS, and Linux browser runs are `NOT_RUN`.
 
 ## Test layers
 

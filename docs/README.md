@@ -46,17 +46,19 @@ analysis, compatibility contracts, and historical acceptance evidence.
 - [Local session lifecycle](architecture/LOCAL_SESSION_LIFECYCLE.md)
 - [Local API security boundaries](architecture/LOCAL_API_SECURITY_BOUNDARIES.md)
 
-## Local Dashboard design
+## Local Dashboard
 
 - [Dashboard UX requirements](product/DASHBOARD_UX_REQUIREMENTS.md)
 - [Local Web Dashboard architecture](architecture/LOCAL_WEB_DASHBOARD.md)
 - [Dashboard threat model](security/DASHBOARD_THREAT_MODEL.md)
 - [Dashboard acceptance matrix](DASHBOARD_ACCEPTANCE_MATRIX.md)
 
-These documents define a future implementation gate. The current Alpha has no
-Dashboard page, browser-authentication flow, packaged frontend, or Dashboard
-test evidence; the CLI and authenticated loopback REST API remain the only
-implemented user-facing surfaces.
+These documents govern the implemented Phase 24 activation, Overview, Projects,
+and Candidates slice. The packaged frontend and browser-for-frontend session
+boundary are present; the acceptance matrix preserves the remaining Chrome,
+zoom, focus, error-state, and assistive-technology checks as `NOT_RUN` or
+partial rather than inferring full UI acceptance. A separate installed-wheel
+Edge read path passes.
 
 ## CI and plugins
 

@@ -18,6 +18,14 @@ bytes with the current FastAPI application, and clean-wheel smoke verifies that
 an installed package exports the same contract. It is an interface description,
 not an authentication or deployment guarantee.
 
+`forgegate.dashboard-openapi.v1.json` is the separate deterministic build-time
+contract for the same-origin `/app/api/` BFF. Regenerate it with `forgegate
+export-dashboard-openapi schemas/forgegate.dashboard-openapi.v1.json`. It is
+not served as interactive documentation and does not replace the direct
+Bearer-authenticated API contract. The contract describes route/model/header
+drift; cookie, Origin, CSRF, and authorization behavior remains enforced and
+tested by the implementation.
+
 Phase 14 adds OpenAPI-only response components and operations for self-logout,
 operator session revocation, and fixed-startup-path trust-store reload. These
 ephemeral process-control documents are not standalone configuration or durable

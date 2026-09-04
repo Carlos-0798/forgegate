@@ -2,10 +2,10 @@
 
 ## Decision status
 
-The local Dashboard architecture is accepted for implementation planning but is
-not implemented. The current `0.1.0a1` product surfaces remain the CLI and the
-authenticated loopback REST API. `/docs` and `/redoc` remain deliberately
-disabled.
+The Phase 23 architecture is implemented as a narrow Phase 24 vertical slice.
+The current `0.1.0a1` surfaces are the CLI, authenticated loopback REST API, and
+same-origin local Dashboard. Full manual cross-browser acceptance is still
+partial. `/docs` and `/redoc` remain deliberately disabled.
 
 ## Decision
 
@@ -15,7 +15,7 @@ no Node.js runtime requirement and loads no runtime asset from a CDN. A build
 toolchain may produce versioned static assets during development; the built
 assets must be included in and verified from the wheel.
 
-The proposed production routes are:
+The implemented production routes are:
 
 | Route | Purpose |
 |---|---|
@@ -23,12 +23,17 @@ The proposed production routes are:
 | `/app/api/` | Cookie-authenticated browser-for-frontend boundary |
 | `/v1/` | Existing Bearer-authenticated public local API |
 | `/healthz` | Existing health contract |
-| `/openapi.json` | Existing committed and drift-checked machine contract |
+| `/openapi.json` | Existing committed and drift-checked direct-API contract |
 | `/docs`, `/redoc` | Continue to return 404 |
 
 The browser-for-frontend boundary is intentionally separate from `/v1/`: raw
 Bearer tokens must not be exposed to browser JavaScript, while current CLI and
 API clients retain the existing challenge/session protocol.
+
+`schemas/forgegate.dashboard-openapi.v1.json` is a separate build-time,
+drift-checked contract for the eleven `/app/api/` operations. It is exported
+from the installed wheel during release smoke but is not exposed as interactive
+documentation at runtime.
 
 ## Component boundary
 
@@ -56,9 +61,9 @@ owns commands and queries. Domain models own lifecycle, evidence, policy,
 identity, and assurance invariants. SQLite remains the authoritative durable
 state.
 
-## Local activation design gate
+## Local activation boundary
 
-Phase 24 must implement and validate a companion activation flow before any
+Phase 24 implements and validates this companion activation flow before any
 protected Dashboard data is rendered:
 
 1. The browser creates a bounded, one-time activation request at `/app/api/`.
@@ -111,12 +116,13 @@ The Phase 24 vertical slice is intentionally narrow:
    exposing the private key or Bearer token to browser JavaScript.
 3. Overview displays health, version, identity, role, exact project scopes,
    expiry, and current product limitations.
-4. Projects lists authorized projects and opens immutable profile/history
-   details through bounded cursors.
+4. Projects lists authorized projects and their current immutable profile
+   identity through the existing bounded query.
 5. Candidates lists project candidates, creates a candidate through an
    immutable reviewed request, and displays candidate plus audit history.
-6. A duplicate submission replays exactly; a reused key with changed content
-   and a stale revision fail visibly without automatic retry.
+6. A duplicate submission replays exactly and a reused key with changed
+   content fails visibly without automatic retry. Stale-revision UI recovery
+   is deferred until this slice exposes a revision-mutating command.
 
 Evidence upload, evaluation, assurance export, plugin execution, session
 administration, and trust-store reload remain disabled and visibly labeled as
@@ -128,9 +134,9 @@ planned. Empty controls or mock success paths are prohibited.
   fixed origin and no relaxation in production code.
 - The release build produces a deterministic asset inventory recorded in the
   source distribution and wheel checks.
-- The local server selects or validates an available loopback port, waits for
-  `/healthz`, then may open the default browser. A port collision fails with a
-  safe actionable error.
+- The operator supplies a validated loopback host and port. The command prints
+  the exact `/app/` URL; bind collisions fail through the bounded local server
+  startup. Automatic port selection and browser opening are not implemented.
 - Closing a browser tab does not imply the server stopped. The page explains
   service state; process shutdown remains explicit and bounded.
 - No Dashboard command launches Podman, touches hardware, reads an AFE/MSP430
@@ -150,9 +156,10 @@ planned. Empty controls or mock success paths are prohibited.
 
 ## Exit gate for implementation
 
-Implementation may start only after the UX requirements, Dashboard threat
-model, and acceptance matrix remain mutually consistent. Phase 24 is accepted
-only from a clean wheel on Windows with automated state/security tests, a real
-Edge or Chrome interaction run, and a retained manual expected-versus-actual
-record. Passing UI tests will not change hardware, producer-authenticity,
-trusted-time, non-loopback, or production claims.
+The UX requirements, Dashboard threat model, and acceptance matrix remain the
+governing gate. The implementation/automation checkpoint and Microsoft Edge
+keyboard path pass; Chrome, the exact zoom matrix, assistive technologies, and
+complete error/focus state runs remain `NOT_RUN` or partial. An installed-wheel
+Edge read path passes. Phase 24 therefore stays open for complete UI acceptance.
+Passing UI tests will not change hardware,
+producer-authenticity, trusted-time, non-loopback, or production claims.

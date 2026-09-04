@@ -556,6 +556,21 @@ def export_openapi(
     typer.echo(str(output_file))
 
 
+@app.command("export-dashboard-openapi")
+def export_dashboard_openapi(
+    output_file: Annotated[Path, typer.Argument(dir_okay=False)],
+) -> None:
+    """Export the deterministic build-time Dashboard BFF OpenAPI contract."""
+    from forgegate.dashboard.openapi import create_dashboard_openapi
+
+    if not output_file.parent.is_dir():
+        typer.echo(f"ERROR: output parent does not exist: {output_file.parent}", err=True)
+        raise typer.Exit(code=3)
+    payload = json.dumps(create_dashboard_openapi(), indent=2, sort_keys=True) + "\n"
+    output_file.write_bytes(payload.encode("utf-8"))
+    typer.echo(str(output_file))
+
+
 @app.command("serve")
 def serve(
     database: Annotated[Path, typer.Option("--database", dir_okay=False)],
@@ -606,6 +621,99 @@ def serve(
         port=port,
         log_level="info",
     )
+
+
+@app.command("dashboard")
+def dashboard(
+    database: Annotated[Path, typer.Option("--database", dir_okay=False)],
+    trust_store_path: Annotated[
+        Path,
+        typer.Option("--trust-store", exists=True, dir_okay=False, readable=True),
+    ],
+    host: Annotated[str, typer.Option("--host")] = "127.0.0.1",
+    port: Annotated[int, typer.Option("--port", min=1, max=65535)] = 8000,
+    session_ttl_seconds: Annotated[
+        int,
+        typer.Option("--session-ttl-seconds", min=60, max=3600),
+    ] = 900,
+) -> None:
+    """Serve the authenticated local Dashboard and established REST API."""
+    import uvicorn
+
+    from forgegate.api import ApiAuthenticator, create_api_app
+
+    try:
+        bind_host = validated_loopback_host(host)
+        runtime_trust_store_path = trust_store_path.expanduser().absolute()
+
+        def load_runtime_trust_store() -> TrustStore:
+            document = load_identity_document(runtime_trust_store_path)
+            if not isinstance(document, TrustStore):
+                raise ValueError("--trust-store must contain forgegate.trust-store.v1")
+            return document
+
+        trust_store = load_runtime_trust_store()
+        authenticator = ApiAuthenticator(
+            trust_store,
+            session_ttl=timedelta(seconds=session_ttl_seconds),
+            trust_store_loader=load_runtime_trust_store,
+        )
+        application = CandidateApplication.for_database(database)
+        application.initialize()
+        local_url = f"http://{bind_host}:{port}/app/"
+        dashboard_app = create_api_app(
+            database,
+            application=application,
+            authenticator=authenticator,
+            dashboard=True,
+        )
+    except (CandidateStoreError, IdentityError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(f"ForgeGate Dashboard: {local_url}")
+    typer.echo("Close this process explicitly to stop the local service.")
+    uvicorn.run(
+        dashboard_app,
+        host=bind_host,
+        port=port,
+        log_level="info",
+    )
+
+
+@app.command("dashboard-activate")
+def dashboard_activate(
+    activation_code: Annotated[str, typer.Argument()],
+    identity_path: Annotated[
+        Path,
+        typer.Option("--identity", exists=True, dir_okay=False, readable=True),
+    ],
+    private_key_path: Annotated[
+        Path,
+        typer.Option("--private-key", exists=True, dir_okay=False, readable=True),
+    ],
+    role: Annotated[IdentityRole, typer.Option("--role")],
+    projects: Annotated[list[str], typer.Option("--project")],
+    server: Annotated[str, typer.Option("--server")] = "http://127.0.0.1:8000",
+) -> None:
+    """Approve one browser-bound Dashboard session without exposing the private key."""
+    from forgegate.dashboard.client import DashboardClientError, activate_dashboard
+
+    try:
+        identity = load_identity_document(identity_path)
+        if not isinstance(identity, SigningIdentity):
+            raise ValueError("--identity must contain forgegate.signing-identity.v1")
+        completed = activate_dashboard(
+            server,
+            activation_code,
+            identity=identity,
+            private_key=load_ed25519_private_key(private_key_path),
+            role=role,
+            project_ids=tuple(projects),
+        )
+    except (DashboardClientError, IdentityError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(completed.model_dump_json(indent=2))
 
 
 @project_app.command("register")

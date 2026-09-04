@@ -344,16 +344,25 @@ browser session, Dashboard route, or browser test.
 
 ## Phase 24 — authenticated local Dashboard vertical slice
 
-- [ ] Add `forgegate dashboard` with loopback-only startup, health readiness,
-  safe port handling, and clean-wheel packaged static assets.
-- [ ] Implement one-time companion CLI activation and a same-origin
+- [x] Add `forgegate dashboard` with loopback-only startup, explicit service
+  lifecycle, safe port validation, and clean-wheel packaged static assets.
+- [x] Implement one-time companion CLI activation and a same-origin
   cookie-authenticated BFF with exact Host/Origin and CSRF controls.
-- [ ] Implement Overview, Projects, and Candidates pages using the existing
+- [x] Implement Overview, Projects, and Candidates pages using the existing
   application/domain services and bounded cursor contracts.
-- [ ] Prove candidate creation review, exact idempotent replay, changed-payload
-  conflict, stale-revision recovery, and safe refresh/back/forward behavior.
+- [x] Commit a deterministic Dashboard BFF OpenAPI contract with explicit
+  operation IDs, local drift verification, and installed-wheel comparison.
+- [x] Prove candidate creation review, exact idempotent replay, changed-payload
+  conflict, and safe refresh/back/forward behavior. Stale-revision recovery is
+  not applicable until a revision-mutating Dashboard command is introduced.
 - [ ] Complete adversarial-content, credential-exposure, role/scope, cache,
   API-drift, Edge/Chrome, keyboard, focus, zoom, and clean-wheel acceptance.
+
+The automated boundary, Microsoft Edge keyboard path, in-app-browser 390 px
+layout check, clean-wheel asset/install smoke, and an installed-wheel Edge read
+path pass. Chrome, exact 100/125/150/175/200% zoom, full modal-focus return, and
+assistive-technology runs remain `NOT_RUN`; Phase 24 therefore remains open
+rather than overstating full UI acceptance.
 
 Evidence upload, policy execution, assurance export, plugin execution, session
 administration, and trust-store administration remain outside this slice.

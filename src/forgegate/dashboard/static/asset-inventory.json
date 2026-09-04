@@ -1,0 +1,30 @@
+{
+  "assets": [
+    {
+      "path": ".vite/manifest.json",
+      "sha256": "af85a624c6028bbf48f1db22b8fe51e2228619a64f1c8d1f5469327ece9ce6ae",
+      "size_bytes": 185
+    },
+    {
+      "path": "assets/index-BtFTkxK-.css",
+      "sha256": "014df0326b14e2925e1b7e34e48f620bb986c5924d8600cb25a2a38201e8dcdd",
+      "size_bytes": 11500
+    },
+    {
+      "path": "assets/index-Vzq-gOCE.js",
+      "sha256": "82943a32e4303be6c1de91668e24b34128bd788990c22497a9217b15872af2c4",
+      "size_bytes": 17538
+    },
+    {
+      "path": "index.html",
+      "sha256": "181b61c975f7c392233d54efe468660195cb1cf6481dffcd87eb4ffc3dd17d48",
+      "size_bytes": 1025
+    },
+    {
+      "path": "third-party-licenses.json",
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "size_bytes": 2
+    }
+  ],
+  "schema_version": "forgegate.dashboard-asset-inventory.v1"
+}

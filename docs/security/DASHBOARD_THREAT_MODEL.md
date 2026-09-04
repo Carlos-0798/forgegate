@@ -2,10 +2,11 @@
 
 ## Status and scope
 
-This is an implementation prerequisite for the planned local Web Dashboard.
-It documents intended controls, not implemented security evidence. The existing
-CLI and Bearer-authenticated loopback REST API remain the accepted product
-surfaces until a later Dashboard implementation passes its own gate.
+This threat model governs the implemented Phase 24 local Dashboard slice.
+Origin/Host/CSRF, browser-bound activation, session, role/scope, header, static-
+asset, and safe-rendering controls have local automated evidence. The generated
+BFF-contract drift gate and portions of the manual browser exit gate remain
+incomplete, so this is not a production security approval.
 
 ## Assets
 
@@ -62,11 +63,10 @@ user trustworthy.
 
 ## Security response headers
 
-The exact production policy is frozen with implementation, but it must at least
-enforce a restrictive same-origin Content Security Policy, no framing, no MIME
-sniffing, no referrer leakage, and no storage of protected responses. The
-policy must not be weakened to support a development tool in the packaged
-product.
+The packaged policy enforces a restrictive same-origin Content Security Policy,
+no framing, no MIME sniffing, no referrer leakage, and no storage of protected
+responses. It must not be weakened to support a development tool in the
+packaged product.
 
 ## Authentication failure semantics
 
@@ -99,7 +99,9 @@ them from the repository status, README, screenshots, or portfolio claims.
 
 ## Security exit gate
 
-No Dashboard write capability is accepted until the implementation proves:
+The current candidate-creation write passes the automated controls below, but
+the complete Dashboard exit gate remains partial until every applicable item is
+recorded in the acceptance matrix:
 
 1. private keys and raw Bearer tokens do not cross into browser JavaScript;
 2. foreign Origin, invalid Host, missing CSRF, role, scope, replay, and stale

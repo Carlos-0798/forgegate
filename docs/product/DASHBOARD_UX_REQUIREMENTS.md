@@ -2,9 +2,9 @@
 
 ## Status and evidence boundary
 
-- Status: accepted product design; not implemented
+- Status: narrow Phase 24 slice implemented; complete manual exit gate pending
 - Target: a local, browser-based control plane for the Windows Alpha
-- Product evidence: design review only
+- Product evidence: local host automation plus partial real-browser acceptance
 - Hardware evidence: not applicable; the Dashboard must not access devices
 
 These requirements adapt owner-supplied interaction lessons from a separate
@@ -21,7 +21,7 @@ presentation and orchestration surface over the existing application/domain
 services. It must not contain a second policy engine, lifecycle implementation,
 or evidence-normalization path.
 
-The first implemented vertical slice will cover authenticated local access,
+The first implemented vertical slice covers authenticated local access,
 service status, project discovery, candidate discovery, candidate creation,
 candidate detail, and audit history. Evidence import, decision execution,
 plugin execution, trust-store administration, and file publication remain

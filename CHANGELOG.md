@@ -2,10 +2,19 @@
 
 ## Unreleased
 
-- Accepted the design-only gate for a same-origin, loopback-only local Web
-  Dashboard, including UX requirements, a browser authentication boundary,
-  threat model, and explicit automated/manual acceptance matrix. No Dashboard
-  page, route, browser session, static asset bundle, or UI test is implemented.
+- Implemented the narrow same-origin, loopback-only local Web Dashboard with
+  one-time CLI activation, an HttpOnly cookie BFF, exact Origin/Host and CSRF
+  controls, and Overview, Projects, and Candidates pages.
+- Added strict TypeScript/Vite build-only tooling, content-hashed packaged
+  assets, a canonical SHA-256 asset inventory, CI/clean-wheel drift checks, and
+  structural guards against executable HTML, persistent browser storage,
+  service workers, and dynamic evaluation.
+- Added a separate deterministic Dashboard BFF OpenAPI export with explicit
+  operation IDs, committed-byte drift checks, and installed-wheel comparison.
+- Added 38 focused Dashboard/BFF/client/CLI/contract tests and recorded a Microsoft Edge
+  keyboard path plus a 390 px responsive browser check. Full Chrome, exact zoom,
+  assistive-technology, error-state, and installed-wheel browser acceptance
+  remains explicitly incomplete.
 
 ## 0.1.0a1 — 2026-09-03
 
