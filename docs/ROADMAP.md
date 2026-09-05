@@ -370,3 +370,29 @@ acceptance.
 
 Evidence upload, policy execution, assurance export, plugin execution, session
 administration, and trust-store administration remain outside this slice.
+
+## Phase 25 — optional MSP430 live-status monitor
+
+- [x] Freeze the consumer implementation against the public MSP430 UART v1
+  contract at upstream commit `151fdcfa60661bce1ba04af13c1d3509706f7d4a`
+  without importing upstream code.
+- [x] Add an optional `pyserial` extra while keeping the generic package,
+  sample, tests, and Dashboard usable without it.
+- [x] Validate bounded ASCII TEL framing, CRC-16/CCITT-FALSE, numeric ranges,
+  state/fault fields, sequence gaps, and monotonic heartbeat staleness.
+- [x] Open only the explicitly selected application UART in input-only mode;
+  expose no serial write, firmware, debug, FRAM, GPIO, or load-control action.
+- [x] Add an authenticated Devices page that refreshes every second and keeps
+  connection, heartbeat freshness, and device-reported health independent.
+- [x] Observe the connected COM4 board in the production Dashboard path:
+  `CONNECTED`, heartbeat `NORMAL`, device `FAULT`, flags `0015`, with sequence
+  58007→58017 and 10 accepted frames over 10 seconds without a sequence gap.
+- [x] Prove disconnected, stale, invalid-frame, device-warning/fault, recovery,
+  and read-only lifecycle behavior with deterministic automated tests.
+- [ ] Perform one owner-assisted physical unplug/replug transition while the
+  Dashboard remains open. Until then, physical disconnect/reconnect UI timing
+  is not claimed; deterministic state-machine coverage is retained separately.
+
+Phase 25 is live status only. It creates no candidate evidence, authenticates no
+producer, validates no sensor measurement, controls no hardware, and does not
+complete the still-planned MSP430 report collector in Phase 3.

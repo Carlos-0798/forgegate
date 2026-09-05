@@ -1,0 +1,107 @@
+{
+  "record_format": "forgegate-development.msp430-live-status-evidence.v1",
+  "observed_date": "2026-09-05",
+  "environment": {
+    "operating_system": "Microsoft Windows 11 Home",
+    "python": "3.12.10",
+    "pyserial": "3.5",
+    "dashboard_origin": "http://127.0.0.1:8131",
+    "evidence_level": "OWNER_AUTHORIZED_PHYSICAL_DEVICE_OBSERVATION"
+  },
+  "consumer_contract": {
+    "protocol": "msp430.uart.v1",
+    "upstream_commit": "151fdcfa60661bce1ba04af13c1d3509706f7d4a",
+    "protocol_document_sha256": "c6f794ffc9daeebb4bdd93c9a8854259a58aa6ceb28d6711549beab1643697f9",
+    "implementation": "independent consumer with no upstream runtime import"
+  },
+  "serial_access": {
+    "endpoint": "COM4",
+    "baud_rate": 115200,
+    "data_bits": 8,
+    "parity": "N",
+    "stop_bits": 1,
+    "mode": "INPUT_ONLY",
+    "dtr_before_open": false,
+    "rts_before_open": false,
+    "serial_write_calls": 0
+  },
+  "browser_observation": {
+    "route": "/app/#/devices",
+    "authenticated": true,
+    "refresh_seconds": 1,
+    "sample_a": {
+      "sequence": 58007,
+      "valid_frames": 151,
+      "connection": "CONNECTED",
+      "heartbeat": "NORMAL",
+      "device_health": "FAULT",
+      "fault_flags": "0015",
+      "protocol_errors": 1,
+      "sequence_gaps": 0
+    },
+    "sample_b": {
+      "sequence": 58017,
+      "valid_frames": 161,
+      "connection": "CONNECTED",
+      "heartbeat": "NORMAL",
+      "device_health": "FAULT",
+      "fault_flags": "0015",
+      "protocol_errors": 1,
+      "sequence_gaps": 0
+    },
+    "elapsed_seconds": 10,
+    "accepted_frame_delta": 10,
+    "sequence_delta": 10,
+    "protocol_error_delta": 0,
+    "sequence_gap_delta": 0
+  },
+  "browser_final_pass": {
+    "navigation": "devices_to_overview_to_devices",
+    "sequence_before_navigation": 58525,
+    "sequence_after_return": 58535,
+    "polling_resumed": true,
+    "overview_hardware_access": "READ_ONLY_TELEMETRY",
+    "viewport_width": 1280,
+    "document_width": 1265,
+    "horizontal_overflow": false,
+    "browser_error_or_warning_count": 0
+  },
+  "retained_asset": {
+    "path": "docs/assets/forgegate-dashboard-msp430-live-status.png",
+    "media_type": "image/png",
+    "width": 1264,
+    "height": 1358,
+    "bytes": 71371,
+    "sha256": "7baf6de9d5269f6856e9f6a1c47a454c085abbefa39b2b42667efacb39c81e89"
+  },
+  "verification": {
+    "pytest_passed": 840,
+    "pytest_skipped": 3,
+    "coverage_percent": 95.32,
+    "statements": 9906,
+    "branches": 2708,
+    "mypy_source_tool_files": 90,
+    "interaction_checks": "33/33",
+    "dashboard_test_count": 26,
+    "msp430_live_status_test_count": 17,
+    "release_smoke": "PASS"
+  },
+  "automated_boundaries": {
+    "disconnected": "PASS_DETERMINISTIC",
+    "stale": "PASS_DETERMINISTIC",
+    "invalid_frame": "PASS_DETERMINISTIC",
+    "recovery": "PASS_DETERMINISTIC",
+    "device_warning_fault_unknown": "PASS_DETERMINISTIC",
+    "physical_unplug_replug": "NOT_RUN"
+  },
+  "claims": {
+    "live_status_only": true,
+    "hardware_control_performed": false,
+    "firmware_or_debug_action_performed": false,
+    "measurement_validated": false,
+    "telemetry_used_as_release_evidence": false,
+    "producer_authenticity_established": false,
+    "long_duration_stability_established": false,
+    "production_readiness_established": false
+  }
+}

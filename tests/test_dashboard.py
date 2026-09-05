@@ -38,6 +38,7 @@ from forgegate.dashboard.assets import (
 from forgegate.dashboard.client import DashboardClientError
 from forgegate.dashboard.openapi import create_dashboard_openapi
 from forgegate.identity import IdentityRole
+from forgegate.live_status import LiveSourceStatus, LiveStatusPage
 from tests.api_auth_support import TEST_IDENTITY, TEST_PRIVATE_KEY, TEST_TRUST_STORE
 from tools.manual_dashboard_fault_server import (
     FAULT_PRESENTATIONS,
@@ -67,6 +68,7 @@ def _dashboard_client(
     repository_root: Path,
     *,
     role: IdentityRole = IdentityRole.OPERATOR,
+    live_status_provider: Any | None = None,
 ) -> TestClient:
     authenticator = ApiAuthenticator(
         TEST_TRUST_STORE if role is IdentityRole.OPERATOR else _producer_trust_store()
@@ -77,6 +79,7 @@ def _dashboard_client(
             application=_application_with_project(tmp_path, repository_root),
             authenticator=authenticator,
             dashboard=True,
+            dashboard_live_status_provider=live_status_provider,
         ),
         base_url=ORIGIN,
     )
@@ -280,6 +283,9 @@ def test_dashboard_static_assets_headers_and_contract_boundary(
     assert all("Your Dashboard session expired" in script for script in scripts)
     assert all("--role ROLE" in script for script in scripts)
     assert all("Candidate pages" in script for script in scripts)
+    assert all("Live devices" in script for script in scripts)
+    assert all("Connection" in script and "Heartbeat" in script for script in scripts)
+    assert all("hardware_control=" in script for script in scripts)
     assert all("Previous page" in script and "Next page" in script for script in scripts)
     assert all("candidate-dialog-title" in script for script in scripts)
     assert all("DRAFT CREATED" in script for script in scripts)
@@ -328,6 +334,7 @@ def test_dashboard_openapi_export_is_deterministic_and_complete(tmp_path: Path) 
         "/app/api/audit-events",
         "/app/api/candidates",
         "/app/api/candidates/{candidate_id}",
+        "/app/api/live-status",
         "/app/api/overview",
         "/app/api/projects",
         "/app/api/projects/{project_id}/candidates",
@@ -337,6 +344,9 @@ def test_dashboard_openapi_export_is_deterministic_and_complete(tmp_path: Path) 
         "createDashboardCandidate"
     )
     assert first["paths"]["/app/api/session"]["delete"]["operationId"] == ("endDashboardSession")
+    assert first["paths"]["/app/api/live-status"]["get"]["operationId"] == (
+        "getDashboardLiveStatus"
+    )
     assert "HTTPBearer" not in first.get("components", {}).get("securitySchemes", {})
 
     rejected = runner.invoke(
@@ -400,6 +410,71 @@ def test_dashboard_activation_session_overview_and_logout(
     assert logout.status_code == 200
     assert logout.json()["status"] == "SESSION_ENDED"
     assert ended.status_code == 401
+
+
+def test_dashboard_live_status_is_authenticated_and_retains_read_only_boundary(
+    tmp_path: Path,
+    repository_root: Path,
+) -> None:
+    class StaticLiveStatusProvider:
+        hardware_access = "READ_ONLY_TELEMETRY"
+
+        def snapshot(self) -> LiveStatusPage:
+            observed = datetime(2026, 9, 5, 12, 0, 1, tzinfo=UTC)
+            return LiveStatusPage(
+                observed_at=observed,
+                sources=(
+                    LiveSourceStatus(
+                        source_id="msp430-uart",
+                        source_type="msp430.uart.v1",
+                        display_name="MSP430 UART monitor",
+                        connection="CONNECTED",
+                        heartbeat="NORMAL",
+                        device_health="FAULT",
+                        detail_code="HEARTBEAT_NORMAL",
+                        detail_message="Valid read-only telemetry is current.",
+                        endpoint="COM4",
+                        protocol="msp430.uart.v1",
+                        baud_rate=115200,
+                        expected_interval_seconds=1,
+                        stale_after_seconds=3,
+                        observed_at=observed,
+                        last_heartbeat_at=observed,
+                        heartbeat_age_seconds=0,
+                        sequence=42,
+                        uptime_ms=42000,
+                        device_state="FAULT",
+                        fault_flags="0015",
+                        frames_received=42,
+                        protocol_errors=0,
+                        sequence_gaps=0,
+                        reconnects=0,
+                    ),
+                ),
+            )
+
+    with _dashboard_client(
+        tmp_path,
+        repository_root,
+        live_status_provider=StaticLiveStatusProvider(),
+    ) as client:
+        unauthenticated = client.get("/app/api/live-status")
+        _activate(client)
+        overview = client.get("/app/api/overview")
+        status_page = client.get("/app/api/live-status")
+
+    assert unauthenticated.status_code == 401
+    assert overview.status_code == 200
+    assert overview.json()["hardware_access"] == "READ_ONLY_TELEMETRY"
+    assert "no command" in overview.json()["limitations"][2].lower()
+    assert status_page.status_code == 200
+    source = status_page.json()["sources"][0]
+    assert source["connection"] == "CONNECTED"
+    assert source["heartbeat"] == "NORMAL"
+    assert source["device_health"] == "FAULT"
+    assert source["fault_flags"] == "0015"
+    assert source["hardware_control"] == "NOT_PERFORMED"
+    assert source["evidence_boundary"] == "LIVE_STATUS_ONLY_NOT_RELEASE_EVIDENCE"
 
 
 def test_dashboard_project_candidate_replay_conflict_and_audit(
@@ -857,6 +932,59 @@ def test_dashboard_cli_starts_loopback_app_and_rejects_wrong_document(
     )
     assert rejected.exit_code == 3
     assert "must contain forgegate.trust-store.v1" in rejected.output
+
+
+def test_dashboard_cli_starts_and_stops_optional_read_only_msp430_monitor(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    trust_path = tmp_path / "trust-store.json"
+    trust_path.write_text(TEST_TRUST_STORE.model_dump_json(indent=2), encoding="utf-8")
+    observed: dict[str, Any] = {}
+
+    class FakeMonitor:
+        hardware_access = "READ_ONLY_TELEMETRY"
+
+        def __init__(self, port: str, *, stale_after_seconds: float) -> None:
+            observed.update(port=port, stale_after_seconds=stale_after_seconds)
+
+        def start(self) -> None:
+            observed["started"] = True
+
+        def stop(self) -> None:
+            observed["stopped"] = True
+
+    def fake_run(application: Any, *, host: str, port: int, log_level: str) -> None:
+        observed.update(application=application, host=host, http_port=port, log_level=log_level)
+
+    monkeypatch.setattr(
+        "forgegate.compatibility.msp430_live.Msp430SerialMonitor",
+        FakeMonitor,
+    )
+    monkeypatch.setattr(uvicorn, "run", fake_run)
+    result = runner.invoke(
+        app,
+        [
+            "dashboard",
+            "--database",
+            str(tmp_path / "dashboard.db"),
+            "--trust-store",
+            str(trust_path),
+            "--port",
+            "8123",
+            "--msp430-port",
+            "COM4",
+            "--msp430-stale-seconds",
+            "4.5",
+        ],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert "read-only COM4 at 115200 baud; no bytes transmitted" in result.output
+    assert observed["port"] == "COM4"
+    assert observed["stale_after_seconds"] == 4.5
+    assert observed["started"] is observed["stopped"] is True
+    assert observed["application"].state.dashboard_live_status_provider.__class__ is FakeMonitor
 
 
 def test_dashboard_activate_cli_loads_local_key_and_sanitizes_failure(

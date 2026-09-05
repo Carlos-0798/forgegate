@@ -42,6 +42,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/assets/forgegate-dashboard-candidates.jpg",
     "docs/assets/forgegate-dashboard-overview.jpg",
     "docs/assets/forgegate-dashboard-validation-error.jpg",
+    "docs/assets/forgegate-dashboard-msp430-live-status.png",
     "docs/architecture/ARTIFACT_AND_JUNIT_SLICE.md",
     "docs/architecture/BENCHMARK_JSON_COLLECTOR.md",
     "docs/architecture/COVERAGE_COLLECTORS.md",
@@ -133,6 +134,8 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_23_LOCAL_WEB_DASHBOARD_DESIGN_GATE.md",
     "reports/PHASE_24_AUTHENTICATED_LOCAL_DASHBOARD_ACCEPTANCE_REPORT.md",
     "reports/PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md",
+    "reports/PHASE_25_MSP430_LIVE_STATUS_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_25_MSP430_LIVE_STATUS_EVIDENCE_2026-09-05.json",
     "reports/DASHBOARD_PORTFOLIO_CAPTURE_EVIDENCE_2026-09-04.json",
     "reports/SOFTWARE_INTEGRITY_INTERACTION_AUDIT_2026-09-03.md",
     "reports/SOFTWARE_INTEGRITY_INTERACTION_LIVE_EVIDENCE.json",
@@ -223,6 +226,7 @@ REQUIRED_SDIST_PATHS = (
     "tests/test_windows_plugin_broker_live_tool.py",
     "tests/test_dashboard.py",
     "tests/test_dashboard_client.py",
+    "tests/test_msp430_live_status.py",
     "tools/dashboard_assets.py",
     "tools/verify_windows_sandbox_live.py",
     "tools/verify_windows_plugin_broker_live.py",
@@ -380,6 +384,19 @@ def main(
         )
         if json.loads(empty_plugin_report.read_text(encoding="utf-8"))["total"] != 0:
             raise SystemExit("clean ForgeGate wheel unexpectedly discovered a plugin")
+        run(
+            [
+                str(python),
+                "-c",
+                (
+                    "import importlib.util; "
+                    "assert importlib.util.find_spec('serial') is None; "
+                    "from forgegate.compatibility.msp430_live import crc16_ccitt_false; "
+                    "assert crc16_ccitt_false(b'123456789') == 0x29B1"
+                ),
+            ],
+            cwd=root,
+        )
         sandbox_report = root / "windows-sandbox-capability.json"
         run_capture(
             [str(python), "-m", "forgegate", "plugins", "sandbox-status"],
@@ -660,6 +677,11 @@ def main(
             != "createDashboardCandidate"
         ):
             raise SystemExit("installed wheel is missing Dashboard BFF operation")
+        if (
+            dashboard_openapi["paths"]["/app/api/live-status"]["get"]["operationId"]
+            != "getDashboardLiveStatus"
+        ):
+            raise SystemExit("installed wheel is missing live-status BFF operation")
         run(
             [
                 str(python),
@@ -1479,6 +1501,36 @@ def main(
                 str(python),
                 "-c",
                 "import importlib.util; assert importlib.util.find_spec('forgegate') is None",
+            ],
+            cwd=root,
+        )
+        msp430_environment = root / "msp430-environment"
+        venv.EnvBuilder(with_pip=True, clear=False).create(msp430_environment)
+        msp430_python = clean_python(msp430_environment)
+        run(
+            [
+                str(msp430_python),
+                "-m",
+                "pip",
+                "install",
+                "--disable-pip-version-check",
+                "-c",
+                str(REPOSITORY_ROOT / "requirements/dev-constraints.txt"),
+                f"forgegate[msp430] @ {wheel.resolve().as_uri()}",
+            ],
+            cwd=root,
+        )
+        run(
+            [
+                str(msp430_python),
+                "-c",
+                (
+                    "import serial; "
+                    "from forgegate.compatibility.msp430_live import "
+                    "MSP430_UART_BAUD_RATE; "
+                    "assert serial.VERSION == '3.5'; "
+                    "assert MSP430_UART_BAUD_RATE == 115200"
+                ),
             ],
             cwd=root,
         )

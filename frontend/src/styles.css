@@ -581,6 +581,89 @@ code {
   color: var(--negative);
 }
 
+.badge.warning {
+  border-color: rgb(243 198 107 / 55%);
+  color: var(--warning);
+  background: rgb(243 198 107 / 7%);
+}
+
+.live-toolbar {
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.live-status-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.live-source-panel {
+  padding: clamp(1.1rem, 3vw, 1.75rem);
+  border: 1px solid var(--line);
+  border-radius: 1rem;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.device-state-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.device-state-card {
+  min-width: 0;
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.85rem;
+  background: var(--surface-raised);
+}
+
+.device-state-card > span:first-child {
+  display: block;
+  margin-bottom: 0.7rem;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.device-state-card p {
+  margin: 0.75rem 0 0;
+  color: var(--muted);
+  font-size: 0.84rem;
+  line-height: 1.5;
+}
+
+.live-detail-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  margin: 1rem 0;
+  padding: 0.85rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 0.8rem;
+  background: rgb(255 255 255 / 2%);
+}
+
+.live-detail-banner p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.live-boundary {
+  margin: 1rem 0 0;
+  padding-top: 1rem;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 0.76rem;
+}
+
+.live-sampled-at {
+  margin: 0;
+  text-align: right;
+  font-size: 0.78rem;
+}
+
 .card-grid {
   grid-template-columns: repeat(auto-fit, minmax(min(24rem, 100%), 1fr));
 }
@@ -860,6 +943,10 @@ td {
   .metric-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+
+  .device-state-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 @media (max-width: 560px) {
@@ -876,6 +963,7 @@ td {
   }
 
   .toolbar,
+  .live-detail-banner,
   .dialog-actions,
   .pager {
     align-items: stretch;
@@ -904,6 +992,9 @@ td {
   .project-card,
   .detail-panel,
   .problem-panel,
+  .live-source-panel,
+  .device-state-card,
+  .live-detail-banner,
   .review-dialog,
   .field input,
   .field select,

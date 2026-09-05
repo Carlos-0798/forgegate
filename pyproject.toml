@@ -19,6 +19,9 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+msp430 = [
+  "pyserial>=3.5,<4",
+]
 dev = [
   "build>=1.2,<2",
   "httpx2>=2.12,<3",

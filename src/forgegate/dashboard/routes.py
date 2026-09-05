@@ -38,6 +38,7 @@ from forgegate.dashboard.models import (
     DashboardSessionResponse,
 )
 from forgegate.dashboard.sessions import DashboardSessionManager
+from forgegate.live_status import DisabledLiveStatusProvider, LiveStatusPage, LiveStatusProvider
 from forgegate.projects import RegisteredProjectPage
 
 DASHBOARD_SESSION_COOKIE = "forgegate_dashboard"
@@ -65,8 +66,10 @@ def install_dashboard_routes(
     authenticator: ApiAuthenticator,
     session_manager: DashboardSessionManager | None = None,
     static_root: Path | None = None,
+    live_status_provider: LiveStatusProvider | None = None,
 ) -> DashboardSessionManager:
     manager = session_manager or DashboardSessionManager(authenticator)
+    status_provider = live_status_provider or DisabledLiveStatusProvider()
     assets_root = static_root or Path(__file__).resolve().parent / "static"
     index_path = assets_root / "index.html"
     if not index_path.is_file():
@@ -242,14 +245,31 @@ def install_dashboard_routes(
         return DashboardOverview(
             forgegate_version=__version__,
             database_schema_version=STORE_SCHEMA_VERSION,
+            hardware_access=status_provider.hardware_access,
             principal=DashboardPrincipal.from_api(principal),
             limitations=(
                 "Request success is not an engineering release decision.",
                 "Artifact integrity does not establish producer authenticity.",
-                "No hardware access or physical measurement is performed.",
+                (
+                    "Read-only telemetry is live status only; no command, physical "
+                    "measurement validation, or release evidence is produced."
+                    if status_provider.hardware_access == "READ_ONLY_TELEMETRY"
+                    else "No hardware access or physical measurement is performed."
+                ),
                 "The service is not approved for non-loopback or production deployment.",
             ),
         )
+
+    @app.get(
+        "/app/api/live-status",
+        response_model=LiveStatusPage,
+        operation_id="getDashboardLiveStatus",
+        include_in_schema=False,
+    )
+    def dashboard_live_status(request: Request) -> LiveStatusPage:
+        _require_same_origin(request, required=False)
+        _dashboard_principal(manager, request)
+        return status_provider.snapshot()
 
     @app.get(
         "/app/api/projects",
@@ -372,6 +392,7 @@ def install_dashboard_routes(
 
     app.state.dashboard_session_manager = manager
     app.state.dashboard_static_root = assets_root
+    app.state.dashboard_live_status_provider = status_provider
     return manager
 
 

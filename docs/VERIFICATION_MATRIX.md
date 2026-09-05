@@ -77,12 +77,15 @@
 | Request correlation and error sanitization | generated/supplied/invalid IDs + injected exception | PASS — local host |
 | Loopback-only API bind | IPv4/IPv6/localhost allowlist + external-address rejection | PASS — local host |
 | OpenAPI 3.1 contract | committed byte comparison + installed-wheel export | PASS — drift-checked |
-| Dashboard BFF OpenAPI contract | separate build-time export + committed byte and installed-wheel comparison | PASS — eleven `/app/api/` operations with explicit operation IDs; not served as interactive docs |
+| Dashboard BFF OpenAPI contract | separate build-time export + committed byte and installed-wheel comparison | PASS — twelve `/app/api/` operations with explicit operation IDs; not served as interactive docs |
 | Authenticated local API | Ed25519 challenge, Bearer session, trust recheck | PASS — local host, loopback only |
 | User interaction acceptance | deterministic CLI plus authenticated REST smoke | PASS — 33/33 expected outputs; ephemeral identity/database; Swagger/ReDoc deliberately return 404 |
 | Local Web Dashboard design | architecture, UX requirements, threat model, acceptance matrix | DESIGN PASS — Phase 23 frozen; Phase 24 implementation preserves the defined same-origin boundary |
 | Authenticated local Web Dashboard | clean wheel, adversarial automation, Edge/Chrome, keyboard, focus, pagination, and zoom evidence | IMPLEMENTED / PARTIAL ACCEPTANCE — 41 focused tests, Edge and Chrome keyboard/focus, 129-record cursor pagination, 409/413/422/429/500 recovery, Chrome 390 px/restart, installed-wheel Edge read, and in-app-browser 390 px checks pass; uncommon status runs use a zero-write test-only harness, while exact zoom and assistive technology are `NOT_RUN` |
 | Connected MSP430 Windows USB/UART presence | user-authorized device enumeration plus non-writing COM4 open/close, sustained-open, and later re-enumeration | BOUNDED PASS / ABSENCE RETAINED / RECONNECTION PASS — the initial 10/10 open and 10-second window passed, COM4/COM5 later reported problem 45 and `Present=false`, then the user-reconnected board passed 25/25 opens, 90/90 two-second presence samples, and 30 sustained-open seconds over 216.1 seconds; no uninterrupted long-duration stability, parsed telemetry, firmware/debug action, protocol/measurement proof, or ForgeGate collector execution |
+| MSP430 UART v1 parser and state machine | protocol/range/CRC, stale/invalid/recovery, sequence, absent-port, dependency/I/O, and read-only lifecycle tests | PASS — local host; frozen consumer implementation, no upstream runtime import |
+| Authenticated MSP430 live status | production Dashboard, connected COM4, browser polling | BOUNDED PASS — input-only 115200 8-N-1; page showed `CONNECTED` + heartbeat `NORMAL` + device `FAULT`/`0015`; sequence 58007→58017 and valid-frame count 151→161 over 10 seconds, protocol-error count remained 1 and sequence gaps 0; no command, measurement validation, evidence collection, or long-duration claim |
+| Physical MSP430 unplug/replug page transition | owner-assisted manual interaction | NOT RUN — deterministic absent/stale/error/recovery states pass; a physical transition requires unplugging and reconnecting the board while the page remains open |
 | API role/project authorization | producer/operator and cross-project adversarial tests | PASS — exact session scopes; producer read-only |
 | Authenticated audit actor | API write/readback, event identity, token absence | PASS — successful writes only |
 | Session replay/expiry/capacity | one-time challenge, bounded memory, restart semantics | PASS — local host |
@@ -151,13 +154,13 @@
 | Source-artifact producer chain | producer-signed artifact receipts | NOT IMPLEMENTED — signature covers retained bundle only |
 | HTTP artifact loading/file publication | no loader/output path; nested metadata is not dereferenced | OUT OF SCOPE |
 | MSP430 report compatibility | frozen public artifact contract | PLANNED |
-| Physical device operation | explicit owner-approved procedure | OUT OF SCOPE |
+| Physical device control | explicit owner-approved procedure | OUT OF SCOPE — live monitor is input-only |
 | Generic project initialization | clean-wheel `forgegate init`, strict model validation, overwrite rejection | PASS — path-free receipt; no hardware requested |
 | Windows Alpha install-to-uninstall chain | full verification + clean wheel + core assurance + live plugin CLI | PASS — 18/18 retained controls; local Windows acceptance only, not a public release or production claim |
 | Structured-input pre-materialization bounds | JSON token, XML event, and YAML event adversarial tests | PASS — byte plus node/element/depth limits; duplicate YAML keys rejected |
 | Plugin output pre-materialization bounds | trusted in-container exporter plus bounded host archive inspection | PASS — clean-wheel live dual snapshots; no archive extraction |
 | Development dependency advisory audit | constrained pip/pytest bootstrap plus `pip-audit` | PASS — no known advisory in resolved registry dependencies; editable local project excluded |
-| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.20% exceeds exact 95.00% threshold |
+| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.32% exceeds exact 95.00% threshold |
 
 See `reports/INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md` for the latest
 expected-versus-actual CLI/API check and

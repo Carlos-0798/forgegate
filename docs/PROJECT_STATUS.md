@@ -1,22 +1,23 @@
 # Project status
 
-- Date: 2026-09-04
+- Date: 2026-09-05
 - Version: 0.1.0a1
-- Stage: Phase 24 authenticated local Dashboard vertical slice implemented;
-  automated acceptance passed and the manual cross-browser exit gate remains
-  partially complete
+- Stage: Phase 25 optional read-only MSP430 live-status slice implemented and
+  observed on the connected Windows board; Phase 24's broader manual
+  cross-browser exit gate remains partially complete
 - Product maturity: testable Windows Alpha with generic initialization,
   local CLI/API release-assurance flow, software-peer collection, audited
   aggregation, durable lifecycle binding, offline GitHub gating, and a
-  live-tested Windows-only brokered plugin path, and a narrow authenticated
-  local Dashboard; not production-ready
+  live-tested Windows-only brokered plugin path, a narrow authenticated local
+  Dashboard, and an optional read-only MSP430 status monitor; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
-- Hardware evidence: not applicable; no device access performed
-- Remote/publication status: private `Carlos-0798/forgegate` synchronized
-  through the presentation checkpoint at `690123e`; CI run 33839976122
-  passed Windows, Ubuntu, macOS, and the generic Action smoke;
-  no public release, License, or
-  LinkedIn publication authorized
+- Hardware evidence: owner-authorized input-only COM4 UART status observation;
+  no command, firmware/debug action, physical measurement validation, release
+  evidence, or production claim
+- Remote/publication status: private `Carlos-0798/forgegate`; repository changes
+  are synchronized through reviewed pull requests and required CI. The latest
+  previously accepted cross-platform run was 33839976122; no public release,
+  License, or LinkedIn publication is authorized
 
 ## Implemented
 
@@ -349,13 +350,23 @@
   SameSite=Strict sessions, exact Origin/Host and anti-CSRF checks, bounded
   activation/session state, restrictive headers, and no persistent browser
   storage or external runtime asset;
-- strict TypeScript Overview, Projects, and Candidates pages with immutable
+- strict TypeScript Overview, Devices, Projects, and Candidates pages with immutable
   candidate review/confirmation, exact role/scope enforcement, audit display,
   explicit limitation/evidence labels, and visibly planned later workflows;
 - content-hashed deterministic frontend assets, canonical SHA-256 inventory,
   source/wheel inclusion checks, locked build dependencies, and CI drift gates;
 - separate deterministic Dashboard BFF OpenAPI export with explicit operation
   IDs, committed-byte drift detection, and installed-wheel comparison;
+- optional `msp430` dependency and domain-neutral live-status provider boundary;
+  an independently implemented MSP430 UART v1 parser validates ASCII framing,
+  128-byte lines, field ranges, and CRC-16/CCITT-FALSE without importing the
+  upstream runtime;
+- input-only COM4 monitor with DTR/RTS inactive before opening, bounded reads,
+  reconnect handling, monotonic staleness, protocol-error and sequence-gap
+  counters, and no serial write surface;
+- authenticated one-second Devices polling that separates connection,
+  heartbeat freshness, and firmware-reported device health, retaining
+  `LIVE_STATUS_ONLY_NOT_RELEASE_EVIDENCE` and `hardware_control=NOT_PERFORMED`;
 - 41 focused Dashboard tests plus real Microsoft Edge and Chrome keyboard/focus
   operation, complete 129-record cursor pagination, browser-rendered
   409/413/422/429/500 recovery, and Chrome/in-app-browser 390 px
@@ -388,10 +399,11 @@ plugins, Linux/macOS plugin execution,
 custom GitHub Checks/PR annotations/API writes,
 managed/encrypted/hardware-backed key custody, trusted timestamps, online
 revocation, CI workload identity federation, database authorization,
-backup/repair, MSP430
-collector, Studio Phase 5
+backup/repair, MSP430 evidence collector and retained telemetry history,
+Studio Phase 5
 human-readable report ingestion, authenticated provenance/signatures, source
-artifact payload/replay export, and hardware access.
+artifact payload/replay export, hardware control, and physical measurement
+validation.
 
 ## Accepted local checkpoint
 
@@ -399,8 +411,11 @@ artifact payload/replay export, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 821 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.20% across 9,565 statements and 2,634 branches
+- pytest: 840 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.32% across 9,906 statements and 2,708 branches
+- MSP430 live-status focus: 17 passed across parser, state classification,
+  staleness, invalid/recovery, counters, dependency/I/O failure, and input-only
+  monitor lifecycle
 - Dashboard focus: 41 passed; 98.49% branch-aware coverage across 557
   statements and 106 branches
 - Dashboard browser checkpoint: Microsoft Edge and Chrome keyboard creation/
@@ -410,6 +425,11 @@ artifact payload/replay export, and hardware access.
   read, in-app-browser 390 px check, and generic portfolio capture PASS;
   uncommon statuses use a zero-write test-only presentation harness; exact
   zoom and assistive technology `NOT_RUN`
+- MSP430 browser checkpoint: authenticated Devices page displayed connection
+  `CONNECTED`, heartbeat `NORMAL`, device health `FAULT`, and flags `0015`;
+  one-second polling resumed after Overview navigation, the status sequence
+  continued advancing, the inspected 1280 px viewport had no horizontal
+  overflow, and the browser error/warning log was empty
 - Plugin execution contract focus: 8 passed across plan authority, protocol
   sequencing, legal transitions, terminal replay, resource limits, JSON
   loading, and content-derived identity; no process started

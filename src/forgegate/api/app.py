@@ -73,6 +73,7 @@ from forgegate.security_events import (
 
 if TYPE_CHECKING:
     from forgegate.dashboard.sessions import DashboardSessionManager
+    from forgegate.live_status import LiveStatusProvider
 
 REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
 MAX_REQUEST_BODY_BYTES = 4 * 1024 * 1024
@@ -120,6 +121,7 @@ def create_api_app(
     dashboard: bool = False,
     dashboard_session_manager: DashboardSessionManager | None = None,
     dashboard_static_root: Path | None = None,
+    dashboard_live_status_provider: LiveStatusProvider | None = None,
 ) -> FastAPI:
     if authenticator is None and not contract_only:
         raise ValueError("authenticated API construction requires an ApiAuthenticator")
@@ -841,6 +843,7 @@ def create_api_app(
             authenticator=authenticator,
             session_manager=dashboard_session_manager,
             static_root=dashboard_static_root,
+            live_status_provider=dashboard_live_status_provider,
         )
     return app
 

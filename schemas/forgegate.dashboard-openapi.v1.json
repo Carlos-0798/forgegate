@@ -604,8 +604,11 @@
             "type": "string"
           },
           "hardware_access": {
-            "const": "NOT_PERFORMED",
             "default": "NOT_PERFORMED",
+            "enum": [
+              "NOT_PERFORMED",
+              "READ_ONLY_TELEMETRY"
+            ],
             "title": "Hardware Access",
             "type": "string"
           },
@@ -753,6 +756,274 @@
         ],
         "title": "IdentityRole",
         "type": "string"
+      },
+      "LiveSourceStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "access_mode": {
+            "const": "READ_ONLY",
+            "default": "READ_ONLY",
+            "title": "Access Mode",
+            "type": "string"
+          },
+          "baud_rate": {
+            "maximum": 10000000.0,
+            "minimum": 1.0,
+            "title": "Baud Rate",
+            "type": "integer"
+          },
+          "connection": {
+            "enum": [
+              "CONNECTING",
+              "CONNECTED",
+              "DISCONNECTED",
+              "ERROR"
+            ],
+            "title": "Connection",
+            "type": "string"
+          },
+          "detail_code": {
+            "pattern": "^[A-Z][A-Z0-9_]{2,63}$",
+            "title": "Detail Code",
+            "type": "string"
+          },
+          "detail_message": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Detail Message",
+            "type": "string"
+          },
+          "device_health": {
+            "enum": [
+              "UNKNOWN",
+              "NORMAL",
+              "WARNING",
+              "FAULT"
+            ],
+            "title": "Device Health",
+            "type": "string"
+          },
+          "device_state": {
+            "anyOf": [
+              {
+                "maxLength": 32,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Device State"
+          },
+          "display_name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "endpoint": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Endpoint",
+            "type": "string"
+          },
+          "evidence_boundary": {
+            "const": "LIVE_STATUS_ONLY_NOT_RELEASE_EVIDENCE",
+            "default": "LIVE_STATUS_ONLY_NOT_RELEASE_EVIDENCE",
+            "title": "Evidence Boundary",
+            "type": "string"
+          },
+          "expected_interval_seconds": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 3600.0,
+            "title": "Expected Interval Seconds",
+            "type": "number"
+          },
+          "fault_flags": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9A-F]{4}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fault Flags"
+          },
+          "frames_received": {
+            "minimum": 0.0,
+            "title": "Frames Received",
+            "type": "integer"
+          },
+          "hardware_control": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Hardware Control",
+            "type": "string"
+          },
+          "heartbeat": {
+            "enum": [
+              "NOT_OBSERVED",
+              "NORMAL",
+              "STALE",
+              "INVALID"
+            ],
+            "title": "Heartbeat",
+            "type": "string"
+          },
+          "heartbeat_age_seconds": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Heartbeat Age Seconds"
+          },
+          "last_heartbeat_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Heartbeat At"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "protocol": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Protocol",
+            "type": "string"
+          },
+          "protocol_errors": {
+            "minimum": 0.0,
+            "title": "Protocol Errors",
+            "type": "integer"
+          },
+          "reconnects": {
+            "minimum": 0.0,
+            "title": "Reconnects",
+            "type": "integer"
+          },
+          "sequence": {
+            "anyOf": [
+              {
+                "maximum": 4294967295.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sequence"
+          },
+          "sequence_gaps": {
+            "minimum": 0.0,
+            "title": "Sequence Gaps",
+            "type": "integer"
+          },
+          "source_id": {
+            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+            "title": "Source Id",
+            "type": "string"
+          },
+          "source_type": {
+            "pattern": "^[a-z0-9][a-z0-9.-]{0,63}$",
+            "title": "Source Type",
+            "type": "string"
+          },
+          "stale_after_seconds": {
+            "exclusiveMinimum": 0.0,
+            "maximum": 3600.0,
+            "title": "Stale After Seconds",
+            "type": "number"
+          },
+          "uptime_ms": {
+            "anyOf": [
+              {
+                "maximum": 4294967295.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Uptime Ms"
+          }
+        },
+        "required": [
+          "source_id",
+          "source_type",
+          "display_name",
+          "connection",
+          "heartbeat",
+          "device_health",
+          "detail_code",
+          "detail_message",
+          "endpoint",
+          "protocol",
+          "baud_rate",
+          "expected_interval_seconds",
+          "stale_after_seconds",
+          "observed_at",
+          "frames_received",
+          "protocol_errors",
+          "sequence_gaps",
+          "reconnects"
+        ],
+        "title": "LiveSourceStatus",
+        "type": "object"
+      },
+      "LiveStatusPage": {
+        "additionalProperties": false,
+        "properties": {
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "refresh_after_seconds": {
+            "default": 1,
+            "maximum": 30.0,
+            "minimum": 1.0,
+            "title": "Refresh After Seconds",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "forgegate.live-status.v1",
+            "default": "forgegate.live-status.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/LiveSourceStatus"
+            },
+            "maxItems": 20,
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "observed_at",
+          "sources"
+        ],
+        "title": "LiveStatusPage",
+        "type": "object"
       },
       "OutputConfig": {
         "additionalProperties": false,
@@ -1593,6 +1864,24 @@
           }
         },
         "summary": "Get Dashboard Candidate"
+      }
+    },
+    "/app/api/live-status": {
+      "get": {
+        "operationId": "getDashboardLiveStatus",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveStatusPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Dashboard Live Status"
       }
     },
     "/app/api/overview": {
