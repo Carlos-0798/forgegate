@@ -830,6 +830,9 @@ function renderCandidateReview(
         },
         body: JSON.stringify(values)
       });
+      heading.textContent = "Request completed";
+      const eyebrow = review.querySelector<HTMLElement>(".eyebrow");
+      if (eyebrow !== null) eyebrow.textContent = "DRAFT CREATED";
       status.replaceChildren(statusBadge("Request completed"), el("p", undefined, `Candidate ${created.candidate_id} is ${created.status}. No policy decision has been made.`));
       const done = button("Inspect candidate", "button primary");
       done.addEventListener("click", async () => {
@@ -840,6 +843,7 @@ function renderCandidateReview(
         if (workspace !== null) void showCandidateDetail(workspace, created.candidate_id);
       });
       controls.replaceChildren(done);
+      done.focus();
     } catch (error) {
       showProblem(status, error, "Return to the draft, reload current state if needed, and review before trying again.");
       back.disabled = false;

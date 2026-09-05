@@ -7,7 +7,7 @@ not be quoted as the latest project status.
 ## Current checkpoint
 
 - [Phase 24 authenticated local Dashboard checkpoint](PHASE_24_AUTHENTICATED_LOCAL_DASHBOARD_ACCEPTANCE_REPORT.md) — implementation and automation pass; full manual cross-browser exit gate partial
-- [Phase 24 manual interaction acceptance](PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md) — operator/producer inputs, durable output cross-check, expiry/restart recovery, Edge focus, 129-record pagination, 422 recovery, and remaining manual boundary
+- [Phase 24 manual interaction acceptance](PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md) — operator/producer inputs, durable output cross-check, expiry/restart recovery, Edge/Chrome focus, 129-record pagination, 422 recovery, and remaining manual boundary
 - [Phase 23 local Web Dashboard design gate](PHASE_23_LOCAL_WEB_DASHBOARD_DESIGN_GATE.md) — historical design evidence
 - [Interaction acceptance report](INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md)
 - [Software integrity and interaction audit](SOFTWARE_INTEGRITY_INTERACTION_AUDIT_2026-09-03.md)

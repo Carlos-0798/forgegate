@@ -15,14 +15,14 @@ authentication, Overview, authorized Projects, and project-scoped Candidates
 with reviewed creation, detail, and append-only audit inspection.
 
 The implementation, security boundary, focused automation, full repository
-quality gate, packaging smoke, one real Microsoft Edge keyboard path, an
-installed-wheel Edge read path, and the follow-up in-app-browser manual
-interaction run pass.
-The follow-up run also passed complete Edge modal focus behavior, a six-page
-large-data traversal, browser-rendered 422 recovery, and another authoritative
-candidate write/readback. This report does not mark Phase 24 fully accepted
-because Chrome, the exact zoom matrix, assistive-technology checks, and every
-browser error state were not executed.
+quality gate, packaging smoke, real Microsoft Edge and Chrome keyboard paths,
+an installed-wheel Edge read path, and the follow-up in-app-browser manual
+interaction run pass. The follow-up runs also passed complete Edge/Chrome
+modal focus behavior, six-page large-data traversal, browser-rendered 422
+recovery, authoritative candidate writes/readbacks, and Chrome restart and
+390 px responsive recovery. This report does not mark Phase 24 fully accepted
+because the exact zoom matrix, assistive-technology checks, and every browser
+error state were not executed.
 
 The detailed input/output record is in
 `reports/PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md`.
@@ -79,20 +79,21 @@ was retained.
 |---|---|---|---|
 | Initial page | Clear unauthenticated state | Activation explanation and action rendered | PASS |
 | CLI companion approval | Browser-bound authenticated session | One-time code approved; Overview loaded | PASS |
-| Keyboard navigation | Core path without a mouse | Microsoft Edge completed activation, Projects, Candidates, create/review/confirm/detail/audit | PASS |
-| Focus entry/containment/return | Logical focus, modal containment, Escape close, and opener return | Edge cycled first-to-last and last-to-first with Shift+Tab/Tab; Escape removed the dialog and returned visible focus to Create candidate | PASS |
+| Keyboard navigation | Core path without a mouse | Microsoft Edge and Chrome completed activation, Projects, Candidates, create/review/confirm/detail/audit | PASS |
+| Focus entry/containment/return | Logical focus, modal containment, Escape close, and opener return | Edge and Chrome cycled first-to-last and last-to-first with Shift+Tab/Tab; Escape removed the dialog and returned visible focus to Create candidate | PASS |
 | Candidate creation | One DRAFT plus one audit event | DRAFT, candidate revision 0, profile version 1, `NOT_EVALUATED`, hardware `NOT_PERFORMED`, and `candidate.created` shown | PASS |
 | Refresh/back/forward | No duplicate mutation | Prior run retained three rows; the follow-up valid sample retained exactly four rows after reload with one matching audit event | PASS |
 | Invalid samples | Clear client/server rejection and no unexpected write | Blank required fields and uppercase SHA stayed client-side; unknown track rendered `STORE_RELEASE_TRACK_NOT_FOUND` and left the list at three | PASS |
 | Producer boundary | Read-only candidate access | Create action absent; candidate fields visible; operator-only audit limitation explicit | PASS |
 | Logout/expiry/restart | Clear protected state and actionable recovery | Explicit logout, natural 60-second expiry, and service-restart 401 all returned to activation with distinct guidance | PASS |
-| Responsive narrow view | No page-level horizontal overflow | 390 × 844 viewport had 375 px body/document scroll width; table/nav used intentional inner scrolling | PASS |
-| Large candidate set | Every bounded page remains reachable without omission or duplication | 129 records occupied six pages: five 25-row pages and a four-row final page; the traversal found 129 unique versions and zero cross-page duplicates | PASS |
+| Responsive narrow view | No page-level horizontal overflow | In-app browser and Chrome 390 × 844 viewports had 375 px body/document scroll width; table/nav used intentional inner scrolling and paging/create controls remained visible | PASS |
+| Large candidate set | Every bounded page remains reachable without omission or duplication | Edge and Chrome each traversed 129 records across six pages: five 25-row pages and a four-row final page, 129 unique versions, and zero cross-page duplicates | PASS |
 | Browser 422 recovery | Invalid server-bound input remains safe and actionable | Track `INVALID!` rendered `API_REQUEST_VALIDATION_FAILED`, a safe next step, and a request ID; no candidate was created | PASS |
 | Follow-up valid sample | One write and exact readback | `ui-acceptance-20260904` created `cand-9c77d4d795e4d4ec5f12c004` as DRAFT revision 0 with one audit event, `NOT_EVALUATED`, and hardware `NOT_PERFORMED` | PASS |
-| Browser console | No application warning/error | No warning or error recorded | PASS |
+| Chrome result semantics | Completed write has an accurate dialog name and retained focus | `chrome-a11y-20260904` created `cand-be1fa73cb1f976c82423dfbc`; dialog name became `Request completed`, focus moved to Inspect candidate, and exact DRAFT/detail/audit fields matched the database | PASS |
+| Browser console | No application warning/error | No warning or error recorded in Edge, Chrome, or the in-app browser | PASS |
 | Installed-wheel browser | Packaged assets and BFF load | Edge authenticated and read Overview, Projects, and Candidates from a dedicated wheel-only environment | PASS |
-| Chrome | Same core flow | Chrome and its enabled integration are installed, but Chrome was not running and no launch was authorized during this run | NOT_RUN |
+| Chrome | Same core flow | Chrome passed activation, Overview, Projects, Candidates, focus, pagination, 422 recovery, valid creation/detail/audit, service-restart recovery, 390 × 844 layout, and clean-console checks | PASS |
 | Exact zoom matrix | Reachable actions/limitations at 100–200% | Browser zoom could not be set reliably by the available controller | NOT_RUN |
 | Screen reader/high contrast/Remote Desktop | Explicit manual evidence | Not executed | NOT_RUN |
 | Portfolio screenshot | Generic and claim-accurate retained capture | Retained `docs/assets/forgegate-dashboard-alpha.png` after visible-claim review; README explicitly limits the image to the local Alpha interaction surface | PASS |
@@ -124,16 +125,19 @@ was retained.
 9. The first screenshot packaging run exposed that `MANIFEST.in` included SVG
    but not PNG documentation assets. PNG inclusion and an explicit release
    smoke requirement now prevent a packaged README with a broken image.
+10. After a successful Chrome write, the result dialog retained the
+    confirmation accessible name and browser focus fell to the page body. The
+    success transition now renames the dialog to `Request completed`, marks the
+    completed draft state, and focuses the Inspect candidate action.
 
 ## Remaining acceptance work
 
 The complete Phase 24 exit gate requires:
 
-1. Chrome core-flow execution on the supported Windows host;
-2. Edge and Chrome checks at 100%, 125%, 150%, 175%, and 200% zoom;
-3. browser-driven 409/413/429/500 recovery (401, 404, 422, logout, natural
+1. Edge and Chrome checks at 100%, 125%, 150%, 175%, and 200% zoom;
+2. browser-driven 409/413/429/500 recovery (401, 404, 422, logout, natural
    expiry, restart, and producer authority paths now pass);
-4. high-contrast, screen-reader, and Remote Desktop checks.
+3. high-contrast, screen-reader, and Remote Desktop checks.
 
 Two-tab stale-revision recovery is not applicable to this slice because it has
 no revision-mutating command. It becomes mandatory when transition, binding,

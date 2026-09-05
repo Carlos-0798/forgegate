@@ -2,7 +2,7 @@
 
 - Product: ForgeGate Windows Local Alpha
 - Surface: authenticated loopback Web Dashboard
-- Browsers: Microsoft Edge and Codex in-app browser on Windows
+- Browsers: Microsoft Edge, Google Chrome, and Codex in-app browser on Windows
 - Fixture: generic `sample-api` project and local ephemeral acceptance identity
 - Hardware access: **NOT_PERFORMED**
 - Remote/GitHub action: **NOT_PERFORMED**
@@ -10,8 +10,8 @@
 
 ## Acceptance outcome
 
-The executed operator and producer workflows pass after correcting one
-session-expiry rendering defect discovered by this run. The browser accepted a
+The executed operator and producer workflows pass after correcting the
+interaction defects discovered by these runs. The browsers accepted a
 valid candidate sample exactly once, rejected invalid samples without an
 unexpected durable write, preserved the distinction between candidate state,
 engineering decision, project profile, and hardware evidence, and cleared
@@ -46,7 +46,13 @@ production, public-release, evidence-authenticity, or remote-deployment proof.
 | Server validation | Track `INVALID!` with otherwise valid fields | 422 is distinct, actionable, and non-mutating | `API_REQUEST_VALIDATION_FAILED`, safe next step, and request ID rendered; total remained unchanged | PASS |
 | Follow-up valid create | Version `ui-acceptance-20260904`; SHA `3333333333333333333333333333333333333333`; branch `acceptance/browser-chain`; track `pull-request` | One exact DRAFT and audit event | Created `cand-9c77d4d795e4d4ec5f12c004`; revision `0`, `NOT_EVALUATED`, profile `1`, hardware `NOT_PERFORMED`, one `candidate.created` | PASS |
 | Narrow large-data view | 390 × 844 viewport with 25-row page | No page-level horizontal overflow; paging remains reachable | Document scroll width 375 px at 390 px viewport; both paging controls remained visible | PASS |
-| Browser console | Complete follow-up workflows | No application warning/error | Edge and in-app browser warning/error logs were empty | PASS |
+| Browser console | Complete follow-up workflows | No application warning/error | Edge, Chrome, and in-app browser warning/error logs were empty | PASS |
+| Chrome core flow | Activate, inspect Overview/Projects/Candidates, create, and inspect | Same authoritative state and boundaries as Edge | Chrome completed the flow with generic local data and no console warning/error | PASS |
+| Chrome pagination | Traverse the 129-record fixture | Six bounded pages, no omission or duplication | 25/25/25/25/25/4 rows, 129 unique versions, zero duplicates; Previous and reload returned to expected pages | PASS |
+| Chrome focus | Initial focus, bidirectional Tab trap, Escape and result transition | Focus never escapes the active modal | Entry focused Version; Shift+Tab/Tab wrapped; Escape returned to Create candidate; successful creation renamed the dialog and focused Inspect candidate | PASS |
+| Chrome 422 | Track `INVALID!` | Actionable rejection without write | `API_REQUEST_VALIDATION_FAILED` with safe next step and request ID; no invalid candidate row | PASS |
+| Chrome final create | Version `chrome-a11y-20260904`; SHA `6666666666666666666666666666666666666666`; branch `acceptance/chrome-a11y` | One DRAFT and one audit event | Created `cand-be1fa73cb1f976c82423dfbc`; revision `0`, `NOT_EVALUATED`, profile `1`, hardware `NOT_PERFORMED`, one `candidate.created` | PASS |
+| Chrome restart/reflow | Restart service; then set 390 × 844 viewport | Clear stale session and preserve actions without page overflow | Restart returned to activation; narrow document width was 375 px and Previous/Next/Create remained visible | PASS |
 
 ## Persisted-output cross-check
 
@@ -67,6 +73,11 @@ modified; the run used a copied ignored work database.
 The separate large-data fixture began with 128 candidates. The rejected 422
 sample did not change that count. The follow-up valid sample produced the sole
 129th candidate and exactly one matching audit event.
+
+The Chrome run began from those 129 candidates. Its invalid sample created no
+row. Two generic valid samples—one revealing the result-focus defect and one
+verifying the correction—produced the only two additional candidates, for 131
+total. `chrome-a11y-20260904` has exactly one `candidate.created` event.
 
 ## Defect discovered and corrected
 
@@ -94,12 +105,18 @@ the page body. An explicit two-direction focus trap, accessible dialog name,
 Escape handler, and opener-focus restoration now pass the repeated keyboard
 run.
 
+Chrome then exposed that a successful write left the dialog named as a pending
+confirmation and moved focus to the page body when its controls were replaced.
+The result state now changes the accessible heading to `Request completed`,
+labels the saved draft, and focuses Inspect candidate. The repeated Chrome
+write/detail/audit run passed after rebuilding and restarting the local service.
+
 ## Remaining manual boundary
 
 The following items remain `NOT_RUN` or partial and are not inferred from this
 run:
 
-- Chrome core flow and the Edge/Chrome 100–200% exact zoom matrix;
+- Edge/Chrome 100–200% exact zoom matrix;
 - browser-driven 409, 413, 429, and 500 rendering (401, 404, and 422 now have
   browser records; producer authority prevents the normal UI from issuing a
   forbidden write);

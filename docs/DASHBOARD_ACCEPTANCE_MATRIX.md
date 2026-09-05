@@ -5,8 +5,8 @@
 This matrix defines the gate for the implemented narrow local Web Dashboard.
 The Phase 24 implementation and automated boundary are present, but the full
 manual cross-browser exit gate is not yet accepted. Design completion, unit
-coverage, clean packaging, Edge focus/large-data execution, and an unexecuted
-Chrome/assistive-technology matrix remain separate evidence.
+coverage, clean packaging, Edge/Chrome execution, and the unexecuted exact-
+zoom/assistive-technology matrix remain separate evidence.
 
 ## Phase 23 design gate
 
@@ -101,12 +101,14 @@ as PASS, FAIL, or NOT_RUN; they are never inferred from Chromium automation.
 | FGD-M10 | PASS | A generic-data Windows local-browser capture is retained at `docs/assets/forgegate-dashboard-alpha.png`; its README caption explicitly excludes hardware, production, and release-approval evidence. |
 
 Additional environments: Microsoft Edge PASS for the recorded core, complete
-modal-focus, large-data, 422-recovery, and installed-wheel read paths; in-app
-browser PASS for the 390 × 844 responsive/large-page check and the follow-up
-operator/producer input-output, logout, expiry, and restart flows. Chrome is
-installed with its enabled integration but was not running, so no Chrome result
-is inferred. Exact zoom, high contrast, screen reader, Remote Desktop, Firefox,
-macOS, and Linux browser runs are `NOT_RUN`.
+modal-focus, large-data, 422-recovery, and installed-wheel read paths; Chrome
+PASS for activation, Overview/Projects/Candidates, complete modal focus,
+129-record pagination, 422 recovery, authoritative writes/readbacks, service-
+restart recovery, 390 × 844 layout, and clean console; in-app browser PASS for
+the 390 × 844 responsive/large-page check and follow-up operator/producer
+input-output, logout, expiry, and restart flows. Exact zoom, high contrast,
+screen reader, Remote Desktop, Firefox, macOS, and Linux browser runs are
+`NOT_RUN`.
 
 The exact follow-up samples and persisted-output cross-check are recorded in
 `reports/PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md`.

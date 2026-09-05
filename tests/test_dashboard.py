@@ -194,6 +194,7 @@ def test_dashboard_static_assets_headers_and_contract_boundary(
     assert all("Candidate pages" in script for script in scripts)
     assert all("Previous page" in script and "Next page" in script for script in scripts)
     assert all("candidate-dialog-title" in script for script in scripts)
+    assert all("DRAFT CREATED" in script for script in scripts)
     assert not any(
         unsafe in script
         for script in scripts

@@ -67,7 +67,7 @@ dependency.
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
 | Dashboard automation | 39 focused tests passed; Dashboard package reached 98.49% branch-aware coverage | Local host test; security, session, cursor pagination, asset, BFF, contract, and CLI boundary |
-| Dashboard browser interaction | Edge keyboard/focus and 129-record pagination paths passed; installed-wheel Edge read, 390 px responsive, 422 recovery, and clean-console checks passed | Windows local browser test; Chrome, exact zoom matrix, and assistive technology remain `NOT_RUN` |
+| Dashboard browser interaction | Edge and Chrome keyboard/focus, 129-record pagination, 390 px responsive, 422 recovery, and clean-console paths passed; installed-wheel Edge read passed | Windows local browser test; exact zoom matrix and assistive technology remain `NOT_RUN` |
 | Windows plugin controls | 18/18 clean-wheel controls passed with the fixed pure-Python fixture | Live local WSL2/Podman test; no general publisher or plugin trust claim |
 | Cross-platform CI | `verify.py`, `release_smoke.py`, and the generic Action smoke passed | [GitHub Actions run 33839976122](https://github.com/Carlos-0798/forgegate/actions/runs/33839976122); hosted CI did not run live Podman fixtures |
 | Hardware/device behavior | Not exercised by ForgeGate | Out of scope |
@@ -189,8 +189,8 @@ and reporting instructions are documented in [SECURITY.md](SECURITY.md).
   hostile-local-user defense, or remote-deployment approval.
 - The local Web Dashboard is a narrow Alpha surface. Evidence/decision/
   assurance/plugin/administration workflows are not implemented there, and
-  Chrome, the exact 100–200% zoom matrix, and assistive technologies remain
-  `NOT_RUN`. The Dashboard BFF has a separate generated and drift-checked
+  the exact 100–200% zoom matrix and assistive technologies remain `NOT_RUN`.
+  The Dashboard BFF has a separate generated and drift-checked
   OpenAPI contract without exposing interactive docs.
 - Sessions, authentication rate state, and trust-store distribution are not
   durable or distributed; time is caller/server supplied rather than trusted.
@@ -212,8 +212,8 @@ These constraints are product boundaries, not implied future results. See the
 
 The next maturity gates are:
 
-1. finish the remaining Chrome, exact-zoom, assistive-technology, and uncommon
-   browser-error checks for the implemented Dashboard slice;
+1. finish the remaining exact-zoom, assistive-technology, and uncommon browser-
+   error checks for the implemented Dashboard slice;
 2. freeze a public MSP430 report contract before adding an optional collector;
 3. establish publisher provenance and broader hostile-plugin compatibility;
 4. design TLS/proxy identity, durable security state, retention/export, and

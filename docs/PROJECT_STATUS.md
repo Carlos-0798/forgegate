@@ -356,9 +356,10 @@
   source/wheel inclusion checks, locked build dependencies, and CI drift gates;
 - separate deterministic Dashboard BFF OpenAPI export with explicit operation
   IDs, committed-byte drift detection, and installed-wheel comparison;
-- 39 focused Dashboard tests plus real Microsoft Edge keyboard/focus operation,
-  complete 129-record cursor pagination, browser-rendered 422 recovery, and an
-  in-app-browser 390 px responsive/clean-console run using generic local data;
+- 39 focused Dashboard tests plus real Microsoft Edge and Chrome keyboard/focus
+  operation, complete 129-record cursor pagination, browser-rendered 422
+  recovery, and Chrome/in-app-browser 390 px responsive/clean-console runs
+  using generic local data;
 - a retained generic-data Windows Dashboard screenshot with explicit Alpha,
   non-hardware, non-production claim boundaries and verified sdist inclusion.
 
@@ -375,7 +376,7 @@
 
 ## Not implemented
 
-full Dashboard Chrome/zoom/assistive-technology acceptance; non-loopback/TLS
+full Dashboard exact-zoom/assistive-technology acceptance; non-loopback/TLS
 API deployment, reverse-proxy trust, hostile-local-user
 defense, managed online revocation, durable/distributed sessions, per-client
 network rate controls, distributed rate state, HTTP artifact collection and
@@ -401,11 +402,12 @@ artifact payload/replay export, and hardware access.
 - branch-aware coverage: 95.20% across 9,565 statements and 2,634 branches
 - Dashboard focus: 39 passed; 98.49% branch-aware coverage across 557
   statements and 106 branches
-- Dashboard browser checkpoint: Microsoft Edge keyboard creation/read, modal
-  Tab containment/Escape/focus return, 129-record six-page traversal, and 422
-  recovery PASS; installed-wheel Edge read and in-app-browser 390 px
-  responsive/clean-console checks plus generic portfolio capture PASS; Chrome,
-  exact zoom, and assistive technology `NOT_RUN`
+- Dashboard browser checkpoint: Microsoft Edge and Chrome keyboard creation/
+  read, modal Tab containment/Escape/focus return, 129-record six-page
+  traversal, and 422 recovery PASS; Chrome service-restart recovery and 390 px
+  responsive/clean-console checks, installed-wheel Edge read, in-app-browser
+  390 px check, and generic portfolio capture PASS; exact zoom and assistive
+  technology `NOT_RUN`
 - Plugin execution contract focus: 8 passed across plan authority, protocol
   sequencing, legal transitions, terminal replay, resource limits, JSON
   loading, and content-derived identity; no process started

@@ -361,10 +361,11 @@ browser session, Dashboard route, or browser test.
 The automated boundary, Microsoft Edge keyboard and complete modal-focus path,
 129-record six-page cursor traversal, browser-rendered 422 recovery,
 in-app-browser 390 px layout check, clean-wheel asset/install smoke, and an
-installed-wheel Edge read path pass. Chrome, exact 100/125/150/175/200% zoom,
-assistive-technology runs, and uncommon browser-driven 409/413/429/500 states
-remain `NOT_RUN` or partial; Phase 24 therefore remains open rather than
-overstating full UI acceptance.
+installed-wheel Edge read path, and Chrome core/focus/large-data/422/restart/
+responsive runs pass. Exact 100/125/150/175/200% zoom, assistive-technology
+runs, and uncommon browser-driven 409/413/429/500 states remain `NOT_RUN` or
+partial; Phase 24 therefore remains open rather than overstating full UI
+acceptance.
 
 Evidence upload, policy execution, assurance export, plugin execution, session
 administration, and trust-store administration remain outside this slice.
