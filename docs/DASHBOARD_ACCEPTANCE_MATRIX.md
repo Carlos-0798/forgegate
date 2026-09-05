@@ -3,10 +3,11 @@
 ## Status
 
 This matrix defines the gate for the implemented narrow local Web Dashboard.
-The Phase 24 implementation and automated boundary are present, but the full
-manual cross-browser exit gate is not yet accepted. Design completion, unit
-coverage, clean packaging, Edge/Chrome execution, and the unexecuted exact-
-zoom/assistive-technology matrix remain separate evidence.
+The Phase 24 authenticated slice, Phase 25 optional live monitor, and Phase 26
+read-only assurance review are present, but the full manual UI exit gate is not
+yet accepted. Design completion, unit coverage, clean packaging, Edge/Chrome
+execution, and the unexecuted exact-zoom/assistive-technology matrix remain
+separate evidence.
 
 ## Phase 23 design gate
 
@@ -49,6 +50,8 @@ zoom/assistive-technology matrix remain separate evidence.
 | FGD-A25 | Bounded UI state | Maximum pages and repeated navigation do not create unbounded cache growth |
 | FGD-A26 | API drift | Dashboard contract generation/check fails when committed OpenAPI changes unexpectedly |
 | FGD-A27 | Existing product regression | `tools/verify.py` and `tools/release_smoke.py` remain PASS |
+| FGD-A28 | Candidate assurance review | One authorized query returns the exact candidate, transition history, evidence binding, policy material/evaluation, attestation, and portable identity without mutation |
+| FGD-A29 | Firmware fault presentation | Known UART v1 bits receive versioned labels; unknown bits remain visible without invented meaning |
 
 ## Phase 24 real-browser and manual Windows acceptance
 
@@ -89,6 +92,8 @@ as PASS, FAIL, or NOT_RUN; they are never inferred from Chromium automation.
 | FGD-A24–A25 | PASS | UI separates request/candidate/decision/hardware/limitations and uses bounded 25-row cursor pages; six-page forward traversal and one backward page produced no duplicate or unreachable row. |
 | FGD-A26 | PASS | A separate generated Dashboard BFF OpenAPI document has explicit operation IDs, committed-byte drift checks, and installed-wheel comparison. |
 | FGD-A27 | PASS | Full verification and clean release smoke pass at this checkpoint. |
+| FGD-A28 | PASS | The project-scoped assurance-review BFF joins persisted source documents without frontend recalculation; complete and missing-record paths pass automation and the committed OpenAPI drift check. |
+| FGD-A29 | PASS | `0x0015` renders the three exact UART v1 reports and an unknown-bit fixture renders `UNKNOWN_FAULT_BITS`; labels explicitly deny diagnostic meaning. |
 | FGD-M01 | PASS | Initial loading and unauthenticated activation frame rendered without a blank/unfinished state. |
 | FGD-M02 | PASS | Microsoft Edge keyboard-only path covered activation, project/candidate navigation, review, confirmation, detail, and audit. |
 | FGD-M03 | PASS | Edge kept Shift+Tab/Tab inside the dialog, Escape closed it, and visible focus returned to Create candidate; the dialog retained a semantic accessible name. |
@@ -112,6 +117,22 @@ screen reader, Remote Desktop, Firefox, macOS, and Linux browser runs are
 
 The exact follow-up samples and persisted-output cross-check are recorded in
 `reports/PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md`.
+
+## 2026-09-05 Phase 25/26 follow-up
+
+| Scope | Result | Actual observation / boundary |
+|---|---|---|
+| Physical unplug/replug | BOUNDED PASS | The owner performed one physical cycle while the page remained open and observed the live transition. The independent post-reconnect window advanced sequence 138→149 and valid frames 3,028→3,039 while reconnects remained 1. No automated transition timestamp or electrical measurement is claimed. |
+| Live decoded reports | PASS | The connected COM4 page displayed `FAULT 0015` as `DS18B20_MISSING`, `NTC_RANGE`, and `INA219_COMM`; ForgeGate sent zero serial bytes and made no diagnosis. |
+| Evidence review | PASS | A generic persisted PASS fixture rendered its binding, assembly, evidence value, trust, verification level, and artifact hash. |
+| Decision review | PASS | The same fixture rendered expected `0`, actual `0`, evidence ID, reason code, explanation, exact policy material, and PASS aggregation. |
+| Assurance review | PASS | The same fixture rendered its unsigned-local attestation, bundle identity, transition chain, source-byte state, verification scope, and limitations. |
+| Portfolio retention | PASS | Four new JPEG captures have committed dimensions and SHA-256 values in machine-readable evidence records; no personal data or secret is present. |
+
+The detailed records are
+`reports/MSP430_MANUAL_UNPLUG_REPLUG_EVIDENCE_2026-09-05.json`,
+`reports/DASHBOARD_ASSURANCE_REVIEW_EVIDENCE_2026-09-05.json`, and
+`reports/PHASE_26_DASHBOARD_ASSURANCE_REVIEW_ACCEPTANCE_REPORT.md`.
 
 ## Test layers
 

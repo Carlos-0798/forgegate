@@ -1,0 +1,88 @@
+{
+  "record_format": "forgegate-msp430-manual-unplug-replug-evidence-v1",
+  "environment": {
+    "platform": "Windows",
+    "service_origin": "http://127.0.0.1:8131",
+    "endpoint": "COM4",
+    "protocol": "msp430.uart.v1",
+    "baud_rate": 115200,
+    "access_mode": "READ_ONLY",
+    "evidence_level": "OWNER_ASSISTED_LOCAL_BROWSER_TEST"
+  },
+  "physical_action": {
+    "performed_by": "project owner",
+    "action": "one USB unplug and reconnect while the Devices page remained open",
+    "owner_observed_live_transition": true,
+    "automated_transition_timestamp_available": false
+  },
+  "post_reconnect_window": {
+    "duration_seconds": 10.5,
+    "connection": "CONNECTED",
+    "heartbeat": "NORMAL",
+    "device_health": "FAULT",
+    "fault_flags": "0015",
+    "sequence_start": 138,
+    "sequence_end": 149,
+    "valid_frames_start": 3028,
+    "valid_frames_end": 3039,
+    "protocol_errors_start": 1,
+    "protocol_errors_end": 1,
+    "sequence_gaps_start": 1,
+    "sequence_gaps_end": 1,
+    "reconnects_start": 1,
+    "reconnects_end": 1,
+    "result": "PASS"
+  },
+  "decoded_fault_follow_up": {
+    "observed_at": "2026-09-05T21:08:28Z",
+    "connection": "CONNECTED",
+    "heartbeat": "NORMAL",
+    "fault_flags": "0015",
+    "reported_issues": [
+      {
+        "mask": "0x0001",
+        "code": "DS18B20_MISSING",
+        "label": "DS18B20 sensor not detected"
+      },
+      {
+        "mask": "0x0004",
+        "code": "NTC_RANGE",
+        "label": "NTC input unavailable or outside its valid range"
+      },
+      {
+        "mask": "0x0010",
+        "code": "INA219_COMM",
+        "label": "INA219 communication unavailable"
+      }
+    ],
+    "stability_check": {
+      "sequence_start": 1439,
+      "sequence_end": 1456,
+      "valid_frames_start": 24,
+      "valid_frames_end": 41,
+      "protocol_errors_start": 0,
+      "protocol_errors_end": 0,
+      "sequence_gaps_start": 0,
+      "sequence_gaps_end": 0,
+      "reconnects_start": 0,
+      "reconnects_end": 0
+    },
+    "screenshot": {
+      "path": "docs/assets/forgegate-dashboard-msp430-decoded-faults.jpg",
+      "media_type": "image/jpeg",
+      "bytes": 111404,
+      "sha256": "57412ba3f267db345a4dcb1bf070dde50717906d4b3a1e358bada709c664fb07",
+      "width": 1025,
+      "height": 1198
+    }
+  },
+  "boundaries": {
+    "bytes_transmitted_to_device": 0,
+    "firmware_changed": false,
+    "device_configuration_changed": false,
+    "sensor_measurement_validated": false,
+    "long_duration_stability_proven": false,
+    "release_evidence_created": false,
+    "device_report_is_forgegate_diagnosis": false
+  }
+}

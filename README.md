@@ -24,8 +24,8 @@ The current checkpoint demonstrates:
 - content-addressed attestations and portable assurance bundles;
 - an Ed25519-authenticated, project-authorized, loopback-only REST API;
 - a same-origin local Dashboard for activation, status, project discovery,
-  candidate creation, audit inspection, and optional live device status without
-  browser-held signing keys;
+  candidate creation, audit inspection, read-only evidence/decision/assurance
+  review, and optional live device status without browser-held signing keys;
 - offline GitHub Actions gating without GitHub API write permissions; and
 - rootless Podman/WSL2 isolation for the exact Windows plugin runs that passed
   the retained hostile-fixture checks.
@@ -52,11 +52,16 @@ flowchart LR
     J["Windows Podman/WSL2 broker<br/>Validated low-trust output"]
     M["Optional MSP430 UART v1 monitor<br/>Read-only live status"]
     W["Dashboard Devices page<br/>Connection · heartbeat · device health"]
+    X["Dashboard assurance review<br/>Evidence · rules · attestation"]
 
     A --> B --> C --> D --> E --> F --> G
     H --> F
     I --> J --> B
     M --> W
+    C --> X
+    D --> X
+    E --> X
+    F --> X
 ```
 
 The core stays domain-neutral. Analog Validation Studio integration consumes a
@@ -69,13 +74,13 @@ MSP430 release-evidence collection remains planned and separate.
 
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 840 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
-| Branch-aware coverage | 95.32% across 9,906 statements and 2,708 branches | Local host test |
+| Full Python suite | 843 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
+| Branch-aware coverage | 95.33% across 9,958 statements and 2,714 branches | Local host test |
 | Static quality | Ruff, formatting, and strict mypy passed across 90 source/tool files | Local host test |
 | Contracts | 41 document and 2 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
-| Dashboard automation | 41 focused tests passed; Dashboard package reached 98.49% branch-aware coverage | Local host test; security, session, cursor pagination, fault-presentation harness, asset/evidence integrity, BFF, contract, and CLI boundary |
+| Dashboard automation | 45 focused tests passed; Dashboard package reached 98.31% branch-aware coverage | Local host test; security, session, cursor pagination, fault-presentation harness, assurance-review and asset/evidence integrity, BFF, contract, and CLI boundary |
 | Dashboard browser interaction | Edge and Chrome keyboard/focus, 129-record pagination, 390 px responsive, 409/413/422/429/500 recovery, and clean-console paths passed; installed-wheel Edge read passed | Windows local browser test; 409/413/429/500 use a test-only presentation harness; exact zoom matrix and assistive technology remain `NOT_RUN` |
 | MSP430 live status | COM4 opened input-only at 115200 8-N-1; authenticated Devices page showed `CONNECTED`, heartbeat `NORMAL`, device `FAULT`, flags `0015`; sequence advanced 58007→58017 over 10 seconds with 10 accepted frames and no sequence gap | Owner-authorized Windows physical-device observation; one earlier invalid frame was rejected, no command or firmware/debug action, measurement validation, release evidence, or long-duration stability claim |
 | Windows plugin controls | 18/18 clean-wheel controls passed with the fixed pure-Python fixture | Live local WSL2/Podman test; no general publisher or plugin trust claim |
@@ -161,10 +166,12 @@ an owner-managed trust store and an initialized project database:
 
 The browser receives an opaque HttpOnly cookie, never the raw API Bearer token
 or private signing key. The implemented pages cover activation, Overview,
-Devices, Projects, and candidate list/create/detail/audit. Evidence upload, policy
-execution, assurance export, plugin execution, and administration remain
-visibly planned. Swagger UI and ReDoc stay disabled; the committed,
-drift-checked OpenAPI document remains the direct API reference.
+Devices, Projects, candidate list/create/detail/audit, and read-only Evidence,
+Decision, and Assurance review for one selected candidate. Evidence upload,
+collection, policy execution, assurance export, plugin execution, and
+administration remain CLI/API work or visibly planned. Swagger UI and ReDoc
+stay disabled; the committed, drift-checked OpenAPI document remains the direct
+API reference.
 
 MSP430 monitoring is an optional dependency and must be enabled explicitly. The
 monitor enumerates and opens only the selected application UART, sets DTR/RTS
@@ -182,9 +189,12 @@ the serial write path:
 The Devices page refreshes every second and separates serial connection,
 heartbeat freshness, and the firmware-reported device state. `FAULT 0015` can
 therefore coexist with a healthy connection and heartbeat; it is not presented
-as a ForgeGate release failure.
+as a ForgeGate release failure. The versioned UART adapter decodes `0015` as
+DS18B20 missing, NTC unavailable/out of range, and INA219 communication
+unavailable while labeling those values as firmware reports rather than
+ForgeGate diagnoses.
 
-![ForgeGate Devices page showing a connected MSP430, normal UART heartbeat, and independently reported device fault](docs/assets/forgegate-dashboard-msp430-live-status.png)
+![ForgeGate Devices page showing a connected MSP430, normal UART heartbeat, and decoded firmware-reported fault flags](docs/assets/forgegate-dashboard-msp430-decoded-faults.jpg)
 
 This real Windows browser capture records the owner-authorized, input-only COM4
 observation described in the
@@ -192,6 +202,15 @@ observation described in the
 It demonstrates live transport and presentation only—not sensor accuracy,
 firmware correctness, release evidence, hardware control, or production
 readiness.
+
+![ForgeGate Dashboard tracing a PASS decision to retained policy material, expected and actual rule values, and evidence IDs](docs/assets/forgegate-dashboard-decision-review.jpg)
+
+![ForgeGate Dashboard showing the retained attestation, portable bundle identity, transition chain, and explicit claim limits](docs/assets/forgegate-dashboard-assurance-review.jpg)
+
+These generic-fixture captures demonstrate the implemented read-only
+evidence-to-decision-to-attestation review path. Their exact values, dimensions,
+hashes, and claim boundaries are retained in the
+[Phase 26 browser evidence](reports/DASHBOARD_ASSURANCE_REVIEW_EVIDENCE_2026-09-05.json).
 
 ![ForgeGate local Dashboard showing service health, authenticated authority, and explicit evidence limitations](docs/assets/forgegate-dashboard-overview.jpg)
 
@@ -231,9 +250,10 @@ and reporting instructions are documented in [SECURITY.md](SECURITY.md).
 
 - The authenticated API is loopback-only and has no TLS, reverse-proxy trust,
   hostile-local-user defense, or remote-deployment approval.
-- The local Web Dashboard is a narrow Alpha surface. Evidence/decision/
-  assurance/plugin/administration workflows are not implemented there, and
-  the exact 100–200% zoom matrix and assistive technologies remain `NOT_RUN`.
+- The local Web Dashboard is a narrow Alpha surface. Evidence, decision, and
+  assurance are read-only review views; collection, policy execution, export,
+  plugin, and administration workflows are not implemented there, and the
+  exact 100–200% zoom matrix and assistive technologies remain `NOT_RUN`.
   The Dashboard BFF has a separate generated and drift-checked
   OpenAPI contract without exposing interactive docs.
 - Sessions, authentication rate state, and trust-store distribution are not
@@ -259,12 +279,14 @@ The next maturity gates are:
 
 1. finish the remaining exact-zoom, assistive-technology, and uncommon browser-
    error checks for the implemented Dashboard slice;
-2. freeze a public MSP430 report contract before adding an optional evidence
+2. add reviewed Dashboard actions only after their authorization, idempotency,
+   stale-revision, and recovery contracts are frozen;
+3. freeze a public MSP430 report contract before adding an optional evidence
    collector; the separate UART v1 live-status monitor is already implemented;
-3. establish publisher provenance and broader hostile-plugin compatibility;
-4. design TLS/proxy identity, durable security state, retention/export, and
+4. establish publisher provenance and broader hostile-plugin compatibility;
+5. design TLS/proxy identity, durable security state, retention/export, and
    managed key lifecycle before considering non-loopback deployment; and
-5. consider GitHub Checks, signed CI provenance, OIDC, and artifact publication
+6. consider GitHub Checks, signed CI provenance, OIDC, and artifact publication
    only as separately authorized integrations.
 
 Completed acceptance-level work and remaining tasks are tracked in

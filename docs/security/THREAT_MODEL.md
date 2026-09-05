@@ -432,7 +432,7 @@ retains plugin evidence as `unsigned_local`/`declared`.
 | Optional hardware support becomes a core dependency | `pyserial` is an explicit optional extra, imported lazily only when the monitor is enabled; the default provider returns no sources and generic workflows remain unchanged |
 | Serial errors leak host details | The API returns only bounded stable status codes/messages and the selected endpoint; exception text, device serial identifiers, and OS paths are not returned |
 | A local page exposes device status without authorization | `/app/api/live-status` uses the existing authenticated Dashboard session and same-origin BFF boundary |
-| A short observation is overstated as hardware validation | Documentation retains input-only status, physical unplug/replug `NOT_RUN`, no measurement validation, no producer authenticity, and no long-duration or production claim |
+| A short observation is overstated as hardware validation | Documentation retains input-only status, labels the owner-assisted unplug/replug as a bounded observation, and makes no measurement-validation, producer-authenticity, long-duration, or production claim |
 
 ## Deferred risks
 

@@ -1,6 +1,16 @@
 {
   "components": {
     "schemas": {
+      "Aggregation": {
+        "enum": [
+          "value",
+          "count",
+          "all",
+          "any"
+        ],
+        "title": "Aggregation",
+        "type": "string"
+      },
       "ApiAuthChallenge": {
         "additionalProperties": false,
         "properties": {
@@ -124,6 +134,41 @@
           "signature_base64"
         ],
         "title": "ApiSessionCreateRequest",
+        "type": "object"
+      },
+      "ArtifactReference": {
+        "additionalProperties": false,
+        "properties": {
+          "media_type": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Media Type",
+            "type": "string"
+          },
+          "path_or_uri": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Path Or Uri",
+            "type": "string"
+          },
+          "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Sha256",
+            "type": "string"
+          },
+          "size_bytes": {
+            "minimum": 0.0,
+            "title": "Size Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path_or_uri",
+          "media_type",
+          "sha256",
+          "size_bytes"
+        ],
+        "title": "ArtifactReference",
         "type": "object"
       },
       "AuditActor": {
@@ -383,6 +428,53 @@
           }
         ]
       },
+      "CandidateEvidenceBinding": {
+        "additionalProperties": false,
+        "properties": {
+          "assembly": {
+            "$ref": "#/components/schemas/EvidenceBundleAssembly"
+          },
+          "assembly_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Assembly Fingerprint",
+            "type": "string"
+          },
+          "binding_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Binding Id",
+            "type": "string"
+          },
+          "bound_at": {
+            "format": "date-time",
+            "title": "Bound At",
+            "type": "string"
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/CandidateDocument"
+          },
+          "candidate_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Candidate Fingerprint",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.candidate-evidence-binding.v1",
+            "default": "forgegate.candidate-evidence-binding.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "binding_id",
+          "bound_at",
+          "candidate",
+          "candidate_fingerprint",
+          "assembly",
+          "assembly_fingerprint"
+        ],
+        "title": "CandidateEvidenceBinding",
+        "type": "object"
+      },
       "CandidateStatus": {
         "enum": [
           "DRAFT",
@@ -396,6 +488,192 @@
         ],
         "title": "CandidateStatus",
         "type": "string"
+      },
+      "CandidateTransition": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_id": {
+            "pattern": "^cand-[0-9a-f]{24}$",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "evaluation_id": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluation Id"
+          },
+          "from_revision": {
+            "minimum": 0.0,
+            "title": "From Revision",
+            "type": "integer"
+          },
+          "from_status": {
+            "$ref": "#/components/schemas/CandidateStatus"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "prior_candidate_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Prior Candidate Fingerprint",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "result_candidate_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Result Candidate Fingerprint",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.candidate-transition.v1",
+            "default": "forgegate.candidate-transition.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "to_revision": {
+            "minimum": 1.0,
+            "title": "To Revision",
+            "type": "integer"
+          },
+          "to_status": {
+            "$ref": "#/components/schemas/CandidateStatus"
+          },
+          "transition_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Transition Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "transition_id",
+          "candidate_id",
+          "from_status",
+          "to_status",
+          "from_revision",
+          "to_revision",
+          "prior_candidate_fingerprint",
+          "result_candidate_fingerprint",
+          "occurred_at"
+        ],
+        "title": "CandidateTransition",
+        "type": "object"
+      },
+      "CollectionIssue": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "pattern": "^[A-Z][A-Z0-9_]{2,127}$",
+            "title": "Code",
+            "type": "string"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "maxLength": 512,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "message": {
+            "maxLength": 1024,
+            "minLength": 1,
+            "title": "Message",
+            "type": "string"
+          },
+          "severity": {
+            "$ref": "#/components/schemas/IssueSeverity"
+          }
+        },
+        "required": [
+          "code",
+          "severity",
+          "message"
+        ],
+        "title": "CollectionIssue",
+        "type": "object"
+      },
+      "CollectionReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "artifacts": {
+            "items": {
+              "$ref": "#/components/schemas/ArtifactReference"
+            },
+            "minItems": 1,
+            "title": "Artifacts",
+            "type": "array"
+          },
+          "collector_name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Collector Name",
+            "type": "string"
+          },
+          "collector_version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Collector Version",
+            "type": "string"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "result_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Result Fingerprint",
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/components/schemas/ArtifactReference"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/CollectionIssue"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "source",
+          "collector_name",
+          "collector_version",
+          "result_fingerprint",
+          "artifacts",
+          "evidence_ids"
+        ],
+        "title": "CollectionReceipt",
+        "type": "object"
       },
       "CollectorConfig": {
         "additionalProperties": false,
@@ -550,6 +828,145 @@
           "expires_at"
         ],
         "title": "DashboardActivationStatus",
+        "type": "object"
+      },
+      "DashboardCandidateAssuranceReview": {
+        "additionalProperties": false,
+        "properties": {
+          "assurance": {
+            "anyOf": [
+              {
+                "const": "unsigned_local",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assurance"
+          },
+          "assurance_bundle_id": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assurance Bundle Id"
+          },
+          "attestation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReleaseAttestation"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/CandidateDocument"
+          },
+          "evidence_binding": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CandidateEvidenceBinding"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "evidence_binding_required": {
+            "title": "Evidence Binding Required",
+            "type": "boolean"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Limitations",
+            "type": "array"
+          },
+          "policy_evaluation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyEvaluationDocument"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "policy_material": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyMaterial"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "policy_material_required": {
+            "title": "Policy Material Required",
+            "type": "boolean"
+          },
+          "schema_version": {
+            "const": "forgegate.dashboard-candidate-assurance-review.v1",
+            "default": "forgegate.dashboard-candidate-assurance-review.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_artifact_bytes": {
+            "anyOf": [
+              {
+                "const": "not_embedded",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Artifact Bytes"
+          },
+          "transitions": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateTransition"
+            },
+            "title": "Transitions",
+            "type": "array"
+          },
+          "verification_scope": {
+            "anyOf": [
+              {
+                "const": "retained_documents_and_embedded_policy_bytes",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verification Scope"
+          }
+        },
+        "required": [
+          "candidate",
+          "transitions",
+          "evidence_binding_required",
+          "evidence_binding",
+          "policy_material_required",
+          "policy_material",
+          "policy_evaluation",
+          "attestation",
+          "limitations"
+        ],
+        "title": "DashboardCandidateAssuranceReview",
         "type": "object"
       },
       "DashboardLogoutResponse": {
@@ -736,6 +1153,296 @@
         "title": "DashboardSessionResponse",
         "type": "object"
       },
+      "Decision": {
+        "enum": [
+          "PASS",
+          "FAIL",
+          "REVIEW",
+          "ERROR"
+        ],
+        "title": "Decision",
+        "type": "string"
+      },
+      "EvidenceBundle": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_commit": {
+            "pattern": "^[0-9a-fA-F]{7,64}$",
+            "title": "Candidate Commit",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRecord"
+            },
+            "minItems": 1,
+            "title": "Evidence",
+            "type": "array"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "producer": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Producer",
+            "type": "string"
+          },
+          "producer_version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Producer Version",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.evidence-bundle.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "producer",
+          "producer_version",
+          "candidate_commit",
+          "generated_at",
+          "evidence"
+        ],
+        "title": "EvidenceBundle",
+        "type": "object"
+      },
+      "EvidenceBundleAssembly": {
+        "additionalProperties": false,
+        "properties": {
+          "assembly_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Assembly Id",
+            "type": "string"
+          },
+          "bundle": {
+            "$ref": "#/components/schemas/EvidenceBundle"
+          },
+          "collections": {
+            "items": {
+              "$ref": "#/components/schemas/CollectionReceipt"
+            },
+            "minItems": 1,
+            "title": "Collections",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "forgegate.evidence-bundle-assembly.v1",
+            "default": "forgegate.evidence-bundle-assembly.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "warning_disposition": {
+            "enum": [
+              "none",
+              "retained"
+            ],
+            "title": "Warning Disposition",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assembly_id",
+          "warning_disposition",
+          "bundle",
+          "collections"
+        ],
+        "title": "EvidenceBundleAssembly",
+        "type": "object"
+      },
+      "EvidenceRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact": {
+            "$ref": "#/components/schemas/ArtifactReference"
+          },
+          "collected_at": {
+            "format": "date-time",
+            "title": "Collected At",
+            "type": "string"
+          },
+          "evidence_id": {
+            "pattern": "^[a-z][a-z0-9._-]{1,127}$",
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "execution_context": {
+            "$ref": "#/components/schemas/ExecutionContext"
+          },
+          "kind": {
+            "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z0-9_-]+)+$",
+            "title": "Kind",
+            "type": "string"
+          },
+          "scope": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Scope",
+            "type": "string"
+          },
+          "source_tool": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Source Tool",
+            "type": "string"
+          },
+          "source_version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Source Version",
+            "type": "string"
+          },
+          "status": {
+            "maxLength": 64,
+            "minLength": 1,
+            "title": "Status",
+            "type": "string"
+          },
+          "tags": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "object"
+          },
+          "trust": {
+            "$ref": "#/components/schemas/EvidenceTrust"
+          },
+          "unit": {
+            "anyOf": [
+              {
+                "maxLength": 64,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit"
+          },
+          "value": {
+            "title": "Value"
+          },
+          "verification_level": {
+            "$ref": "#/components/schemas/VerificationLevel"
+          }
+        },
+        "required": [
+          "evidence_id",
+          "kind",
+          "scope",
+          "value",
+          "status",
+          "source_tool",
+          "source_version",
+          "execution_context",
+          "artifact",
+          "collected_at",
+          "trust",
+          "verification_level"
+        ],
+        "title": "EvidenceRecord",
+        "type": "object"
+      },
+      "EvidenceTrust": {
+        "description": "How strongly ForgeGate can trust the producer identity.",
+        "enum": [
+          "unsigned_local",
+          "claimed_ci_metadata",
+          "verified_ci_identity",
+          "signed_attestation"
+        ],
+        "title": "EvidenceTrust",
+        "type": "string"
+      },
+      "ExecutionContext": {
+        "additionalProperties": false,
+        "properties": {
+          "architecture": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Architecture"
+          },
+          "ci_provider": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci Provider"
+          },
+          "ci_run_id": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ci Run Id"
+          },
+          "commit_sha": {
+            "pattern": "^[0-9a-fA-F]{7,64}$",
+            "title": "Commit Sha",
+            "type": "string"
+          },
+          "operating_system": {
+            "anyOf": [
+              {
+                "maxLength": 120,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operating System"
+          },
+          "runtime": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runtime"
+          },
+          "tags": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "object"
+          }
+        },
+        "required": [
+          "commit_sha"
+        ],
+        "title": "ExecutionContext",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -756,6 +1463,42 @@
         ],
         "title": "IdentityRole",
         "type": "string"
+      },
+      "IssueSeverity": {
+        "enum": [
+          "WARNING",
+          "REJECTION"
+        ],
+        "title": "IssueSeverity",
+        "type": "string"
+      },
+      "LiveReportedIssue": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "pattern": "^[A-Z][A-Z0-9_]{2,63}$",
+            "title": "Code",
+            "type": "string"
+          },
+          "label": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "mask": {
+            "pattern": "^0x[0-9A-F]{4}$",
+            "title": "Mask",
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "label",
+          "mask"
+        ],
+        "title": "LiveReportedIssue",
+        "type": "object"
       },
       "LiveSourceStatus": {
         "additionalProperties": false,
@@ -917,6 +1660,15 @@
             "title": "Reconnects",
             "type": "integer"
           },
+          "reported_issues": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/LiveReportedIssue"
+            },
+            "maxItems": 32,
+            "title": "Reported Issues",
+            "type": "array"
+          },
           "sequence": {
             "anyOf": [
               {
@@ -1025,6 +1777,20 @@
         "title": "LiveStatusPage",
         "type": "object"
       },
+      "Operator": {
+        "enum": [
+          "equals",
+          "not_equals",
+          "greater_than",
+          "greater_than_or_equal",
+          "less_than",
+          "less_than_or_equal",
+          "contains",
+          "exists"
+        ],
+        "title": "Operator",
+        "type": "string"
+      },
       "OutputConfig": {
         "additionalProperties": false,
         "properties": {
@@ -1046,6 +1812,367 @@
           "markdown"
         ],
         "title": "OutputConfig",
+        "type": "object"
+      },
+      "PolicyConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Name",
+            "type": "string"
+          },
+          "rules": {
+            "items": {
+              "$ref": "#/components/schemas/PolicyRule"
+            },
+            "minItems": 1,
+            "title": "Rules",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "forgegate.policy.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "name",
+          "rules"
+        ],
+        "title": "PolicyConfig",
+        "type": "object"
+      },
+      "PolicyEvaluation": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_commit": {
+            "pattern": "^[0-9a-fA-F]{7,64}$",
+            "title": "Candidate Commit",
+            "type": "string"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/Decision"
+          },
+          "evaluated_at": {
+            "format": "date-time",
+            "title": "Evaluated At",
+            "type": "string"
+          },
+          "evaluated_evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evaluated Evidence Ids",
+            "type": "array"
+          },
+          "evaluation_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Evaluation Id",
+            "type": "string"
+          },
+          "evidence_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Evidence Fingerprint",
+            "type": "string"
+          },
+          "policy_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Policy Fingerprint",
+            "type": "string"
+          },
+          "policy_name": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Policy Name",
+            "type": "string"
+          },
+          "rule_results": {
+            "items": {
+              "$ref": "#/components/schemas/RuleEvaluation"
+            },
+            "minItems": 1,
+            "title": "Rule Results",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "forgegate.policy-evaluation.v1",
+            "default": "forgegate.policy-evaluation.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "evaluation_id",
+          "policy_name",
+          "policy_fingerprint",
+          "evidence_fingerprint",
+          "candidate_commit",
+          "evaluated_at",
+          "decision",
+          "rule_results",
+          "evaluated_evidence_ids"
+        ],
+        "title": "PolicyEvaluation",
+        "type": "object"
+      },
+      "PolicyEvaluationDocument": {
+        "discriminator": {
+          "mapping": {
+            "forgegate.policy-evaluation.v1": "#/components/schemas/PolicyEvaluation",
+            "forgegate.policy-evaluation.v2": "#/components/schemas/ProfileAuthorizedPolicyEvaluation"
+          },
+          "propertyName": "schema_version"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/PolicyEvaluation"
+          },
+          {
+            "$ref": "#/components/schemas/ProfileAuthorizedPolicyEvaluation"
+          }
+        ]
+      },
+      "PolicyMaterial": {
+        "additionalProperties": false,
+        "description": "Exact policy bytes authorized by one immutable project profile.",
+        "properties": {
+          "artifact": {
+            "$ref": "#/components/schemas/ArtifactReference"
+          },
+          "content_base64": {
+            "maxLength": 1398104,
+            "minLength": 4,
+            "title": "Content Base64",
+            "type": "string"
+          },
+          "material_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Material Id",
+            "type": "string"
+          },
+          "policy": {
+            "$ref": "#/components/schemas/PolicyConfig"
+          },
+          "policy_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Policy Fingerprint",
+            "type": "string"
+          },
+          "project_id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "project_profile_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Project Profile Id",
+            "type": "string"
+          },
+          "project_profile_version": {
+            "minimum": 1.0,
+            "title": "Project Profile Version",
+            "type": "integer"
+          },
+          "release_track": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Release Track",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.policy-material.v1",
+            "default": "forgegate.policy-material.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "material_id",
+          "project_id",
+          "project_profile_id",
+          "project_profile_version",
+          "release_track",
+          "artifact",
+          "content_base64",
+          "policy",
+          "policy_fingerprint"
+        ],
+        "title": "PolicyMaterial",
+        "type": "object"
+      },
+      "PolicyRule": {
+        "additionalProperties": false,
+        "properties": {
+          "aggregation": {
+            "$ref": "#/components/schemas/Aggregation",
+            "default": "value"
+          },
+          "claim": {
+            "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z0-9_-]+)+$",
+            "title": "Claim",
+            "type": "string"
+          },
+          "evidence_kind": {
+            "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z0-9_-]+)+$",
+            "title": "Evidence Kind",
+            "type": "string"
+          },
+          "expected": {
+            "title": "Expected"
+          },
+          "id": {
+            "pattern": "^[a-z][a-z0-9._-]{1,127}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "mandatory": {
+            "default": true,
+            "title": "Mandatory",
+            "type": "boolean"
+          },
+          "maximum_age_seconds": {
+            "anyOf": [
+              {
+                "maximum": 315576000.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maximum Age Seconds"
+          },
+          "minimum_trust": {
+            "$ref": "#/components/schemas/EvidenceTrust",
+            "default": "unsigned_local"
+          },
+          "minimum_verification": {
+            "$ref": "#/components/schemas/VerificationLevel",
+            "default": "declared"
+          },
+          "on_missing": {
+            "$ref": "#/components/schemas/Decision",
+            "default": "REVIEW"
+          },
+          "operator": {
+            "$ref": "#/components/schemas/Operator"
+          },
+          "require_presence": {
+            "default": true,
+            "title": "Require Presence",
+            "type": "boolean"
+          },
+          "where": {
+            "additionalProperties": true,
+            "title": "Where",
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "claim",
+          "evidence_kind",
+          "operator",
+          "expected"
+        ],
+        "title": "PolicyRule",
+        "type": "object"
+      },
+      "ProfileAuthorizedPolicyEvaluation": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_commit": {
+            "pattern": "^[0-9a-fA-F]{7,64}$",
+            "title": "Candidate Commit",
+            "type": "string"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/Decision"
+          },
+          "evaluated_at": {
+            "format": "date-time",
+            "title": "Evaluated At",
+            "type": "string"
+          },
+          "evaluated_evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evaluated Evidence Ids",
+            "type": "array"
+          },
+          "evaluation_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Evaluation Id",
+            "type": "string"
+          },
+          "evidence_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Evidence Fingerprint",
+            "type": "string"
+          },
+          "policy_artifact_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Policy Artifact Sha256",
+            "type": "string"
+          },
+          "policy_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Policy Fingerprint",
+            "type": "string"
+          },
+          "policy_material_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Policy Material Id",
+            "type": "string"
+          },
+          "policy_name": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Policy Name",
+            "type": "string"
+          },
+          "project_profile_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Project Profile Id",
+            "type": "string"
+          },
+          "project_profile_version": {
+            "minimum": 1.0,
+            "title": "Project Profile Version",
+            "type": "integer"
+          },
+          "rule_results": {
+            "items": {
+              "$ref": "#/components/schemas/RuleEvaluation"
+            },
+            "minItems": 1,
+            "title": "Rule Results",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "forgegate.policy-evaluation.v2",
+            "default": "forgegate.policy-evaluation.v2",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "evaluation_id",
+          "policy_name",
+          "policy_fingerprint",
+          "evidence_fingerprint",
+          "candidate_commit",
+          "evaluated_at",
+          "decision",
+          "rule_results",
+          "evaluated_evidence_ids",
+          "policy_material_id",
+          "policy_artifact_sha256",
+          "project_profile_id",
+          "project_profile_version"
+        ],
+        "title": "ProfileAuthorizedPolicyEvaluation",
         "type": "object"
       },
       "ProfileBoundReleaseCandidate": {
@@ -1335,6 +2462,100 @@
         "title": "RegisteredProjectPage",
         "type": "object"
       },
+      "ReleaseAttestation": {
+        "additionalProperties": false,
+        "properties": {
+          "assurance": {
+            "const": "unsigned_local",
+            "default": "unsigned_local",
+            "title": "Assurance",
+            "type": "string"
+          },
+          "attestation_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Attestation Id",
+            "type": "string"
+          },
+          "candidate": {
+            "$ref": "#/components/schemas/CandidateDocument"
+          },
+          "candidate_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Candidate Fingerprint",
+            "type": "string"
+          },
+          "evaluation_fingerprint": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluation Fingerprint"
+          },
+          "generator": {
+            "const": "forgegate",
+            "default": "forgegate",
+            "title": "Generator",
+            "type": "string"
+          },
+          "generator_version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Generator Version",
+            "type": "string"
+          },
+          "issued_at": {
+            "format": "date-time",
+            "title": "Issued At",
+            "type": "string"
+          },
+          "policy_evaluation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyEvaluationDocument"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "schema_version": {
+            "const": "forgegate.release-attestation.v1",
+            "default": "forgegate.release-attestation.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "transition_chain_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Transition Chain Fingerprint",
+            "type": "string"
+          },
+          "transitions": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateTransition"
+            },
+            "maxItems": 4,
+            "minItems": 4,
+            "title": "Transitions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "attestation_id",
+          "generator_version",
+          "issued_at",
+          "candidate",
+          "candidate_fingerprint",
+          "transitions",
+          "transition_chain_fingerprint"
+        ],
+        "title": "ReleaseAttestation",
+        "type": "object"
+      },
       "ReleaseCandidate": {
         "additionalProperties": false,
         "properties": {
@@ -1498,6 +2719,91 @@
         "title": "ReleaseTrack",
         "type": "object"
       },
+      "RuleEvaluation": {
+        "additionalProperties": false,
+        "properties": {
+          "actual": {
+            "title": "Actual"
+          },
+          "aggregation": {
+            "$ref": "#/components/schemas/Aggregation"
+          },
+          "claim": {
+            "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z0-9_-]+)+$",
+            "title": "Claim",
+            "type": "string"
+          },
+          "decision": {
+            "$ref": "#/components/schemas/Decision"
+          },
+          "evidence_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "evidence_kind": {
+            "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z0-9_-]+)+$",
+            "title": "Evidence Kind",
+            "type": "string"
+          },
+          "expected": {
+            "title": "Expected"
+          },
+          "explanation": {
+            "maxLength": 2048,
+            "minLength": 1,
+            "title": "Explanation",
+            "type": "string"
+          },
+          "mandatory": {
+            "title": "Mandatory",
+            "type": "boolean"
+          },
+          "operator": {
+            "$ref": "#/components/schemas/Operator"
+          },
+          "reason_code": {
+            "pattern": "^[A-Z][A-Z0-9_]{1,127}$",
+            "title": "Reason Code",
+            "type": "string"
+          },
+          "remediation_hint": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Remediation Hint"
+          },
+          "rule_id": {
+            "pattern": "^[a-z][a-z0-9._-]{1,127}$",
+            "title": "Rule Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rule_id",
+          "claim",
+          "decision",
+          "mandatory",
+          "evidence_kind",
+          "aggregation",
+          "operator",
+          "expected",
+          "actual",
+          "evidence_ids",
+          "reason_code",
+          "explanation"
+        ],
+        "title": "RuleEvaluation",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -1537,6 +2843,21 @@
         ],
         "title": "ValidationError",
         "type": "object"
+      },
+      "VerificationLevel": {
+        "description": "What kind of engineering observation the evidence represents.",
+        "enum": [
+          "declared",
+          "simulated",
+          "replayed",
+          "host_tested",
+          "target_built",
+          "ci_validated",
+          "system_observed",
+          "physically_verified"
+        ],
+        "title": "VerificationLevel",
+        "type": "string"
       }
     }
   },
@@ -1864,6 +3185,45 @@
           }
         },
         "summary": "Get Dashboard Candidate"
+      }
+    },
+    "/app/api/candidates/{candidate_id}/assurance-review": {
+      "get": {
+        "operationId": "getDashboardCandidateAssuranceReview",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardCandidateAssuranceReview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Dashboard Candidate Assurance Review"
       }
     },
     "/app/api/live-status": {

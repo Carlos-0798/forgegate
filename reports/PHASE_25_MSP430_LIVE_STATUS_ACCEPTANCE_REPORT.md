@@ -69,10 +69,12 @@ browser error or warning was recorded. The retained 1264 x 1358 PNG has SHA-256
 
 ## Not established
 
-The physical unplug/replug page transition remains `NOT_RUN` because it
-requires a person to disconnect and reconnect the board while the monitor is
-running. Deterministic disconnected, stale, invalid, and recovery behavior is
-covered, but it is not a substitute for that physical interaction.
+At the time of this original capture, the physical unplug/replug page transition
+was `NOT_RUN`. The owner later performed the transition while the page remained
+open; the bounded observation and recovered counters are retained separately in
+[`MSP430_MANUAL_UNPLUG_REPLUG_EVIDENCE_2026-09-05.json`](MSP430_MANUAL_UNPLUG_REPLUG_EVIDENCE_2026-09-05.json).
+Deterministic disconnected, stale, invalid, and recovery behavior remains
+covered by automated tests.
 
 This phase does not validate temperatures, voltage, current, power, PWM,
 sensors, firmware correctness, producer authenticity, uninterrupted

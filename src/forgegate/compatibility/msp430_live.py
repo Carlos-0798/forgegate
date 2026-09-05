@@ -9,7 +9,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime
 from typing import Literal, Protocol, cast
 
-from forgegate.live_status.models import LiveSourceStatus, LiveStatusPage
+from forgegate.live_status.models import LiveReportedIssue, LiveSourceStatus, LiveStatusPage
 
 MSP430_UART_PROTOCOL = "msp430.uart.v1"
 MSP430_UART_BAUD_RATE = 115_200
@@ -25,6 +25,20 @@ _VALID_STATES = frozenset(
 _UNSIGNED_INTEGER = re.compile(r"^(?:0|[1-9][0-9]*)$")
 _SIGNED_INTEGER = re.compile(r"^-?(?:0|[1-9][0-9]*)$")
 _HEX16 = re.compile(r"^[0-9A-Fa-f]{4}$")
+_FAULT_DESCRIPTIONS = (
+    (0x0001, "DS18B20_MISSING", "DS18B20 sensor not detected"),
+    (0x0002, "DS18B20_CRC", "DS18B20 CRC validation failed"),
+    (0x0004, "NTC_RANGE", "NTC input unavailable or outside its valid range"),
+    (0x0008, "SENSOR_DISAGREE", "Temperature sensors disagree"),
+    (0x0010, "INA219_COMM", "INA219 communication unavailable"),
+    (0x0020, "FAN_NO_CURRENT", "Fan current was not detected"),
+    (0x0040, "FAN_OVERCURRENT", "Fan overcurrent reported"),
+    (0x0080, "OVERTEMP_WARNING", "Overtemperature warning reported"),
+    (0x0100, "OVERTEMP_CRITICAL", "Critical overtemperature reported"),
+    (0x0200, "CONFIG_CRC", "Configuration CRC validation failed"),
+    (0x0400, "WATCHDOG_RESET", "Watchdog reset reported"),
+    (0x0800, "UART_PROTOCOL", "UART protocol fault reported"),
+)
 
 
 class Msp430ProtocolError(ValueError):
@@ -271,6 +285,7 @@ class Msp430SerialMonitor:
                 uptime_ms=None if frame is None else frame.uptime_ms,
                 device_state=None if frame is None else frame.state,
                 fault_flags=None if frame is None else frame.fault_flags,
+                reported_issues=() if frame is None else _reported_issues(frame.fault_flags),
                 frames_received=self._frames_received,
                 protocol_errors=self._protocol_errors,
                 sequence_gaps=self._sequence_gaps,
@@ -369,6 +384,26 @@ def _device_health(state: str | None) -> Literal["UNKNOWN", "NORMAL", "WARNING",
     if state in {"NORMAL", "COOLING_LOW", "COOLING_HIGH"}:
         return "NORMAL"
     return "UNKNOWN"
+
+
+def _reported_issues(fault_flags: str) -> tuple[LiveReportedIssue, ...]:
+    value = int(fault_flags, 16)
+    issues = [
+        LiveReportedIssue(code=code, label=label, mask=f"0x{mask:04X}")
+        for mask, code, label in _FAULT_DESCRIPTIONS
+        if value & mask
+    ]
+    known_mask = sum(mask for mask, _, _ in _FAULT_DESCRIPTIONS)
+    unknown_mask = value & ~known_mask
+    if unknown_mask:
+        issues.append(
+            LiveReportedIssue(
+                code="UNKNOWN_FAULT_BITS",
+                label="Firmware reported fault bits not defined by this adapter version",
+                mask=f"0x{unknown_mask:04X}",
+            )
+        )
+    return tuple(issues)
 
 
 def _default_serial_factory(port: str) -> SerialHandle:

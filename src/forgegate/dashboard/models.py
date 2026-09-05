@@ -6,7 +6,11 @@ from typing import Literal, Self
 from pydantic import Field
 
 from forgegate.api.auth import ApiPrincipal
+from forgegate.attestations import ReleaseAttestation
+from forgegate.candidates import CandidateDocument, CandidateEvidenceBinding
+from forgegate.candidates.models import CandidateTransition
 from forgegate.domain.models import SLUG_PATTERN, StrictModel
+from forgegate.policy import PolicyEvaluationDocument, PolicyMaterial
 
 
 class DashboardPrincipal(StrictModel):
@@ -89,10 +93,30 @@ class DashboardCandidateProject(StrictModel):
     project_id: str = Field(pattern=SLUG_PATTERN)
 
 
+class DashboardCandidateAssuranceReview(StrictModel):
+    schema_version: Literal["forgegate.dashboard-candidate-assurance-review.v1"] = (
+        "forgegate.dashboard-candidate-assurance-review.v1"
+    )
+    candidate: CandidateDocument
+    transitions: tuple[CandidateTransition, ...]
+    evidence_binding_required: bool
+    evidence_binding: CandidateEvidenceBinding | None
+    policy_material_required: bool
+    policy_material: PolicyMaterial | None
+    policy_evaluation: PolicyEvaluationDocument | None
+    attestation: ReleaseAttestation | None
+    assurance_bundle_id: str | None = Field(default=None, pattern=r"^sha256:[0-9a-f]{64}$")
+    assurance: Literal["unsigned_local"] | None = None
+    verification_scope: Literal["retained_documents_and_embedded_policy_bytes"] | None = None
+    source_artifact_bytes: Literal["not_embedded"] | None = None
+    limitations: tuple[str, ...] = Field(min_length=1, max_length=20)
+
+
 __all__ = [
     "DashboardActivationCompleted",
     "DashboardActivationStart",
     "DashboardActivationStatus",
+    "DashboardCandidateAssuranceReview",
     "DashboardCandidateProject",
     "DashboardLogoutResponse",
     "DashboardOverview",

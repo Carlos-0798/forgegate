@@ -6,7 +6,10 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
-- [Phase 25 MSP430 live-status acceptance](PHASE_25_MSP430_LIVE_STATUS_ACCEPTANCE_REPORT.md) — optional read-only UART v1 monitor, authenticated Devices page, deterministic status-state coverage, and bounded real COM4 observation; physical unplug/replug remains `NOT_RUN`
+- [Phase 26 Dashboard assurance-review acceptance](PHASE_26_DASHBOARD_ASSURANCE_REVIEW_ACCEPTANCE_REPORT.md) — read-only candidate-bound Evidence/Decision/Assurance pages, exact rule-result presentation, portable identity, and live fault-code decoding
+- [Phase 26 Dashboard assurance-review evidence](DASHBOARD_ASSURANCE_REVIEW_EVIDENCE_2026-09-05.json) — generic PASS fixture, browser values, screenshot dimensions/hashes, and explicit claim boundaries
+- [Owner-assisted MSP430 unplug/replug evidence](MSP430_MANUAL_UNPLUG_REPLUG_EVIDENCE_2026-09-05.json) — observed live transition, bounded post-reconnect counters, decoded `0015`, and no-control/no-measurement boundaries
+- [Phase 25 MSP430 live-status acceptance](PHASE_25_MSP430_LIVE_STATUS_ACCEPTANCE_REPORT.md) — optional read-only UART v1 monitor, authenticated Devices page, deterministic status-state coverage, and bounded real COM4 observation; historical pre-unplug snapshot
 - [Phase 25 MSP430 live-status evidence](PHASE_25_MSP430_LIVE_STATUS_EVIDENCE_2026-09-05.json) — exact ten-second browser counters and explicit no-control/no-measurement/no-release-evidence boundaries
 - [Phase 24 authenticated local Dashboard checkpoint](PHASE_24_AUTHENTICATED_LOCAL_DASHBOARD_ACCEPTANCE_REPORT.md) — implementation and automation pass; full manual cross-browser exit gate partial
 - [Phase 24 manual interaction acceptance](PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md) — operator/producer inputs, durable output cross-check, expiry/restart recovery, Edge/Chrome focus, 129-record pagination, 422 recovery, and remaining manual boundary
@@ -38,7 +41,8 @@ publisher-provenance, or general third-party compatibility claims.
 | 22 | Clean-install Windows Alpha delivery chain | [Acceptance report](PHASE_22_WINDOWS_ALPHA_ACCEPTANCE_REPORT.md), [raw evidence](PHASE_22_WINDOWS_ALPHA_LIVE_EVIDENCE.json) |
 | 23 | Local Web Dashboard design gate | [Design report](PHASE_23_LOCAL_WEB_DASHBOARD_DESIGN_GATE.md); no UI implementation |
 | 24 | Authenticated local Dashboard vertical slice | [Acceptance report](PHASE_24_AUTHENTICATED_LOCAL_DASHBOARD_ACCEPTANCE_REPORT.md) and [manual interaction record](PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md); implementation/local flow pass, manual cross-browser gate partial |
-| 25 | Optional MSP430 read-only live status | [Acceptance report](PHASE_25_MSP430_LIVE_STATUS_ACCEPTANCE_REPORT.md) and [bounded machine record](PHASE_25_MSP430_LIVE_STATUS_EVIDENCE_2026-09-05.json); deterministic state coverage plus connected COM4 browser observation, physical unplug/replug not run |
+| 25 | Optional MSP430 read-only live status | [Acceptance report](PHASE_25_MSP430_LIVE_STATUS_ACCEPTANCE_REPORT.md), [bounded machine record](PHASE_25_MSP430_LIVE_STATUS_EVIDENCE_2026-09-05.json), and [later owner-assisted follow-up](MSP430_MANUAL_UNPLUG_REPLUG_EVIDENCE_2026-09-05.json); deterministic state coverage plus connected COM4 browser observation |
+| 26 | Read-only Dashboard assurance review | [Acceptance report](PHASE_26_DASHBOARD_ASSURANCE_REVIEW_ACCEPTANCE_REPORT.md), [browser evidence](DASHBOARD_ASSURANCE_REVIEW_EVIDENCE_2026-09-05.json), and [MSP430 follow-up](MSP430_MANUAL_UNPLUG_REPLUG_EVIDENCE_2026-09-05.json); candidate-bound Evidence/Decision/Assurance and decoded live fault reports |
 
 `SANDBOXED` applies only to an exact accepted run. The generic fixture does not
 establish publisher trust, native-extension safety, arbitrary dependency

@@ -24,7 +24,15 @@ from forgegate.api import (
     create_api_app,
     sign_api_challenge,
 )
-from forgegate.application import CandidateApplication, ProjectRegisterCommand
+from forgegate.application import (
+    CandidateAdvanceCommand,
+    CandidateApplication,
+    CandidateAttestCommand,
+    CandidateBindEvidenceCommand,
+    CandidateCreateCommand,
+    CandidateEvaluateCommand,
+    ProjectRegisterCommand,
+)
 from forgegate.cli import app
 from forgegate.config import load_config
 from forgegate.dashboard import DashboardSessionManager
@@ -37,6 +45,7 @@ from forgegate.dashboard.assets import (
 )
 from forgegate.dashboard.client import DashboardClientError
 from forgegate.dashboard.openapi import create_dashboard_openapi
+from forgegate.domain.enums import CandidateStatus
 from forgegate.identity import IdentityRole
 from forgegate.live_status import LiveSourceStatus, LiveStatusPage
 from tests.api_auth_support import TEST_IDENTITY, TEST_PRIVATE_KEY, TEST_TRUST_STORE
@@ -83,6 +92,65 @@ def _dashboard_client(
         ),
         base_url=ORIGIN,
     )
+
+
+def _completed_dashboard_application(
+    tmp_path: Path,
+    repository_root: Path,
+) -> tuple[CandidateApplication, str]:
+    application = _application_with_project(tmp_path, repository_root)
+    candidate = application.create_candidate(
+        CandidateCreateCommand.model_validate(_candidate_payload()),
+        idempotency_key="dashboard:review:candidate",
+    )
+    application.advance_candidate(
+        candidate.candidate_id,
+        CandidateAdvanceCommand(
+            to_status=CandidateStatus.COLLECTING,
+            expected_revision=0,
+            occurred_at=datetime(2026, 9, 4, 12, 31, tzinfo=UTC),
+        ),
+        idempotency_key="dashboard:review:collecting",
+    )
+    application.bind_evidence(
+        candidate.candidate_id,
+        CandidateBindEvidenceCommand(
+            assembly=load_config(repository_root / "tests/golden/evidence_bundle_assembly.json"),
+            bound_at=datetime(2026, 9, 4, 20, 31, tzinfo=UTC),
+        ),
+        idempotency_key="dashboard:review:evidence",
+    )
+    for revision, target, occurred_at in (
+        (1, CandidateStatus.READY, datetime(2026, 9, 4, 20, 32, tzinfo=UTC)),
+        (2, CandidateStatus.EVALUATING, datetime(2026, 9, 4, 20, 33, tzinfo=UTC)),
+    ):
+        application.advance_candidate(
+            candidate.candidate_id,
+            CandidateAdvanceCommand(
+                to_status=target,
+                expected_revision=revision,
+                occurred_at=occurred_at,
+            ),
+            idempotency_key=f"dashboard:review:{target.value.lower()}",
+        )
+    material = application.materialize_policy(
+        candidate.candidate_id,
+        repository_root / "examples/sample-python-api",
+    )
+    application.evaluate_candidate(
+        candidate.candidate_id,
+        CandidateEvaluateCommand(
+            policy_material=material,
+            expected_revision=3,
+            evaluated_at=datetime(2026, 9, 4, 21, 0, tzinfo=UTC),
+        ),
+        idempotency_key="dashboard:review:evaluate",
+    )
+    application.attest_candidate(
+        candidate.candidate_id,
+        CandidateAttestCommand(issued_at=datetime(2026, 9, 4, 22, 0, tzinfo=UTC)),
+    )
+    return application, candidate.candidate_id
 
 
 def _producer_trust_store():
@@ -250,6 +318,51 @@ def test_dashboard_portfolio_capture_record_matches_retained_generic_assets(
     assert boundaries["public_release_authorized"] is False
 
 
+def test_dashboard_assurance_review_and_msp430_follow_up_records_match_assets(
+    repository_root: Path,
+) -> None:
+    review_path = (
+        repository_root / "reports" / "DASHBOARD_ASSURANCE_REVIEW_EVIDENCE_2026-09-05.json"
+    )
+    review = json.loads(review_path.read_text(encoding="utf-8"))
+    assert review["record_format"] == "forgegate-dashboard-assurance-review-evidence-v1"
+    assert review["fixture"]["classification"] == "GENERIC_EPHEMERAL_TEST_DATA"
+    assert review["actual"]["decision"] == "PASS"
+    assert review["actual"]["rule_expected"] == review["actual"]["rule_actual"] == 0
+    assert review["actual"]["attestation_assurance"] == "unsigned_local"
+    assert review["boundaries"]["personal_data_used"] is False
+    assert review["boundaries"]["production_readiness_proven"] is False
+
+    gallery = (repository_root / "docs" / "PORTFOLIO_EVIDENCE.md").read_text(encoding="utf-8")
+    for asset in review["assets"]:
+        payload = (repository_root / asset["path"]).read_bytes()
+        assert payload.startswith(b"\xff\xd8\xff")
+        assert len(payload) == asset["bytes"]
+        assert hashlib.sha256(payload).hexdigest() == asset["sha256"]
+        assert Path(asset["path"]).name in gallery
+
+    msp_path = repository_root / "reports" / "MSP430_MANUAL_UNPLUG_REPLUG_EVIDENCE_2026-09-05.json"
+    msp = json.loads(msp_path.read_text(encoding="utf-8"))
+    assert msp["physical_action"]["performed_by"] == "project owner"
+    assert msp["physical_action"]["owner_observed_live_transition"] is True
+    assert msp["post_reconnect_window"]["result"] == "PASS"
+    assert msp["post_reconnect_window"]["reconnects_end"] == 1
+    assert [item["code"] for item in msp["decoded_fault_follow_up"]["reported_issues"]] == [
+        "DS18B20_MISSING",
+        "NTC_RANGE",
+        "INA219_COMM",
+    ]
+    screenshot = msp["decoded_fault_follow_up"]["screenshot"]
+    payload = (repository_root / screenshot["path"]).read_bytes()
+    assert len(payload) == screenshot["bytes"]
+    assert hashlib.sha256(payload).hexdigest() == screenshot["sha256"]
+    boundaries = msp["boundaries"]
+    assert boundaries["bytes_transmitted_to_device"] == 0
+    assert all(
+        value is False for key, value in boundaries.items() if key != "bytes_transmitted_to_device"
+    )
+
+
 def test_dashboard_static_assets_headers_and_contract_boundary(
     tmp_path: Path,
     repository_root: Path,
@@ -285,8 +398,13 @@ def test_dashboard_static_assets_headers_and_contract_boundary(
     assert all("Candidate pages" in script for script in scripts)
     assert all("Live devices" in script for script in scripts)
     assert all("Connection" in script and "Heartbeat" in script for script in scripts)
+    assert all("Decoded firmware reports" in script for script in scripts)
+    assert all("Bound evidence" in script and "Policy decision" in script for script in scripts)
+    assert all("Release assurance" in script and "assurance-review" in script for script in scripts)
+    assert all("producer authenticity" in script for script in scripts)
     assert all("hardware_control=" in script for script in scripts)
     assert all("Previous page" in script and "Next page" in script for script in scripts)
+    assert all("Showing " in script for script in scripts)
     assert all("candidate-dialog-title" in script for script in scripts)
     assert all("DRAFT CREATED" in script for script in scripts)
     assert all(
@@ -298,6 +416,10 @@ def test_dashboard_static_assets_headers_and_contract_boundary(
     assert all("stated 4 MiB service limit" in script for script in scripts)
     assert all("Do not assume the write failed" in script for script in scripts)
     assert all("aria-live" in script and "assertive" in script for script in scripts)
+    frontend_source = (repository_root / "frontend" / "src" / "main.ts").read_text(encoding="utf-8")
+    assert "function paginatedReviewTable" in frontend_source
+    assert "const pageSize = 25" in frontend_source
+    assert 'window.scrollTo({ top: 0, left: 0, behavior: "auto" })' in frontend_source
     assert not any(
         unsafe in script
         for script in scripts
@@ -334,6 +456,7 @@ def test_dashboard_openapi_export_is_deterministic_and_complete(tmp_path: Path) 
         "/app/api/audit-events",
         "/app/api/candidates",
         "/app/api/candidates/{candidate_id}",
+        "/app/api/candidates/{candidate_id}/assurance-review",
         "/app/api/live-status",
         "/app/api/overview",
         "/app/api/projects",
@@ -346,6 +469,10 @@ def test_dashboard_openapi_export_is_deterministic_and_complete(tmp_path: Path) 
     assert first["paths"]["/app/api/session"]["delete"]["operationId"] == ("endDashboardSession")
     assert first["paths"]["/app/api/live-status"]["get"]["operationId"] == (
         "getDashboardLiveStatus"
+    )
+    assert (
+        first["paths"]["/app/api/candidates/{candidate_id}/assurance-review"]["get"]["operationId"]
+        == "getDashboardCandidateAssuranceReview"
     )
     assert "HTTPBearer" not in first.get("components", {}).get("securitySchemes", {})
 
@@ -477,6 +604,42 @@ def test_dashboard_live_status_is_authenticated_and_retains_read_only_boundary(
     assert source["evidence_boundary"] == "LIVE_STATUS_ONLY_NOT_RELEASE_EVIDENCE"
 
 
+def test_dashboard_assurance_review_joins_retained_documents_without_new_claims(
+    tmp_path: Path,
+    repository_root: Path,
+) -> None:
+    application, candidate_id = _completed_dashboard_application(tmp_path, repository_root)
+    with TestClient(
+        create_api_app(
+            tmp_path / "forgegate.db",
+            application=application,
+            authenticator=ApiAuthenticator(TEST_TRUST_STORE),
+            dashboard=True,
+        ),
+        base_url=ORIGIN,
+    ) as client:
+        unauthenticated = client.get(f"/app/api/candidates/{candidate_id}/assurance-review")
+        _activate(client)
+        response = client.get(f"/app/api/candidates/{candidate_id}/assurance-review")
+
+    assert unauthenticated.status_code == 401
+    assert response.status_code == 200, response.text
+    review = response.json()
+    assert review["schema_version"] == "forgegate.dashboard-candidate-assurance-review.v1"
+    assert review["candidate"]["status"] == "PASS"
+    assert review["evidence_binding"]["assembly"]["bundle"]["evidence"]
+    assert (
+        review["policy_material"]["material_id"]
+        == (review["policy_evaluation"]["policy_material_id"])
+    )
+    assert review["policy_evaluation"]["decision"] == "PASS"
+    assert review["attestation"]["candidate"]["candidate_id"] == candidate_id
+    assert review["assurance_bundle_id"].startswith("sha256:")
+    assert review["assurance"] == "unsigned_local"
+    assert review["source_artifact_bytes"] == "not_embedded"
+    assert any("not producer authenticity" in item for item in review["limitations"])
+
+
 def test_dashboard_project_candidate_replay_conflict_and_audit(
     tmp_path: Path,
     repository_root: Path,
@@ -512,6 +675,7 @@ def test_dashboard_project_candidate_replay_conflict_and_audit(
         )
         candidate_id = created.json()["candidate_id"]
         detail = client.get(f"/app/api/candidates/{candidate_id}")
+        review = client.get(f"/app/api/candidates/{candidate_id}/assurance-review")
         audit = client.get(
             f"/app/api/audit-events?project_id=sample-api&candidate_id={candidate_id}&limit=100"
         )
@@ -523,6 +687,12 @@ def test_dashboard_project_candidate_replay_conflict_and_audit(
     assert no_origin.status_code == no_csrf.status_code == 403
     assert created.status_code == replay.status_code == 201
     assert created.json() == replay.json() == detail.json()
+    assert review.status_code == 200
+    assert review.json()["candidate"]["status"] == "DRAFT"
+    assert review.json()["evidence_binding"] is None
+    assert review.json()["policy_evaluation"] is None
+    assert review.json()["attestation"] is None
+    assert review.json()["assurance_bundle_id"] is None
     assert conflict.status_code == 409
     assert conflict.json()["error"]["code"] == "STORE_IDEMPOTENCY_CONFLICT"
     assert [event["event_type"] for event in audit.json()["events"]] == ["candidate.created"]

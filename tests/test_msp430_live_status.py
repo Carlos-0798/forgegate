@@ -116,6 +116,11 @@ def test_monitor_separates_connection_heartbeat_staleness_and_device_fault() -> 
     assert current.device_health == "FAULT"
     assert current.device_state == "FAULT"
     assert current.fault_flags == "0015"
+    assert [(issue.code, issue.mask) for issue in current.reported_issues] == [
+        ("DS18B20_MISSING", "0x0001"),
+        ("NTC_RANGE", "0x0004"),
+        ("INA219_COMM", "0x0010"),
+    ]
     assert current.frames_received == 1
     assert current.hardware_control == "NOT_PERFORMED"
     assert current.evidence_boundary == "LIVE_STATUS_ONLY_NOT_RELEASE_EVIDENCE"
@@ -149,6 +154,7 @@ def test_monitor_counts_protocol_errors_and_sequence_gaps_then_recovers() -> Non
     recovered = monitor.snapshot().sources[0]
     assert recovered.heartbeat == "NORMAL"
     assert recovered.device_health == "NORMAL"
+    assert recovered.reported_issues == ()
     assert recovered.frames_received == 2
     assert recovered.protocol_errors == 1
     assert recovered.sequence_gaps == 2
@@ -162,6 +168,15 @@ def test_monitor_counts_protocol_errors_and_sequence_gaps_then_recovers() -> Non
     clock.advance(1)
     monitor._process_line(_tel_line(sequence=2, uptime_ms=4000, state="INIT"))
     assert monitor.snapshot().sources[0].device_health == "UNKNOWN"
+
+
+def test_monitor_retains_unknown_fault_bits_without_inventing_meaning() -> None:
+    monitor = Msp430SerialMonitor("COM4", port_present=lambda _port: False)
+    monitor._process_line(_tel_line(fault_flags="9000"))
+
+    issue = monitor.snapshot().sources[0].reported_issues[0]
+    assert issue.code == "UNKNOWN_FAULT_BITS"
+    assert issue.mask == "0x9000"
 
 
 def test_monitor_validates_configuration() -> None:

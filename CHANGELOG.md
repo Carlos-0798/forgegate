@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Added authenticated, project-scoped, read-only Dashboard Evidence, Decision,
+  and Assurance review with candidate-preserving deep links, exact policy rule
+  inputs/results, attestation/bundle identity, and explicit claim boundaries.
+- Decoded versioned MSP430 UART v1 fault bits in the compatibility adapter,
+  retained unknown bits without invented meaning, and recorded the
+  owner-assisted unplug/replug plus a fresh live COM4 browser check.
+- Added generic-data Evidence/Decision/Assurance portfolio captures with exact
+  dimensions, SHA-256 records, and a Phase 26 acceptance report.
 - Implemented the narrow same-origin, loopback-only local Web Dashboard with
   one-time CLI activation, an HttpOnly cookie BFF, exact Origin/Host and CSRF
   controls, and Overview, Projects, and Candidates pages.
