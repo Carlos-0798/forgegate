@@ -74,7 +74,7 @@ class DashboardOverview(StrictModel):
     api_version: Literal["v1"] = "v1"
     database_schema_version: int = Field(ge=1)
     deployment: Literal["loopback-local"] = "loopback-local"
-    hardware_access: Literal["NOT_PERFORMED"] = "NOT_PERFORMED"
+    hardware_access: Literal["NOT_PERFORMED", "READ_ONLY_TELEMETRY"] = "NOT_PERFORMED"
     limitations: tuple[str, ...] = Field(min_length=1, max_length=20)
     principal: DashboardPrincipal
 

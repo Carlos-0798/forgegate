@@ -1,22 +1,27 @@
 # Portfolio evidence gallery
 
 This page collects the small set of real, reproducible artifacts intended for
-the repository landing page and portfolio review. Every image uses generic
-local fixture data. None of the captures contains a private key, API token,
-personal email address, physical measurement, or production environment.
+the repository landing page and portfolio review. The candidate workflow images
+use generic local fixture data. The final Devices image is separately labeled as
+an owner-authorized, input-only MSP430 UART observation. None of the captures
+contains a private key, API token, personal email address, validated physical
+measurement, or production environment.
 
 ## Evidence boundary
 
 - Environment: Google Chrome on Windows, loopback-only ForgeGate Dashboard
 - Evidence level: `LOCAL_BROWSER_TEST`
 - Product status: private Windows Alpha `0.1.0a1`
-- Hardware access: `NOT_PERFORMED`
+- Hardware access: candidate-workflow captures `NOT_PERFORMED`; Devices capture
+  `READ_ONLY_TELEMETRY`
 - Remote deployment and release approval: not demonstrated
 - Source checkpoint used for the captures: `ed205c7`
 
 The exact fixture values, output cross-checks, image dimensions, and SHA-256
 digests are retained in the
-[machine-readable capture record](../reports/DASHBOARD_PORTFOLIO_CAPTURE_EVIDENCE_2026-09-04.json).
+[Dashboard capture record](../reports/DASHBOARD_PORTFOLIO_CAPTURE_EVIDENCE_2026-09-04.json)
+and the separate
+[MSP430 live-status record](../reports/PHASE_25_MSP430_LIVE_STATUS_EVIDENCE_2026-09-05.json).
 
 ## 1. Authority and limitations
 
@@ -71,14 +76,27 @@ acceptance fixture. All six pages were traversed as
 complete input/output record and remaining manual boundary are in the
 [Phase 24 manual interaction report](../reports/PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md).
 
+## 6. Read-only MSP430 live status
+
+![ForgeGate Devices page showing independent connection, heartbeat, and device-health signals](assets/forgegate-dashboard-msp430-live-status.png)
+
+This Windows browser capture shows the selected COM4 application UART as
+`CONNECTED`, its valid-frame heartbeat as `NORMAL`, and the firmware-reported
+health independently as `FAULT 0015`. The monitor performed input-only reads;
+it did not send a serial command or modify firmware, debug state, GPIO, FRAM, or
+an external load. The capture supports live transport and page-presentation
+claims only. It does not validate sensor values, firmware correctness, release
+evidence, or long-duration stability.
+
 ## What these artifacts support
 
 They support the narrow claim that the authenticated, loopback-only Dashboard
-implements activation, Overview, Projects, and candidate list/create/detail/
-audit interactions, including visible evidence boundaries and actionable
-validation errors, on the tested Windows/Chrome setup.
+implements activation, Overview, Devices, Projects, and candidate list/create/
+detail/audit interactions, including visible evidence boundaries and actionable
+validation errors, on the tested Windows browser setup. The Devices capture
+also supports an owner-authorized, input-only MSP430 UART status observation.
 
-They do not support claims of hardware validation, evidence authenticity,
+They do not support claims of sensor or hardware-behavior validation, evidence authenticity,
 production readiness, public release, non-loopback security, full
 accessibility conformance, or completion of the planned Evidence, Decision,
 Assurance, Plugins, and Security pages.

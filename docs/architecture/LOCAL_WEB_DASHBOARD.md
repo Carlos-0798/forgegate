@@ -31,7 +31,7 @@ Bearer tokens must not be exposed to browser JavaScript, while current CLI and
 API clients retain the existing challenge/session protocol.
 
 `schemas/forgegate.dashboard-openapi.v1.json` is a separate build-time,
-drift-checked contract for the eleven `/app/api/` operations. It is exported
+drift-checked contract for the twelve `/app/api/` operations. It is exported
 from the installed wheel during release smoke but is not exposed as interactive
 documentation at runtime.
 
@@ -46,6 +46,7 @@ flowchart LR
     D[(SQLite stores)]
     C[CLI activation helper]
     K[Owner-managed\nEd25519 private key]
+    M[Optional MSP430 UART v1\nread-only monitor]
 
     U --> B
     U --> C
@@ -54,6 +55,7 @@ flowchart LR
     C -->|one-time signed activation| H
     C --> K
     K -. never enters browser or server retention .-> C
+    M -->|generic live-status snapshot| H
 ```
 
 The UI owns draft form state and presentation only. The application service
@@ -116,9 +118,12 @@ The Phase 24 vertical slice is intentionally narrow:
    exposing the private key or Bearer token to browser JavaScript.
 3. Overview displays health, version, identity, role, exact project scopes,
    expiry, and current product limitations.
-4. Projects lists authorized projects and their current immutable profile
+4. Devices optionally displays independently evaluated serial connection,
+   heartbeat freshness, and firmware-reported health from a frozen UART v1
+   consumer; it sends no serial bytes and creates no release evidence.
+5. Projects lists authorized projects and their current immutable profile
    identity through the existing bounded query.
-5. Candidates lists project candidates, creates a candidate through an
+6. Candidates lists project candidates, creates a candidate through an
    immutable reviewed request, and displays candidate plus audit history.
 6. A duplicate submission replays exactly and a reused key with changed
    content fails visibly without automatic retry. Stale-revision UI recovery
@@ -139,8 +144,10 @@ planned. Empty controls or mock success paths are prohibited.
   startup. Automatic port selection and browser opening are not implemented.
 - Closing a browser tab does not imply the server stopped. The page explains
   service state; process shutdown remains explicit and bounded.
-- No Dashboard command launches Podman, touches hardware, reads an AFE/MSP430
-  repository, publishes to GitHub, or changes repository visibility.
+- No Dashboard command launches Podman, sends a device byte, reads an AFE/MSP430
+  repository, flashes firmware, publishes to GitHub, or changes repository
+  visibility. The optional background monitor only reads the explicitly selected
+  serial endpoint through the independently implemented public protocol.
 
 ## Rejected alternatives
 

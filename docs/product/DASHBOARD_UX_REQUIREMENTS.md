@@ -2,10 +2,12 @@
 
 ## Status and evidence boundary
 
-- Status: narrow Phase 24 slice implemented; complete manual exit gate pending
+- Status: narrow Phase 24 slice plus Phase 25 optional live status implemented;
+  complete manual cross-browser exit gate and physical unplug/replug check pending
 - Target: a local, browser-based control plane for the Windows Alpha
 - Product evidence: local host automation plus partial real-browser acceptance
-- Hardware evidence: not applicable; the Dashboard must not access devices
+- Hardware evidence: optional input-only UART status observation; no device
+  control, measurement validation, or release evidence
 
 These requirements adapt owner-supplied interaction lessons from a separate
 engineering application. They do not import that application's UI, workflow,
@@ -21,9 +23,9 @@ presentation and orchestration surface over the existing application/domain
 services. It must not contain a second policy engine, lifecycle implementation,
 or evidence-normalization path.
 
-The first implemented vertical slice covers authenticated local access,
-service status, project discovery, candidate discovery, candidate creation,
-candidate detail, and audit history. Evidence import, decision execution,
+The implemented slices cover authenticated local access, service status,
+optional device status, project discovery, candidate discovery, candidate
+creation, candidate detail, and audit history. Evidence import, decision execution,
 plugin execution, trust-store administration, and file publication remain
 separate later gates.
 
@@ -31,7 +33,7 @@ separate later gates.
 
 - remote, LAN, internet, SaaS, or multi-user deployment;
 - browser access to private signing keys;
-- hardware, serial, AFE, or MSP430 control;
+- hardware, serial, AFE, or MSP430 control; optional serial input is observation only;
 - changing an evidence level or engineering decision in presentation code;
 - replacing the CLI or public versioned REST contracts;
 - accepting arbitrary server filesystem paths from the browser;
@@ -55,19 +57,21 @@ The planned navigation is:
 
 1. **Overview** — health, version, database schema, authenticated identity,
    role, project scope, session expiry, and current limitations.
-2. **Projects** — bounded project list, immutable profile identity, current
+2. **Devices** — optional serial connection, heartbeat freshness, and
+   device-reported state, with read-only and non-evidence boundaries.
+3. **Projects** — bounded project list, immutable profile identity, current
    profile, and revision history.
-3. **Candidates** — project-scoped list, create action, current lifecycle,
+4. **Candidates** — project-scoped list, create action, current lifecycle,
    exact revision, commit, track, and governing profile.
-4. **Evidence** — collection receipts, warnings, artifact identities,
+5. **Evidence** — collection receipts, warnings, artifact identities,
    verification levels, and candidate binding.
-5. **Decision** — frozen policy material, per-rule outcome, remediation, and
+6. **Decision** — frozen policy material, per-rule outcome, remediation, and
    overall PASS/FAIL/REVIEW/ERROR.
-6. **Assurance** — attestation, signature status, portable bundle identity,
+7. **Assurance** — attestation, signature status, portable bundle identity,
    offline verification, and export state.
-7. **Plugins** — discovery, compatibility, requested/approved permissions,
+8. **Plugins** — discovery, compatibility, requested/approved permissions,
    run plan, isolation evidence, receipts, and low-trust output.
-8. **Audit & security** — project/candidate audit events, security-event
+9. **Audit & security** — project/candidate audit events, security-event
    journal, session state, and trust-store status.
 
 Navigation labels describe objects and outcomes. Mutating actions use explicit
@@ -106,7 +110,7 @@ Every result view separates these fields:
 | Authority | Identity, role, project scope, and frozen project profile |
 | Integrity | Commit, content ID, size, and SHA-256 where available |
 | Limitations | What the result does not establish |
-| Hardware claim | Always explicit; current ForgeGate operations are NOT_PERFORMED |
+| Hardware claim | Always explicit; live serial status is READ_ONLY_TELEMETRY while control remains NOT_PERFORMED |
 
 Green styling alone must never imply that evidence is authentic, hardware was
 tested, a release was published, or the product is production-ready. Missing or

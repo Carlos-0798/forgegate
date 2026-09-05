@@ -636,11 +636,23 @@ def dashboard(
         int,
         typer.Option("--session-ttl-seconds", min=60, max=3600),
     ] = 900,
+    msp430_port: Annotated[
+        str | None,
+        typer.Option(
+            "--msp430-port",
+            help="Read MSP430 UART v1 telemetry from this serial port; never transmit.",
+        ),
+    ] = None,
+    msp430_stale_seconds: Annotated[
+        float,
+        typer.Option("--msp430-stale-seconds", min=1.5, max=60.0),
+    ] = 3.0,
 ) -> None:
     """Serve the authenticated local Dashboard and established REST API."""
     import uvicorn
 
     from forgegate.api import ApiAuthenticator, create_api_app
+    from forgegate.compatibility.msp430_live import Msp430SerialMonitor
 
     try:
         bind_host = validated_loopback_host(host)
@@ -661,23 +673,42 @@ def dashboard(
         application = CandidateApplication.for_database(database)
         application.initialize()
         local_url = f"http://{bind_host}:{port}/app/"
+        monitor = (
+            None
+            if msp430_port is None
+            else Msp430SerialMonitor(
+                msp430_port,
+                stale_after_seconds=msp430_stale_seconds,
+            )
+        )
         dashboard_app = create_api_app(
             database,
             application=application,
             authenticator=authenticator,
             dashboard=True,
+            dashboard_live_status_provider=monitor,
         )
     except (CandidateStoreError, IdentityError, ValueError) as exc:
         typer.echo(f"ERROR: {exc}", err=True)
         raise typer.Exit(code=3) from exc
     typer.echo(f"ForgeGate Dashboard: {local_url}")
+    if monitor is not None:
+        typer.echo(
+            f"MSP430 live status: read-only {msp430_port} at 115200 baud; no bytes transmitted."
+        )
     typer.echo("Close this process explicitly to stop the local service.")
-    uvicorn.run(
-        dashboard_app,
-        host=bind_host,
-        port=port,
-        log_level="info",
-    )
+    try:
+        if monitor is not None:
+            monitor.start()
+        uvicorn.run(
+            dashboard_app,
+            host=bind_host,
+            port=port,
+            log_level="info",
+        )
+    finally:
+        if monitor is not None:
+            monitor.stop()
 
 
 @app.command("dashboard-activate")

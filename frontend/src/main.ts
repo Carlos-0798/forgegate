@@ -1,7 +1,7 @@
 import "./styles.css";
 
 type Role = "operator" | "producer";
-type Route = "overview" | "projects" | "candidates";
+type Route = "overview" | "devices" | "projects" | "candidates";
 
 interface Principal {
   session_id: string;
@@ -99,6 +99,43 @@ interface Overview {
   principal: Principal;
 }
 
+interface LiveSourceStatus {
+  source_id: string;
+  source_type: string;
+  display_name: string;
+  access_mode: "READ_ONLY";
+  connection: "CONNECTING" | "CONNECTED" | "DISCONNECTED" | "ERROR";
+  heartbeat: "NOT_OBSERVED" | "NORMAL" | "STALE" | "INVALID";
+  device_health: "UNKNOWN" | "NORMAL" | "WARNING" | "FAULT";
+  detail_code: string;
+  detail_message: string;
+  endpoint: string;
+  protocol: string;
+  baud_rate: number;
+  expected_interval_seconds: number;
+  stale_after_seconds: number;
+  observed_at: string;
+  last_heartbeat_at: string | null;
+  heartbeat_age_seconds: number | null;
+  sequence: number | null;
+  uptime_ms: number | null;
+  device_state: string | null;
+  fault_flags: string | null;
+  frames_received: number;
+  protocol_errors: number;
+  sequence_gaps: number;
+  reconnects: number;
+  evidence_boundary: "LIVE_STATUS_ONLY_NOT_RELEASE_EVIDENCE";
+  hardware_control: "NOT_PERFORMED";
+}
+
+interface LiveStatusPage {
+  schema_version: "forgegate.live-status.v1";
+  observed_at: string;
+  refresh_after_seconds: number;
+  sources: LiveSourceStatus[];
+}
+
 interface ApiProblem {
   error?: { code?: string; message?: string; request_id?: string };
 }
@@ -127,6 +164,9 @@ let candidateCursor: string | null = null;
 let candidateCursorHistory: Array<string | null> = [];
 let activationTimer: number | null = null;
 let sessionExpiryTimer: number | null = null;
+let liveStatusTimer: number | null = null;
+let liveStatusGeneration = 0;
+let lastLiveAnnouncement = "";
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -172,7 +212,9 @@ function keepFocusInsideDialog(dialog: HTMLDialogElement, event: KeyboardEvent):
 
 function routeFromHash(): Route {
   const candidate = window.location.hash.replace(/^#\/?/, "");
-  return candidate === "projects" || candidate === "candidates" ? candidate : "overview";
+  return candidate === "devices" || candidate === "projects" || candidate === "candidates"
+    ? candidate
+    : "overview";
 }
 
 function requestId(): string {
@@ -219,6 +261,13 @@ function clearActivationTimer(): void {
 function clearSessionExpiryTimer(): void {
   if (sessionExpiryTimer !== null) window.clearTimeout(sessionExpiryTimer);
   sessionExpiryTimer = null;
+}
+
+function clearLiveStatusTimer(): void {
+  if (liveStatusTimer !== null) window.clearTimeout(liveStatusTimer);
+  liveStatusTimer = null;
+  liveStatusGeneration += 1;
+  lastLiveAnnouncement = "";
 }
 
 function scheduleSessionExpiry(): void {
@@ -297,13 +346,17 @@ function holdRateLimitedAction(
 
 function statusBadge(value: string): HTMLSpanElement {
   const normalized = value.toLowerCase();
-  const tone = ["pass", "ready", "complete", "authenticated"].some((item) =>
-    normalized.includes(item)
+  const tone = ["fail", "error", "denied", "disconnected", "stale", "invalid", "fault"].some(
+    (item) => normalized.includes(item)
   )
-    ? "positive"
-    : ["fail", "error", "denied"].some((item) => normalized.includes(item))
-      ? "negative"
-      : "neutral";
+    ? "negative"
+    : ["warning", "connecting", "not observed"].some((item) => normalized.includes(item))
+      ? "warning"
+      : ["pass", "ready", "complete", "authenticated", "connected", "normal"].some((item) =>
+          normalized.includes(item)
+        )
+        ? "positive"
+        : "neutral";
   return el("span", `badge ${tone}`, value);
 }
 
@@ -343,6 +396,7 @@ function shell(content: HTMLElement): void {
   nav.setAttribute("aria-label", "Primary");
   for (const [route, label, detail] of [
     ["overview", "Overview", "Service and authority"],
+    ["devices", "Devices", "Live read-only status"],
     ["projects", "Projects", "Immutable profiles"],
     ["candidates", "Candidates", "Release work and audit"]
   ] as const) {
@@ -413,6 +467,7 @@ async function loadSession(): Promise<void> {
 function renderActivation(notice?: string): void {
   clearActivationTimer();
   clearSessionExpiryTimer();
+  clearLiveStatusTimer();
   session = null;
   projects = [];
   selectedProjectId = null;
@@ -441,7 +496,7 @@ function renderActivation(notice?: string): void {
   for (const [label, value] of [
     ["Network", "Loopback only"],
     ["Credential", "CLI-held Ed25519 key"],
-    ["Hardware", "Not accessed"],
+    ["Hardware", "CLI-configured, read-only"],
     ["Product status", "Windows Local Alpha"]
   ]) {
     const item = el("div", "boundary-item");
@@ -460,7 +515,7 @@ function renderActivation(notice?: string): void {
     el("p", "eyebrow", "EVIDENCE BOUNDARY"),
     el("h2", undefined, "What this page does not prove"),
     el("p", undefined, "A successful session does not authenticate imported evidence, verify hardware, publish a release, or approve remote deployment."),
-    el("p", "mono subtle", "hardware_access = NOT_PERFORMED")
+    el("p", "mono subtle", "browser_hardware_control = NOT_PERFORMED")
   );
   main.append(card, aside);
   shell(main);
@@ -542,10 +597,173 @@ async function renderRoute(): Promise<void> {
     renderActivation();
     return;
   }
+  clearLiveStatusTimer();
   currentRoute = routeFromHash();
   if (currentRoute === "overview") await renderOverview();
+  if (currentRoute === "devices") await renderDevices();
   if (currentRoute === "projects") await renderProjects();
   if (currentRoute === "candidates") await renderCandidates();
+}
+
+async function renderDevices(): Promise<void> {
+  const generation = liveStatusGeneration;
+  const main = page(
+    "Live devices",
+    "READ-ONLY OBSERVATION",
+    "Connection, heartbeat freshness, and device-reported health are independent signals. No serial command is sent."
+  );
+  const toolbar = el("section", "toolbar live-toolbar");
+  const refresh = button("Refresh now", "button secondary");
+  const cadence = statusBadge("Live · every 1 s");
+  refresh.addEventListener("click", () => void refreshLiveStatus(main, generation));
+  toolbar.append(cadence, refresh);
+  const announcement = el("p", "sr-only");
+  announcement.setAttribute("aria-live", "polite");
+  announcement.setAttribute("aria-atomic", "true");
+  const content = el("section", "live-status-region");
+  content.setAttribute("aria-label", "Live device status");
+  content.setAttribute("aria-busy", "true");
+  content.append(el("p", "muted", "Loading the current read-only device status…"));
+  main.append(toolbar, announcement, content);
+  shell(main);
+  await refreshLiveStatus(main, generation);
+}
+
+async function refreshLiveStatus(main: HTMLElement, generation: number): Promise<void> {
+  if (generation !== liveStatusGeneration || currentRoute !== "devices" || session === null) return;
+  if (liveStatusTimer !== null) window.clearTimeout(liveStatusTimer);
+  liveStatusTimer = null;
+  const content = main.querySelector<HTMLElement>(".live-status-region");
+  const announcement = main.querySelector<HTMLElement>("[aria-live='polite']");
+  if (content === null || !main.isConnected) return;
+  try {
+    const result = await api<LiveStatusPage>("/app/api/live-status");
+    if (generation !== liveStatusGeneration || currentRoute !== "devices" || !main.isConnected) return;
+    content.setAttribute("aria-busy", "false");
+    content.replaceChildren(renderLiveStatus(result));
+    const signature = result.sources
+      .map((source) => `${source.display_name}: ${source.connection}, heartbeat ${source.heartbeat}, device ${source.device_health}`)
+      .join(". ");
+    if (announcement !== null && signature !== lastLiveAnnouncement) {
+      announcement.textContent = signature || "No live device monitor is configured.";
+      lastLiveAnnouncement = signature;
+    }
+    liveStatusTimer = window.setTimeout(
+      () => void refreshLiveStatus(main, generation),
+      Math.max(1, result.refresh_after_seconds) * 1000
+    );
+  } catch (error) {
+    if (handleProtectedProblem(content, error, "Confirm the local monitor is running, then retry.")) return;
+    liveStatusTimer = window.setTimeout(() => void refreshLiveStatus(main, generation), 2000);
+  }
+}
+
+function renderLiveStatus(result: LiveStatusPage): HTMLElement {
+  const wrapper = el("div", "live-status-stack");
+  if (result.sources.length === 0) {
+    wrapper.append(
+      emptyState(
+        "No live monitor configured",
+        "Restart the Dashboard with --msp430-port COM4 to enable the optional read-only MSP430 UART v1 monitor."
+      )
+    );
+    return wrapper;
+  }
+  for (const source of result.sources) wrapper.append(renderLiveSource(source));
+  wrapper.append(el("p", "live-sampled-at muted", `Status sampled ${formatDate(result.observed_at)}`));
+  return wrapper;
+}
+
+function renderLiveSource(source: LiveSourceStatus): HTMLElement {
+  const sourcePanel = el("article", "live-source-panel");
+  const heading = el("div", "card-heading");
+  const title = el("div");
+  title.append(el("p", "eyebrow", "LIVE SOURCE"), el("h2", undefined, source.display_name));
+  heading.append(title, statusBadge(source.access_mode));
+
+  const stateGrid = el("section", "device-state-grid");
+  stateGrid.setAttribute("aria-label", `${source.display_name} current states`);
+  stateGrid.append(
+    liveStateCard("Connection", source.connection, connectionDescription(source.connection)),
+    liveStateCard("Heartbeat", source.heartbeat, heartbeatDescription(source)),
+    liveStateCard("Device health", source.device_health, healthDescription(source))
+  );
+
+  const detail = el("section", "live-detail-banner");
+  detail.append(statusBadge(source.detail_code), el("p", undefined, source.detail_message));
+
+  const columns = el("div", "content-columns");
+  const telemetry = el("section", "panel");
+  telemetry.append(el("p", "eyebrow", "LATEST VALID TEL FRAME"), el("h3", undefined, "Telemetry position"));
+  const telemetryValues = el("dl", "definition-list");
+  telemetryValues.append(
+    definition("Sequence", nullableNumber(source.sequence)),
+    definition("Device uptime", source.uptime_ms === null ? "Not observed" : formatDuration(source.uptime_ms)),
+    definition("Reported state", source.device_state ?? "Not observed"),
+    definition("Fault flags", source.fault_flags ?? "Not observed", true),
+    definition("Last heartbeat", source.last_heartbeat_at === null ? "Not observed" : formatDate(source.last_heartbeat_at)),
+    definition("Heartbeat age", source.heartbeat_age_seconds === null ? "Not observed" : `${source.heartbeat_age_seconds.toFixed(3)} s`)
+  );
+  telemetry.append(telemetryValues);
+
+  const monitor = el("section", "panel");
+  monitor.append(el("p", "eyebrow", "MONITOR DIAGNOSTICS"), el("h3", undefined, "Read-only transport"));
+  const monitorValues = el("dl", "definition-list");
+  monitorValues.append(
+    definition("Endpoint", source.endpoint, true),
+    definition("Protocol", source.protocol, true),
+    definition("Baud", String(source.baud_rate)),
+    definition("Stale after", `${source.stale_after_seconds.toFixed(1)} s`),
+    definition("Valid frames", String(source.frames_received)),
+    definition("Protocol errors", String(source.protocol_errors)),
+    definition("Sequence gaps", String(source.sequence_gaps)),
+    definition("Reconnects", String(source.reconnects))
+  );
+  monitor.append(monitorValues);
+  columns.append(telemetry, monitor);
+
+  const boundary = el("p", "live-boundary mono", `${source.evidence_boundary} · hardware_control=${source.hardware_control}`);
+  sourcePanel.append(heading, stateGrid, detail, columns, boundary);
+  return sourcePanel;
+}
+
+function liveStateCard(label: string, value: string, description: string): HTMLElement {
+  const card = el("article", "device-state-card");
+  card.append(el("span", undefined, label), statusBadge(value.replaceAll("_", " ")), el("p", undefined, description));
+  return card;
+}
+
+function connectionDescription(value: LiveSourceStatus["connection"]): string {
+  if (value === "CONNECTED") return "The configured serial endpoint is open for input.";
+  if (value === "CONNECTING") return "The monitor is attempting a read-only connection.";
+  if (value === "DISCONNECTED") return "The configured endpoint is not currently available.";
+  return "The endpoint could not be opened or read.";
+}
+
+function heartbeatDescription(source: LiveSourceStatus): string {
+  if (source.heartbeat === "NORMAL") return "The latest valid TEL frame is inside the freshness window.";
+  if (source.heartbeat === "STALE") return "A previous valid frame exists, but no current frame arrived in time.";
+  if (source.heartbeat === "INVALID") return "The latest TEL frame failed framing, range, or CRC validation.";
+  return "No valid TEL frame has been observed in this process.";
+}
+
+function healthDescription(source: LiveSourceStatus): string {
+  if (source.device_health === "FAULT") return `The firmware reports FAULT${source.fault_flags === null ? "" : ` with flags ${source.fault_flags}`}.`;
+  if (source.device_health === "WARNING") return "The firmware reports WARNING.";
+  if (source.device_health === "NORMAL") return `The firmware reports ${source.device_state ?? "a normal operating state"}.`;
+  return "No normal, warning, or fault state has been established.";
+}
+
+function nullableNumber(value: number | null): string {
+  return value === null ? "Not observed" : String(value);
+}
+
+function formatDuration(milliseconds: number): string {
+  const seconds = Math.floor(milliseconds / 1000);
+  const hours = Math.floor(seconds / 3600);
+  const minutes = Math.floor((seconds % 3600) / 60);
+  const remainder = seconds % 60;
+  return `${hours}h ${minutes}m ${remainder}s`;
 }
 
 async function renderOverview(): Promise<void> {
@@ -988,5 +1206,6 @@ window.addEventListener("hashchange", () => void renderRoute());
 window.addEventListener("beforeunload", () => {
   clearActivationTimer();
   clearSessionExpiryTimer();
+  clearLiveStatusTimer();
 });
 void loadSession();

@@ -419,6 +419,21 @@ Phase 20 then passed 13/13 production-broker controls through the installed
 generic plugin. Each successful receipt is scoped to its exact run plan and
 retains plugin evidence as `unsigned_local`/`declared`.
 
+## Addressed in the Phase 25 MSP430 live-status slice
+
+| Threat | Current control |
+|---|---|
+| A browser or remote caller selects an arbitrary device | Only the local operator selects one port at process startup; the authenticated BFF accepts no port or path parameter |
+| Monitoring changes firmware or device state | The adapter exposes no write command, opens only the application UART with DTR/RTS inactive, and never accesses the debug interface, firmware, FRAM, GPIO, or external loads |
+| Malformed or unbounded serial input exhausts or corrupts the service | Reads stop at 129 bytes; the frozen UART v1 consumer requires ASCII, newline framing, exact TEL fields, bounded integers, known state, four-hex fault/CRC values, and CRC-16/CCITT-FALSE |
+| A partial or corrupt frame is shown as healthy | Invalid TEL increments a protocol-error counter and sets heartbeat `INVALID` until the next valid TEL; silence beyond the monotonic threshold becomes `STALE` |
+| Device fault is confused with transport failure | Connection, heartbeat freshness, and firmware-reported health are independent response fields and separate visible cards |
+| Live telemetry is promoted into release evidence | The response retains `LIVE_STATUS_ONLY_NOT_RELEASE_EVIDENCE`; there is no store, collector, candidate-binding, policy, or attestation path from this monitor |
+| Optional hardware support becomes a core dependency | `pyserial` is an explicit optional extra, imported lazily only when the monitor is enabled; the default provider returns no sources and generic workflows remain unchanged |
+| Serial errors leak host details | The API returns only bounded stable status codes/messages and the selected endpoint; exception text, device serial identifiers, and OS paths are not returned |
+| A local page exposes device status without authorization | `/app/api/live-status` uses the existing authenticated Dashboard session and same-origin BFF boundary |
+| A short observation is overstated as hardware validation | Documentation retains input-only status, physical unplug/replug `NOT_RUN`, no measurement validation, no producer authenticity, and no long-duration or production claim |
+
 ## Deferred risks
 
 - archive and compressed-input bombs in future collectors;
@@ -441,3 +456,5 @@ retains plugin evidence as `unsigned_local`/`declared`.
   chunk; Phase 15 bounds application-retained bytes, not privileged local peers.
 - GitHub Checks/PR annotations, artifact upload, repository API writes, custom
   token scopes, OIDC workload identity, and authenticated CI provenance.
+- retained telemetry history, authenticated device identity, rate/volume trends,
+  physical unplug/replug acceptance, and any future MSP430 evidence collector.

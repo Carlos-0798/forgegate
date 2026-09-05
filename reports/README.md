@@ -6,6 +6,8 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
+- [Phase 25 MSP430 live-status acceptance](PHASE_25_MSP430_LIVE_STATUS_ACCEPTANCE_REPORT.md) — optional read-only UART v1 monitor, authenticated Devices page, deterministic status-state coverage, and bounded real COM4 observation; physical unplug/replug remains `NOT_RUN`
+- [Phase 25 MSP430 live-status evidence](PHASE_25_MSP430_LIVE_STATUS_EVIDENCE_2026-09-05.json) — exact ten-second browser counters and explicit no-control/no-measurement/no-release-evidence boundaries
 - [Phase 24 authenticated local Dashboard checkpoint](PHASE_24_AUTHENTICATED_LOCAL_DASHBOARD_ACCEPTANCE_REPORT.md) — implementation and automation pass; full manual cross-browser exit gate partial
 - [Phase 24 manual interaction acceptance](PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md) — operator/producer inputs, durable output cross-check, expiry/restart recovery, Edge/Chrome focus, 129-record pagination, 422 recovery, and remaining manual boundary
 - [MSP430 connection and Dashboard observation](MSP430_CONNECTION_AND_DASHBOARD_OBSERVATION_2026-09-04.md) — bounded Windows USB/UART pass, retained device absence, and a 216.1-second reconnection pass, plus non-mutating Dashboard checks; not uninterrupted long-duration stability, firmware, protocol, measurement, or ForgeGate hardware-integration proof
@@ -36,6 +38,7 @@ publisher-provenance, or general third-party compatibility claims.
 | 22 | Clean-install Windows Alpha delivery chain | [Acceptance report](PHASE_22_WINDOWS_ALPHA_ACCEPTANCE_REPORT.md), [raw evidence](PHASE_22_WINDOWS_ALPHA_LIVE_EVIDENCE.json) |
 | 23 | Local Web Dashboard design gate | [Design report](PHASE_23_LOCAL_WEB_DASHBOARD_DESIGN_GATE.md); no UI implementation |
 | 24 | Authenticated local Dashboard vertical slice | [Acceptance report](PHASE_24_AUTHENTICATED_LOCAL_DASHBOARD_ACCEPTANCE_REPORT.md) and [manual interaction record](PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md); implementation/local flow pass, manual cross-browser gate partial |
+| 25 | Optional MSP430 read-only live status | [Acceptance report](PHASE_25_MSP430_LIVE_STATUS_ACCEPTANCE_REPORT.md) and [bounded machine record](PHASE_25_MSP430_LIVE_STATUS_EVIDENCE_2026-09-05.json); deterministic state coverage plus connected COM4 browser observation, physical unplug/replug not run |
 
 `SANDBOXED` applies only to an exact accepted run. The generic fixture does not
 establish publisher trust, native-extension safety, arbitrary dependency
@@ -67,6 +70,7 @@ compatibility, remote acquisition safety, or hardware behavior.
 - `LOCAL_HOST_TEST` is not CI, physical-device, or production evidence.
 - Hosted CI does not prove the local Podman/WSL2 hostile-fixture results.
 - AFE simulation or bench-labeled upstream data is not ForgeGate hardware proof.
-- Planned MSP430 compatibility remains unimplemented until its public artifact
+- MSP430 UART live status is implemented as input-only observation; the separate
+  release-evidence collector remains unimplemented until a public report artifact
   contract is frozen and aligned in this project context.
 - Historical failures and corrections remain part of the record.

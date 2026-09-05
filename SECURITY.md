@@ -88,3 +88,14 @@ plugins, generalized third-party compatibility, and Linux/macOS execution are
 not established. There is no subprocess-only fallback. WSL's automatic
 machine-level Windows-drive mounts remain a documented defense-in-depth
 limitation even though the disposable container test could not read `/mnt/c`.
+
+Phase 25 adds an optional MSP430 live-status monitor behind the authenticated
+Dashboard. The operator must select one application UART at process startup.
+The adapter is input-only, sets DTR/RTS inactive before opening, performs
+bounded reads, validates the frozen public UART v1 TEL framing and CRC, and
+returns sanitized connection/heartbeat/device-state snapshots. It exposes no
+serial write command and does not access the debug interface, firmware, FRAM,
+GPIO, or external loads. Live status is explicitly not candidate evidence,
+measurement validation, producer authentication, hardware control, or a release
+decision. The optional `pyserial` dependency is loaded only when this monitor is
+enabled; the generic core and default Dashboard remain device-independent.
