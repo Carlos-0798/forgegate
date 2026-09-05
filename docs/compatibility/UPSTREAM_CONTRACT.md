@@ -35,23 +35,30 @@ limitations, source schemas, TestRun outcome, metrics, and criteria. It emits
 no `physically_verified` record because v1 does not require instrument or
 calibration provenance.
 
-## MSP430 Equipment Health & Safety Controller — later hardware peer
+## MSP430 Equipment Health & Safety Controller — optional artifact peer
 
-Reference snapshot: commit `151fdcfa60661bce1ba04af13c1d3509706f7d4a`,
-reported 2026-08-30. ForgeGate may later consume target-build reports, host test
-results, UART soak summaries, HIL checklists, and external bench reports. It
-must not open COM ports, flash firmware, mutate FRAM, send commands, control the
-fan, or inherit Dashboard observations as stronger evidence.
+Planning reference snapshot: commit `151fdcfa60661bce1ba04af13c1d3509706f7d4a`,
+reported 2026-08-30. The implemented optional collector now consumes the frozen
+`forgegate.msp430-validation-report.v1` artifact. The retained Phase 6
+migration fixture resolves its tested source commit to
+`0850241c1b2aa34704228146600501346ee81745`; the planning and evidence snapshots
+remain deliberately distinct.
+
+ForgeGate does not open COM ports through this collector, flash firmware,
+mutate FRAM, send commands, control the fan, or inherit live Dashboard
+observations as stronger evidence. The contract and boundary are documented in
+`architecture/MSP430_VALIDATION_COLLECTOR.md`.
 
 Initial mapping proposal:
 
-| MSP430 evidence | ForgeGate verification level |
+| MSP430 report evidence level | ForgeGate verification level |
 |---|---|
-| pytest/host protocol tests | `host_tested` |
-| TI compiler/linker report | `target_built` |
-| GitHub Actions result with claimed metadata | `ci_validated` |
-| LaunchPad UART/soak observation | `system_observed` |
-| future sensor/fan bench acceptance | `physically_verified` |
+| `HOST_TEST` | `host_tested` |
+| `TARGET_BUILD` | `target_built` |
+| `LAUNCHPAD_HIL` | `system_observed` plus a retained scope warning |
+| `BENCH_MEASURED` with incomplete calibration provenance | `system_observed` plus a retained cap warning |
+| `BENCH_MEASURED` with explicit physical context and complete instrument calibration provenance | `physically_verified` |
 
-Future progress updates must change this snapshot deliberately; prior evidence
-must remain associated with its original commit and artifact hashes.
+Every report must carry its own full source commit and source-artifact hashes.
+Future progress updates must create a new report rather than rewrite this
+snapshot; prior evidence remains associated with its original identities.

@@ -3,11 +3,11 @@
 ## Decision status
 
 The Phase 23 architecture is implemented through the Phase 24 authenticated
-vertical slice, Phase 25 optional live monitor, and Phase 26 read-only
-assurance review. The current `0.1.0a1` surfaces are the CLI, authenticated
-loopback REST API, and same-origin local Dashboard. Full manual accessibility
-and exact-zoom acceptance is still partial. `/docs` and `/redoc` remain
-deliberately disabled.
+vertical slice, Phase 25 optional live monitor, Phase 26 assurance review, and
+Phase 27 reviewed candidate write workflow. The current `0.1.0a1` surfaces are
+the CLI, authenticated loopback REST API, and same-origin local Dashboard.
+Exact Edge zoom is accepted; environment-specific accessibility checks retain
+their own bounded results. `/docs` and `/redoc` remain deliberately disabled.
 
 ## Decision
 
@@ -33,7 +33,7 @@ Bearer tokens must not be exposed to browser JavaScript, while current CLI and
 API clients retain the existing challenge/session protocol.
 
 `schemas/forgegate.dashboard-openapi.v1.json` is a separate build-time,
-drift-checked contract for the thirteen `/app/api/` operations. It is exported
+drift-checked contract for the seventeen `/app/api/` operations. It is exported
 from the installed wheel during release smoke but is not exposed as interactive
 documentation at runtime.
 
@@ -127,20 +127,35 @@ The implemented surface remains intentionally bounded:
    identity through the existing bounded query.
 6. Candidates lists project candidates, creates a candidate through an
    immutable reviewed request, and displays candidate plus audit history.
-7. A duplicate submission replays exactly and a reused key with changed
-   content fails visibly without automatic retry. Stale-revision UI recovery
-   is deferred until this slice exposes a revision-mutating command.
-8. Evidence, Decision, and Assurance join the selected candidate to its
+7. An operator can review and separately confirm DRAFT-to-COLLECTING,
+   COLLECTING-to-READY, and READY-to-EVALUATING transitions with exact expected
+   revisions; stale state produces a visible 409 and cannot overwrite.
+8. An operator can select one local evidence-assembly JSON document, review its
+   candidate commit, content identity, receipt/evidence counts, warning
+   disposition, size, and browser-computed SHA-256, then request one immutable
+   binding. The server never receives or interprets a local path.
+9. An operator can select exact material produced from the candidate's frozen
+   profile, review the policy identity and hash, execute the domain policy
+   engine, and inspect its terminal decision. Presentation code does not
+   reproduce rule evaluation.
+10. A terminal candidate can generate one reviewed, immutable unsigned-local
+   attestation. This neither publishes nor deploys the result.
+11. Duplicate submissions replay exactly and reused keys with changed content
+   fail visibly without automatic retry. Every successful write reloads both
+   the candidate list and detail from authoritative state.
+12. Evidence, Decision, and Assurance join the selected candidate to its
    retained evidence binding, exact policy material and evaluation, attestation,
    transition chain, and portable bundle identity through one project-scoped
    read operation. Missing records remain visibly unknown rather than inferred.
-9. The Devices page decodes only versioned MSP430 UART v1 fault bits, retains
+13. The Devices page decodes only versioned MSP430 UART v1 fault bits, retains
    unknown bits without invented meaning, and labels every decoded item as a
    firmware report rather than a ForgeGate diagnosis.
 
-Evidence upload, collection, evaluation, assurance export, plugin execution, session
-administration, and trust-store reload remain disabled and visibly labeled as
-planned. Empty controls or mock success paths are prohibited.
+Automatic evidence collection, assurance export/download, plugin execution,
+session administration, and trust-store reload remain disabled and visibly
+labeled as planned. The implemented local JSON imports are reviewed document
+transfers, not arbitrary server-path access or remote acquisition. Empty
+controls or mock success paths are prohibited.
 
 ## Packaging and lifecycle
 
@@ -174,8 +189,9 @@ planned. Empty controls or mock success paths are prohibited.
 
 The UX requirements, Dashboard threat model, and acceptance matrix remain the
 governing gate. Automation, installed-wheel comparison, Edge and Chrome core
-interaction, focus, responsive, error-presentation, and Phase 26 read-only
-review paths pass. The exact zoom and assistive-technology matrix remains
-`NOT_RUN` or partial, so complete UI acceptance is still open. Passing UI tests
-will not change hardware,
-producer-authenticity, trusted-time, non-loopback, or production claims.
+interaction, focus, responsive, error-presentation, assurance review, and the
+reviewed write path pass. Edge 100/125/150/175/200% zoom also passes. High
+contrast, spoken screen-reader output, and Remote Desktop retain their exact
+recorded status; complete accessibility certification is not claimed. Passing
+UI tests will not change hardware, producer-authenticity, trusted-time,
+non-loopback, or production claims.

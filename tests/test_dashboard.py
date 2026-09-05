@@ -307,8 +307,29 @@ def test_dashboard_portfolio_capture_record_matches_retained_generic_assets(
         assert Path(asset["path"]).name in gallery
 
     assert "docs/PORTFOLIO_EVIDENCE.md" in readme
-    assert "docs/assets/forgegate-dashboard-overview.jpg" in readme
-    assert "docs/assets/forgegate-dashboard-candidate-detail.jpg" in readme
+    assert "docs/assets/forgegate-dashboard-reviewed-workflow-pass.jpg" in readme
+    assert "docs/assets/forgegate-dashboard-reviewed-workflow-decision.jpg" in readme
+
+    phase27_path = (
+        repository_root / "reports" / "DASHBOARD_PHASE27_INTERACTION_EVIDENCE_2026-09-05.json"
+    )
+    phase27 = json.loads(phase27_path.read_text(encoding="utf-8"))
+    assert phase27["candidate"]["final_status"] == "PASS"
+    assert phase27["candidate"]["final_revision"] == 4
+    assert phase27["negative_case"]["durable_write"] is False
+    assert phase27["assistive_technology"]["windows_narrator"]["result"] == "BOUNDED_PASS"
+    assert phase27["assistive_technology"]["high_contrast"] == "NOT_RUN"
+    assert phase27["automated_verification"]["development_verification"] == "PASS"
+    assert phase27["automated_verification"]["release_smoke"] == "PASS"
+    for asset in phase27["screenshots"]:
+        payload = (repository_root / asset["file"]).read_bytes()
+        assert len(payload) == asset["size_bytes"]
+        assert hashlib.sha256(payload).hexdigest() == asset["sha256"]
+        assert asset["file"].endswith(".jpg")
+        assert payload.startswith(b"\xff\xd8\xff")
+    assert "forgegate-dashboard-reviewed-workflow-pass.jpg" in gallery
+    assert "forgegate-dashboard-reviewed-workflow-decision.jpg" in gallery
+    assert "forgegate-dashboard-reviewed-workflow-assurance.jpg" in gallery
 
     boundaries = evidence["boundaries"]
     assert boundaries["private_key_or_token_visible"] is False
@@ -457,6 +478,10 @@ def test_dashboard_openapi_export_is_deterministic_and_complete(tmp_path: Path) 
         "/app/api/candidates",
         "/app/api/candidates/{candidate_id}",
         "/app/api/candidates/{candidate_id}/assurance-review",
+        "/app/api/candidates/{candidate_id}/attestation",
+        "/app/api/candidates/{candidate_id}/evaluate",
+        "/app/api/candidates/{candidate_id}/evidence",
+        "/app/api/candidates/{candidate_id}/transitions",
         "/app/api/live-status",
         "/app/api/overview",
         "/app/api/projects",
@@ -465,6 +490,22 @@ def test_dashboard_openapi_export_is_deterministic_and_complete(tmp_path: Path) 
     }
     assert first["paths"]["/app/api/candidates"]["post"]["operationId"] == (
         "createDashboardCandidate"
+    )
+    assert (
+        first["paths"]["/app/api/candidates/{candidate_id}/transitions"]["post"]["operationId"]
+        == "advanceDashboardCandidate"
+    )
+    assert (
+        first["paths"]["/app/api/candidates/{candidate_id}/evidence"]["post"]["operationId"]
+        == "bindDashboardCandidateEvidence"
+    )
+    assert (
+        first["paths"]["/app/api/candidates/{candidate_id}/evaluate"]["post"]["operationId"]
+        == "evaluateDashboardCandidate"
+    )
+    assert (
+        first["paths"]["/app/api/candidates/{candidate_id}/attestation"]["post"]["operationId"]
+        == "attestDashboardCandidate"
     )
     assert first["paths"]["/app/api/session"]["delete"]["operationId"] == ("endDashboardSession")
     assert first["paths"]["/app/api/live-status"]["get"]["operationId"] == (
@@ -697,6 +738,176 @@ def test_dashboard_project_candidate_replay_conflict_and_audit(
     assert conflict.json()["error"]["code"] == "STORE_IDEMPOTENCY_CONFLICT"
     assert [event["event_type"] for event in audit.json()["events"]] == ["candidate.created"]
     assert missing_scope.status_code == 403
+
+
+def test_dashboard_operator_completes_reviewed_candidate_write_workflow(
+    tmp_path: Path,
+    repository_root: Path,
+) -> None:
+    application = _application_with_project(tmp_path, repository_root)
+    with TestClient(
+        create_api_app(
+            tmp_path / "forgegate.db",
+            application=application,
+            authenticator=ApiAuthenticator(TEST_TRUST_STORE),
+            dashboard=True,
+        ),
+        base_url=ORIGIN,
+    ) as client:
+        activated = _activate(client)
+        write_headers = {
+            **ORIGIN_HEADER,
+            "X-ForgeGate-CSRF": activated["csrf_token"],
+        }
+        created = client.post(
+            "/app/api/candidates",
+            headers={**write_headers, "Idempotency-Key": "dashboard:workflow:create"},
+            json=_candidate_payload(),
+        )
+        candidate_id = created.json()["candidate_id"]
+
+        collecting_command = {
+            "to_status": "COLLECTING",
+            "expected_revision": 0,
+            "occurred_at": "2026-09-04T12:31:00Z",
+            "reason": "Begin retained evidence collection",
+        }
+        transition_headers = {
+            **write_headers,
+            "Idempotency-Key": "dashboard:workflow:collecting",
+        }
+        no_origin = client.post(
+            f"/app/api/candidates/{candidate_id}/transitions",
+            headers={
+                "X-ForgeGate-CSRF": activated["csrf_token"],
+                "Idempotency-Key": "dashboard:workflow:no-origin",
+            },
+            json=collecting_command,
+        )
+        collecting = client.post(
+            f"/app/api/candidates/{candidate_id}/transitions",
+            headers=transition_headers,
+            json=collecting_command,
+        )
+        collecting_replay = client.post(
+            f"/app/api/candidates/{candidate_id}/transitions",
+            headers=transition_headers,
+            json=collecting_command,
+        )
+        stale = client.post(
+            f"/app/api/candidates/{candidate_id}/transitions",
+            headers={**write_headers, "Idempotency-Key": "dashboard:workflow:stale"},
+            json={**collecting_command, "to_status": "READY"},
+        )
+
+        assembly = json.loads(
+            (repository_root / "tests/golden/evidence_bundle_assembly.json").read_text(
+                encoding="utf-8"
+            )
+        )
+        evidence_command = {
+            "assembly": assembly,
+            "bound_at": "2026-09-04T20:31:00Z",
+        }
+        evidence_headers = {
+            **write_headers,
+            "Idempotency-Key": "dashboard:workflow:evidence",
+        }
+        bound = client.post(
+            f"/app/api/candidates/{candidate_id}/evidence",
+            headers=evidence_headers,
+            json=evidence_command,
+        )
+        bound_replay = client.post(
+            f"/app/api/candidates/{candidate_id}/evidence",
+            headers=evidence_headers,
+            json=evidence_command,
+        )
+
+        for revision, target, timestamp in (
+            (1, "READY", "2026-09-04T20:32:00Z"),
+            (2, "EVALUATING", "2026-09-04T20:33:00Z"),
+        ):
+            advanced = client.post(
+                f"/app/api/candidates/{candidate_id}/transitions",
+                headers={
+                    **write_headers,
+                    "Idempotency-Key": f"dashboard:workflow:{target.lower()}",
+                },
+                json={
+                    "to_status": target,
+                    "expected_revision": revision,
+                    "occurred_at": timestamp,
+                    "reason": f"Advance reviewed candidate to {target}",
+                },
+            )
+            assert advanced.status_code == 200, advanced.text
+
+        material = application.materialize_policy(
+            candidate_id,
+            repository_root / "examples/sample-python-api",
+        )
+        evaluation_command = {
+            "policy_material": material.model_dump(mode="json"),
+            "policy": None,
+            "expected_revision": 3,
+            "evaluated_at": "2026-09-04T21:00:00Z",
+            "reason": "Evaluate the reviewed retained evidence",
+        }
+        evaluation_headers = {
+            **write_headers,
+            "Idempotency-Key": "dashboard:workflow:evaluate",
+        }
+        evaluated = client.post(
+            f"/app/api/candidates/{candidate_id}/evaluate",
+            headers=evaluation_headers,
+            json=evaluation_command,
+        )
+        evaluated_replay = client.post(
+            f"/app/api/candidates/{candidate_id}/evaluate",
+            headers=evaluation_headers,
+            json=evaluation_command,
+        )
+        attestation_command = {"issued_at": "2026-09-04T22:00:00Z"}
+        attested = client.post(
+            f"/app/api/candidates/{candidate_id}/attestation",
+            headers=write_headers,
+            json=attestation_command,
+        )
+        attested_replay = client.post(
+            f"/app/api/candidates/{candidate_id}/attestation",
+            headers=write_headers,
+            json=attestation_command,
+        )
+        attestation_conflict = client.post(
+            f"/app/api/candidates/{candidate_id}/attestation",
+            headers=write_headers,
+            json={"issued_at": "2026-09-04T22:01:00Z"},
+        )
+        review = client.get(f"/app/api/candidates/{candidate_id}/assurance-review")
+
+    assert created.status_code == 201
+    assert no_origin.status_code == 403
+    assert collecting.status_code == collecting_replay.status_code == 200
+    assert collecting.json() == collecting_replay.json()
+    assert stale.status_code == 409
+    assert stale.json()["error"]["code"] == "STORE_REVISION_CONFLICT"
+    assert bound.status_code == bound_replay.status_code == 200
+    assert bound.json() == bound_replay.json()
+    assert evaluated.status_code == evaluated_replay.status_code == 200
+    assert evaluated.json() == evaluated_replay.json()
+    assert evaluated.json()["transition"]["candidate"]["status"] == "PASS"
+    assert attested.status_code == attested_replay.status_code == 200
+    assert attested.json() == attested_replay.json()
+    assert attestation_conflict.status_code == 409
+    assert attestation_conflict.json()["error"]["code"] == "STORE_ATTESTATION_CONFLICT"
+    assert review.status_code == 200
+    assert review.json()["candidate"]["revision"] == 4
+    assert review.json()["candidate"]["status"] == "PASS"
+    assert review.json()["evidence_binding"] is not None
+    assert review.json()["policy_evaluation"]["decision"] == "PASS"
+    assert review.json()["attestation"] is not None
+    assert review.json()["assurance_bundle_id"].startswith("sha256:")
 
 
 def test_dashboard_candidate_pages_are_bounded_and_cursor_complete(

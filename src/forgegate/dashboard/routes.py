@@ -20,12 +20,24 @@ from forgegate.api.auth import (
 )
 from forgegate.application import (
     AuditEventQuery,
+    CandidateAdvanceCommand,
     CandidateApplication,
+    CandidateAttestCommand,
+    CandidateBindEvidenceCommand,
     CandidateCreateCommand,
+    CandidateEvaluateCommand,
+    CandidateEvaluationResult,
     CandidateQuery,
 )
+from forgegate.attestations import ReleaseAttestation
 from forgegate.audit import AuditEventPage
-from forgegate.candidates import CandidateDocument, CandidateStoreError, ReleaseCandidatePage
+from forgegate.candidates import (
+    CandidateDocument,
+    CandidateEvidenceBinding,
+    CandidateStoreError,
+    CandidateTransitionResult,
+    ReleaseCandidatePage,
+)
 from forgegate.candidates.store import STORE_SCHEMA_VERSION
 from forgegate.dashboard.assets import validate_dashboard_assets
 from forgegate.dashboard.models import (
@@ -353,6 +365,116 @@ def install_dashboard_routes(
             actor=principal.audit_actor(),
         )
 
+    @app.post(
+        "/app/api/candidates/{candidate_id}/transitions",
+        response_model=CandidateTransitionResult,
+        operation_id="advanceDashboardCandidate",
+        include_in_schema=False,
+    )
+    def advance_dashboard_candidate(
+        request: Request,
+        candidate_id: str,
+        command: CandidateAdvanceCommand,
+        idempotency_key: Annotated[str, Header(alias="Idempotency-Key")],
+        csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> CandidateTransitionResult:
+        principal = _dashboard_write_principal(
+            manager,
+            authenticator,
+            application,
+            request,
+            candidate_id,
+            csrf_token,
+        )
+        return application.advance_candidate(
+            candidate_id,
+            command,
+            idempotency_key=idempotency_key,
+            actor=principal.audit_actor(),
+        )
+
+    @app.post(
+        "/app/api/candidates/{candidate_id}/evidence",
+        response_model=CandidateEvidenceBinding,
+        operation_id="bindDashboardCandidateEvidence",
+        include_in_schema=False,
+    )
+    def bind_dashboard_candidate_evidence(
+        request: Request,
+        candidate_id: str,
+        command: CandidateBindEvidenceCommand,
+        idempotency_key: Annotated[str, Header(alias="Idempotency-Key")],
+        csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> CandidateEvidenceBinding:
+        principal = _dashboard_write_principal(
+            manager,
+            authenticator,
+            application,
+            request,
+            candidate_id,
+            csrf_token,
+        )
+        return application.bind_evidence(
+            candidate_id,
+            command,
+            idempotency_key=idempotency_key,
+            actor=principal.audit_actor(),
+        )
+
+    @app.post(
+        "/app/api/candidates/{candidate_id}/evaluate",
+        response_model=CandidateEvaluationResult,
+        operation_id="evaluateDashboardCandidate",
+        include_in_schema=False,
+    )
+    def evaluate_dashboard_candidate(
+        request: Request,
+        candidate_id: str,
+        command: CandidateEvaluateCommand,
+        idempotency_key: Annotated[str, Header(alias="Idempotency-Key")],
+        csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> CandidateEvaluationResult:
+        principal = _dashboard_write_principal(
+            manager,
+            authenticator,
+            application,
+            request,
+            candidate_id,
+            csrf_token,
+        )
+        return application.evaluate_candidate(
+            candidate_id,
+            command,
+            idempotency_key=idempotency_key,
+            actor=principal.audit_actor(),
+        )
+
+    @app.post(
+        "/app/api/candidates/{candidate_id}/attestation",
+        response_model=ReleaseAttestation,
+        operation_id="attestDashboardCandidate",
+        include_in_schema=False,
+    )
+    def attest_dashboard_candidate(
+        request: Request,
+        candidate_id: str,
+        command: CandidateAttestCommand,
+        csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> ReleaseAttestation:
+        principal = _dashboard_write_principal(
+            manager,
+            authenticator,
+            application,
+            request,
+            candidate_id,
+            csrf_token,
+        )
+        return application.attest_candidate(
+            candidate_id,
+            command,
+            actor=principal.audit_actor(),
+        )
+
     @app.get(
         "/app/api/candidates/{candidate_id}",
         response_model=CandidateDocument,
@@ -456,6 +578,23 @@ def install_dashboard_routes(
 def _dashboard_principal(manager: DashboardSessionManager, request: Request) -> ApiPrincipal:
     _, principal = manager.session(request.cookies.get(DASHBOARD_SESSION_COOKIE))
     request.state.authenticated_principal = principal
+    return principal
+
+
+def _dashboard_write_principal(
+    manager: DashboardSessionManager,
+    authenticator: ApiAuthenticator,
+    application: CandidateApplication,
+    request: Request,
+    candidate_id: str,
+    csrf_token: str | None,
+) -> ApiPrincipal:
+    _require_same_origin(request, required=True)
+    stored, principal = manager.session(request.cookies.get(DASHBOARD_SESSION_COOKIE))
+    request.state.authenticated_principal = principal
+    manager.require_csrf(stored, csrf_token)
+    candidate = application.get_candidate(candidate_id)
+    authenticator.require_project(principal, candidate.project_id, write=True)
     return principal
 
 

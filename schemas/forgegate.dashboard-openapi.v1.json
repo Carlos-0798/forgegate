@@ -364,6 +364,78 @@
         "title": "AuditEventType",
         "type": "string"
       },
+      "CandidateAdvanceCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "to_status": {
+            "$ref": "#/components/schemas/CandidateStatus"
+          }
+        },
+        "required": [
+          "to_status",
+          "expected_revision",
+          "occurred_at"
+        ],
+        "title": "CandidateAdvanceCommand",
+        "type": "object"
+      },
+      "CandidateAttestCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "issued_at": {
+            "format": "date-time",
+            "title": "Issued At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "issued_at"
+        ],
+        "title": "CandidateAttestCommand",
+        "type": "object"
+      },
+      "CandidateBindEvidenceCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "assembly": {
+            "$ref": "#/components/schemas/EvidenceBundleAssembly"
+          },
+          "bound_at": {
+            "format": "date-time",
+            "title": "Bound At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "assembly",
+          "bound_at"
+        ],
+        "title": "CandidateBindEvidenceCommand",
+        "type": "object"
+      },
       "CandidateCreateCommand": {
         "additionalProperties": false,
         "properties": {
@@ -427,6 +499,87 @@
             "$ref": "#/components/schemas/ProfileBoundReleaseCandidate"
           }
         ]
+      },
+      "CandidateEvaluateCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "evaluated_at": {
+            "format": "date-time",
+            "title": "Evaluated At",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "policy": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "policy_material": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyMaterial"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "evaluated_at"
+        ],
+        "title": "CandidateEvaluateCommand",
+        "type": "object"
+      },
+      "CandidateEvaluationResult": {
+        "additionalProperties": false,
+        "properties": {
+          "evaluation": {
+            "$ref": "#/components/schemas/PolicyEvaluationDocument"
+          },
+          "policy_material": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PolicyMaterial"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "transition": {
+            "$ref": "#/components/schemas/CandidateTransitionResult"
+          }
+        },
+        "required": [
+          "evaluation",
+          "transition"
+        ],
+        "title": "CandidateEvaluationResult",
+        "type": "object"
       },
       "CandidateEvidenceBinding": {
         "additionalProperties": false,
@@ -577,6 +730,29 @@
           "occurred_at"
         ],
         "title": "CandidateTransition",
+        "type": "object"
+      },
+      "CandidateTransitionResult": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate": {
+            "$ref": "#/components/schemas/CandidateDocument"
+          },
+          "schema_version": {
+            "const": "forgegate.candidate-transition-result.v1",
+            "default": "forgegate.candidate-transition-result.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "transition": {
+            "$ref": "#/components/schemas/CandidateTransition"
+          }
+        },
+        "required": [
+          "candidate",
+          "transition"
+        ],
+        "title": "CandidateTransitionResult",
         "type": "object"
       },
       "CollectionIssue": {
@@ -3224,6 +3400,293 @@
           }
         },
         "summary": "Get Dashboard Candidate Assurance Review"
+      }
+    },
+    "/app/api/candidates/{candidate_id}/attestation": {
+      "post": {
+        "operationId": "attestDashboardCandidate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateAttestCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseAttestation"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Attest Dashboard Candidate"
+      }
+    },
+    "/app/api/candidates/{candidate_id}/evaluate": {
+      "post": {
+        "operationId": "evaluateDashboardCandidate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateEvaluateCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateEvaluationResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Evaluate Dashboard Candidate"
+      }
+    },
+    "/app/api/candidates/{candidate_id}/evidence": {
+      "post": {
+        "operationId": "bindDashboardCandidateEvidence",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateBindEvidenceCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateEvidenceBinding"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Bind Dashboard Candidate Evidence"
+      }
+    },
+    "/app/api/candidates/{candidate_id}/transitions": {
+      "post": {
+        "operationId": "advanceDashboardCandidate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateAdvanceCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateTransitionResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Advance Dashboard Candidate"
       }
     },
     "/app/api/live-status": {

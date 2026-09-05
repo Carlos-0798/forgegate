@@ -1,0 +1,110 @@
+{
+  "schema_version": "forgegate.dashboard-manual-evidence.v1",
+  "recorded_on": "2026-09-05",
+  "environment": {
+    "operating_system": "Windows 11",
+    "browser": "Microsoft Edge",
+    "service_url": "http://127.0.0.1:8132/app/",
+    "service_scope": "isolated local test instance",
+    "host_display_scale_percent": 150,
+    "hardware_access": "NOT_PERFORMED",
+    "remote_publication": "NOT_PERFORMED"
+  },
+  "candidate": {
+    "candidate_id": "cand-270169223181fdd6a6d287a0",
+    "project_id": "sample-api",
+    "version": "2.7.0-manual",
+    "commit_sha": "9ac23494b86212928185de9b0eef1c1a82a8c0ea",
+    "release_track": "pull-request",
+    "final_status": "PASS",
+    "final_revision": 4
+  },
+  "workflow": [
+    { "step": "create", "result": "PASS", "audit_sequence": 5 },
+    { "step": "DRAFT_TO_COLLECTING", "result": "PASS", "audit_sequence": 6 },
+    { "step": "bind_evidence", "result": "PASS", "audit_sequence": 7 },
+    { "step": "COLLECTING_TO_READY", "result": "PASS", "audit_sequence": 8 },
+    { "step": "READY_TO_EVALUATING", "result": "PASS", "audit_sequence": 9 },
+    { "step": "evaluate_to_PASS", "result": "PASS", "audit_sequences": [10, 11] },
+    { "step": "generate_attestation", "result": "PASS", "audit_sequence": 12 }
+  ],
+  "negative_case": {
+    "case": "assembly candidate commit mismatch",
+    "expected": "reject before binding",
+    "actual": "HTTP 422 DASHBOARD_IMPORT_INVALID",
+    "durable_write": false
+  },
+  "retained_identities": {
+    "assembly_id": "sha256:ee0814f74df5498587349df3a06a88497735a69fe31eb847d1ccc4dd19240637",
+    "policy_material_id": "sha256:1639b2befec2437ffaf2dfec6ab8488e7f0b32c8666f2009bcfc1f1b39d2db41",
+    "policy_fingerprint": "sha256:26de07d5718ca9d55362a958791d98993d6dc79ea244f48c003e32bd3a4f0f3d",
+    "evaluation_id": "sha256:4702d30b0bc7ac536167537a991928e056070f7aebb136095c97015733d48c32",
+    "attestation_id": "sha256:9e271955f869ca0a5d2877fe3d0a5f796e10c53232662618e7143f7f56b83033",
+    "assurance_bundle_id": "sha256:92f2082cb6b2292019911981a3feb5683c873de0d82f9cb6d50560469ff6da97",
+    "assurance": "unsigned_local"
+  },
+  "manual_defects_corrected": [
+    {
+      "defect": "candidate table retained the old state after a detail-only reload",
+      "correction": "reload the full candidate workspace and then reopen authoritative detail",
+      "retest": "PASS; table and detail both displayed PASS revision 4"
+    },
+    {
+      "defect": "reviewed command initially focused Cancel before the dialog was fully opened",
+      "correction": "open the native dialog before rendering and focusing the confirmation action",
+      "retest": "PASS; confirmation initially active, focus trapped, Escape returned focus"
+    }
+  ],
+  "zoom_matrix": [
+    { "zoom_percent": 100, "device_pixel_ratio": 1.5, "inner_width": 2552, "inner_height": 1261, "root_horizontal_overflow": 0, "action_reachable": true, "nav_main_overlap": false, "clipped_checked_text": [] },
+    { "zoom_percent": 125, "device_pixel_ratio": 1.875, "inner_width": 2041, "inner_height": 1009, "root_horizontal_overflow": 0, "action_reachable": true, "nav_main_overlap": false, "clipped_checked_text": [] },
+    { "zoom_percent": 150, "device_pixel_ratio": 2.25, "inner_width": 1701, "inner_height": 841, "root_horizontal_overflow": 0, "action_reachable": true, "nav_main_overlap": false, "clipped_checked_text": [] },
+    { "zoom_percent": 175, "device_pixel_ratio": 2.625, "inner_width": 1458, "inner_height": 720, "root_horizontal_overflow": 0, "action_reachable": true, "nav_main_overlap": false, "clipped_checked_text": [] },
+    { "zoom_percent": 200, "device_pixel_ratio": 3.0, "inner_width": 1276, "inner_height": 630, "root_horizontal_overflow": 0, "action_reachable": true, "nav_main_overlap": false, "clipped_checked_text": [], "dialog_horizontal_overflow": 0, "focus_loop": "PASS", "escape_focus_return": "PASS" }
+  ],
+  "assistive_technology": {
+    "windows_narrator": {
+      "result": "BOUNDED_PASS",
+      "process_started": true,
+      "system_keyboard_traversal": "PASS",
+      "semantic_names": "PASS",
+      "landmarks_headings_tables_live_regions": "PASS",
+      "spoken_output_recorded": false
+    },
+    "high_contrast": "NOT_RUN",
+    "remote_desktop": {
+      "result": "NOT_RUN",
+      "reason": "current Windows logon is interactive type 2, not RemoteInteractive type 10"
+    }
+  },
+  "screenshots": [
+    { "file": "docs/assets/forgegate-dashboard-reviewed-workflow-pass.jpg", "sha256": "4d6ade31ab0ac191a3b4b32a112e556af4b6b6aa654616d59faea0ddd4880acd", "size_bytes": 82390 },
+    { "file": "docs/assets/forgegate-dashboard-reviewed-workflow-decision.jpg", "sha256": "f59e498fa7b8ccf5fc8234d1cb7ad1b8c9f48efdaddb860f43babd7c96030dd5", "size_bytes": 70003 },
+    { "file": "docs/assets/forgegate-dashboard-reviewed-workflow-assurance.jpg", "sha256": "82e7f02361b61a2fc7a89f6055909353d2def75a88dec5ccdeeff4cbdf8aa499", "size_bytes": 71974 },
+    { "file": "docs/assets/forgegate-dashboard-zoom-100.jpg", "sha256": "f731d3cb975b81421c29107da5cff73dc501708c956919add6b192d83e5aa45c", "size_bytes": 187715 },
+    { "file": "docs/assets/forgegate-dashboard-zoom-125.jpg", "sha256": "939442ad9f4be42f9aa92b0b7d5b3f05e58f88f47cfce11e22a248975e67c61c", "size_bytes": 136807 },
+    { "file": "docs/assets/forgegate-dashboard-zoom-150.jpg", "sha256": "c81041e8dc0521c1bca5903f66fb9f14a7041845c02ec50f2a75b168dc1a641d", "size_bytes": 93782 },
+    { "file": "docs/assets/forgegate-dashboard-zoom-175.jpg", "sha256": "ee81b5387756bdff2cd6e14e60a3db9367ee3b4437b003ab70e3f763646f16cf", "size_bytes": 64543 },
+    { "file": "docs/assets/forgegate-dashboard-zoom-200.jpg", "sha256": "12d5b794a857d07a98d8df11fae63d375a336eae676c071bdaa170a6bd83942a", "size_bytes": 48656 },
+    { "file": "docs/assets/forgegate-dashboard-zoom-200-dialog.jpg", "sha256": "7d9ca117612f4ef9a5acfac50440c955376f4384386d3cf6bfb5db3446e396c9", "size_bytes": 35939 }
+  ],
+  "automated_verification": {
+    "full_python_suite": { "passed": 878, "skipped": 3 },
+    "branch_coverage_percent": 95.23,
+    "statements": 10389,
+    "branches": 2810,
+    "dashboard_focus": { "passed": 46, "branch_coverage_percent": 98.37 },
+    "msp430_collector_focus": { "passed": 34 },
+    "document_schemas": 41,
+    "artifact_schemas": 3,
+    "dashboard_bff_operations": 17,
+    "development_verification": "PASS",
+    "release_smoke": "PASS"
+  },
+  "limitations": [
+    "The candidate uses generic sample evidence; it does not validate hardware or authenticate the evidence producer.",
+    "The attestation is unsigned_local and is not a publication, deployment approval, trusted timestamp, or production-security decision.",
+    "Narrator spoken output was not captured; no screen-reader or WCAG conformance certification is claimed.",
+    "High contrast and a real Remote Desktop session retain NOT_RUN until separately executed."
+  ]
+}

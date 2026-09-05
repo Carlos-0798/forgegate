@@ -45,8 +45,8 @@
   `BENCH_*` exports at `system_observed`.
 - [x] Add CLI, fixture, Golden, adversarial tests, documentation, and
   clean-install smoke.
-- [ ] Add an MSP430 compatibility collector only after new hardware progress is
-  aligned in this project context and its public report contract is frozen.
+- [x] Freeze an MSP430 validation-report contract and add an artifact-only,
+  fail-closed collector without coupling ForgeGate to the upstream runtime.
 - [ ] Revisit human-readable Studio report ingestion only after its Phase 5
   product report contract is implemented and frozen upstream.
 
@@ -353,8 +353,7 @@ browser session, Dashboard route, or browser test.
 - [x] Commit a deterministic Dashboard BFF OpenAPI contract with explicit
   operation IDs, local drift verification, and installed-wheel comparison.
 - [x] Prove candidate creation review, exact idempotent replay, changed-payload
-  conflict, and safe refresh/back/forward behavior. Stale-revision recovery is
-  not applicable until a revision-mutating Dashboard command is introduced.
+  conflict, and safe refresh/back/forward behavior.
 - [ ] Complete adversarial-content, credential-exposure, role/scope, cache,
   API-drift, Edge/Chrome, keyboard, focus, zoom, and clean-wheel acceptance.
 
@@ -364,9 +363,10 @@ recovery, in-app-browser 390 px layout check, clean-wheel asset/install smoke,
 an installed-wheel Edge read path, and Chrome core/focus/large-data/restart/
 responsive runs pass. Uncommon statuses use an isolated zero-write
 presentation harness and are not authentic operational-failure evidence.
-Exact 100/125/150/175/200% zoom and assistive-technology runs remain `NOT_RUN`
-or partial; Phase 24 therefore remains open rather than overstating full UI
-acceptance.
+Exact Microsoft Edge 100/125/150/175/200% zoom now passes. Narrator has a
+bounded keyboard/semantic result without spoken-output capture. High contrast
+and a real Remote Desktop run remain separate open environment checks; Phase
+24 therefore remains open rather than overstating complete UI accessibility.
 
 Evidence upload/collection, policy execution, assurance export, plugin
 execution, session administration, and trust-store administration remain
@@ -397,8 +397,9 @@ separately in Phase 26.
   then remained stable while sequence and valid-frame counts advanced.
 
 Phase 25 is live status only. It creates no candidate evidence, authenticates no
-producer, validates no sensor measurement, controls no hardware, and does not
-complete the still-planned MSP430 report collector in Phase 3.
+producer, validates no sensor measurement, and controls no hardware. The later
+Phase 27 report collector consumes a separate upstream artifact and does not
+promote this live process state.
 
 ## Phase 26 — read-only Dashboard assurance review
 
@@ -425,3 +426,30 @@ complete the still-planned MSP430 report collector in Phase 3.
 Phase 26 is a review surface only. It validates and presents retained ForgeGate
 documents; it does not re-run collectors, authenticate artifact producers,
 embed source artifact bytes, approve deployment, or validate hardware.
+
+## Phase 27 — reviewed Dashboard workflow and MSP430 evidence contract
+
+- [x] Add same-origin operator-only BFF commands for expected-revision lifecycle
+  transitions, immutable evidence binding, exact policy evaluation, and
+  terminal attestation generation.
+- [x] Require one explicit reviewed confirmation per command, enforce CSRF,
+  role/project scope, idempotency, stale-state handling, and authoritative
+  list/detail reload.
+- [x] Add bounded local JSON selection for an exact evidence assembly and exact
+  frozen policy material without retaining or interpreting a client path.
+- [x] Exercise the full Edge DRAFT→COLLECTING→READY→EVALUATING→PASS→attestation
+  flow plus a mismatched-commit rejection and retain portfolio-safe captures.
+- [x] Freeze `forgegate.msp430-validation-report.v1` and implement a fail-closed,
+  artifact-only collector with host/target/HIL/bench verification mapping.
+- [x] Retain one privacy-safe Phase 6 LaunchPad HIL migration fixture with exact
+  source hashes, correction history, and limitations; do not claim a new run.
+- [x] Execute exact Edge 100/125/150/175/200% zoom and bounded Narrator
+  keyboard/semantic checks.
+- [x] Pass 878 full-suite tests, 95.23% branch-aware coverage, the committed
+  contract gates, and clean-wheel release smoke including the new collector.
+- [ ] Execute Windows high contrast and a real Remote Desktop session; spoken
+  Narrator output timing also remains uncaptured.
+
+Phase 27 adds engineering workflow capability but does not add automatic
+collection, server filesystem browsing, assurance export, remote publication,
+producer authentication, MSP430 control, or physical measurement validation.

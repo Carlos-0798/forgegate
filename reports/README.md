@@ -6,6 +6,8 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
+- [Phase 27 Dashboard write and MSP430 collector acceptance](PHASE_27_DASHBOARD_WRITE_AND_MSP430_COLLECTOR_ACCEPTANCE_REPORT.md) — complete reviewed candidate workflow, strict artifact-only MSP430 validation collector, exact Edge zoom, bounded Narrator result, and explicit remaining environment gates
+- [Phase 27 Dashboard interaction evidence](DASHBOARD_PHASE27_INTERACTION_EVIDENCE_2026-09-05.json) — candidate/audit identities, negative import, defect corrections, exact zoom metrics, screenshot hashes, and assistive-technology boundaries
 - [Phase 26 Dashboard assurance-review acceptance](PHASE_26_DASHBOARD_ASSURANCE_REVIEW_ACCEPTANCE_REPORT.md) — read-only candidate-bound Evidence/Decision/Assurance pages, exact rule-result presentation, portable identity, and live fault-code decoding
 - [Phase 26 Dashboard assurance-review evidence](DASHBOARD_ASSURANCE_REVIEW_EVIDENCE_2026-09-05.json) — generic PASS fixture, browser values, screenshot dimensions/hashes, and explicit claim boundaries
 - [Owner-assisted MSP430 unplug/replug evidence](MSP430_MANUAL_UNPLUG_REPLUG_EVIDENCE_2026-09-05.json) — observed live transition, bounded post-reconnect counters, decoded `0015`, and no-control/no-measurement boundaries
@@ -43,6 +45,7 @@ publisher-provenance, or general third-party compatibility claims.
 | 24 | Authenticated local Dashboard vertical slice | [Acceptance report](PHASE_24_AUTHENTICATED_LOCAL_DASHBOARD_ACCEPTANCE_REPORT.md) and [manual interaction record](PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md); implementation/local flow pass, manual cross-browser gate partial |
 | 25 | Optional MSP430 read-only live status | [Acceptance report](PHASE_25_MSP430_LIVE_STATUS_ACCEPTANCE_REPORT.md), [bounded machine record](PHASE_25_MSP430_LIVE_STATUS_EVIDENCE_2026-09-05.json), and [later owner-assisted follow-up](MSP430_MANUAL_UNPLUG_REPLUG_EVIDENCE_2026-09-05.json); deterministic state coverage plus connected COM4 browser observation |
 | 26 | Read-only Dashboard assurance review | [Acceptance report](PHASE_26_DASHBOARD_ASSURANCE_REVIEW_ACCEPTANCE_REPORT.md), [browser evidence](DASHBOARD_ASSURANCE_REVIEW_EVIDENCE_2026-09-05.json), and [MSP430 follow-up](MSP430_MANUAL_UNPLUG_REPLUG_EVIDENCE_2026-09-05.json); candidate-bound Evidence/Decision/Assurance and decoded live fault reports |
+| 27 | Reviewed Dashboard workflow and MSP430 evidence contract | [Acceptance report](PHASE_27_DASHBOARD_WRITE_AND_MSP430_COLLECTOR_ACCEPTANCE_REPORT.md) and [browser evidence](DASHBOARD_PHASE27_INTERACTION_EVIDENCE_2026-09-05.json); complete local write workflow, strict artifact-only collector, exact Edge zoom, and explicit accessibility boundaries |
 
 `SANDBOXED` applies only to an exact accepted run. The generic fixture does not
 establish publisher trust, native-extension safety, arbitrary dependency
@@ -74,7 +77,7 @@ compatibility, remote acquisition safety, or hardware behavior.
 - `LOCAL_HOST_TEST` is not CI, physical-device, or production evidence.
 - Hosted CI does not prove the local Podman/WSL2 hostile-fixture results.
 - AFE simulation or bench-labeled upstream data is not ForgeGate hardware proof.
-- MSP430 UART live status is implemented as input-only observation; the separate
-  release-evidence collector remains unimplemented until a public report artifact
-  contract is frozen and aligned in this project context.
+- MSP430 UART live status remains input-only observation. The separate formal
+  report collector consumes `forgegate.msp430-validation-report.v1`; it does
+  not convert live process state into evidence or access hardware.
 - Historical failures and corrections remain part of the record.

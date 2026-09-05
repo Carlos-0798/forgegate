@@ -15,6 +15,10 @@ from forgegate.collectors.coverage import (
     LcovCollector,
 )
 from forgegate.collectors.junit import JUnitCollectionRequest, JUnitCollector
+from forgegate.collectors.msp430_validation import (
+    Msp430ValidationCollectionRequest,
+    Msp430ValidationReportCollector,
+)
 from forgegate.collectors.sarif import SarifCollectionRequest, SarifCollector
 
 __all__ = [
@@ -31,6 +35,8 @@ __all__ = [
     "JUnitCollectionRequest",
     "JUnitCollector",
     "LcovCollector",
+    "Msp430ValidationCollectionRequest",
+    "Msp430ValidationReportCollector",
     "SarifCollectionRequest",
     "SarifCollector",
 ]

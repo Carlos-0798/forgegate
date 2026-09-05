@@ -236,6 +236,20 @@ interface CandidateAssuranceReview {
   limitations: string[];
 }
 
+type ReviewDetail = readonly [label: string, value: string, mono?: boolean];
+
+interface ReviewedMutation {
+  title: string;
+  eyebrow: string;
+  summary: string;
+  confirmLabel: string;
+  endpoint: string;
+  body: Record<string, unknown>;
+  idempotencyPrefix: string | null;
+  details: ReviewDetail[];
+  completed: (response: unknown) => string;
+}
+
 interface LiveStatusPage {
   schema_version: "forgegate.live-status.v1";
   observed_at: string;
@@ -274,6 +288,8 @@ let sessionExpiryTimer: number | null = null;
 let liveStatusTimer: number | null = null;
 let liveStatusGeneration = 0;
 let lastLiveAnnouncement = "";
+
+const MAX_DASHBOARD_IMPORT_BYTES = 3_900_000;
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -1005,7 +1021,11 @@ function emptyState(title: string, description: string): HTMLElement {
 
 async function renderCandidates(): Promise<void> {
   loadingPage("Candidates");
-  const main = page("Release candidates", "PROJECT-SCOPED WORK", "Candidate state and request completion are shown separately; collection and evaluation remain later actions.");
+  const main = page(
+    "Release candidates",
+    "PROJECT-SCOPED WORK",
+    "Each lifecycle, evidence, evaluation, and attestation write is independently reviewed; successful writes reload authoritative state."
+  );
   try {
     const visible = await ensureProjects();
     if (visible.length === 0) {
@@ -1286,6 +1306,400 @@ function renderCandidateReview(
   confirm.focus();
 }
 
+function isJsonObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+async function sha256Hex(content: ArrayBuffer): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", content);
+  return Array.from(new Uint8Array(digest), (value) => value.toString(16).padStart(2, "0")).join("");
+}
+
+function openReviewedMutation(
+  main: HTMLElement,
+  candidate: Candidate,
+  mutation: ReviewedMutation,
+  returnFocus?: HTMLElement
+): void {
+  const dialog = el("dialog", "review-dialog");
+  dialog.setAttribute("aria-labelledby", "candidate-command-dialog-title");
+  dialog.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    dialog.close();
+  });
+  dialog.addEventListener("keydown", (event) => keepFocusInsideDialog(dialog, event));
+  dialog.addEventListener("close", () => {
+    dialog.remove();
+    if (returnFocus?.isConnected) returnFocus.focus();
+  }, { once: true });
+  main.append(dialog);
+  dialog.showModal();
+  renderReviewedMutation(dialog, candidate, mutation);
+}
+
+function renderReviewedMutation(
+  dialog: HTMLDialogElement,
+  candidate: Candidate,
+  mutation: ReviewedMutation
+): void {
+  const review = el("section", "review-panel");
+  const heading = el("h2", undefined, mutation.title);
+  heading.id = "candidate-command-dialog-title";
+  review.append(
+    el("p", "eyebrow", mutation.eyebrow),
+    heading,
+    el("p", "muted", mutation.summary)
+  );
+  const details = el("dl", "definition-list");
+  for (const [label, value, mono] of mutation.details) {
+    details.append(definition(label, value, mono ?? false));
+  }
+  const boundary = el("p", "command-boundary");
+  boundary.textContent = "This command changes local retained state only. It does not publish, deploy, control hardware, or authenticate imported evidence.";
+  const status = el("div", "dialog-status");
+  status.setAttribute("aria-live", "polite");
+  const controls = el("div", "dialog-actions");
+  const cancel = button("Cancel", "button quiet");
+  cancel.addEventListener("click", () => dialog.close());
+  const confirm = button(mutation.confirmLabel, "button primary");
+  const idempotencyKey = mutation.idempotencyPrefix === null
+    ? null
+    : `${mutation.idempotencyPrefix}:${crypto.randomUUID()}`;
+  confirm.addEventListener("click", async () => {
+    if (session === null) return;
+    cancel.disabled = true;
+    confirm.disabled = true;
+    status.replaceChildren(el("p", "muted", "Submitting the frozen reviewed command once…"));
+    const headers: Record<string, string> = { "X-ForgeGate-CSRF": session.csrf_token };
+    if (idempotencyKey !== null) headers["Idempotency-Key"] = idempotencyKey;
+    try {
+      const response = await api<unknown>(mutation.endpoint, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(mutation.body)
+      });
+      heading.textContent = "Authoritative state updated";
+      const eyebrow = review.querySelector<HTMLElement>(".eyebrow");
+      if (eyebrow !== null) eyebrow.textContent = "WRITE COMPLETED";
+      status.replaceChildren(
+        statusBadge("Request completed"),
+        el("p", undefined, mutation.completed(response))
+      );
+      const inspect = button("Reload authoritative state", "button primary");
+      inspect.addEventListener("click", async () => {
+        dialog.close();
+        await reloadCandidateWorkspace(candidate.candidate_id);
+      });
+      controls.replaceChildren(inspect);
+      inspect.focus();
+    } catch (error) {
+      showProblem(
+        status,
+        error,
+        "Close this review, reload the candidate, and create a new reviewed command."
+      );
+      cancel.disabled = false;
+      cancel.textContent = "Close and reload";
+      cancel.addEventListener("click", () => void reloadCandidateWorkspace(candidate.candidate_id), { once: true });
+      if (error instanceof RequestProblem && holdRateLimitedAction(dialog, confirm, error)) return;
+    }
+  });
+  controls.append(cancel, confirm);
+  review.append(details, boundary, status, controls);
+  dialog.replaceChildren(review);
+  confirm.focus();
+}
+
+async function reloadCandidateWorkspace(candidateId: string): Promise<void> {
+  await renderCandidates();
+  const workspace = document.querySelector<HTMLElement>("#workspace");
+  if (workspace !== null) await showCandidateDetail(workspace, candidateId);
+}
+
+function transitionMutation(candidate: Candidate, toStatus: string): ReviewedMutation {
+  const occurredAt = new Date().toISOString();
+  const purpose: Record<string, string> = {
+    COLLECTING: "Open the immutable candidate for retained evidence binding.",
+    READY: "Record that the required evidence assembly is bound and ready for evaluation.",
+    EVALUATING: "Freeze the transition into policy evaluation readiness."
+  };
+  return {
+    title: `Advance candidate to ${toStatus}`,
+    eyebrow: "REVIEWED LIFECYCLE COMMAND",
+    summary: `${purpose[toStatus] ?? "Advance the candidate lifecycle."} The expected revision prevents stale writes.`,
+    confirmLabel: `Confirm ${toStatus}`,
+    endpoint: `/app/api/candidates/${encodeURIComponent(candidate.candidate_id)}/transitions`,
+    body: {
+      to_status: toStatus,
+      expected_revision: candidate.revision,
+      occurred_at: occurredAt,
+      reason: `Dashboard reviewed transition to ${toStatus}`
+    },
+    idempotencyPrefix: `dashboard:transition:${candidate.candidate_id}:${toStatus.toLowerCase()}`,
+    details: [
+      ["Candidate", candidate.candidate_id, true],
+      ["Current state", candidate.status],
+      ["Target state", toStatus],
+      ["Expected revision", String(candidate.revision)],
+      ["Occurred at", formatDate(occurredAt)]
+    ],
+    completed: (response) => {
+      if (!isJsonObject(response) || !isJsonObject(response.candidate)) {
+        return "The command completed; reload to inspect the authoritative candidate.";
+      }
+      return `Candidate is now ${String(response.candidate.status)} at revision ${String(response.candidate.revision)}.`;
+    }
+  };
+}
+
+function attestMutation(candidate: Candidate): ReviewedMutation {
+  const issuedAt = new Date().toISOString();
+  return {
+    title: "Generate durable release attestation",
+    eyebrow: "REVIEWED ATTESTATION COMMAND",
+    summary: "ForgeGate will bind the terminal candidate, transition chain, retained evidence, and exact policy evaluation into one immutable local attestation.",
+    confirmLabel: "Confirm attestation",
+    endpoint: `/app/api/candidates/${encodeURIComponent(candidate.candidate_id)}/attestation`,
+    body: { issued_at: issuedAt },
+    idempotencyPrefix: null,
+    details: [
+      ["Candidate", candidate.candidate_id, true],
+      ["Terminal decision", candidate.status],
+      ["Candidate revision", String(candidate.revision)],
+      ["Issued at", formatDate(issuedAt)],
+      ["Assurance", "unsigned_local"]
+    ],
+    completed: (response) => isJsonObject(response) && typeof response.attestation_id === "string"
+      ? `Attestation ${shortHash(response.attestation_id)} is retained locally.`
+      : "The attestation is retained locally; reload to inspect it."
+  };
+}
+
+function openJsonCommandImport(
+  main: HTMLElement,
+  candidate: Candidate,
+  kind: "evidence" | "policy",
+  returnFocus?: HTMLElement
+): void {
+  const dialog = el("dialog", "review-dialog");
+  dialog.setAttribute("aria-labelledby", "candidate-command-dialog-title");
+  const form = el("form", "candidate-form");
+  form.method = "dialog";
+  const title = kind === "evidence" ? "Import evidence assembly" : "Import policy material";
+  const heading = el("h2", undefined, title);
+  heading.id = "candidate-command-dialog-title";
+  const explanation = kind === "evidence"
+    ? "Select one forgegate.evidence-bundle-assembly.v1 JSON document. Live device status is not accepted as release evidence."
+    : "Select one forgegate.policy-material.v1 JSON document previously materialized from the candidate's frozen project profile.";
+  form.append(el("p", "eyebrow", "LOCAL JSON IMPORT"), heading, el("p", "muted", explanation));
+  const fieldWrap = el("label", "field file-field");
+  fieldWrap.append(el("span", undefined, kind === "evidence" ? "Evidence assembly JSON" : "Policy material JSON"));
+  const input = el("input");
+  input.type = "file";
+  input.accept = ".json,application/json";
+  input.required = true;
+  fieldWrap.append(input);
+  const status = el("div", "dialog-status");
+  status.setAttribute("aria-live", "polite");
+  const controls = el("div", "dialog-actions");
+  const cancel = button("Cancel", "button quiet");
+  cancel.addEventListener("click", () => dialog.close());
+  const review = button("Review imported document", "button primary");
+  review.addEventListener("click", async () => {
+    const file = input.files?.[0];
+    if (file === undefined) {
+      input.setCustomValidity("Select one JSON document.");
+      input.reportValidity();
+      return;
+    }
+    input.setCustomValidity("");
+    if (file.size > MAX_DASHBOARD_IMPORT_BYTES) {
+      showProblem(status, new RequestProblem(413, "DASHBOARD_IMPORT_TOO_LARGE", "The selected JSON document leaves insufficient room inside the 4 MiB request envelope.", "browser-side", null), "Choose a JSON document no larger than 3,900,000 bytes.");
+      return;
+    }
+    review.disabled = true;
+    status.replaceChildren(el("p", "muted", "Parsing and fingerprinting the selected local document…"));
+    try {
+      const bytes = await file.arrayBuffer();
+      const parsed: unknown = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+      if (!isJsonObject(parsed)) throw new Error("The JSON root must be an object.");
+      const fingerprint = await sha256Hex(bytes);
+      const mutation = kind === "evidence"
+        ? evidenceImportMutation(candidate, parsed, file, fingerprint)
+        : policyImportMutation(candidate, parsed, file, fingerprint);
+      renderReviewedMutation(dialog, candidate, mutation);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "The selected file is not valid UTF-8 JSON.";
+      showProblem(status, new RequestProblem(422, "DASHBOARD_IMPORT_INVALID", message, "browser-side", null), "Choose the exact versioned JSON document and review it again.");
+      review.disabled = false;
+    }
+  });
+  controls.append(cancel, review);
+  form.append(fieldWrap, el("p", "muted import-limit", "Maximum import size: 3,900,000 bytes. The browser reads the file locally and sends only the reviewed JSON document."), status, controls);
+  dialog.append(form);
+  dialog.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    dialog.close();
+  });
+  dialog.addEventListener("keydown", (event) => keepFocusInsideDialog(dialog, event));
+  dialog.addEventListener("close", () => {
+    dialog.remove();
+    if (returnFocus?.isConnected) returnFocus.focus();
+  }, { once: true });
+  main.append(dialog);
+  dialog.showModal();
+  input.focus();
+}
+
+function evidenceImportMutation(
+  candidate: Candidate,
+  assembly: Record<string, unknown>,
+  file: File,
+  fingerprint: string
+): ReviewedMutation {
+  if (assembly.schema_version !== "forgegate.evidence-bundle-assembly.v1") {
+    throw new Error("Expected schema_version forgegate.evidence-bundle-assembly.v1.");
+  }
+  const bundle = assembly.bundle;
+  if (!isJsonObject(bundle) || bundle.candidate_commit !== candidate.commit_sha) {
+    throw new Error("The assembly candidate_commit must exactly match this candidate.");
+  }
+  const evidence = Array.isArray(bundle.evidence) ? bundle.evidence : [];
+  const collections = Array.isArray(assembly.collections) ? assembly.collections : [];
+  const warningDisposition = typeof assembly.warning_disposition === "string"
+    ? assembly.warning_disposition
+    : "unavailable";
+  const boundAt = new Date().toISOString();
+  return {
+    title: "Bind immutable evidence assembly",
+    eyebrow: "REVIEWED EVIDENCE WRITE",
+    summary: "ForgeGate will validate every nested fingerprint, receipt, artifact reference, evidence ID, and candidate commit before retaining one immutable binding.",
+    confirmLabel: "Confirm evidence binding",
+    endpoint: `/app/api/candidates/${encodeURIComponent(candidate.candidate_id)}/evidence`,
+    body: { assembly, bound_at: boundAt },
+    idempotencyPrefix: `dashboard:evidence:${candidate.candidate_id}`,
+    details: [
+      ["Candidate", candidate.candidate_id, true],
+      ["Candidate commit", candidate.commit_sha, true],
+      ["Assembly ID", String(assembly.assembly_id ?? "missing"), true],
+      ["Evidence records", String(evidence.length)],
+      ["Collector receipts", String(collections.length)],
+      ["Warning disposition", warningDisposition],
+      ["Selected file", `${file.name} · ${file.size} bytes`],
+      ["Selected file SHA-256", fingerprint, true],
+      ["Bound at", formatDate(boundAt)]
+    ],
+    completed: () => "The evidence binding is retained. Candidate revision is unchanged until the READY transition is separately reviewed."
+  };
+}
+
+function policyImportMutation(
+  candidate: Candidate,
+  material: Record<string, unknown>,
+  file: File,
+  fingerprint: string
+): ReviewedMutation {
+  if (material.schema_version !== "forgegate.policy-material.v1") {
+    throw new Error("Expected schema_version forgegate.policy-material.v1.");
+  }
+  if (material.release_track !== candidate.release_track) {
+    throw new Error("The policy material release_track must exactly match this candidate.");
+  }
+  if (material.project_profile_id !== candidate.project_profile_id) {
+    throw new Error("The policy material project_profile_id must match this candidate.");
+  }
+  if (material.project_profile_version !== candidate.project_profile_version) {
+    throw new Error("The policy material project_profile_version must match this candidate.");
+  }
+  const policy = material.policy;
+  const rules = isJsonObject(policy) && Array.isArray(policy.rules) ? policy.rules : [];
+  const evaluatedAt = new Date().toISOString();
+  return {
+    title: "Evaluate retained evidence",
+    eyebrow: "REVIEWED POLICY WRITE",
+    summary: "ForgeGate will evaluate the exact retained evidence against these embedded policy bytes, retain the result, and transition the candidate to PASS, FAIL, REVIEW, or ERROR.",
+    confirmLabel: "Confirm evaluation",
+    endpoint: `/app/api/candidates/${encodeURIComponent(candidate.candidate_id)}/evaluate`,
+    body: {
+      policy_material: material,
+      policy: null,
+      expected_revision: candidate.revision,
+      evaluated_at: evaluatedAt,
+      reason: "Dashboard reviewed policy evaluation"
+    },
+    idempotencyPrefix: `dashboard:evaluate:${candidate.candidate_id}`,
+    details: [
+      ["Candidate", candidate.candidate_id, true],
+      ["Expected revision", String(candidate.revision)],
+      ["Policy material ID", String(material.material_id ?? "missing"), true],
+      ["Policy name", isJsonObject(policy) ? String(policy.name ?? "missing") : "missing"],
+      ["Policy rules", String(rules.length)],
+      ["Selected file", `${file.name} · ${file.size} bytes`],
+      ["Selected file SHA-256", fingerprint, true],
+      ["Evaluated at", formatDate(evaluatedAt)]
+    ],
+    completed: (response) => {
+      if (!isJsonObject(response) || !isJsonObject(response.evaluation)) {
+        return "Evaluation is retained; reload to inspect the authoritative decision.";
+      }
+      return `Engineering decision: ${String(response.evaluation.decision)}. Review the rule explanations before using the result.`;
+    }
+  };
+}
+
+function candidateWorkflowPanel(
+  main: HTMLElement,
+  review: CandidateAssuranceReview
+): HTMLElement {
+  const panel = el("section", "workflow-panel");
+  panel.append(
+    el("p", "eyebrow", "CONTROLLED WRITE WORKFLOW"),
+    el("h3", undefined, "Next authorized command")
+  );
+  if (session?.principal.role !== "operator") {
+    panel.append(el("p", "muted", "Producer sessions can inspect candidate state but cannot issue write commands."));
+    return panel;
+  }
+  const candidate = review.candidate;
+  let label = "";
+  let explanation = "";
+  let action: ((buttonNode: HTMLButtonElement) => void) | null = null;
+  if (candidate.status === "DRAFT") {
+    label = "Start evidence collection";
+    explanation = "Advances DRAFT to COLLECTING with optimistic revision control.";
+    action = (buttonNode) => openReviewedMutation(main, candidate, transitionMutation(candidate, "COLLECTING"), buttonNode);
+  } else if (candidate.status === "COLLECTING" && review.evidence_binding === null) {
+    label = "Import and bind evidence";
+    explanation = "Imports one versioned evidence assembly and binds it immutably to this candidate.";
+    action = (buttonNode) => openJsonCommandImport(main, candidate, "evidence", buttonNode);
+  } else if (candidate.status === "COLLECTING") {
+    label = "Mark evidence ready";
+    explanation = "Advances COLLECTING to READY after the retained binding is visible above.";
+    action = (buttonNode) => openReviewedMutation(main, candidate, transitionMutation(candidate, "READY"), buttonNode);
+  } else if (candidate.status === "READY") {
+    label = "Begin evaluation";
+    explanation = "Advances READY to EVALUATING as a separately reviewed lifecycle write.";
+    action = (buttonNode) => openReviewedMutation(main, candidate, transitionMutation(candidate, "EVALUATING"), buttonNode);
+  } else if (candidate.status === "EVALUATING") {
+    label = "Import policy and evaluate";
+    explanation = "Imports exact profile-authorized policy material and records the terminal decision.";
+    action = (buttonNode) => openJsonCommandImport(main, candidate, "policy", buttonNode);
+  } else if (["PASS", "FAIL", "REVIEW", "ERROR"].includes(candidate.status) && review.attestation === null) {
+    label = "Generate attestation";
+    explanation = "Creates an immutable unsigned-local attestation for the terminal candidate.";
+    action = (buttonNode) => openReviewedMutation(main, candidate, attestMutation(candidate), buttonNode);
+  }
+  if (action === null) {
+    panel.append(statusBadge("Workflow complete"), el("p", "muted", "No further candidate write is required. Review Evidence, Decision, and Assurance before export or publication."));
+    return panel;
+  }
+  panel.append(el("p", "muted", explanation));
+  const next = button(label, "button primary");
+  next.addEventListener("click", () => action?.(next));
+  panel.append(next);
+  return panel;
+}
+
 async function showCandidateDetail(main: HTMLElement, candidateId: string): Promise<void> {
   const content = el("section", "detail-panel");
   content.setAttribute("aria-live", "polite");
@@ -1295,6 +1709,9 @@ async function showCandidateDetail(main: HTMLElement, candidateId: string): Prom
   main.append(content);
   try {
     const candidate = await api<Candidate>(`/app/api/candidates/${encodeURIComponent(candidateId)}`);
+    const review = await api<CandidateAssuranceReview>(
+      `/app/api/candidates/${encodeURIComponent(candidateId)}/assurance-review`
+    );
     let audit: AuditPage | null = null;
     if (session?.principal.role === "operator") {
       audit = await api<AuditPage>(`/app/api/audit-events?project_id=${encodeURIComponent(candidate.project_id)}&candidate_id=${encodeURIComponent(candidateId)}&limit=100`);
@@ -1339,7 +1756,7 @@ async function showCandidateDetail(main: HTMLElement, candidateId: string): Prom
       }
       auditSection.append(timeline);
     }
-    content.replaceChildren(heading, details, reviewLinks, auditSection);
+    content.replaceChildren(heading, details, candidateWorkflowPanel(main, review), reviewLinks, auditSection);
     content.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
     handleProtectedProblem(content, error, "Return to the candidate list and retry the inspection.");

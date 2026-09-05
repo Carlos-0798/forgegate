@@ -2,6 +2,18 @@
 
 ## Unreleased
 
+- Added operator-only Dashboard commands for reviewed expected-revision
+  transitions, immutable evidence binding, exact policy evaluation, and
+  deterministic terminal attestation generation.
+- Added bounded browser-local JSON import, per-command frozen review, CSRF,
+  idempotency/stale-state recovery, and authoritative candidate-list/detail
+  reload; corrected two defects found during the full Edge workflow.
+- Added the strict artifact-only `forgegate.msp430-validation-report.v1`
+  collector, Schema, CLI, adversarial tests, clean-wheel smoke, and a
+  privacy-safe LaunchPad HIL migration fixture with retained limitations.
+- Completed native Edge 100–200% zoom and a bounded Narrator keyboard/semantic
+  pass; high contrast, spoken-output timing, and real Remote Desktop remain
+  explicit environment gates.
 - Added authenticated, project-scoped, read-only Dashboard Evidence, Decision,
   and Assurance review with candidate-preserving deep links, exact policy rule
   inputs/results, attestation/bundle identity, and explicit claim boundaries.
@@ -19,10 +31,9 @@
   service workers, and dynamic evaluation.
 - Added a separate deterministic Dashboard BFF OpenAPI export with explicit
   operation IDs, committed-byte drift checks, and installed-wheel comparison.
-- Added 38 focused Dashboard/BFF/client/CLI/contract tests and recorded a Microsoft Edge
-  keyboard path plus a 390 px responsive browser check. Full Chrome, exact zoom,
-  assistive-technology, error-state, and installed-wheel browser acceptance
-  remains explicitly incomplete.
+- Expanded Dashboard/BFF/client/CLI/contract coverage to 46 focused tests. Edge
+  and Chrome keyboard/focus, responsive, uncommon-error presentation, exact
+  zoom, and installed-wheel read paths pass within their recorded boundaries.
 
 ## 0.1.0a1 — 2026-09-03
 

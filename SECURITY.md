@@ -99,3 +99,26 @@ GPIO, or external loads. Live status is explicitly not candidate evidence,
 measurement validation, producer authentication, hardware control, or a release
 decision. The optional `pyserial` dependency is loaded only when this monitor is
 enabled; the generic core and default Dashboard remain device-independent.
+
+Phase 27 adds reviewed Dashboard writes without extending the loopback trust
+boundary. Candidate transitions, evidence binding, policy evaluation, and
+attestation generation require an authenticated operator session, exact
+project scope, exact Origin, anti-CSRF token, and the existing application and
+domain validation. State-changing requests carry an explicit expected revision
+or deterministic replay identity; the browser never retries an ambiguous write
+automatically. Evidence assemblies and policy materials are selected locally
+as bounded JSON, then sent as complete documents. The server receives no client
+file path and does not browse or dereference the client filesystem. Browser
+hashing and review are usability controls only; server-side contract and
+content-identity validation remain authoritative.
+
+The separate MSP430 validation-report collector accepts only bounded strict
+`forgegate.msp430-validation-report.v1` artifacts. It opens no serial port,
+imports no upstream runtime, sends no command, and does not convert live-status
+state into evidence. Exact commit association, evidence level, hardware scope,
+source digests, corrections, limitations, and outcome consistency are checked
+before normalization. LaunchPad HIL is capped at `system_observed`; only a
+structurally complete external-bench report with physical context and full
+instrument calibration provenance can map to `physically_verified`. SHA-256
+integrity does not authenticate the producer or prove that a reported run
+occurred.

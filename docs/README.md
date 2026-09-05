@@ -54,15 +54,14 @@ analysis, compatibility contracts, and historical acceptance evidence.
 - [Dashboard threat model](security/DASHBOARD_THREAT_MODEL.md)
 - [Dashboard acceptance matrix](DASHBOARD_ACCEPTANCE_MATRIX.md)
 
-These documents govern the implemented Phase 24 activation, Overview, Projects,
-Candidates, and Phase 26 read-only Evidence, Decision, and Assurance review
-slices. The packaged frontend and browser-for-frontend session boundary are
-present. Edge and Chrome keyboard/focus, pagination, responsive,
-409/413/422/429/500 recovery, and clean-console paths pass; uncommon statuses
-use an isolated zero-write presentation harness. The acceptance matrix
-preserves the remaining exact zoom and assistive-technology checks as
-`NOT_RUN` or partial rather than inferring full UI acceptance. A separate
-installed-wheel Edge read path passes.
+These documents govern the implemented Phase 24 activation, Phase 25 optional
+live status, Phase 26 assurance review, and Phase 27 reviewed candidate writes.
+The packaged frontend and browser-for-frontend session boundary are present.
+Edge and Chrome keyboard/focus, pagination, responsive,
+409/413/422/429/500 recovery, clean-console paths, and exact Edge 100–200% zoom
+pass; uncommon statuses use an isolated zero-write presentation harness.
+Narrator has a bounded keyboard/semantic result without spoken-output capture;
+high contrast and Remote Desktop retain their explicit unexecuted state.
 
 ## CI and plugins
 
@@ -77,13 +76,14 @@ installed-wheel Edge read path passes.
 ## Compatibility and research
 
 - [Analog Validation collector](architecture/ANALOG_VALIDATION_COLLECTOR.md)
+- [MSP430 validation-report collector](architecture/MSP430_VALIDATION_COLLECTOR.md)
 - [Upstream compatibility contract](compatibility/UPSTREAM_CONTRACT.md)
 - [Open-source reference review](research/OPEN_SOURCE_REFERENCE_REVIEW.md)
 
-Analog Validation Studio and any future MSP430 project remain independent
-producers. ForgeGate consumes only explicitly versioned artifacts and preserves
-their original evidence level. Their source code, runtime, and hardware are not
-part of the ForgeGate core.
+Analog Validation Studio and the MSP430 project remain independent producers.
+ForgeGate consumes only explicitly versioned artifacts and preserves their
+original evidence level. Their source code, runtime, and hardware are not part
+of the ForgeGate core.
 
 ## Acceptance evidence
 

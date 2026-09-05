@@ -47,6 +47,15 @@ REQUIRED_SDIST_PATHS = (
     "docs/assets/forgegate-dashboard-evidence-review.jpg",
     "docs/assets/forgegate-dashboard-decision-review.jpg",
     "docs/assets/forgegate-dashboard-assurance-review.jpg",
+    "docs/assets/forgegate-dashboard-reviewed-workflow-pass.jpg",
+    "docs/assets/forgegate-dashboard-reviewed-workflow-decision.jpg",
+    "docs/assets/forgegate-dashboard-reviewed-workflow-assurance.jpg",
+    "docs/assets/forgegate-dashboard-zoom-100.jpg",
+    "docs/assets/forgegate-dashboard-zoom-125.jpg",
+    "docs/assets/forgegate-dashboard-zoom-150.jpg",
+    "docs/assets/forgegate-dashboard-zoom-175.jpg",
+    "docs/assets/forgegate-dashboard-zoom-200.jpg",
+    "docs/assets/forgegate-dashboard-zoom-200-dialog.jpg",
     "docs/architecture/ARTIFACT_AND_JUNIT_SLICE.md",
     "docs/architecture/BENCHMARK_JSON_COLLECTOR.md",
     "docs/architecture/COVERAGE_COLLECTORS.md",
@@ -57,6 +66,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/SQLITE_CANDIDATE_STORE.md",
     "docs/architecture/ATTESTATIONS.md",
     "docs/architecture/ANALOG_VALIDATION_COLLECTOR.md",
+    "docs/architecture/MSP430_VALIDATION_COLLECTOR.md",
     "docs/architecture/EVIDENCE_BUNDLE_ASSEMBLY.md",
     "docs/architecture/CANDIDATE_EVIDENCE_BINDING.md",
     "docs/architecture/LOCAL_REST_API.md",
@@ -89,6 +99,7 @@ REQUIRED_SDIST_PATHS = (
     "examples/sample-python-api/artifacts/coverage.info",
     "examples/sample-python-api/artifacts/coverage.xml",
     "examples/sample-python-api/artifacts/analog-validation-result.json",
+    "examples/msp430-validation/artifacts/phase6-soak-report.json",
     "examples/sample-python-api/forgegate.yaml",
     "examples/plugin-sdk/sample-collector-plugin/pyproject.toml",
     "examples/plugin-sdk/sample-collector-plugin/README.md",
@@ -143,6 +154,8 @@ REQUIRED_SDIST_PATHS = (
     "reports/MSP430_MANUAL_UNPLUG_REPLUG_EVIDENCE_2026-09-05.json",
     "reports/PHASE_26_DASHBOARD_ASSURANCE_REVIEW_ACCEPTANCE_REPORT.md",
     "reports/DASHBOARD_ASSURANCE_REVIEW_EVIDENCE_2026-09-05.json",
+    "reports/DASHBOARD_PHASE27_INTERACTION_EVIDENCE_2026-09-05.json",
+    "reports/PHASE_27_DASHBOARD_WRITE_AND_MSP430_COLLECTOR_ACCEPTANCE_REPORT.md",
     "reports/DASHBOARD_PORTFOLIO_CAPTURE_EVIDENCE_2026-09-04.json",
     "reports/SOFTWARE_INTEGRITY_INTERACTION_AUDIT_2026-09-03.md",
     "reports/SOFTWARE_INTEGRITY_INTERACTION_LIVE_EVIDENCE.json",
@@ -190,6 +203,7 @@ REQUIRED_SDIST_PATHS = (
     "schemas/forgegate.dashboard-openapi.v1.json",
     "schemas/forgegate.benchmark.v1.schema.json",
     "schemas/analog-validation.result-export.v1.schema.json",
+    "schemas/forgegate.msp430-validation-report.v1.schema.json",
     "tests/test_models.py",
     "tests/test_bootstrap.py",
     "tests/test_plugin_workflow.py",
@@ -215,6 +229,7 @@ REQUIRED_SDIST_PATHS = (
     "tests/test_candidate_store_cli.py",
     "tests/test_attestations.py",
     "tests/test_analog_validation_collector.py",
+    "tests/test_msp430_validation_collector.py",
     "tests/test_evidence_assembly.py",
     "tests/test_candidate_evidence_binding.py",
     "tests/test_application.py",
@@ -679,11 +694,30 @@ def main(
                 "installed wheel Dashboard OpenAPI contract differs from committed contract"
             )
         dashboard_openapi = json.loads(exported_dashboard_openapi.read_text(encoding="utf-8"))
-        if (
-            dashboard_openapi["paths"]["/app/api/candidates"]["post"]["operationId"]
-            != "createDashboardCandidate"
-        ):
-            raise SystemExit("installed wheel is missing Dashboard BFF operation")
+        dashboard_operations = {
+            ("/app/api/candidates", "post"): "createDashboardCandidate",
+            (
+                "/app/api/candidates/{candidate_id}/transitions",
+                "post",
+            ): "advanceDashboardCandidate",
+            (
+                "/app/api/candidates/{candidate_id}/evidence",
+                "post",
+            ): "bindDashboardCandidateEvidence",
+            (
+                "/app/api/candidates/{candidate_id}/evaluate",
+                "post",
+            ): "evaluateDashboardCandidate",
+            (
+                "/app/api/candidates/{candidate_id}/attestation",
+                "post",
+            ): "attestDashboardCandidate",
+        }
+        for (path, method), operation_id in dashboard_operations.items():
+            if dashboard_openapi["paths"][path][method]["operationId"] != operation_id:
+                raise SystemExit(
+                    f"installed wheel is missing Dashboard BFF operation: {operation_id}"
+                )
         if (
             dashboard_openapi["paths"]["/app/api/live-status"]["get"]["operationId"]
             != "getDashboardLiveStatus"
@@ -712,6 +746,22 @@ def main(
                 "forgegate",
                 "validate-config",
                 str(assembly_path),
+            ],
+            cwd=root,
+        )
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "collect-msp430-validation",
+                "artifacts/phase6-soak-report.json",
+                "--root",
+                str(REPOSITORY_ROOT / "examples/msp430-validation"),
+                "--commit",
+                "0850241c1b2aa34704228146600501346ee81745",
+                "--collected-at",
+                "2026-09-05T18:30:00Z",
             ],
             cwd=root,
         )

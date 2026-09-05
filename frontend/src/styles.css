@@ -869,6 +869,50 @@ td {
   border-top: 1px solid var(--line);
 }
 
+.workflow-panel {
+  margin-top: 1.25rem;
+  padding: 1.25rem;
+  border: 1px solid var(--accent-strong);
+  border-radius: 0.9rem;
+  background: linear-gradient(145deg, rgb(89 229 178 / 7%), var(--surface-raised));
+}
+
+.workflow-panel h3 {
+  margin-bottom: 0.45rem;
+}
+
+.workflow-panel .button {
+  margin-top: 0.5rem;
+}
+
+.command-boundary {
+  margin: 1rem 0 0;
+  padding: 0.85rem 1rem;
+  border-left: 3px solid var(--warning);
+  color: var(--muted);
+  background: rgb(243 198 107 / 6%);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.file-field input[type="file"] {
+  padding: 0.7rem;
+}
+
+.file-field input[type="file"]::file-selector-button {
+  min-height: 2rem;
+  margin-right: 0.75rem;
+  padding: 0.35rem 0.65rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 0.45rem;
+  color: var(--text);
+  background: var(--surface-raised);
+}
+
+.import-limit {
+  font-size: 0.76rem;
+}
+
 .timeline {
   position: relative;
   padding-left: 1.5rem;
@@ -1078,6 +1122,8 @@ td {
   .project-card,
   .detail-panel,
   .problem-panel,
+  .workflow-panel,
+  .command-boundary,
   .live-source-panel,
   .device-state-card,
   .live-detail-banner,
@@ -1086,6 +1132,12 @@ td {
   .field select,
   .compact-field select {
     border-color: CanvasText;
+  }
+
+  .file-field input[type="file"]::file-selector-button {
+    border-color: ButtonText;
+    color: ButtonText;
+    background: ButtonFace;
   }
 
   .button.primary,
