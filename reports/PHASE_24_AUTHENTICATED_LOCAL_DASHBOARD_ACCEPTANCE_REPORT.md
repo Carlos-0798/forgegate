@@ -21,8 +21,9 @@ interaction run pass. The follow-up runs also passed complete Edge/Chrome
 modal focus behavior, six-page large-data traversal, browser-rendered 422
 recovery, authoritative candidate writes/readbacks, and Chrome restart and
 390 px responsive recovery. This report does not mark Phase 24 fully accepted
-because the exact zoom matrix, assistive-technology checks, and every browser
-error state were not executed.
+because the exact zoom matrix and assistive-technology checks were not
+executed. The isolated 409/413/429/500 runs establish presentation behavior,
+not authentic operational-failure evidence.
 
 The detailed input/output record is in
 `reports/PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md`.
@@ -53,9 +54,9 @@ The detailed input/output record is in
 
 | Check | Actual result | Boundary |
 |---|---|---|
-| Dashboard focus | 40 passed | BFF, activation/session, cursor pagination, assets/evidence integrity, roles/scopes, client, CLI, and BFF contract |
+| Dashboard focus | 41 passed | BFF, activation/session, cursor pagination, fault-presentation harness, assets/evidence integrity, roles/scopes, client, CLI, and BFF contract |
 | Dashboard package coverage | 98.49% | 557 statements, 106 branches |
-| Full repository suite | 820 passed, 3 skipped | Existing Windows symlink creation remains unavailable |
+| Full repository suite | 821 passed, 3 skipped | Existing Windows symlink creation remains unavailable |
 | Full branch-aware coverage | 95.20% | 9,565 statements, 2,634 branches |
 | Static quality | PASS | Ruff, formatting, strict mypy across 84 source/tool files |
 | Frontend static check | PASS | TypeScript strict mode |
@@ -89,6 +90,10 @@ was retained.
 | Responsive narrow view | No page-level horizontal overflow | In-app browser and Chrome 390 × 844 viewports had 375 px body/document scroll width; table/nav used intentional inner scrolling and paging/create controls remained visible | PASS |
 | Large candidate set | Every bounded page remains reachable without omission or duplication | Edge and Chrome each traversed 129 records across six pages: five 25-row pages and a four-row final page, 129 unique versions, and zero cross-page duplicates | PASS |
 | Browser 422 recovery | Invalid server-bound input remains safe and actionable | Track `INVALID!` rendered `API_REQUEST_VALIDATION_FAILED`, a safe next step, and a request ID; no candidate was created | PASS |
+| Browser 409 recovery | Injected conflict remains non-automatic and reviewable | Status/code/request ID rendered; recovery required authoritative reload and re-review; alert focused and Confirm remained disabled | PASS — TEST HARNESS |
+| Browser 413 recovery | Injected oversized request names the service limit | Status/code/request ID and the 4 MiB reduction guidance rendered; alert focused and Confirm remained disabled | PASS — TEST HARNESS |
+| Browser 429 recovery | Injected rate limit respects `Retry-After: 3` | Three-second guidance rendered; the disabled action showed a decrementing retry label and re-enabled after the hold | PASS — TEST HARNESS |
+| Browser 500 recovery | Injected uncertain failure prevents blind retry | Status/code/request ID rendered; recovery said not to assume failure and required logs plus authoritative-state inspection | PASS — TEST HARNESS |
 | Follow-up valid sample | One write and exact readback | `ui-acceptance-20260904` created `cand-9c77d4d795e4d4ec5f12c004` as DRAFT revision 0 with one audit event, `NOT_EVALUATED`, and hardware `NOT_PERFORMED` | PASS |
 | Chrome result semantics | Completed write has an accurate dialog name and retained focus | `chrome-a11y-20260904` created `cand-be1fa73cb1f976c82423dfbc`; dialog name became `Request completed`, focus moved to Inspect candidate, and exact DRAFT/detail/audit fields matched the database | PASS |
 | Browser console | No application warning/error | No warning or error recorded in Edge, Chrome, or the in-app browser | PASS |
@@ -129,15 +134,16 @@ was retained.
     confirmation accessible name and browser focus fell to the page body. The
     success transition now renames the dialog to `Request completed`, marks the
     completed draft state, and focuses the Inspect candidate action.
+11. Returning from reviewed confirmation cleared Version and Commit SHA. The
+    edit dialog now restores every reviewed field, states that no request has
+    been submitted, and retains Cancel-to-opener focus restoration.
 
 ## Remaining acceptance work
 
 The complete Phase 24 exit gate requires:
 
 1. Edge and Chrome checks at 100%, 125%, 150%, 175%, and 200% zoom;
-2. browser-driven 409/413/429/500 recovery (401, 404, 422, logout, natural
-   expiry, restart, and producer authority paths now pass);
-3. high-contrast, screen-reader, and Remote Desktop checks.
+2. high-contrast, screen-reader, and Remote Desktop checks.
 
 Two-tab stale-revision recovery is not applicable to this slice because it has
 no revision-mutating command. It becomes mandatory when transition, binding,

@@ -57,10 +57,11 @@ analysis, compatibility contracts, and historical acceptance evidence.
 These documents govern the implemented Phase 24 activation, Overview, Projects,
 and Candidates slice. The packaged frontend and browser-for-frontend session
 boundary are present. Edge and Chrome keyboard/focus, pagination, responsive,
-422 recovery, and clean-console paths pass; the acceptance matrix preserves the
-remaining exact zoom, uncommon browser-error, assistive-technology, and Remote
-Desktop checks as `NOT_RUN` or partial rather than inferring full UI
-acceptance. A separate installed-wheel Edge read path passes.
+409/413/422/429/500 recovery, and clean-console paths pass; uncommon statuses
+use an isolated zero-write presentation harness. The acceptance matrix
+preserves the remaining exact zoom, assistive-technology, and Remote Desktop
+checks as `NOT_RUN` or partial rather than inferring full UI acceptance. A
+separate installed-wheel Edge read path passes.
 
 ## CI and plugins
 

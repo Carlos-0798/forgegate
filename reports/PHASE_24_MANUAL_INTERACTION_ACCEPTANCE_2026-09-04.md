@@ -4,7 +4,8 @@
 - Surface: authenticated loopback Web Dashboard
 - Browsers: Microsoft Edge, Google Chrome, and Codex in-app browser on Windows
 - Fixture: generic `sample-api` project and local ephemeral acceptance identity
-- Hardware access: **NOT_PERFORMED**
+- ForgeGate hardware access/integration: **NOT_PERFORMED**
+- External board connectivity observation: **PASS — connection only; no serial read/write, firmware action, protocol validation, or measurement**
 - Remote/GitHub action: **NOT_PERFORMED**
 - Decision: **EXECUTED LOCAL FLOWS PASS / FULL CROSS-BROWSER EXIT GATE PARTIAL**
 
@@ -53,6 +54,13 @@ production, public-release, evidence-authenticity, or remote-deployment proof.
 | Chrome 422 | Track `INVALID!` | Actionable rejection without write | `API_REQUEST_VALIDATION_FAILED` with safe next step and request ID; no invalid candidate row | PASS |
 | Chrome final create | Version `chrome-a11y-20260904`; SHA `6666666666666666666666666666666666666666`; branch `acceptance/chrome-a11y` | One DRAFT and one audit event | Created `cand-be1fa73cb1f976c82423dfbc`; revision `0`, `NOT_EVALUATED`, profile `1`, hardware `NOT_PERFORMED`, one `candidate.created` | PASS |
 | Chrome restart/reflow | Restart service; then set 390 × 844 viewport | Clear stale session and preserve actions without page overflow | Restart returned to activation; narrow document width was 375 px and Previous/Next/Create remained visible | PASS |
+| MSP430 Windows connection | Enumerate TI/MSP interfaces; non-writing COM4 open/close and sustained-open observation | Stable connection without changing the board | COM4 and COM5 remained Windows `OK`; COM4 passed 10/10 open/close cycles and a 10-second sustained open; zero reads/writes, DTR/RTS disabled | PASS — CONNECTION ONLY |
+| Post-connection Dashboard | Recheck health and hardware claim | Service healthy; external observation must not become ForgeGate hardware evidence | Health remained `ok`; Overview continued to show `Hardware NOT_PERFORMED` and the no-hardware/no-measurement limitation | PASS |
+| Review round-trip | Enter a valid draft, review it, then return to edit | All draft fields retained without writing | Initial run cleared Version and Commit SHA; implementation was corrected and repeated Chrome run restored both exact values with a no-submit notice | PASS AFTER FIX |
+| Injected 409 | Version `ui-error-409` in isolated fault harness | No automatic retry; reload and re-review guidance | `STORE_IDEMPOTENCY_CONFLICT`, status 409, request ID, focused alert, disabled Confirm, restored draft, zero write | PASS — PRESENTATION |
+| Injected 413 | Version `ui-error-413` in isolated fault harness | State the 4 MiB limit and require a smaller reviewed request | `API_BODY_TOO_LARGE`, status 413, request ID, focused alert, disabled Confirm, restored draft, zero write | PASS — PRESENTATION |
+| Injected 429 | Version `ui-error-429`; `Retry-After: 3` | Hold the action for the stated interval | `API_AUTH_RATE_LIMITED`, status 429, request ID, focused alert, countdown observed at `Retry in 2s`, action re-enabled after the hold, zero write | PASS — PRESENTATION |
+| Injected 500 | Version `ui-error-500` in isolated fault harness | Do not infer whether the write happened; require logs and authoritative-state inspection | `API_INTERNAL_ERROR`, status 500, request ID, focused alert, disabled Confirm, restored draft, zero write | PASS — PRESENTATION |
 
 ## Persisted-output cross-check
 
@@ -111,15 +119,30 @@ The result state now changes the accessible heading to `Request completed`,
 labels the saved draft, and focuses Inspect candidate. The repeated Chrome
 write/detail/audit run passed after rebuilding and restarting the local service.
 
+The user-authorized MSP430 connection check then exposed no board or Dashboard
+availability fault, but the adjacent draft-review run found that Back to edit
+discarded Version and Commit SHA. The dialog now restores all reviewed fields,
+announces that no request has been submitted, and retains opener-focus behavior
+on Cancel. The repeated Chrome run restored the exact sample values and the
+candidate count remained unchanged. The external COM4 observation is recorded
+separately and does not change ForgeGate's `Hardware NOT_PERFORMED` claim.
+
+An isolated Chrome fault-presentation run then exercised 409, 413, 429, and
+500 responses through the real Dashboard UI. Every case rendered its exact
+HTTP status, stable code, request ID, focused alert, and status-specific safe
+next step. Conflict, oversized-body, and internal-error samples left Confirm
+disabled. The rate-limit sample honored `Retry-After: 3`, showed a decrementing
+retry label, and re-enabled the action after the hold. Back to edit restored the
+exact draft each time, and the copied fixture remained at three candidates.
+These injected responses prove presentation behavior only, not the occurrence
+or authenticity of an operational failure.
+
 ## Remaining manual boundary
 
 The following items remain `NOT_RUN` or partial and are not inferred from this
 run:
 
 - Edge/Chrome 100–200% exact zoom matrix;
-- browser-driven 409, 413, 429, and 500 rendering (401, 404, and 422 now have
-  browser records; producer authority prevents the normal UI from issuing a
-  forbidden write);
 - high contrast, screen reader, and Remote Desktop.
 
 Five generic-data Windows Chrome captures are retained under `docs/assets/`

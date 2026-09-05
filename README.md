@@ -60,14 +60,14 @@ dependency.
 
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 820 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
+| Full Python suite | 821 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
 | Branch-aware coverage | 95.20% across 9,565 statements and 2,634 branches | Local host test |
 | Static quality | Ruff, formatting, and strict mypy passed across 84 source/tool files | Local host test |
 | Contracts | 41 document and 2 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
-| Dashboard automation | 40 focused tests passed; Dashboard package reached 98.49% branch-aware coverage | Local host test; security, session, cursor pagination, asset/evidence integrity, BFF, contract, and CLI boundary |
-| Dashboard browser interaction | Edge and Chrome keyboard/focus, 129-record pagination, 390 px responsive, 422 recovery, and clean-console paths passed; installed-wheel Edge read passed | Windows local browser test; exact zoom matrix and assistive technology remain `NOT_RUN` |
+| Dashboard automation | 41 focused tests passed; Dashboard package reached 98.49% branch-aware coverage | Local host test; security, session, cursor pagination, fault-presentation harness, asset/evidence integrity, BFF, contract, and CLI boundary |
+| Dashboard browser interaction | Edge and Chrome keyboard/focus, 129-record pagination, 390 px responsive, 409/413/422/429/500 recovery, and clean-console paths passed; installed-wheel Edge read passed | Windows local browser test; 409/413/429/500 use a test-only presentation harness; exact zoom matrix and assistive technology remain `NOT_RUN` |
 | Windows plugin controls | 18/18 clean-wheel controls passed with the fixed pure-Python fixture | Live local WSL2/Podman test; no general publisher or plugin trust claim |
 | Cross-platform CI | `verify.py`, `release_smoke.py`, and the generic Action smoke passed | [GitHub Actions run 33839976122](https://github.com/Carlos-0798/forgegate/actions/runs/33839976122); hosted CI did not run live Podman fixtures |
 | Hardware/device behavior | Not exercised by ForgeGate | Out of scope |

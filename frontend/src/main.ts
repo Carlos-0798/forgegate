@@ -108,7 +108,8 @@ class RequestProblem extends Error {
     readonly status: number,
     readonly code: string,
     message: string,
-    readonly requestId: string
+    readonly requestId: string,
+    readonly retryAfterSeconds: number | null
   ) {
     super(message);
   }
@@ -178,6 +179,13 @@ function requestId(): string {
   return `dashboard-${crypto.randomUUID()}`;
 }
 
+function retryAfterSeconds(response: Response): number | null {
+  const value = response.headers.get("Retry-After");
+  if (value === null || !/^\d+$/.test(value)) return null;
+  const seconds = Number(value);
+  return Number.isSafeInteger(seconds) && seconds > 0 ? seconds : null;
+}
+
 async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
@@ -196,7 +204,8 @@ async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
       response.status,
       problem.error?.code ?? "DASHBOARD_REQUEST_FAILED",
       problem.error?.message ?? "The local service rejected the request.",
-      problem.error?.request_id ?? response.headers.get("X-Request-ID") ?? "unavailable"
+      problem.error?.request_id ?? response.headers.get("X-Request-ID") ?? "unavailable",
+      retryAfterSeconds(response)
     );
   }
   return payload as T;
@@ -226,18 +235,64 @@ function scheduleSessionExpiry(): void {
   }, delay);
 }
 
+function problemRecovery(problem: RequestProblem | null, fallback: string): string {
+  if (problem?.status === 409) {
+    return "Reload authoritative state, review the changed values, and submit a new request. This write will not be retried automatically.";
+  }
+  if (problem?.status === 413) {
+    return "Reduce the request below the stated 4 MiB service limit, then review it before trying again.";
+  }
+  if (problem?.status === 429) {
+    return problem.retryAfterSeconds === null
+      ? "Wait for the local rate window to reset before retrying manually."
+      : `Wait ${problem.retryAfterSeconds} seconds for the local rate window to reset before retrying manually.`;
+  }
+  if (problem?.status === 500) {
+    return "Do not assume the write failed. Record the request ID, inspect local logs and authoritative state, then retry only after the cause is understood.";
+  }
+  return fallback;
+}
+
 function showProblem(container: HTMLElement, error: unknown, recovery: string): void {
   const problem = error instanceof RequestProblem ? error : null;
   const panel = el("section", "problem-panel");
   panel.setAttribute("role", "alert");
+  panel.setAttribute("aria-live", "assertive");
+  panel.tabIndex = -1;
   panel.append(
     el("p", "problem-code", `ERROR [${problem?.code ?? "DASHBOARD_UNEXPECTED_ERROR"}]`),
     el("h2", undefined, "The request did not complete"),
+    el("p", "problem-status", `HTTP status: ${problem?.status ?? "unavailable"}`),
     el("p", undefined, problem?.message ?? "An unexpected browser-side error occurred."),
-    el("p", "recovery", `Safe next step: ${recovery}`),
+    el("p", "recovery", `Safe next step: ${problemRecovery(problem, recovery)}`),
     el("p", "request-id", `Request ID: ${problem?.requestId ?? "not available"}`)
   );
   container.replaceChildren(panel);
+  panel.focus();
+}
+
+function holdRateLimitedAction(
+  dialog: HTMLDialogElement,
+  action: HTMLButtonElement,
+  problem: RequestProblem
+): boolean {
+  if (problem.status !== 429 || problem.retryAfterSeconds === null) return false;
+  let remaining = problem.retryAfterSeconds;
+  const originalLabel = action.textContent ?? "Confirm creation";
+  action.disabled = true;
+  action.textContent = `Retry in ${remaining}s`;
+  const interval = window.setInterval(() => {
+    remaining -= 1;
+    if (remaining > 0) {
+      action.textContent = `Retry in ${remaining}s`;
+      return;
+    }
+    window.clearInterval(interval);
+    action.textContent = originalLabel;
+    action.disabled = false;
+  }, 1000);
+  dialog.addEventListener("close", () => window.clearInterval(interval), { once: true });
+  return true;
 }
 
 function statusBadge(value: string): HTMLSpanElement {
@@ -718,7 +773,11 @@ function candidateTable(candidates: Candidate[], main: HTMLElement): HTMLElement
   return wrapper;
 }
 
-function openCandidateDialog(main: HTMLElement, returnFocus?: HTMLElement): void {
+function openCandidateDialog(
+  main: HTMLElement,
+  returnFocus?: HTMLElement,
+  initialValues?: Record<string, string>
+): void {
   const dialog = el("dialog", "review-dialog");
   dialog.setAttribute("aria-labelledby", "candidate-dialog-title");
   const form = el("form", "candidate-form");
@@ -726,11 +785,18 @@ function openCandidateDialog(main: HTMLElement, returnFocus?: HTMLElement): void
   const heading = el("h2", undefined, "Create release candidate");
   heading.id = "candidate-dialog-title";
   form.append(el("p", "eyebrow", "DRAFT REQUEST"), heading, el("p", "muted", "Client checks guide this draft. ForgeGate remains authoritative."));
+  if (initialValues !== undefined) {
+    form.append(el("p", "muted", "Draft values restored for review; no request has been submitted."));
+  }
   const version = field("Version", "version", "1.0.0", "text", true);
   const commit = field("Commit SHA", "commit", "40 or 64 lowercase hexadecimal characters", "text", true);
   commit.input.addEventListener("input", () => commit.input.setCustomValidity(""));
   const branch = field("Source branch", "branch", "main", "text", true);
   const track = field("Release track", "track", "pull-request", "text", true);
+  version.input.value = initialValues?.version ?? "";
+  commit.input.value = initialValues?.commit_sha ?? "";
+  branch.input.value = initialValues?.source_branch ?? branch.input.value;
+  track.input.value = initialValues?.release_track ?? track.input.value;
   form.append(version.wrapper, commit.wrapper, branch.wrapper, track.wrapper);
   const controls = el("div", "dialog-actions");
   const cancel = button("Cancel", "button quiet");
@@ -812,7 +878,7 @@ function renderCandidateReview(
   back.addEventListener("click", () => {
     dialog.close();
     const workspace = document.querySelector<HTMLElement>("#workspace");
-    if (workspace !== null) openCandidateDialog(workspace, returnFocus);
+    if (workspace !== null) openCandidateDialog(workspace, returnFocus, values);
   });
   const confirm = button("Confirm creation", "button primary");
   const idempotencyKey = `dashboard:candidate:${crypto.randomUUID()}`;
@@ -847,6 +913,10 @@ function renderCandidateReview(
     } catch (error) {
       showProblem(status, error, "Return to the draft, reload current state if needed, and review before trying again.");
       back.disabled = false;
+      if (error instanceof RequestProblem) {
+        if (holdRateLimitedAction(dialog, confirm, error)) return;
+        if ([409, 413, 500].includes(error.status)) return;
+      }
       confirm.disabled = false;
     }
   });

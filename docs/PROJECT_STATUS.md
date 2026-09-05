@@ -356,10 +356,11 @@
   source/wheel inclusion checks, locked build dependencies, and CI drift gates;
 - separate deterministic Dashboard BFF OpenAPI export with explicit operation
   IDs, committed-byte drift detection, and installed-wheel comparison;
-- 40 focused Dashboard tests plus real Microsoft Edge and Chrome keyboard/focus
-  operation, complete 129-record cursor pagination, browser-rendered 422
-  recovery, and Chrome/in-app-browser 390 px responsive/clean-console runs
-  using generic local data;
+- 41 focused Dashboard tests plus real Microsoft Edge and Chrome keyboard/focus
+  operation, complete 129-record cursor pagination, browser-rendered
+  409/413/422/429/500 recovery, and Chrome/in-app-browser 390 px
+  responsive/clean-console runs using generic local data; uncommon statuses
+  use a zero-write test-only presentation harness;
 - a retained generic-data Windows Dashboard screenshot with explicit Alpha,
   non-hardware, non-production claim boundaries and verified sdist inclusion.
 
@@ -398,16 +399,17 @@ artifact payload/replay export, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 820 passed, 3 skipped (Windows symlink creation unavailable)
+- pytest: 821 passed, 3 skipped (Windows symlink creation unavailable)
 - branch-aware coverage: 95.20% across 9,565 statements and 2,634 branches
-- Dashboard focus: 40 passed; 98.49% branch-aware coverage across 557
+- Dashboard focus: 41 passed; 98.49% branch-aware coverage across 557
   statements and 106 branches
 - Dashboard browser checkpoint: Microsoft Edge and Chrome keyboard creation/
   read, modal Tab containment/Escape/focus return, 129-record six-page
-  traversal, and 422 recovery PASS; Chrome service-restart recovery and 390 px
-  responsive/clean-console checks, installed-wheel Edge read, in-app-browser
-  390 px check, and generic portfolio capture PASS; exact zoom and assistive
-  technology `NOT_RUN`
+  traversal, and 409/413/422/429/500 recovery PASS; Chrome service-restart
+  recovery and 390 px responsive/clean-console checks, installed-wheel Edge
+  read, in-app-browser 390 px check, and generic portfolio capture PASS;
+  uncommon statuses use a zero-write test-only presentation harness; exact
+  zoom and assistive technology `NOT_RUN`
 - Plugin execution contract focus: 8 passed across plan authority, protocol
   sequencing, legal transitions, terminal replay, resource limits, JSON
   loading, and content-derived identity; no process started

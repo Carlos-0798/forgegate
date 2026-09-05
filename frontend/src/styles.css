@@ -56,7 +56,8 @@ button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible,
-dialog:focus-visible {
+dialog:focus-visible,
+.problem-panel:focus-visible {
   outline: 3px solid var(--focus);
   outline-offset: 3px;
 }
@@ -896,8 +897,43 @@ td {
 }
 
 @media (forced-colors: active) {
+  .button,
+  .badge,
+  .nav-link,
+  .panel,
+  .project-card,
+  .detail-panel,
+  .problem-panel,
+  .review-dialog,
+  .field input,
+  .field select,
+  .compact-field select {
+    border-color: CanvasText;
+  }
+
+  .button.primary,
+  .nav-link.active {
+    color: HighlightText;
+    background: Highlight;
+  }
+
+  .button:disabled {
+    color: GrayText;
+    opacity: 1;
+  }
+
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  dialog:focus-visible,
+  .problem-panel:focus-visible {
+    outline-color: Highlight;
+  }
+
   .metric-dot,
   .timeline li::before {
     border: 1px solid CanvasText;
+    background: Highlight;
   }
 }

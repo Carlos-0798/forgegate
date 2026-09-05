@@ -1,0 +1,70 @@
+{
+  "schema_version": "forgegate.dashboard-fault-presentation-evidence.v1",
+  "captured_at": "2026-09-05T03:10:03.0449467Z",
+  "environment": {
+    "operating_system": "Windows",
+    "browser": "Google Chrome",
+    "origin": "http://localhost:8132",
+    "service": "TEST_ONLY_FAULT_PRESENTATION_HARNESS",
+    "normal_dashboard_origin": "http://127.0.0.1:8131"
+  },
+  "presentations": [
+    {
+      "sample_version": "ui-error-409",
+      "http_status": 409,
+      "error_code": "STORE_IDEMPOTENCY_CONFLICT",
+      "request_id": "manual-browser-fault-409",
+      "recovery": "Reload authoritative state, review the changed values, and submit a new request. This write will not be retried automatically.",
+      "error_panel_focused": true,
+      "confirm_action_disabled": true,
+      "draft_restored_on_back": true,
+      "result": "PASS"
+    },
+    {
+      "sample_version": "ui-error-413",
+      "http_status": 413,
+      "error_code": "API_BODY_TOO_LARGE",
+      "request_id": "manual-browser-fault-413",
+      "recovery": "Reduce the request below the stated 4 MiB service limit, then review it before trying again.",
+      "error_panel_focused": true,
+      "confirm_action_disabled": true,
+      "draft_restored_on_back": true,
+      "result": "PASS"
+    },
+    {
+      "sample_version": "ui-error-429",
+      "http_status": 429,
+      "error_code": "API_AUTH_RATE_LIMITED",
+      "request_id": "manual-browser-fault-429",
+      "retry_after_seconds": 3,
+      "recovery": "Wait 3 seconds for the local rate window to reset before retrying manually.",
+      "observed_countdown_label": "Retry in 2s",
+      "action_reenabled_after_countdown": true,
+      "error_panel_focused": true,
+      "draft_restored_on_back": true,
+      "result": "PASS"
+    },
+    {
+      "sample_version": "ui-error-500",
+      "http_status": 500,
+      "error_code": "API_INTERNAL_ERROR",
+      "request_id": "manual-browser-fault-500",
+      "recovery": "Do not assume the write failed. Record the request ID, inspect local logs and authoritative state, then retry only after the cause is understood.",
+      "error_panel_focused": true,
+      "confirm_action_disabled": true,
+      "draft_restored_on_back": true,
+      "result": "PASS"
+    }
+  ],
+  "candidate_rows_before": 3,
+  "candidate_rows_after": 3,
+  "durable_write_observed": false,
+  "normal_dashboard_left_running": true,
+  "outcome": "PASS_TEST_ONLY_BROWSER_PRESENTATION",
+  "boundaries": {
+    "authentic_operational_fault_claimed": false,
+    "production_behavior_claimed": false,
+    "remote_service_used": false,
+    "hardware_accessed": false
+  }
+}

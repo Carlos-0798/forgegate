@@ -85,7 +85,7 @@ as PASS, FAIL, or NOT_RUN; they are never inferred from Chromium automation.
 | FGD-A20 | NOT_APPLICABLE | This slice exposes no revision-mutating command; stale-revision UI becomes mandatory with the first such command. |
 | FGD-A21 | PASS | Edge refresh/back/forward retained three rows and issued no observed duplicate mutation. |
 | FGD-A22 | PASS | Dynamic values use text-node APIs only; executable HTML APIs/storage/service-worker/eval patterns are rejected by a committed asset test and CSP. |
-| FGD-A23 | PARTIAL | Browser runs cover 401 recovery, unknown-track 404, and strict-body 422 with stable code, safe next step, and request ID; 409/413/429/500 are not browser-driven. Producer authority prevents the normal UI from issuing a forbidden write. |
+| FGD-A23 | PASS | Browser runs cover 401 recovery, unknown-track 404, strict-body 422, and isolated test-harness 409/413/429/500 with stable status/code, safe next step, request ID, focused alert, zero write, and a three-second 429 action hold. Producer authority prevents the normal UI from issuing a forbidden write. The injected statuses are presentation evidence, not authentic operational-failure evidence. |
 | FGD-A24–A25 | PASS | UI separates request/candidate/decision/hardware/limitations and uses bounded 25-row cursor pages; six-page forward traversal and one backward page produced no duplicate or unreachable row. |
 | FGD-A26 | PASS | A separate generated Dashboard BFF OpenAPI document has explicit operation IDs, committed-byte drift checks, and installed-wheel comparison. |
 | FGD-A27 | PASS | Full verification and clean release smoke pass at this checkpoint. |

@@ -39,6 +39,10 @@ from forgegate.dashboard.client import DashboardClientError
 from forgegate.dashboard.openapi import create_dashboard_openapi
 from forgegate.identity import IdentityRole
 from tests.api_auth_support import TEST_IDENTITY, TEST_PRIVATE_KEY, TEST_TRUST_STORE
+from tools.manual_dashboard_fault_server import (
+    FAULT_PRESENTATIONS,
+    create_fault_presentation_app,
+)
 
 ORIGIN = "http://127.0.0.1"
 ORIGIN_HEADER = {"Origin": ORIGIN}
@@ -160,6 +164,41 @@ def _activate_manager(manager: DashboardSessionManager) -> tuple[str, str]:
     return started.activation_code, dashboard_cookie
 
 
+def test_manual_dashboard_fault_harness_is_isolated_and_exact(
+    tmp_path: Path,
+    repository_root: Path,
+) -> None:
+    database = tmp_path / "forgegate.db"
+    _application_with_project(tmp_path, repository_root)
+    trust_store = tmp_path / "trust-store.json"
+    trust_store.write_text(TEST_TRUST_STORE.model_dump_json(indent=2), encoding="utf-8")
+    with TestClient(
+        create_fault_presentation_app(database, trust_store),
+        base_url=ORIGIN,
+    ) as client:
+        activated = _activate(client)
+        headers = {
+            **ORIGIN_HEADER,
+            "X-ForgeGate-CSRF": activated["csrf_token"],
+            "Idempotency-Key": "manual:fault:presentation",
+        }
+        for version, expected in FAULT_PRESENTATIONS.items():
+            response = client.post(
+                "/app/api/candidates",
+                headers=headers,
+                json=_candidate_payload(version=version),
+            )
+            assert response.status_code == expected.status
+            assert response.json()["error"]["code"] == expected.code
+            assert response.headers["X-Request-ID"] == f"manual-browser-fault-{expected.status}"
+            if expected.retry_after is not None:
+                assert response.headers["Retry-After"] == str(expected.retry_after)
+        candidates = client.get("/app/api/projects/sample-api/candidates?limit=25")
+
+    assert candidates.status_code == 200
+    assert candidates.json()["candidates"] == []
+
+
 def test_dashboard_portfolio_capture_record_matches_retained_generic_assets(
     repository_root: Path,
 ) -> None:
@@ -244,6 +283,15 @@ def test_dashboard_static_assets_headers_and_contract_boundary(
     assert all("Previous page" in script and "Next page" in script for script in scripts)
     assert all("candidate-dialog-title" in script for script in scripts)
     assert all("DRAFT CREATED" in script for script in scripts)
+    assert all(
+        "Draft values restored for review; no request has been submitted." in script
+        for script in scripts
+    )
+    assert all("Retry-After" in script and "Retry in" in script for script in scripts)
+    assert all("This write will not be retried automatically" in script for script in scripts)
+    assert all("stated 4 MiB service limit" in script for script in scripts)
+    assert all("Do not assume the write failed" in script for script in scripts)
+    assert all("aria-live" in script and "assertive" in script for script in scripts)
     assert not any(
         unsafe in script
         for script in scripts

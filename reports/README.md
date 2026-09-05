@@ -8,6 +8,9 @@ not be quoted as the latest project status.
 
 - [Phase 24 authenticated local Dashboard checkpoint](PHASE_24_AUTHENTICATED_LOCAL_DASHBOARD_ACCEPTANCE_REPORT.md) — implementation and automation pass; full manual cross-browser exit gate partial
 - [Phase 24 manual interaction acceptance](PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md) — operator/producer inputs, durable output cross-check, expiry/restart recovery, Edge/Chrome focus, 129-record pagination, 422 recovery, and remaining manual boundary
+- [MSP430 connection and Dashboard observation](MSP430_CONNECTION_AND_DASHBOARD_OBSERVATION_2026-09-04.md) — user-authorized Windows USB/UART stability and non-mutating Dashboard checks; not firmware, protocol, measurement, or ForgeGate hardware-integration proof
+- [MSP430 connection observation record](MSP430_CONNECTION_OBSERVATION_2026-09-04.json) — exact local counters and explicit non-claims without a device serial number
+- [Dashboard fault-presentation record](DASHBOARD_FAULT_PRESENTATION_EVIDENCE_2026-09-04.json) — isolated Chrome 409/413/429/500 rendering, focus, recovery, countdown, and zero-write evidence; test injection, not authentic operational failure evidence
 - [Dashboard portfolio capture record](DASHBOARD_PORTFOLIO_CAPTURE_EVIDENCE_2026-09-04.json) — generic Chrome fixture, 422 non-mutation cross-check, screenshot dimensions, hashes, and claim boundaries
 - [Phase 23 local Web Dashboard design gate](PHASE_23_LOCAL_WEB_DASHBOARD_DESIGN_GATE.md) — historical design evidence
 - [Interaction acceptance report](INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md)
