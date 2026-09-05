@@ -368,8 +368,10 @@ Exact 100/125/150/175/200% zoom and assistive-technology runs remain `NOT_RUN`
 or partial; Phase 24 therefore remains open rather than overstating full UI
 acceptance.
 
-Evidence upload, policy execution, assurance export, plugin execution, session
-administration, and trust-store administration remain outside this slice.
+Evidence upload/collection, policy execution, assurance export, plugin
+execution, session administration, and trust-store administration remain
+outside this slice. Read-only Evidence/Decision/Assurance review is completed
+separately in Phase 26.
 
 ## Phase 25 — optional MSP430 live-status monitor
 
@@ -389,10 +391,37 @@ administration, and trust-store administration remain outside this slice.
   58007→58017 and 10 accepted frames over 10 seconds without a sequence gap.
 - [x] Prove disconnected, stale, invalid-frame, device-warning/fault, recovery,
   and read-only lifecycle behavior with deterministic automated tests.
-- [ ] Perform one owner-assisted physical unplug/replug transition while the
-  Dashboard remains open. Until then, physical disconnect/reconnect UI timing
-  is not claimed; deterministic state-machine coverage is retained separately.
+- [x] Perform one owner-assisted physical unplug/replug transition while the
+  Dashboard remains open. The owner observed the live transition; post-recovery
+  counters retained one reconnect, one sequence gap, and one protocol error,
+  then remained stable while sequence and valid-frame counts advanced.
 
 Phase 25 is live status only. It creates no candidate evidence, authenticates no
 producer, validates no sensor measurement, controls no hardware, and does not
 complete the still-planned MSP430 report collector in Phase 3.
+
+## Phase 26 — read-only Dashboard assurance review
+
+- [x] Add one authenticated, project-scoped BFF read model joining candidate
+  history, evidence binding, exact policy material, policy evaluation,
+  attestation, and portable bundle identity.
+- [x] Implement candidate-bound Evidence, Decision, and Assurance pages without
+  introducing evidence upload, policy execution, lifecycle mutation, or export
+  from the browser.
+- [x] Show trust/verification labels, artifact references, expected/actual rule
+  values, evidence IDs, reason codes, lifecycle transitions, and explicit
+  assurance limitations.
+- [x] Preserve candidate context across review tabs and refresh using a
+  non-secret hash query, with explicit no-selection and incomplete-stage states.
+- [x] Bound Evidence and Decision rendering to 25 rows per page with visible,
+  keyboard-operable range and navigation controls.
+- [x] Decode MSP430 UART v1 fault bits in the compatibility adapter, retain
+  unknown bits without invented meaning, and label all decoded values as device
+  reports rather than ForgeGate diagnoses.
+- [x] Validate the slice with strict TypeScript, deterministic assets, BFF and
+  adapter tests, a generic PASS browser fixture, a live input-only COM4 follow-up,
+  and retained screenshot hashes.
+
+Phase 26 is a review surface only. It validates and presents retained ForgeGate
+documents; it does not re-run collectors, authenticate artifact producers,
+embed source artifact bytes, approve deployment, or validate hardware.

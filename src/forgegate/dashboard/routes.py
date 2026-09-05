@@ -32,6 +32,7 @@ from forgegate.dashboard.models import (
     DashboardActivationCompleted,
     DashboardActivationStart,
     DashboardActivationStatus,
+    DashboardCandidateAssuranceReview,
     DashboardLogoutResponse,
     DashboardOverview,
     DashboardPrincipal,
@@ -364,6 +365,62 @@ def install_dashboard_routes(
         candidate = application.get_candidate(candidate_id)
         authenticator.require_project(principal, candidate.project_id)
         return candidate
+
+    @app.get(
+        "/app/api/candidates/{candidate_id}/assurance-review",
+        response_model=DashboardCandidateAssuranceReview,
+        operation_id="getDashboardCandidateAssuranceReview",
+        include_in_schema=False,
+    )
+    def get_dashboard_candidate_assurance_review(
+        request: Request,
+        candidate_id: str,
+    ) -> DashboardCandidateAssuranceReview:
+        _require_same_origin(request, required=False)
+        principal = _dashboard_principal(manager, request)
+        history = application.get_history(candidate_id)
+        authenticator.require_project(principal, history.candidate.project_id)
+        evaluation = application.get_evaluation(candidate_id)
+        try:
+            attestation = application.get_attestation(candidate_id)
+        except CandidateStoreError as exc:
+            if exc.code != "STORE_ATTESTATION_NOT_FOUND":
+                raise
+            attestation = None
+        assurance_bundle = None
+        if (
+            history.evidence_binding is not None
+            and history.policy_material is not None
+            and attestation is not None
+        ):
+            assurance_bundle = application.get_assurance_bundle(candidate_id)
+        return DashboardCandidateAssuranceReview(
+            candidate=history.candidate,
+            transitions=history.transitions,
+            evidence_binding_required=history.evidence_binding_required,
+            evidence_binding=history.evidence_binding,
+            policy_material_required=history.policy_material_required,
+            policy_material=history.policy_material,
+            policy_evaluation=evaluation,
+            attestation=attestation,
+            assurance_bundle_id=(None if assurance_bundle is None else assurance_bundle.bundle_id),
+            assurance=None if assurance_bundle is None else assurance_bundle.assurance,
+            verification_scope=(
+                None if assurance_bundle is None else assurance_bundle.verification_scope
+            ),
+            source_artifact_bytes=(
+                None if assurance_bundle is None else assurance_bundle.source_artifact_bytes
+            ),
+            limitations=(
+                "Stored documents are validated on read; collectors are not re-run by this page.",
+                "Artifact hashes establish retained-byte integrity, not producer authenticity.",
+                (
+                    "Source artifact bytes are referenced but are not embedded in this "
+                    "review response."
+                ),
+                "An unsigned local decision is not deployment approval or hardware validation.",
+            ),
+        )
 
     @app.get(
         "/app/api/audit-events",

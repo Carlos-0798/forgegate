@@ -1,7 +1,7 @@
 import "./styles.css";
 
 type Role = "operator" | "producer";
-type Route = "overview" | "devices" | "projects" | "candidates";
+type Route = "overview" | "devices" | "projects" | "candidates" | "evidence" | "decision" | "assurance";
 
 interface Principal {
   session_id: string;
@@ -121,12 +121,119 @@ interface LiveSourceStatus {
   uptime_ms: number | null;
   device_state: string | null;
   fault_flags: string | null;
+  reported_issues: Array<{ code: string; label: string; mask: string }>;
   frames_received: number;
   protocol_errors: number;
   sequence_gaps: number;
   reconnects: number;
   evidence_boundary: "LIVE_STATUS_ONLY_NOT_RELEASE_EVIDENCE";
   hardware_control: "NOT_PERFORMED";
+}
+
+interface CandidateTransition {
+  transition_id: string;
+  from_status: string;
+  to_status: string;
+  to_revision: number;
+  occurred_at: string;
+  reason: string | null;
+}
+
+interface ArtifactReference {
+  path_or_uri: string;
+  media_type: string;
+  sha256: string;
+  size_bytes: number;
+}
+
+interface EvidenceRecord {
+  evidence_id: string;
+  kind: string;
+  scope: string;
+  value: unknown;
+  unit: string | null;
+  status: string;
+  source_tool: string;
+  source_version: string;
+  artifact: ArtifactReference;
+  collected_at: string;
+  trust: string;
+  verification_level: string;
+}
+
+interface EvidenceBinding {
+  binding_id: string;
+  bound_at: string;
+  assembly_fingerprint: string;
+  assembly: {
+    assembly_id: string;
+    warning_disposition: string;
+    bundle: { generated_at: string; producer: string; evidence: EvidenceRecord[] };
+    collections: Array<{ collector_name: string; collector_version: string; warnings: Array<{ code: string; message: string }> }>;
+  };
+}
+
+interface PolicyMaterial {
+  material_id: string;
+  project_profile_id: string;
+  project_profile_version: number;
+  release_track: string;
+  artifact: ArtifactReference;
+  policy_fingerprint: string;
+  policy: { name: string; rules: Array<{ id: string }> };
+}
+
+interface RuleEvaluation {
+  rule_id: string;
+  claim: string;
+  decision: string;
+  mandatory: boolean;
+  expected: unknown;
+  actual: unknown;
+  evidence_ids: string[];
+  reason_code: string;
+  explanation: string;
+  remediation_hint: string | null;
+}
+
+interface PolicyEvaluation {
+  evaluation_id: string;
+  policy_name: string;
+  policy_fingerprint: string;
+  evidence_fingerprint: string;
+  candidate_commit: string;
+  evaluated_at: string;
+  decision: string;
+  rule_results: RuleEvaluation[];
+  evaluated_evidence_ids: string[];
+  policy_material_id?: string;
+  project_profile_id?: string;
+  project_profile_version?: number;
+}
+
+interface ReleaseAttestation {
+  attestation_id: string;
+  generator_version: string;
+  assurance: "unsigned_local";
+  issued_at: string;
+  transition_chain_fingerprint: string;
+}
+
+interface CandidateAssuranceReview {
+  schema_version: "forgegate.dashboard-candidate-assurance-review.v1";
+  candidate: Candidate;
+  transitions: CandidateTransition[];
+  evidence_binding_required: boolean;
+  evidence_binding: EvidenceBinding | null;
+  policy_material_required: boolean;
+  policy_material: PolicyMaterial | null;
+  policy_evaluation: PolicyEvaluation | null;
+  attestation: ReleaseAttestation | null;
+  assurance_bundle_id: string | null;
+  assurance: "unsigned_local" | null;
+  verification_scope: "retained_documents_and_embedded_policy_bytes" | null;
+  source_artifact_bytes: "not_embedded" | null;
+  limitations: string[];
 }
 
 interface LiveStatusPage {
@@ -211,10 +318,22 @@ function keepFocusInsideDialog(dialog: HTMLDialogElement, event: KeyboardEvent):
 }
 
 function routeFromHash(): Route {
-  const candidate = window.location.hash.replace(/^#\/?/, "");
-  return candidate === "devices" || candidate === "projects" || candidate === "candidates"
+  const candidate = window.location.hash.replace(/^#\/?/, "").split("?", 1)[0];
+  return candidate === "devices" || candidate === "projects" || candidate === "candidates" ||
+    candidate === "evidence" || candidate === "decision" || candidate === "assurance"
     ? candidate
     : "overview";
+}
+
+function candidateIdFromHash(): string | null {
+  const query = window.location.hash.split("?", 2)[1];
+  if (query === undefined) return null;
+  const value = new URLSearchParams(query).get("candidate_id");
+  return value !== null && /^cand-[0-9a-f]{24}$/.test(value) ? value : null;
+}
+
+function candidateReviewHash(route: "evidence" | "decision" | "assurance", candidateId: string): string {
+  return `#/${route}?${new URLSearchParams({ candidate_id: candidateId }).toString()}`;
 }
 
 function requestId(): string {
@@ -369,6 +488,7 @@ function definition(label: string, value: string, mono = false): HTMLDivElement 
 function shell(content: HTMLElement): void {
   if (session === null) {
     root.replaceChildren(content);
+    window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     return;
   }
 
@@ -394,21 +514,27 @@ function shell(content: HTMLElement): void {
   const body = el("div", "app-body");
   const nav = el("nav", "side-nav");
   nav.setAttribute("aria-label", "Primary");
+  const reviewCandidateId = candidateIdFromHash();
   for (const [route, label, detail] of [
     ["overview", "Overview", "Service and authority"],
     ["devices", "Devices", "Live read-only status"],
     ["projects", "Projects", "Immutable profiles"],
-    ["candidates", "Candidates", "Release work and audit"]
+    ["candidates", "Candidates", "Release work and audit"],
+    ["evidence", "Evidence", "Bound records and sources"],
+    ["decision", "Decision", "Rules and explanations"],
+    ["assurance", "Assurance", "Attestation and limits"]
   ] as const) {
     const link = el("a", currentRoute === route ? "nav-link active" : "nav-link");
-    link.href = `#/${route}`;
+    link.href = reviewCandidateId !== null && ["evidence", "decision", "assurance"].includes(route)
+      ? candidateReviewHash(route as "evidence" | "decision" | "assurance", reviewCandidateId)
+      : `#/${route}`;
     if (currentRoute === route) link.setAttribute("aria-current", "page");
     link.append(el("strong", undefined, label), el("span", undefined, detail));
     nav.append(link);
   }
   const planned = el("section", "planned-nav");
   planned.append(el("p", "eyebrow", "LATER GATES"));
-  for (const label of ["Evidence", "Decision", "Assurance", "Plugins", "Security"]) {
+  for (const label of ["Plugins", "Security"]) {
     const row = el("div", "planned-row");
     row.append(el("span", undefined, label), el("span", "badge neutral", "Planned"));
     planned.append(row);
@@ -420,6 +546,7 @@ function shell(content: HTMLElement): void {
   body.append(nav, content);
   frame.append(header, body);
   root.replaceChildren(frame);
+  window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 }
 
 function page(title: string, eyebrow: string, description: string): HTMLElement {
@@ -603,6 +730,9 @@ async function renderRoute(): Promise<void> {
   if (currentRoute === "devices") await renderDevices();
   if (currentRoute === "projects") await renderProjects();
   if (currentRoute === "candidates") await renderCandidates();
+  if (currentRoute === "evidence") await renderEvidence();
+  if (currentRoute === "decision") await renderDecision();
+  if (currentRoute === "assurance") await renderAssurance();
 }
 
 async function renderDevices(): Promise<void> {
@@ -705,6 +835,18 @@ function renderLiveSource(source: LiveSourceStatus): HTMLElement {
     definition("Heartbeat age", source.heartbeat_age_seconds === null ? "Not observed" : `${source.heartbeat_age_seconds.toFixed(3)} s`)
   );
   telemetry.append(telemetryValues);
+  if (source.reported_issues.length > 0) {
+    const issues = el("section", "reported-issues");
+    issues.append(el("h4", undefined, "Decoded firmware reports"));
+    const list = el("ul", "issue-list");
+    for (const issue of source.reported_issues) {
+      const item = el("li");
+      item.append(el("code", undefined, issue.mask), el("span", undefined, issue.label));
+      list.append(item);
+    }
+    issues.append(list, el("p", "muted", "Decoded from the versioned MSP430 UART v1 adapter; these are device reports, not ForgeGate diagnoses."));
+    telemetry.append(issues);
+  }
 
   const monitor = el("section", "panel");
   monitor.append(el("p", "eyebrow", "MONITOR DIAGNOSTICS"), el("h3", undefined, "Read-only transport"));
@@ -1171,6 +1313,17 @@ async function showCandidateDetail(main: HTMLElement, candidateId: string): Prom
       definition("Profile version", String(candidate.project_profile_version ?? "unbound")),
       definition("Hardware claim", "NOT_PERFORMED")
     );
+    const reviewLinks = el("nav", "review-links");
+    reviewLinks.setAttribute("aria-label", "Candidate assurance review");
+    for (const [route, label] of [
+      ["evidence", "Review evidence"],
+      ["decision", "Review decision"],
+      ["assurance", "Review assurance"]
+    ] as const) {
+      const link = el("a", "button secondary", label);
+      link.href = candidateReviewHash(route, candidateId);
+      reviewLinks.append(link);
+    }
     const auditSection = el("section", "audit-section");
     auditSection.append(el("h3", undefined, "Append-only audit history"));
     if (audit === null) {
@@ -1186,11 +1339,337 @@ async function showCandidateDetail(main: HTMLElement, candidateId: string): Prom
       }
       auditSection.append(timeline);
     }
-    content.replaceChildren(heading, details, auditSection);
+    content.replaceChildren(heading, details, reviewLinks, auditSection);
     content.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (error) {
     handleProtectedProblem(content, error, "Return to the candidate list and retry the inspection.");
   }
+}
+
+async function loadCandidateAssuranceReview(): Promise<CandidateAssuranceReview | null> {
+  const candidateId = candidateIdFromHash();
+  if (candidateId === null) return null;
+  return api<CandidateAssuranceReview>(
+    `/app/api/candidates/${encodeURIComponent(candidateId)}/assurance-review`
+  );
+}
+
+function reviewSelectionState(title: string): HTMLElement {
+  const state = emptyState(
+    `Select a candidate for ${title.toLowerCase()}`,
+    "Open Candidates, inspect one release candidate, then choose the corresponding review action."
+  );
+  const open = el("a", "button primary", "Open candidates");
+  open.href = "#/candidates";
+  state.append(open);
+  return state;
+}
+
+function reviewHeader(review: CandidateAssuranceReview, label: string): HTMLElement {
+  const panel = el("section", "review-context");
+  const heading = el("div", "card-heading");
+  const title = el("div");
+  title.append(el("p", "eyebrow", label), el("h2", undefined, review.candidate.version));
+  heading.append(title, statusBadge(review.candidate.status));
+  const details = el("dl", "definition-list detail-grid");
+  details.append(
+    definition("Candidate ID", review.candidate.candidate_id, true),
+    definition("Project", review.candidate.project_id),
+    definition("Commit", review.candidate.commit_sha, true),
+    definition("Release track", review.candidate.release_track)
+  );
+  const links = el("nav", "review-tabs");
+  links.setAttribute("aria-label", "Assurance review sections");
+  for (const [route, text] of [
+    ["evidence", "Evidence"],
+    ["decision", "Decision"],
+    ["assurance", "Assurance"]
+  ] as const) {
+    const link = el("a", currentRoute === route ? "review-tab active" : "review-tab", text);
+    link.href = candidateReviewHash(route, review.candidate.candidate_id);
+    if (currentRoute === route) link.setAttribute("aria-current", "page");
+    links.append(link);
+  }
+  panel.append(heading, details, links);
+  return panel;
+}
+
+function textValue(value: unknown): string {
+  if (typeof value === "string") return value;
+  if (value === null) return "null";
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return "unavailable";
+  }
+}
+
+function paginatedReviewTable(
+  caption: string,
+  headings: readonly string[],
+  rowFactories: ReadonlyArray<() => HTMLElement>
+): HTMLElement {
+  const pageSize = 25;
+  let pageIndex = 0;
+  const region = el("section", "review-table-region");
+  const wrapper = el("div", "table-wrap");
+  const table = el("table");
+  table.append(el("caption", "sr-only", caption));
+  const head = el("thead");
+  const headingRow = el("tr");
+  for (const label of headings) headingRow.append(el("th", undefined, label));
+  head.append(headingRow);
+  const body = el("tbody");
+  table.append(head, body);
+  wrapper.append(table);
+
+  const pager = el("nav", "pager review-pager");
+  pager.setAttribute("aria-label", `${caption} pages`);
+  const status = el("p", "pager-status");
+  status.setAttribute("aria-live", "polite");
+  const actions = el("div", "pager-actions");
+  const previous = button("Previous page", "button quiet");
+  const next = button("Next page", "button secondary");
+
+  const renderPage = (): void => {
+    const start = pageIndex * pageSize;
+    const end = Math.min(start + pageSize, rowFactories.length);
+    body.replaceChildren(...rowFactories.slice(start, end).map((createRow) => createRow()));
+    status.textContent = `Showing ${start + 1}–${end} of ${rowFactories.length}`;
+    previous.disabled = pageIndex === 0;
+    next.disabled = end >= rowFactories.length;
+  };
+  previous.addEventListener("click", () => {
+    if (pageIndex === 0) return;
+    pageIndex -= 1;
+    renderPage();
+  });
+  next.addEventListener("click", () => {
+    if ((pageIndex + 1) * pageSize >= rowFactories.length) return;
+    pageIndex += 1;
+    renderPage();
+  });
+  actions.append(previous, next);
+  pager.append(status, actions);
+  region.append(wrapper, pager);
+  renderPage();
+  return region;
+}
+
+async function renderEvidence(): Promise<void> {
+  loadingPage("Evidence");
+  const main = page(
+    "Bound evidence",
+    "RETAINED INPUTS",
+    "Inspect the immutable evidence binding, collector receipts, trust labels, and artifact references used by one candidate."
+  );
+  try {
+    const review = await loadCandidateAssuranceReview();
+    if (review === null) {
+      main.append(reviewSelectionState("Evidence"));
+      shell(main);
+      return;
+    }
+    main.append(reviewHeader(review, "CANDIDATE EVIDENCE"));
+    const binding = review.evidence_binding;
+    if (binding === null) {
+      main.append(
+        emptyState(
+          review.evidence_binding_required ? "Evidence not bound" : "No binding required for this legacy record",
+          "This candidate has no retained evidence assembly. No rule input is inferred from live status or other projects."
+        )
+      );
+    } else {
+      const metrics = el("section", "metric-grid");
+      for (const [label, value] of [
+        ["Records", String(binding.assembly.bundle.evidence.length)],
+        ["Collections", String(binding.assembly.collections.length)],
+        ["Warnings", binding.assembly.warning_disposition],
+        ["Bound", formatDate(binding.bound_at)]
+      ]) {
+        const card = el("article", "metric-card");
+        card.append(el("span", undefined, label), el("strong", undefined, value));
+        metrics.append(card);
+      }
+      const identity = el("section", "panel");
+      identity.append(el("p", "eyebrow", "CONTENT IDENTITY"), el("h3", undefined, "Binding and assembly"));
+      const ids = el("dl", "definition-list");
+      ids.append(
+        definition("Binding ID", binding.binding_id, true),
+        definition("Assembly ID", binding.assembly.assembly_id, true),
+        definition("Assembly fingerprint", binding.assembly_fingerprint, true),
+        definition("Producer", binding.assembly.bundle.producer),
+        definition("Bundle generated", formatDate(binding.assembly.bundle.generated_at))
+      );
+      identity.append(ids);
+
+      const evidenceTable = paginatedReviewTable(
+        "Bound evidence records",
+        ["Evidence ID", "Kind", "Scope", "Value", "Status", "Trust", "Verification", "Artifact"],
+        binding.assembly.bundle.evidence.map((record) => () => {
+          const evidenceRow = el("tr");
+          evidenceRow.append(
+            el("td", "mono", record.evidence_id),
+            el("td", undefined, record.kind),
+            el("td", undefined, record.scope),
+            el("td", "mono", `${textValue(record.value)}${record.unit === null ? "" : ` ${record.unit}`}`),
+            el("td", undefined, record.status),
+            el("td", undefined, record.trust),
+            el("td", undefined, record.verification_level),
+            el("td", "mono", shortHash(record.artifact.sha256))
+          );
+          return evidenceRow;
+        })
+      );
+      const boundary = el("section", "panel warning-panel");
+      boundary.append(
+        el("p", "eyebrow", "EVIDENCE BOUNDARY"),
+        el("h3", undefined, "Integrity is narrower than authenticity"),
+        el("p", undefined, review.limitations[1] ?? "Artifact hashes do not establish producer authenticity.")
+      );
+      main.append(metrics, identity, evidenceTable, boundary);
+    }
+  } catch (error) {
+    if (handleProtectedProblem(main, error, "Return to Candidates and confirm the selected candidate is in scope.")) return;
+  }
+  shell(main);
+}
+
+async function renderDecision(): Promise<void> {
+  loadingPage("Decision");
+  const main = page(
+    "Policy decision",
+    "EXPLAINABLE RULES",
+    "Trace the candidate decision to exact policy material, rule results, expected values, actual values, and evidence IDs."
+  );
+  try {
+    const review = await loadCandidateAssuranceReview();
+    if (review === null) {
+      main.append(reviewSelectionState("Decision"));
+      shell(main);
+      return;
+    }
+    main.append(reviewHeader(review, "ENGINEERING DECISION"));
+    const evaluation = review.policy_evaluation;
+    if (evaluation === null) {
+      main.append(emptyState("Not evaluated", "No durable policy evaluation exists for this candidate. Its current status is not a release decision."));
+    } else {
+      const summary = el("section", "decision-hero");
+      const title = el("div");
+      title.append(el("p", "eyebrow", "AGGREGATED RESULT"), el("h2", undefined, evaluation.decision));
+      summary.append(title, statusBadge(evaluation.decision));
+      const columns = el("div", "content-columns");
+      const evaluationPanel = el("section", "panel");
+      evaluationPanel.append(el("p", "eyebrow", "EVALUATION IDENTITY"), el("h3", undefined, evaluation.policy_name));
+      const evaluationDetails = el("dl", "definition-list");
+      evaluationDetails.append(
+        definition("Evaluation ID", evaluation.evaluation_id, true),
+        definition("Evaluated", formatDate(evaluation.evaluated_at)),
+        definition("Evidence fingerprint", evaluation.evidence_fingerprint, true),
+        definition("Evidence referenced", String(evaluation.evaluated_evidence_ids.length))
+      );
+      evaluationPanel.append(evaluationDetails);
+      const policyPanel = el("section", "panel");
+      policyPanel.append(el("p", "eyebrow", "POLICY AUTHORITY"), el("h3", undefined, review.policy_material?.release_track ?? "Legacy or unavailable"));
+      const policyDetails = el("dl", "definition-list");
+      policyDetails.append(
+        definition("Material ID", review.policy_material?.material_id ?? "NOT_RETAINED", true),
+        definition("Policy fingerprint", evaluation.policy_fingerprint, true),
+        definition("Profile version", String(review.policy_material?.project_profile_version ?? "unbound")),
+        definition("Policy path", review.policy_material?.artifact.path_or_uri ?? "not available", true)
+      );
+      policyPanel.append(policyDetails);
+      columns.append(evaluationPanel, policyPanel);
+
+      const ruleTable = paginatedReviewTable(
+        "Policy rule results",
+        ["Rule", "Claim", "Decision", "Expected", "Actual", "Evidence", "Explanation"],
+        evaluation.rule_results.map((rule) => () => {
+          const result = el("tr");
+          const decision = el("td");
+          decision.append(statusBadge(rule.decision));
+          result.append(
+            el("td", "strong-cell", rule.rule_id),
+            el("td", undefined, rule.claim),
+            decision,
+            el("td", "mono", textValue(rule.expected)),
+            el("td", "mono", textValue(rule.actual)),
+            el("td", "mono", rule.evidence_ids.join(", ") || "none"),
+            el("td", undefined, `${rule.reason_code}: ${rule.explanation}`)
+          );
+          return result;
+        })
+      );
+      main.append(summary, columns, ruleTable);
+    }
+  } catch (error) {
+    if (handleProtectedProblem(main, error, "Return to Candidates and confirm the selected candidate is in scope.")) return;
+  }
+  shell(main);
+}
+
+async function renderAssurance(): Promise<void> {
+  loadingPage("Assurance");
+  const main = page(
+    "Release assurance",
+    "PORTABLE REVIEW",
+    "Inspect the retained attestation, transition chain, portable bundle identity, and explicit assurance limitations."
+  );
+  try {
+    const review = await loadCandidateAssuranceReview();
+    if (review === null) {
+      main.append(reviewSelectionState("Assurance"));
+      shell(main);
+      return;
+    }
+    main.append(reviewHeader(review, "ASSURANCE ARTIFACT"));
+    if (review.attestation === null) {
+      main.append(emptyState("Attestation not generated", "This candidate has no durable release attestation. No portable assurance bundle is claimed."));
+    } else {
+      const summary = el("section", "assurance-hero");
+      const title = el("div");
+      title.append(el("p", "eyebrow", "ATTESTED DECISION"), el("h2", undefined, review.candidate.status));
+      summary.append(title, statusBadge(review.assurance ?? review.attestation.assurance));
+      const columns = el("div", "content-columns");
+      const identity = el("section", "panel");
+      identity.append(el("p", "eyebrow", "PORTABLE IDENTITY"), el("h3", undefined, "Attestation and bundle"));
+      const details = el("dl", "definition-list");
+      details.append(
+        definition("Attestation ID", review.attestation.attestation_id, true),
+        definition("Bundle ID", review.assurance_bundle_id ?? "NOT_AVAILABLE", true),
+        definition("Issued", formatDate(review.attestation.issued_at)),
+        definition("Generator", `ForgeGate ${review.attestation.generator_version}`),
+        definition("Transition chain", review.attestation.transition_chain_fingerprint, true),
+        definition("Verification scope", review.verification_scope ?? "not available"),
+        definition("Source bytes", review.source_artifact_bytes ?? "not available")
+      );
+      identity.append(details);
+      const boundaries = el("section", "panel warning-panel");
+      boundaries.append(el("p", "eyebrow", "ASSURANCE LIMITS"), el("h3", undefined, "Read the claim boundary first"));
+      const list = el("ul", "limitation-list");
+      for (const limitation of review.limitations) list.append(el("li", undefined, limitation));
+      boundaries.append(list);
+      columns.append(identity, boundaries);
+
+      const transitions = el("section", "panel transition-panel");
+      transitions.append(el("p", "eyebrow", "IMMUTABLE LIFECYCLE"), el("h3", undefined, "Candidate transition chain"));
+      const timeline = el("ol", "timeline");
+      for (const transition of review.transitions) {
+        const item = el("li");
+        item.append(
+          el("strong", undefined, `${transition.from_status} → ${transition.to_status}`),
+          el("span", undefined, `${formatDate(transition.occurred_at)} · revision ${transition.to_revision}`),
+          el("code", undefined, shortHash(transition.transition_id))
+        );
+        timeline.append(item);
+      }
+      transitions.append(timeline);
+      main.append(summary, columns, transitions);
+    }
+  } catch (error) {
+    if (handleProtectedProblem(main, error, "Return to Candidates and confirm the selected candidate is in scope.")) return;
+  }
+  shell(main);
 }
 
 function handleProtectedProblem(container: HTMLElement, error: unknown, recovery: string): boolean {

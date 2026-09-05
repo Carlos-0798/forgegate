@@ -2,14 +2,15 @@
 
 - Date: 2026-09-05
 - Version: 0.1.0a1
-- Stage: Phase 25 optional read-only MSP430 live-status slice implemented and
-  observed on the connected Windows board; Phase 24's broader manual
-  cross-browser exit gate remains partially complete
+- Stage: Phase 26 read-only Dashboard assurance-review slice implemented and
+  browser-tested; Phase 25 owner-assisted unplug/replug completed, while Phase
+  24's broader exact-zoom/assistive-technology gate remains partially complete
 - Product maturity: testable Windows Alpha with generic initialization,
   local CLI/API release-assurance flow, software-peer collection, audited
   aggregation, durable lifecycle binding, offline GitHub gating, and a
   live-tested Windows-only brokered plugin path, a narrow authenticated local
-  Dashboard, and an optional read-only MSP430 status monitor; not production-ready
+  Dashboard with Evidence/Decision/Assurance review, and an optional read-only
+  MSP430 status monitor; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: owner-authorized input-only COM4 UART status observation;
   no command, firmware/debug action, physical measurement validation, release
@@ -350,9 +351,10 @@
   SameSite=Strict sessions, exact Origin/Host and anti-CSRF checks, bounded
   activation/session state, restrictive headers, and no persistent browser
   storage or external runtime asset;
-- strict TypeScript Overview, Devices, Projects, and Candidates pages with immutable
-  candidate review/confirmation, exact role/scope enforcement, audit display,
-  explicit limitation/evidence labels, and visibly planned later workflows;
+- strict TypeScript Overview, Devices, Projects, Candidates, Evidence,
+  Decision, and Assurance pages with immutable candidate review/confirmation,
+  exact role/scope enforcement, audit display, explainable rule results,
+  attestation/bundle identity, and explicit limitation/evidence labels;
 - content-hashed deterministic frontend assets, canonical SHA-256 inventory,
   source/wheel inclusion checks, locked build dependencies, and CI drift gates;
 - separate deterministic Dashboard BFF OpenAPI export with explicit operation
@@ -367,7 +369,16 @@
 - authenticated one-second Devices polling that separates connection,
   heartbeat freshness, and firmware-reported device health, retaining
   `LIVE_STATUS_ONLY_NOT_RELEASE_EVIDENCE` and `hardware_control=NOT_PERFORMED`;
-- 41 focused Dashboard tests plus real Microsoft Edge and Chrome keyboard/focus
+- versioned MSP430 UART v1 fault-bit decoding, including explicit unknown-bit
+  retention and a visible warning that device reports are not ForgeGate diagnoses;
+- one project-scoped, authenticated assurance-review BFF response joining the
+  retained candidate history, evidence binding, exact policy material,
+  evaluation, attestation, and portable bundle identity without a new browser
+  mutation surface;
+- read-only Evidence, Decision, and Assurance pages with candidate-bound deep
+  links, exact expected/actual rule values, referenced evidence IDs, lifecycle
+  transitions, missing-stage states, and explicit assurance limitations;
+- 45 focused Dashboard tests plus real Microsoft Edge and Chrome keyboard/focus
   operation, complete 129-record cursor pagination, browser-rendered
   409/413/422/429/500 recovery, and Chrome/in-app-browser 390 px
   responsive/clean-console runs using generic local data; uncommon statuses
@@ -377,7 +388,7 @@
 
 ## Designed, not implemented
 
-- later Dashboard evidence import, policy execution, assurance export, plugin
+- later Dashboard evidence import/collection, policy execution, assurance export, plugin
   execution, session/trust administration, and revision-mutating workflows;
 - publisher signatures/trust, remote plugin acquisition, automatic install,
   and an independent production plugin repository;
@@ -388,7 +399,9 @@
 
 ## Not implemented
 
-full Dashboard exact-zoom/assistive-technology acceptance; non-loopback/TLS
+full Dashboard exact-zoom/assistive-technology acceptance; browser-side
+evidence collection, policy execution, attestation/export, and plugin/admin
+commands; non-loopback/TLS
 API deployment, reverse-proxy trust, hostile-local-user
 defense, managed online revocation, durable/distributed sessions, per-client
 network rate controls, distributed rate state, HTTP artifact collection and
@@ -411,13 +424,13 @@ validation.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 840 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.32% across 9,906 statements and 2,708 branches
+- pytest: 843 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.33% across 9,958 statements and 2,714 branches
 - MSP430 live-status focus: 17 passed across parser, state classification,
   staleness, invalid/recovery, counters, dependency/I/O failure, and input-only
   monitor lifecycle
-- Dashboard focus: 41 passed; 98.49% branch-aware coverage across 557
-  statements and 106 branches
+- Dashboard focus: 45 passed; 98.31% branch-aware coverage across 601
+  statements and 110 branches
 - Dashboard browser checkpoint: Microsoft Edge and Chrome keyboard creation/
   read, modal Tab containment/Escape/focus return, 129-record six-page
   traversal, and 409/413/422/429/500 recovery PASS; Chrome service-restart
@@ -430,6 +443,18 @@ validation.
   one-second polling resumed after Overview navigation, the status sequence
   continued advancing, the inspected 1280 px viewport had no horizontal
   overflow, and the browser error/warning log was empty
+- Phase 25 owner-assisted unplug/replug checkpoint: the owner observed the live
+  transition; the recovered process retained `reconnects=1`, one sequence gap,
+  and one protocol error, then advanced sequence 138→149 and valid frames
+  3028→3039 over 10.5 seconds without increasing those counters
+- Phase 26 browser checkpoint: a generic PASS fixture navigated from candidate
+  detail through Evidence, Decision, and Assurance; displayed the exact
+  expected/actual value `0`, `RULE_SATISFIED`, attestation/bundle IDs,
+  `unsigned_local`, and explicit source-byte/authenticity/hardware boundaries
+- Phase 26 live-device follow-up: COM4 remained `CONNECTED` with heartbeat
+  `NORMAL`; `0015` decoded to DS18B20 missing, NTC unavailable/range, and
+  INA219 communication, while 17 additional frames arrived with zero new
+  protocol errors, gaps, or reconnects in the fresh process
 - Plugin execution contract focus: 8 passed across plan authority, protocol
   sequencing, legal transitions, terminal replay, resource limits, JSON
   loading, and content-derived identity; no process started

@@ -2,10 +2,12 @@
 
 ## Decision status
 
-The Phase 23 architecture is implemented as a narrow Phase 24 vertical slice.
-The current `0.1.0a1` surfaces are the CLI, authenticated loopback REST API, and
-same-origin local Dashboard. Full manual cross-browser acceptance is still
-partial. `/docs` and `/redoc` remain deliberately disabled.
+The Phase 23 architecture is implemented through the Phase 24 authenticated
+vertical slice, Phase 25 optional live monitor, and Phase 26 read-only
+assurance review. The current `0.1.0a1` surfaces are the CLI, authenticated
+loopback REST API, and same-origin local Dashboard. Full manual accessibility
+and exact-zoom acceptance is still partial. `/docs` and `/redoc` remain
+deliberately disabled.
 
 ## Decision
 
@@ -31,7 +33,7 @@ Bearer tokens must not be exposed to browser JavaScript, while current CLI and
 API clients retain the existing challenge/session protocol.
 
 `schemas/forgegate.dashboard-openapi.v1.json` is a separate build-time,
-drift-checked contract for the twelve `/app/api/` operations. It is exported
+drift-checked contract for the thirteen `/app/api/` operations. It is exported
 from the installed wheel during release smoke but is not exposed as interactive
 documentation at runtime.
 
@@ -108,9 +110,9 @@ approved for non-loopback deployment.
 - Do not show fabricated progress for synchronous endpoints. A later long-task
   feature requires a versioned Job contract before polling or cancellation UI.
 
-## First implementation slice
+## Implemented Dashboard slices
 
-The Phase 24 vertical slice is intentionally narrow:
+The implemented surface remains intentionally bounded:
 
 1. `forgegate dashboard` starts the existing loopback service and serves
    packaged static assets without opening a remote listener.
@@ -125,11 +127,18 @@ The Phase 24 vertical slice is intentionally narrow:
    identity through the existing bounded query.
 6. Candidates lists project candidates, creates a candidate through an
    immutable reviewed request, and displays candidate plus audit history.
-6. A duplicate submission replays exactly and a reused key with changed
+7. A duplicate submission replays exactly and a reused key with changed
    content fails visibly without automatic retry. Stale-revision UI recovery
    is deferred until this slice exposes a revision-mutating command.
+8. Evidence, Decision, and Assurance join the selected candidate to its
+   retained evidence binding, exact policy material and evaluation, attestation,
+   transition chain, and portable bundle identity through one project-scoped
+   read operation. Missing records remain visibly unknown rather than inferred.
+9. The Devices page decodes only versioned MSP430 UART v1 fault bits, retains
+   unknown bits without invented meaning, and labels every decoded item as a
+   firmware report rather than a ForgeGate diagnosis.
 
-Evidence upload, evaluation, assurance export, plugin execution, session
+Evidence upload, collection, evaluation, assurance export, plugin execution, session
 administration, and trust-store reload remain disabled and visibly labeled as
 planned. Empty controls or mock success paths are prohibited.
 
@@ -164,9 +173,9 @@ planned. Empty controls or mock success paths are prohibited.
 ## Exit gate for implementation
 
 The UX requirements, Dashboard threat model, and acceptance matrix remain the
-governing gate. The implementation/automation checkpoint and Microsoft Edge
-keyboard path pass; Chrome, the exact zoom matrix, assistive technologies, and
-complete error/focus state runs remain `NOT_RUN` or partial. An installed-wheel
-Edge read path passes. Phase 24 therefore stays open for complete UI acceptance.
-Passing UI tests will not change hardware,
+governing gate. Automation, installed-wheel comparison, Edge and Chrome core
+interaction, focus, responsive, error-presentation, and Phase 26 read-only
+review paths pass. The exact zoom and assistive-technology matrix remains
+`NOT_RUN` or partial, so complete UI acceptance is still open. Passing UI tests
+will not change hardware,
 producer-authenticity, trusted-time, non-loopback, or production claims.

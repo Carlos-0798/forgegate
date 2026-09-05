@@ -2,8 +2,9 @@
 
 ## Status and evidence boundary
 
-- Status: narrow Phase 24 slice plus Phase 25 optional live status implemented;
-  complete manual cross-browser exit gate and physical unplug/replug check pending
+- Status: narrow Phase 24 slice, Phase 25 optional live status, and Phase 26
+  read-only assurance review implemented; the exact zoom and
+  assistive-technology exit gates remain incomplete
 - Target: a local, browser-based control plane for the Windows Alpha
 - Product evidence: local host automation plus partial real-browser acceptance
 - Hardware evidence: optional input-only UART status observation; no device
@@ -25,9 +26,11 @@ or evidence-normalization path.
 
 The implemented slices cover authenticated local access, service status,
 optional device status, project discovery, candidate discovery, candidate
-creation, candidate detail, and audit history. Evidence import, decision execution,
-plugin execution, trust-store administration, and file publication remain
-separate later gates.
+creation, candidate detail, audit history, bound-evidence inspection,
+explainable policy results, retained attestations, and portable-assurance
+identity. Evidence import, decision execution, assurance export, plugin
+execution, trust-store administration, and file publication remain separate
+later gates.
 
 ## Non-goals
 
@@ -53,7 +56,7 @@ authenticated principal.
 
 ## Information architecture
 
-The planned navigation is:
+The navigation model is:
 
 1. **Overview** — health, version, database schema, authenticated identity,
    role, project scope, session expiry, and current limitations.
@@ -73,6 +76,10 @@ The planned navigation is:
    run plan, isolation evidence, receipts, and low-trust output.
 9. **Audit & security** — project/candidate audit events, security-event
    journal, session state, and trust-store status.
+
+Items 1–7 are implemented for their stated read-only or bounded-create slices.
+Candidate audit history is embedded in item 4; dedicated Plugins and Audit &
+security workspaces remain planned.
 
 Navigation labels describe objects and outcomes. Mutating actions use explicit
 verbs such as **Create candidate**, **Review transition**, **Run policy

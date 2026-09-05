@@ -353,6 +353,9 @@ class CandidateApplication:
     def get_policy_material(self, candidate_id: str) -> PolicyMaterial:
         return self.repository.get_policy_material(candidate_id)
 
+    def get_evaluation(self, candidate_id: str) -> PolicyEvaluationDocument | None:
+        return self.repository.evaluation(candidate_id)
+
     def get_attestation(self, candidate_id: str) -> ReleaseAttestation:
         return self.repository.get_attestation(candidate_id)
 

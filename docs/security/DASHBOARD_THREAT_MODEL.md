@@ -2,11 +2,12 @@
 
 ## Status and scope
 
-This threat model governs the implemented Phase 24 local Dashboard slice.
+This threat model governs the implemented Phase 24 local Dashboard slice,
+Phase 25 optional read-only live monitor, and Phase 26 assurance review.
 Origin/Host/CSRF, browser-bound activation, session, role/scope, header, static-
-asset, and safe-rendering controls have local automated evidence. The generated
-BFF-contract drift gate and portions of the manual browser exit gate remain
-incomplete, so this is not a production security approval.
+asset, safe-rendering, and generated BFF-contract drift controls have local
+automated evidence. Portions of the manual browser exit gate remain incomplete,
+so this is not a production security approval.
 
 ## Assets
 
@@ -38,7 +39,7 @@ user trustworthy.
 
 ## Threats and required controls
 
-| Threat | Required control | Phase 24 acceptance evidence |
+| Threat | Required control | Current acceptance evidence |
 |---|---|---|
 | DNS rebinding or hostile website reaches localhost | Loopback bind, exact Host and Origin allowlist, same-origin BFF, no permissive CORS | Cross-origin and invalid-Host requests rejected |
 | Cross-site request forgery | Host-only SameSite=Strict cookie, exact Origin, per-session anti-CSRF value on mutations | Missing/wrong token and foreign Origin rejected |
@@ -55,6 +56,9 @@ user trustworthy.
 | API/frontend contract drift | Committed OpenAPI remains authoritative; generated client/types checked in build and CI | Deliberate drift fails the gate |
 | Misleading progress or completion | No fabricated progress; final state only after authoritative response/cleanup | Slow/error response tests |
 | UI promotes evidence assurance | Render exact retained trust/verification/decision fields and limitations; no client recomputation | Snapshot/semantic assertions for synthetic and unsigned fixtures |
+| Joined assurance response crosses project scope | Authorize against the persisted candidate project before returning any evidence, policy, evaluation, attestation, or bundle field | Unauthenticated and cross-project route tests plus project-scoped browser fixture |
+| Large retained evidence or policy result freezes the page | Keep the server response inside existing bounded parsing/storage contracts and render tables in fixed 25-row pages | Source/asset assertions and visible pager state |
+| Firmware fault labels are mistaken for diagnoses | Decode only the versioned UART v1 bit map, retain unknown bits, and state that labels are upstream device reports | Known/unknown-bit tests and live page wording |
 | Sensitive diagnostics leak | Stable code/request ID only; redact token, signature, key, absolute path, header, body, and traceback | Log/DOM/error-fixture scan |
 | Unsafe file import | No upload in first slice; later bounded staging contract, strict parsing, create-new publication, cleanup, and no server path input | Route absence plus future separate gate |
 | Unbounded list or response exhausts UI | Existing cursor/limit contracts, bounded caches, table virtualization only when required | Maximum page and pagination tests |

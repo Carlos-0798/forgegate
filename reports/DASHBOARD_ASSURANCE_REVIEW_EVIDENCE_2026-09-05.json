@@ -1,0 +1,93 @@
+{
+  "record_format": "forgegate-dashboard-assurance-review-evidence-v1",
+  "observed_at": "2026-09-05T21:06:28Z",
+  "environment": {
+    "platform": "Windows",
+    "browser_surface": "Codex in-app browser",
+    "service_origin": "http://127.0.0.1:8132",
+    "evidence_level": "LOCAL_BROWSER_TEST"
+  },
+  "fixture": {
+    "classification": "GENERIC_EPHEMERAL_TEST_DATA",
+    "project_id": "sample-api",
+    "candidate_id": "cand-5dfa9e4131c4ce4edfff7052",
+    "version": "1.2.0",
+    "commit_sha": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "status": "PASS",
+    "hardware_access": "NOT_PERFORMED"
+  },
+  "expected": {
+    "evidence_records": 1,
+    "decision": "PASS",
+    "rule_id": "tests-pass",
+    "expected_value": 0,
+    "actual_value": 0,
+    "attestation_assurance": "unsigned_local",
+    "source_artifact_bytes": "not_embedded"
+  },
+  "actual": {
+    "candidate_status": "PASS",
+    "evidence_records": 1,
+    "evidence_id": "test-summary-12345678",
+    "evidence_value": {
+      "failures": 0
+    },
+    "evidence_trust": "claimed_ci_metadata",
+    "evidence_verification": "ci_validated",
+    "decision": "PASS",
+    "rule_id": "tests-pass",
+    "rule_reason_code": "RULE_SATISFIED",
+    "rule_expected": 0,
+    "rule_actual": 0,
+    "attestation_assurance": "unsigned_local",
+    "assurance_bundle_present": true,
+    "source_artifact_bytes": "not_embedded",
+    "result": "PASS"
+  },
+  "browser_checks": {
+    "candidate_to_evidence_navigation": "PASS",
+    "evidence_to_decision_navigation": "PASS",
+    "decision_to_assurance_navigation": "PASS",
+    "deep_link_candidate_context_preserved": "PASS",
+    "empty_selection_state": "LOCAL_BROWSER_PASS",
+    "route_scroll_reset": "LOCAL_BROWSER_PASS",
+    "review_table_pagination": "LOCAL_BROWSER_PASS",
+    "unauthenticated_request": "401_TESTED",
+    "new_browser_mutation_surface": false
+  },
+  "assets": [
+    {
+      "path": "docs/assets/forgegate-dashboard-evidence-review.jpg",
+      "media_type": "image/jpeg",
+      "bytes": 71551,
+      "sha256": "378ed52d7fe669896280f0c517129a06b923bf3d74f216a32887a43f3bae0fd9",
+      "width": 900,
+      "height": 1200
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-decision-review.jpg",
+      "media_type": "image/jpeg",
+      "bytes": 71489,
+      "sha256": "c6a709589d9377fe4095a40265d0b95d52da7859574780d939a7f2a6752fa4e1",
+      "width": 900,
+      "height": 1200
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-assurance-review.jpg",
+      "media_type": "image/jpeg",
+      "bytes": 124484,
+      "sha256": "bf333b7a9eafa4fa0d53e79bb82cf245b9933e8b5f16f1eb6167aa3ae7c2fcfa",
+      "width": 1025,
+      "height": 1198
+    }
+  ],
+  "boundaries": {
+    "private_key_or_token_visible": false,
+    "personal_data_used": false,
+    "collectors_rerun_by_page": false,
+    "artifact_hash_proves_authenticity": false,
+    "hardware_validation_performed": false,
+    "deployment_approval_performed": false,
+    "production_readiness_proven": false
+  }
+}

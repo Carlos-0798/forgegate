@@ -8,6 +8,12 @@ from pydantic import Field
 from forgegate.domain.models import StrictModel
 
 
+class LiveReportedIssue(StrictModel):
+    code: str = Field(pattern=r"^[A-Z][A-Z0-9_]{2,63}$")
+    label: str = Field(min_length=1, max_length=160)
+    mask: str = Field(pattern=r"^0x[0-9A-F]{4}$")
+
+
 class LiveSourceStatus(StrictModel):
     source_id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]{0,63}$")
     source_type: str = Field(pattern=r"^[a-z0-9][a-z0-9.-]{0,63}$")
@@ -30,6 +36,7 @@ class LiveSourceStatus(StrictModel):
     uptime_ms: int | None = Field(default=None, ge=0, le=4_294_967_295)
     device_state: str | None = Field(default=None, max_length=32)
     fault_flags: str | None = Field(default=None, pattern=r"^[0-9A-F]{4}$")
+    reported_issues: tuple[LiveReportedIssue, ...] = Field(default=(), max_length=32)
     frames_received: int = Field(ge=0)
     protocol_errors: int = Field(ge=0)
     sequence_gaps: int = Field(ge=0)
@@ -47,4 +54,4 @@ class LiveStatusPage(StrictModel):
     sources: tuple[LiveSourceStatus, ...] = Field(max_length=20)
 
 
-__all__ = ["LiveSourceStatus", "LiveStatusPage"]
+__all__ = ["LiveReportedIssue", "LiveSourceStatus", "LiveStatusPage"]

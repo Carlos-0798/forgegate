@@ -55,13 +55,14 @@ analysis, compatibility contracts, and historical acceptance evidence.
 - [Dashboard acceptance matrix](DASHBOARD_ACCEPTANCE_MATRIX.md)
 
 These documents govern the implemented Phase 24 activation, Overview, Projects,
-and Candidates slice. The packaged frontend and browser-for-frontend session
-boundary are present. Edge and Chrome keyboard/focus, pagination, responsive,
+Candidates, and Phase 26 read-only Evidence, Decision, and Assurance review
+slices. The packaged frontend and browser-for-frontend session boundary are
+present. Edge and Chrome keyboard/focus, pagination, responsive,
 409/413/422/429/500 recovery, and clean-console paths pass; uncommon statuses
 use an isolated zero-write presentation harness. The acceptance matrix
-preserves the remaining exact zoom, assistive-technology, and Remote Desktop
-checks as `NOT_RUN` or partial rather than inferring full UI acceptance. A
-separate installed-wheel Edge read path passes.
+preserves the remaining exact zoom and assistive-technology checks as
+`NOT_RUN` or partial rather than inferring full UI acceptance. A separate
+installed-wheel Edge read path passes.
 
 ## CI and plugins
 

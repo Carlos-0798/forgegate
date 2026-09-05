@@ -658,6 +658,35 @@ code {
   font-size: 0.76rem;
 }
 
+.reported-issues {
+  border-top: 1px solid var(--line);
+  margin-top: 1.25rem;
+  padding-top: 1rem;
+}
+
+.reported-issues h4 {
+  margin: 0 0 .75rem;
+}
+
+.issue-list {
+  list-style: none;
+  margin: 0 0 .75rem;
+  padding: 0;
+}
+
+.issue-list li {
+  align-items: baseline;
+  border-top: 1px solid var(--line);
+  display: grid;
+  gap: .75rem;
+  grid-template-columns: 5rem minmax(0, 1fr);
+  padding: .6rem 0;
+}
+
+.issue-list code {
+  color: var(--warning);
+}
+
 .live-sampled-at {
   margin: 0;
   text-align: right;
@@ -770,6 +799,63 @@ td {
 .detail-panel {
   margin-top: 1rem;
   scroll-margin-top: 6rem;
+}
+
+.review-links,
+.review-tabs {
+  align-items: center;
+  display: flex;
+  flex-wrap: wrap;
+  gap: .75rem;
+  margin-top: 1.25rem;
+}
+
+.review-links a {
+  text-decoration: none;
+}
+
+.review-context {
+  border: 1px solid var(--line);
+  background: linear-gradient(145deg, rgba(89, 229, 178, .05), var(--surface));
+  border-radius: 1rem;
+  margin-bottom: 1rem;
+  padding: 1.5rem;
+}
+
+.review-tab {
+  border-bottom: 2px solid transparent;
+  color: var(--muted);
+  padding: .6rem .1rem;
+  text-decoration: none;
+}
+
+.review-tab:hover,
+.review-tab.active {
+  border-bottom-color: var(--accent);
+  color: var(--text);
+}
+
+.decision-hero,
+.assurance-hero {
+  align-items: center;
+  background: linear-gradient(120deg, rgba(89, 229, 178, .12), rgba(13, 24, 34, .92));
+  border: 1px solid var(--accent-strong);
+  border-radius: 1rem;
+  display: flex;
+  justify-content: space-between;
+  margin: 1rem 0;
+  padding: 1.5rem;
+}
+
+.decision-hero h2,
+.assurance-hero h2 {
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  margin: 0;
+}
+
+.review-table-region,
+.transition-panel {
+  margin-top: 1rem;
 }
 
 .detail-grid {
