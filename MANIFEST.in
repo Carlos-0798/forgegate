@@ -4,7 +4,11 @@ include AGENTS.md
 include CHANGELOG.md
 include CONTRIBUTING.md
 include SECURITY.md
-recursive-include docs *.md *.svg
+recursive-include docs *.md *.svg *.jpg
+include package.json
+include pnpm-lock.yaml
+recursive-include frontend *.html *.css *.ts *.json
+recursive-include src/forgegate/dashboard/static *
 recursive-include examples *.yaml *.xml *.info *.sarif *.json *.md
 recursive-include examples/plugin-sdk *.toml *.py
 prune examples/plugin-sdk/sample-collector-plugin/build

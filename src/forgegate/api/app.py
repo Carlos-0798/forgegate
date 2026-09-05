@@ -6,7 +6,7 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Annotated, Literal
+from typing import TYPE_CHECKING, Annotated, Literal
 
 from fastapi import Depends, FastAPI, Header, Query, Request, status
 from fastapi import Path as ApiPath
@@ -71,6 +71,9 @@ from forgegate.security_events import (
     SecurityEventTargetType,
 )
 
+if TYPE_CHECKING:
+    from forgegate.dashboard.sessions import DashboardSessionManager
+
 REQUEST_ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
 MAX_REQUEST_BODY_BYTES = 4 * 1024 * 1024
 BEARER_SCHEME = HTTPBearer(auto_error=False)
@@ -114,6 +117,9 @@ def create_api_app(
     application: CandidateApplication | None = None,
     authenticator: ApiAuthenticator | None = None,
     contract_only: bool = False,
+    dashboard: bool = False,
+    dashboard_session_manager: DashboardSessionManager | None = None,
+    dashboard_static_root: Path | None = None,
 ) -> FastAPI:
     if authenticator is None and not contract_only:
         raise ValueError("authenticated API construction requires an ApiAuthenticator")
@@ -825,6 +831,17 @@ def create_api_app(
         require_candidate(principal, candidate_id)
         return candidate_application.get_attestation(candidate_id)
 
+    if dashboard:
+        assert authenticator is not None
+        from forgegate.dashboard.routes import install_dashboard_routes
+
+        install_dashboard_routes(
+            app,
+            application=candidate_application,
+            authenticator=authenticator,
+            session_manager=dashboard_session_manager,
+            static_root=dashboard_static_root,
+        )
     return app
 
 

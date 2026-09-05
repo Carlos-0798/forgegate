@@ -27,6 +27,23 @@ The revisions above identify the exact snapshots inspected on 2026-09-01 and
 the Podman runtime update inspected on 2026-09-03.
 They are not dependency pins and ForgeGate does not automatically update them.
 
+## Phase 24 frontend build-tool review
+
+The local Dashboard uses only build-time frontend tooling; neither package is a
+runtime product dependency:
+
+| Package | Locked version | License | Use |
+|---|---:|---|---|
+| [Vite](https://github.com/vitejs/vite) | 8.2.2 | MIT | deterministic production asset build with content-hashed names |
+| [TypeScript](https://github.com/microsoft/TypeScript) | 7.0.2 | Apache-2.0 | strict static checking of the browser source |
+
+`pnpm install --frozen-lockfile`, strict TypeScript checking, two consecutive
+byte-identical builds, and `pnpm audit --audit-level moderate` passed on
+2026-09-04. No framework, CDN asset, remote font, analytics package, runtime
+package download, or copied third-party frontend source was introduced. The
+build dependency licenses do not change ForgeGate's own unlicensed/private
+status.
+
 ## Adopted ideas
 
 - Keep an immutable subject/digest envelope separate from type-specific plugin

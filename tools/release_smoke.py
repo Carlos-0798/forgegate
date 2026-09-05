@@ -21,12 +21,27 @@ REQUIRED_SDIST_PATHS = (
     "CHANGELOG.md",
     "CONTRIBUTING.md",
     "SECURITY.md",
+    "package.json",
+    "pnpm-lock.yaml",
+    "frontend/index.html",
+    "frontend/src/main.ts",
+    "frontend/src/styles.css",
+    "frontend/src/vite-env.d.ts",
+    "frontend/tsconfig.json",
+    "frontend/vite.config.ts",
     "docs/README.md",
     "docs/DEMO.md",
     "docs/PROJECT_STATUS.md",
     "docs/ROADMAP.md",
     "docs/VERIFICATION_MATRIX.md",
+    "docs/DASHBOARD_ACCEPTANCE_MATRIX.md",
+    "docs/PORTFOLIO_EVIDENCE.md",
     "docs/assets/forgegate-cli-demo.svg",
+    "docs/assets/forgegate-dashboard-alpha.jpg",
+    "docs/assets/forgegate-dashboard-candidate-detail.jpg",
+    "docs/assets/forgegate-dashboard-candidates.jpg",
+    "docs/assets/forgegate-dashboard-overview.jpg",
+    "docs/assets/forgegate-dashboard-validation-error.jpg",
     "docs/architecture/ARTIFACT_AND_JUNIT_SLICE.md",
     "docs/architecture/BENCHMARK_JSON_COLLECTOR.md",
     "docs/architecture/COVERAGE_COLLECTORS.md",
@@ -41,6 +56,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/CANDIDATE_EVIDENCE_BINDING.md",
     "docs/architecture/LOCAL_REST_API.md",
     "docs/architecture/LOCAL_REST_COMMAND_WORKFLOW.md",
+    "docs/architecture/LOCAL_WEB_DASHBOARD.md",
     "docs/architecture/PROJECT_REGISTRY_AND_AUDIT_QUERY.md",
     "docs/architecture/PROJECT_AUTHORITY_AND_DISCOVERY.md",
     "docs/architecture/PROJECT_PROFILE_REVISIONS.md",
@@ -56,6 +72,11 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/PRODUCTION_PLUGIN_BROKER.md",
     "docs/architecture/PLUGIN_OPERATOR_WORKFLOW.md",
     "docs/architecture/WINDOWS_ALPHA_DELIVERY.md",
+    "docs/product/DASHBOARD_UX_REQUIREMENTS.md",
+    "docs/security/DASHBOARD_THREAT_MODEL.md",
+    "src/forgegate/dashboard/static/asset-inventory.json",
+    "src/forgegate/dashboard/static/index.html",
+    "src/forgegate/dashboard/static/third-party-licenses.json",
     "examples/sample-python-api/artifacts/junit.xml",
     "examples/sample-python-api/artifacts/junit-pass.xml",
     "examples/sample-python-api/artifacts/benchmark.json",
@@ -109,6 +130,10 @@ REQUIRED_SDIST_PATHS = (
     "reports/PHASE_21_PLUGIN_OPERATOR_WORKFLOW_ACCEPTANCE_REPORT.md",
     "reports/PHASE_22_WINDOWS_ALPHA_ACCEPTANCE_REPORT.md",
     "reports/PHASE_22_WINDOWS_ALPHA_LIVE_EVIDENCE.json",
+    "reports/PHASE_23_LOCAL_WEB_DASHBOARD_DESIGN_GATE.md",
+    "reports/PHASE_24_AUTHENTICATED_LOCAL_DASHBOARD_ACCEPTANCE_REPORT.md",
+    "reports/PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md",
+    "reports/DASHBOARD_PORTFOLIO_CAPTURE_EVIDENCE_2026-09-04.json",
     "reports/SOFTWARE_INTEGRITY_INTERACTION_AUDIT_2026-09-03.md",
     "reports/SOFTWARE_INTEGRITY_INTERACTION_LIVE_EVIDENCE.json",
     "requirements/dev-constraints.txt",
@@ -152,6 +177,7 @@ REQUIRED_SDIST_PATHS = (
     "schemas/forgegate.initialization-report.v1.schema.json",
     "schemas/forgegate.windows-plugin-sandbox-capability.v1.schema.json",
     "schemas/forgegate.openapi.v1.json",
+    "schemas/forgegate.dashboard-openapi.v1.json",
     "schemas/forgegate.benchmark.v1.schema.json",
     "schemas/analog-validation.result-export.v1.schema.json",
     "tests/test_models.py",
@@ -171,6 +197,7 @@ REQUIRED_SDIST_PATHS = (
     "tests/golden/release_attestation_pass.json",
     "tests/golden/release_attestation_pass.md",
     "tests/golden/sarif_summary.json",
+    "tools/interaction_smoke.py",
     "tools/verify.py",
     "tools/verify_windows_alpha.ps1",
     "tests/test_candidate_lifecycle.py",
@@ -194,6 +221,9 @@ REQUIRED_SDIST_PATHS = (
     "tests/test_windows_plugin_sandbox.py",
     "tests/test_windows_sandbox_live_tool.py",
     "tests/test_windows_plugin_broker_live_tool.py",
+    "tests/test_dashboard.py",
+    "tests/test_dashboard_client.py",
+    "tools/dashboard_assets.py",
     "tools/verify_windows_sandbox_live.py",
     "tools/verify_windows_plugin_broker_live.py",
 )
@@ -325,6 +355,20 @@ def main(
                 "install",
                 "--disable-pip-version-check",
                 str(wheel),
+            ],
+            cwd=root,
+        )
+        run(
+            [
+                str(python),
+                "-c",
+                (
+                    "from pathlib import Path; "
+                    "import forgegate.dashboard.assets as assets; "
+                    "root = Path(assets.__file__).resolve().parent / 'static'; "
+                    "inventory = assets.validate_dashboard_assets(root); "
+                    "assert len(inventory.assets) >= 5"
+                ),
             ],
             cwd=root,
         )
@@ -592,6 +636,30 @@ def main(
         for (path, method), operation_id in expected_operations.items():
             if openapi["paths"][path][method]["operationId"] != operation_id:
                 raise SystemExit(f"installed wheel is missing API operation: {operation_id}")
+        exported_dashboard_openapi = root / "forgegate.dashboard-openapi.v1.json"
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "export-dashboard-openapi",
+                str(exported_dashboard_openapi),
+            ],
+            cwd=root,
+        )
+        if (
+            exported_dashboard_openapi.read_bytes()
+            != (REPOSITORY_ROOT / "schemas/forgegate.dashboard-openapi.v1.json").read_bytes()
+        ):
+            raise SystemExit(
+                "installed wheel Dashboard OpenAPI contract differs from committed contract"
+            )
+        dashboard_openapi = json.loads(exported_dashboard_openapi.read_text(encoding="utf-8"))
+        if (
+            dashboard_openapi["paths"]["/app/api/candidates"]["post"]["operationId"]
+            != "createDashboardCandidate"
+        ):
+            raise SystemExit("installed wheel is missing Dashboard BFF operation")
         run(
             [
                 str(python),

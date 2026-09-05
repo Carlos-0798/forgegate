@@ -1,0 +1,77 @@
+{
+  "schema_version": "forgegate.local-device-connectivity-observation.v1",
+  "captured_at": "2026-09-05T03:03:19.2837441Z",
+  "host": {
+    "operating_system": "Windows",
+    "dashboard_origin": "http://127.0.0.1:8131",
+    "network_scope": "loopback"
+  },
+  "authorized_scope": [
+    "enumerate the connected TI/MSP interfaces",
+    "open and close the application UART without sending data",
+    "observe the receive-queue byte count without reading data",
+    "confirm the ForgeGate Dashboard remains healthy and displays its evidence boundary"
+  ],
+  "devices": [
+    {
+      "interface": "MSP Application UART1",
+      "port": "COM4",
+      "windows_status": "OK",
+      "windows_problem_code": 0
+    },
+    {
+      "interface": "MSP Debug Interface",
+      "port": "COM5",
+      "windows_status": "OK",
+      "windows_problem_code": 0,
+      "opened": false
+    },
+    {
+      "interface": "TI USB composite device",
+      "usb_vid": "2047",
+      "usb_pid": "0013",
+      "windows_status": "OK",
+      "windows_problem_code": 0
+    }
+  ],
+  "application_uart_observation": {
+    "port": "COM4",
+    "open_close_cycles": 10,
+    "successful_cycles": 10,
+    "enumeration_failures": 0,
+    "sustained_open_seconds": 10,
+    "sustained_open_error": null,
+    "minimum_bytes_waiting": 208,
+    "maximum_bytes_waiting": 1144,
+    "bytes_read": 0,
+    "writes_sent": 0,
+    "dtr_enabled": false,
+    "rts_enabled": false,
+    "elapsed_seconds": 19.05
+  },
+  "dashboard_observation": {
+    "health_status": "ok",
+    "forgegate_version": "0.1.0a1",
+    "api_version": "v1",
+    "database_schema_version": 8,
+    "authenticated_role": "operator",
+    "project_scope": "sample-api",
+    "visible_hardware_claim": "NOT_PERFORMED",
+    "visible_limitation": "No hardware access or physical measurement is performed.",
+    "candidate_rows_after_non_mutating_ui_test": 3
+  },
+  "outcome": "PASS_LOCAL_USB_UART_CONNECTION_OBSERVATION",
+  "boundaries": {
+    "firmware_written": false,
+    "serial_command_sent": false,
+    "serial_payload_read_or_parsed": false,
+    "debug_interface_opened": false,
+    "fram_or_gpio_modified": false,
+    "external_load_controlled": false,
+    "telemetry_protocol_validated": false,
+    "forgegate_hardware_collector_executed": false,
+    "physical_measurement_performed": false,
+    "release_evidence_imported": false,
+    "hardware_release_claim_supported": false
+  }
+}

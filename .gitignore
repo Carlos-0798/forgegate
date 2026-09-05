@@ -11,3 +11,5 @@ build/
 *.egg-info/
 work/
 reports/forgegate-progress-resume-handoff-*/
+node_modules/
+frontend/.vite/

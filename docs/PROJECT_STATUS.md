@@ -1,17 +1,19 @@
 # Project status
 
-- Date: 2026-09-03
+- Date: 2026-09-04
 - Version: 0.1.0a1
-- Stage: Phase 21 operator plugin evidence workflow and Phase 22 private
-  Windows Alpha delivery candidate implemented
+- Stage: Phase 24 authenticated local Dashboard vertical slice implemented;
+  automated acceptance passed and the manual cross-browser exit gate remains
+  partially complete
 - Product maturity: testable Windows Alpha with generic initialization,
   local CLI/API release-assurance flow, software-peer collection, audited
   aggregation, durable lifecycle binding, offline GitHub gating, and a
-  live-tested Windows-only brokered plugin path; not production-ready
+  live-tested Windows-only brokered plugin path, and a narrow authenticated
+  local Dashboard; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: not applicable; no device access performed
 - Remote/publication status: private `Carlos-0798/forgegate` synchronized
-  through the documented integrity checkpoint at `5b146d8`; CI run 33816785584
+  through the presentation checkpoint at `690123e`; CI run 33839976122
   passed Windows, Ubuntu, macOS, and the generic Action smoke;
   no public release, License, or
   LinkedIn publication authorized
@@ -336,9 +338,36 @@
 - clean-wheel Windows Alpha verification covering install, init, core
   assurance chain, live plugin CLI success/replay/failure/query/collect/
   assembly/policy flow, sample-plugin independence, and uninstall.
+- deterministic interaction smoke covering project validation, all four CLI
+  decision/exit outcomes, API health/correlation, deliberate documentation-page
+  denial, authentication/authorization, exact replay/readback, and strict
+  request rejection with an ephemeral identity and database.
+- `forgegate dashboard` and `dashboard-activate` for explicit loopback service
+  startup and one-time CLI approval with no browser-held private key or raw
+  Bearer token;
+- same-origin `/app/` assets and `/app/api/` BFF with opaque HttpOnly,
+  SameSite=Strict sessions, exact Origin/Host and anti-CSRF checks, bounded
+  activation/session state, restrictive headers, and no persistent browser
+  storage or external runtime asset;
+- strict TypeScript Overview, Projects, and Candidates pages with immutable
+  candidate review/confirmation, exact role/scope enforcement, audit display,
+  explicit limitation/evidence labels, and visibly planned later workflows;
+- content-hashed deterministic frontend assets, canonical SHA-256 inventory,
+  source/wheel inclusion checks, locked build dependencies, and CI drift gates;
+- separate deterministic Dashboard BFF OpenAPI export with explicit operation
+  IDs, committed-byte drift detection, and installed-wheel comparison;
+- 41 focused Dashboard tests plus real Microsoft Edge and Chrome keyboard/focus
+  operation, complete 129-record cursor pagination, browser-rendered
+  409/413/422/429/500 recovery, and Chrome/in-app-browser 390 px
+  responsive/clean-console runs using generic local data; uncommon statuses
+  use a zero-write test-only presentation harness;
+- a retained generic-data Windows Dashboard screenshot with explicit Alpha,
+  non-hardware, non-production claim boundaries and verified sdist inclusion.
 
 ## Designed, not implemented
 
+- later Dashboard evidence import, policy execution, assurance export, plugin
+  execution, session/trust administration, and revision-mutating workflows;
 - publisher signatures/trust, remote plugin acquisition, automatic install,
   and an independent production plugin repository;
 - native-extension and separately packaged plugin-dependency support;
@@ -348,7 +377,8 @@
 
 ## Not implemented
 
-Non-loopback/TLS API deployment, reverse-proxy trust, hostile-local-user
+full Dashboard exact-zoom/assistive-technology acceptance; non-loopback/TLS
+API deployment, reverse-proxy trust, hostile-local-user
 defense, managed online revocation, durable/distributed sessions, per-client
 network rate controls, distributed rate state, HTTP artifact collection and
 file publication, complete rejected-request/warning ingestion, security/audit
@@ -369,8 +399,17 @@ artifact payload/replay export, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 780 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.01% across 8,959 statements and 2,520 branches
+- pytest: 821 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.20% across 9,565 statements and 2,634 branches
+- Dashboard focus: 41 passed; 98.49% branch-aware coverage across 557
+  statements and 106 branches
+- Dashboard browser checkpoint: Microsoft Edge and Chrome keyboard creation/
+  read, modal Tab containment/Escape/focus return, 129-record six-page
+  traversal, and 409/413/422/429/500 recovery PASS; Chrome service-restart
+  recovery and 390 px responsive/clean-console checks, installed-wheel Edge
+  read, in-app-browser 390 px check, and generic portfolio capture PASS;
+  uncommon statuses use a zero-write test-only presentation harness; exact
+  zoom and assistive technology `NOT_RUN`
 - Plugin execution contract focus: 8 passed across plan authority, protocol
   sequencing, legal transitions, terminal replay, resource limits, JSON
   loading, and content-derived identity; no process started
@@ -392,7 +431,8 @@ artifact payload/replay export, and hardware access.
   branches
 - candidate evidence-binding/store focus: 71 passed; 100% across 526 statements
   and 138 branches
-- committed JSON Schema and OpenAPI drift checks: PASS
+- committed JSON Schema, direct API OpenAPI, and Dashboard BFF OpenAPI drift
+  checks: PASS
 - project/policy/candidate/transition example documents: VALID
 - forty-one canonical versioned document Schemas plus Benchmark and Analog
   Validation artifact Schemas: drift-checked and parsed
@@ -411,10 +451,10 @@ artifact payload/replay export, and hardware access.
 - repository-external ForgeGate installation plus sample-plugin
   install/discover/uninstall independence smoke: PASS
 - Git Bash shell-script syntax check: PASS
-- latest accepted GitHub Actions baseline: integrity run 33816785584
+- latest accepted GitHub Actions baseline: merge run 33839976122
   PASS on Windows, Ubuntu, and macOS; each platform completed `verify.py` over
   783 collected tests and `release_smoke.py` for checkpoint commit
-  `5b146d822dc20699db1efd79dac176aa27211d47`, and the dependent Ubuntu job
+  `690123efcba79a699f356a73a557f804a8267ec9`, and the dependent Ubuntu job
   passed the real composite Action against the generic fixture; the local
   Podman hostile fixtures were not run or claimed by hosted CI
 - private GitHub synchronization: `main` pushed with noreply commit identity;
@@ -468,3 +508,12 @@ review is recorded in
 `reports/SOFTWARE_INTEGRITY_INTERACTION_AUDIT_2026-09-03.md`, with its latest
 18-control clean-wheel Podman record in
 `reports/SOFTWARE_INTEGRITY_INTERACTION_LIVE_EVIDENCE.json`.
+The latest expected-versus-actual CLI/API verification and browser-tool limit
+are recorded in `reports/INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md`.
+The Phase 23 design gate remains recorded in
+`reports/PHASE_23_LOCAL_WEB_DASHBOARD_DESIGN_GATE.md`. The subsequent
+implementation and exact PASS/NOT_RUN boundaries are recorded in
+`reports/PHASE_24_AUTHENTICATED_LOCAL_DASHBOARD_ACCEPTANCE_REPORT.md`. The
+follow-up operator/producer samples, persisted-output cross-check, and corrected
+expiry/restart recovery are recorded in
+`reports/PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md`.

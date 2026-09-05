@@ -1,0 +1,409 @@
+from __future__ import annotations
+
+from datetime import UTC, datetime
+from pathlib import Path
+from typing import Annotated
+
+from fastapi import FastAPI, Header, Query, Request, Response, status
+from fastapi import Path as ApiPath
+from starlette.middleware.base import RequestResponseEndpoint
+from starlette.responses import FileResponse, PlainTextResponse, RedirectResponse
+
+from forgegate import __version__
+from forgegate.api.auth import (
+    ApiAuthChallenge,
+    ApiAuthenticationError,
+    ApiAuthenticator,
+    ApiChallengeRequest,
+    ApiPrincipal,
+    ApiSessionCreateRequest,
+)
+from forgegate.application import (
+    AuditEventQuery,
+    CandidateApplication,
+    CandidateCreateCommand,
+    CandidateQuery,
+)
+from forgegate.audit import AuditEventPage
+from forgegate.candidates import CandidateDocument, CandidateStoreError, ReleaseCandidatePage
+from forgegate.candidates.store import STORE_SCHEMA_VERSION
+from forgegate.dashboard.assets import validate_dashboard_assets
+from forgegate.dashboard.models import (
+    DashboardActivationCompleted,
+    DashboardActivationStart,
+    DashboardActivationStatus,
+    DashboardLogoutResponse,
+    DashboardOverview,
+    DashboardPrincipal,
+    DashboardSessionResponse,
+)
+from forgegate.dashboard.sessions import DashboardSessionManager
+from forgegate.projects import RegisteredProjectPage
+
+DASHBOARD_SESSION_COOKIE = "forgegate_dashboard"
+DASHBOARD_ACTIVATION_COOKIE = "forgegate_dashboard_activation"
+DASHBOARD_CSRF_HEADER = "X-ForgeGate-CSRF"
+DASHBOARD_CSP = (
+    "default-src 'none'; "
+    "base-uri 'none'; "
+    "connect-src 'self'; "
+    "font-src 'self'; "
+    "form-action 'self'; "
+    "frame-ancestors 'none'; "
+    "img-src 'self' data:; "
+    "manifest-src 'self'; "
+    "script-src 'self'; "
+    "style-src 'self'"
+)
+ACTIVATION_CODE_PATTERN = r"^FG-[A-Z2-7]{5}-[A-Z2-7]{5}$"
+
+
+def install_dashboard_routes(
+    app: FastAPI,
+    *,
+    application: CandidateApplication,
+    authenticator: ApiAuthenticator,
+    session_manager: DashboardSessionManager | None = None,
+    static_root: Path | None = None,
+) -> DashboardSessionManager:
+    manager = session_manager or DashboardSessionManager(authenticator)
+    assets_root = static_root or Path(__file__).resolve().parent / "static"
+    index_path = assets_root / "index.html"
+    if not index_path.is_file():
+        raise ValueError("packaged Dashboard index is missing")
+    inventory = validate_dashboard_assets(assets_root)
+    accepted_asset_paths = frozenset(asset.path for asset in inventory.assets)
+
+    @app.middleware("http")
+    async def dashboard_security_headers(
+        request: Request,
+        call_next: RequestResponseEndpoint,
+    ) -> Response:
+        response = await call_next(request)
+        if request.url.path == "/app" or request.url.path.startswith("/app/"):
+            response.headers["Content-Security-Policy"] = DASHBOARD_CSP
+            response.headers["X-Content-Type-Options"] = "nosniff"
+            response.headers["X-Frame-Options"] = "DENY"
+            response.headers["Referrer-Policy"] = "no-referrer"
+            response.headers["Permissions-Policy"] = (
+                "camera=(), geolocation=(), microphone=(), payment=(), usb=()"
+            )
+            if request.url.path.startswith("/app/api/"):
+                response.headers["Cache-Control"] = "no-store"
+                response.headers["Pragma"] = "no-cache"
+            elif (
+                request.url.path.startswith("/app/assets/")
+                and response.status_code == status.HTTP_200_OK
+            ):
+                response.headers["Cache-Control"] = "public, max-age=31536000, immutable"
+            else:
+                response.headers["Cache-Control"] = "no-cache"
+        return response
+
+    @app.get("/app", include_in_schema=False)
+    def dashboard_redirect() -> RedirectResponse:
+        return RedirectResponse(url="/app/", status_code=status.HTTP_307_TEMPORARY_REDIRECT)
+
+    @app.get("/app/", include_in_schema=False)
+    def dashboard_index() -> FileResponse:
+        return FileResponse(index_path, media_type="text/html; charset=utf-8")
+
+    @app.get("/app/assets/{asset_name}", include_in_schema=False)
+    def dashboard_asset(
+        asset_name: Annotated[str, ApiPath(pattern=r"^[A-Za-z0-9][A-Za-z0-9._-]{0,199}$")],
+    ) -> Response:
+        target = assets_root / "assets" / asset_name
+        if f"assets/{asset_name}" not in accepted_asset_paths or not target.is_file():
+            return PlainTextResponse("Not found", status_code=status.HTTP_404_NOT_FOUND)
+        return FileResponse(target)
+
+    @app.post(
+        "/app/api/activations",
+        response_model=DashboardActivationStart,
+        status_code=status.HTTP_201_CREATED,
+        operation_id="startDashboardActivation",
+        include_in_schema=False,
+    )
+    def start_dashboard_activation(
+        request: Request,
+        response: Response,
+    ) -> DashboardActivationStart:
+        _require_same_origin(request, required=True)
+        activation, browser_cookie = manager.start_activation()
+        response.set_cookie(
+            DASHBOARD_ACTIVATION_COOKIE,
+            browser_cookie,
+            max_age=max(1, int((activation.expires_at - datetime.now(UTC)).total_seconds())),
+            httponly=True,
+            secure=False,
+            samesite="strict",
+            path="/app",
+        )
+        return activation
+
+    @app.post(
+        "/app/api/activations/{activation_code}/challenge",
+        response_model=ApiAuthChallenge,
+        status_code=status.HTTP_201_CREATED,
+        operation_id="issueDashboardActivationChallenge",
+        include_in_schema=False,
+    )
+    def issue_dashboard_activation_challenge(
+        request: Request,
+        activation_code: Annotated[str, ApiPath(pattern=ACTIVATION_CODE_PATTERN)],
+        command: ApiChallengeRequest,
+    ) -> ApiAuthChallenge:
+        _require_same_origin(request, required=False)
+        return manager.issue_challenge(activation_code, command)
+
+    @app.post(
+        "/app/api/activations/{activation_code}/complete",
+        response_model=DashboardActivationCompleted,
+        status_code=status.HTTP_201_CREATED,
+        operation_id="completeDashboardActivation",
+        include_in_schema=False,
+    )
+    def complete_dashboard_activation(
+        request: Request,
+        activation_code: Annotated[str, ApiPath(pattern=ACTIVATION_CODE_PATTERN)],
+        command: ApiSessionCreateRequest,
+    ) -> DashboardActivationCompleted:
+        _require_same_origin(request, required=False)
+        return manager.complete_activation(activation_code, command)
+
+    @app.get(
+        "/app/api/activation",
+        response_model=DashboardActivationStatus,
+        operation_id="pollDashboardActivation",
+        include_in_schema=False,
+    )
+    def poll_dashboard_activation(
+        request: Request,
+        response: Response,
+    ) -> DashboardActivationStatus:
+        _require_same_origin(request, required=False)
+        result, dashboard_cookie = manager.poll_activation(
+            request.cookies.get(DASHBOARD_ACTIVATION_COOKIE)
+        )
+        if dashboard_cookie is not None and result.principal is not None:
+            response.set_cookie(
+                DASHBOARD_SESSION_COOKIE,
+                dashboard_cookie,
+                max_age=max(
+                    1,
+                    int((result.principal.expires_at - datetime.now(UTC)).total_seconds()),
+                ),
+                httponly=True,
+                secure=False,
+                samesite="strict",
+                path="/app",
+            )
+        return result
+
+    @app.get(
+        "/app/api/session",
+        response_model=DashboardSessionResponse,
+        operation_id="getDashboardSession",
+        include_in_schema=False,
+    )
+    def get_dashboard_session(request: Request) -> DashboardSessionResponse:
+        _require_same_origin(request, required=False)
+        return manager.session_response(request.cookies.get(DASHBOARD_SESSION_COOKIE))
+
+    @app.delete(
+        "/app/api/session",
+        response_model=DashboardLogoutResponse,
+        operation_id="endDashboardSession",
+        include_in_schema=False,
+    )
+    def end_dashboard_session(
+        request: Request,
+        response: Response,
+        csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> DashboardLogoutResponse:
+        _require_same_origin(request, required=True)
+        result = manager.logout(
+            request.cookies.get(DASHBOARD_SESSION_COOKIE),
+            csrf_token,
+        )
+        response.delete_cookie(DASHBOARD_SESSION_COOKIE, path="/app")
+        response.delete_cookie(DASHBOARD_ACTIVATION_COOKIE, path="/app")
+        return result
+
+    @app.get(
+        "/app/api/overview",
+        response_model=DashboardOverview,
+        operation_id="getDashboardOverview",
+        include_in_schema=False,
+    )
+    def dashboard_overview(request: Request) -> DashboardOverview:
+        _require_same_origin(request, required=False)
+        principal = _dashboard_principal(manager, request)
+        return DashboardOverview(
+            forgegate_version=__version__,
+            database_schema_version=STORE_SCHEMA_VERSION,
+            principal=DashboardPrincipal.from_api(principal),
+            limitations=(
+                "Request success is not an engineering release decision.",
+                "Artifact integrity does not establish producer authenticity.",
+                "No hardware access or physical measurement is performed.",
+                "The service is not approved for non-loopback or production deployment.",
+            ),
+        )
+
+    @app.get(
+        "/app/api/projects",
+        response_model=RegisteredProjectPage,
+        operation_id="listDashboardProjects",
+        include_in_schema=False,
+    )
+    def dashboard_projects(
+        request: Request,
+        after_project_id: str | None = None,
+        limit: Annotated[int, Query(ge=1, le=200)] = 100,
+    ) -> RegisteredProjectPage:
+        _require_same_origin(request, required=False)
+        principal = _dashboard_principal(manager, request)
+        authorized_ids = tuple(
+            project_id
+            for project_id in principal.project_ids
+            if after_project_id is None or project_id > after_project_id
+        )
+        projects = []
+        for project_id in authorized_ids:
+            try:
+                projects.append(application.get_project(project_id))
+            except CandidateStoreError as exc:
+                if exc.code != "STORE_PROJECT_NOT_FOUND":
+                    raise
+            if len(projects) > limit:
+                break
+        visible = tuple(projects[:limit])
+        return RegisteredProjectPage(
+            projects=visible,
+            next_after_project_id=visible[-1].project_id if visible else None,
+            has_more=len(projects) > limit,
+        )
+
+    @app.get(
+        "/app/api/projects/{project_id}/candidates",
+        response_model=ReleaseCandidatePage,
+        operation_id="listDashboardCandidates",
+        include_in_schema=False,
+    )
+    def dashboard_candidates(
+        request: Request,
+        project_id: str,
+        after_candidate_id: str | None = None,
+        limit: Annotated[int, Query(ge=1, le=200)] = 100,
+    ) -> ReleaseCandidatePage:
+        _require_same_origin(request, required=False)
+        principal = _dashboard_principal(manager, request)
+        authenticator.require_project(principal, project_id)
+        return application.list_candidates(
+            CandidateQuery(
+                project_id=project_id,
+                after_candidate_id=after_candidate_id,
+                limit=limit,
+            )
+        )
+
+    @app.post(
+        "/app/api/candidates",
+        response_model=CandidateDocument,
+        status_code=status.HTTP_201_CREATED,
+        operation_id="createDashboardCandidate",
+        include_in_schema=False,
+    )
+    def create_dashboard_candidate(
+        request: Request,
+        command: CandidateCreateCommand,
+        idempotency_key: Annotated[str, Header(alias="Idempotency-Key")],
+        csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> CandidateDocument:
+        _require_same_origin(request, required=True)
+        stored, principal = manager.session(request.cookies.get(DASHBOARD_SESSION_COOKIE))
+        request.state.authenticated_principal = principal
+        manager.require_csrf(stored, csrf_token)
+        authenticator.require_project(principal, command.project_id, write=True)
+        return application.create_candidate(
+            command,
+            idempotency_key=idempotency_key,
+            actor=principal.audit_actor(),
+        )
+
+    @app.get(
+        "/app/api/candidates/{candidate_id}",
+        response_model=CandidateDocument,
+        operation_id="getDashboardCandidate",
+        include_in_schema=False,
+    )
+    def get_dashboard_candidate(request: Request, candidate_id: str) -> CandidateDocument:
+        _require_same_origin(request, required=False)
+        principal = _dashboard_principal(manager, request)
+        candidate = application.get_candidate(candidate_id)
+        authenticator.require_project(principal, candidate.project_id)
+        return candidate
+
+    @app.get(
+        "/app/api/audit-events",
+        response_model=AuditEventPage,
+        operation_id="listDashboardAuditEvents",
+        include_in_schema=False,
+    )
+    def dashboard_audit_events(
+        request: Request,
+        project_id: str,
+        after_sequence: Annotated[int, Query(ge=0)] = 0,
+        limit: Annotated[int, Query(ge=1, le=200)] = 100,
+        candidate_id: str | None = None,
+    ) -> AuditEventPage:
+        _require_same_origin(request, required=False)
+        principal = _dashboard_principal(manager, request)
+        authenticator.require_project(principal, project_id, audit=True)
+        return application.query_audit_events(
+            AuditEventQuery(
+                after_sequence=after_sequence,
+                limit=limit,
+                project_id=project_id,
+                candidate_id=candidate_id,
+            )
+        )
+
+    app.state.dashboard_session_manager = manager
+    app.state.dashboard_static_root = assets_root
+    return manager
+
+
+def _dashboard_principal(manager: DashboardSessionManager, request: Request) -> ApiPrincipal:
+    _, principal = manager.session(request.cookies.get(DASHBOARD_SESSION_COOKIE))
+    request.state.authenticated_principal = principal
+    return principal
+
+
+def _require_same_origin(request: Request, *, required: bool) -> None:
+    origin = request.headers.get("Origin")
+    if origin is None:
+        if required:
+            raise ApiAuthenticationError(
+                "DASHBOARD_ORIGIN_REQUIRED",
+                "browser mutation requires the exact local Origin",
+                status_code=403,
+            )
+        return
+    host = request.headers.get("Host")
+    if host is None or origin != f"{request.url.scheme}://{host}":
+        raise ApiAuthenticationError(
+            "DASHBOARD_ORIGIN_INVALID",
+            "request Origin does not match the local Dashboard origin",
+            status_code=403,
+        )
+
+
+__all__ = [
+    "DASHBOARD_ACTIVATION_COOKIE",
+    "DASHBOARD_CSP",
+    "DASHBOARD_CSRF_HEADER",
+    "DASHBOARD_SESSION_COOKIE",
+    "install_dashboard_routes",
+]

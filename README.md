@@ -11,8 +11,8 @@ reviewable release decisions.
 ## Current status
 
 > **Testable Windows Alpha `0.1.0a1`** — the end-to-end local CLI assurance
-> workflow and a brokered Windows plugin execution path are implemented and
-> verified with a fixed generic fixture. The product is not production-ready.
+> workflow, authenticated local Dashboard vertical slice, and brokered Windows
+> plugin path are implemented. The product is not production-ready.
 
 The current checkpoint demonstrates:
 
@@ -22,6 +22,8 @@ The current checkpoint demonstrates:
 - immutable project profiles, release candidates, and append-only audit history;
 - content-addressed attestations and portable assurance bundles;
 - an Ed25519-authenticated, project-authorized, loopback-only REST API;
+- a same-origin local Dashboard for activation, status, project discovery,
+  candidate creation, and audit inspection without browser-held signing keys;
 - offline GitHub Actions gating without GitHub API write permissions; and
 - rootless Podman/WSL2 isolation for the exact Windows plugin runs that passed
   the retained hostile-fixture checks.
@@ -58,19 +60,25 @@ dependency.
 
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 780 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
-| Branch-aware coverage | 95.01% across 8,959 statements and 2,520 branches | Local host test |
-| Static quality | Ruff, formatting, and strict mypy passed across 75 source/tool files | Local host test |
-| Contracts | 41 document and 2 artifact JSON Schemas plus OpenAPI passed drift checks | Local host test |
+| Full Python suite | 821 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
+| Branch-aware coverage | 95.20% across 9,565 statements and 2,634 branches | Local host test |
+| Static quality | Ruff, formatting, and strict mypy passed across 84 source/tool files | Local host test |
+| Contracts | 41 document and 2 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
+| User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
+| Dashboard automation | 41 focused tests passed; Dashboard package reached 98.49% branch-aware coverage | Local host test; security, session, cursor pagination, fault-presentation harness, asset/evidence integrity, BFF, contract, and CLI boundary |
+| Dashboard browser interaction | Edge and Chrome keyboard/focus, 129-record pagination, 390 px responsive, 409/413/422/429/500 recovery, and clean-console paths passed; installed-wheel Edge read passed | Windows local browser test; 409/413/429/500 use a test-only presentation harness; exact zoom matrix and assistive technology remain `NOT_RUN` |
 | Windows plugin controls | 18/18 clean-wheel controls passed with the fixed pure-Python fixture | Live local WSL2/Podman test; no general publisher or plugin trust claim |
-| Cross-platform CI | `verify.py`, `release_smoke.py`, and the generic Action smoke passed | [GitHub Actions run 33816785584](https://github.com/Carlos-0798/forgegate/actions/runs/33816785584); hosted CI did not run live Podman fixtures |
+| Cross-platform CI | `verify.py`, `release_smoke.py`, and the generic Action smoke passed | [GitHub Actions run 33839976122](https://github.com/Carlos-0798/forgegate/actions/runs/33839976122); hosted CI did not run live Podman fixtures |
 | Hardware/device behavior | Not exercised by ForgeGate | Out of scope |
 
 See the [verification matrix](docs/VERIFICATION_MATRIX.md) for capability-level
-status and the [software integrity and interaction audit](reports/SOFTWARE_INTEGRITY_INTERACTION_AUDIT_2026-09-03.md)
-for the exact accepted checkpoint. Historical phase reports are retained under
-[`reports/`](reports/README.md) instead of being presented as current results.
+status, the [interaction acceptance report](reports/INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md)
+for expected-versus-actual samples, and the
+[software integrity and interaction audit](reports/SOFTWARE_INTEGRITY_INTERACTION_AUDIT_2026-09-03.md)
+for the accepted security/package checkpoint. Historical phase reports are
+retained under [`reports/`](reports/README.md) instead of being presented as
+current results.
 
 ## Key design decisions
 
@@ -98,6 +106,7 @@ documented Windows 11, WSL2, and rootless Podman environment.
 ```powershell
 .\tools\setup_environment.ps1
 .\.venv\Scripts\python.exe tools\verify.py
+.\.venv\Scripts\python.exe tools\interaction_smoke.py
 .\.venv\Scripts\python.exe tools\release_smoke.py
 .\.venv\Scripts\python.exe -m forgegate init work\sample-project
 ```
@@ -124,6 +133,41 @@ evidence label are retained in the [reproducible CLI walkthrough](docs/DEMO.md).
 Decision exits are stable: `0` PASS, `1` FAIL, `2` REVIEW, and `3` ERROR.
 ForgeGate does not run the build or authenticate evidence while evaluating it.
 
+The current Alpha includes a narrow same-origin local Dashboard. Start it with
+an owner-managed trust store and an initialized project database:
+
+```powershell
+.\.venv\Scripts\forgegate.exe dashboard `
+  --database work\forgegate.db `
+  --trust-store work\trust-store.json
+
+# In another terminal, approve the code displayed by the page:
+.\.venv\Scripts\forgegate.exe dashboard-activate FG-ABCDE-FGHJK `
+  --identity work\operator-identity.json `
+  --private-key work\operator-private-key.pem `
+  --role operator `
+  --project sample-api
+```
+
+The browser receives an opaque HttpOnly cookie, never the raw API Bearer token
+or private signing key. The implemented pages cover activation, Overview,
+Projects, and candidate list/create/detail/audit. Evidence upload, policy
+execution, assurance export, plugin execution, and administration remain
+visibly planned. Swagger UI and ReDoc stay disabled; the committed,
+drift-checked OpenAPI document remains the direct API reference.
+
+![ForgeGate local Dashboard showing service health, authenticated authority, and explicit evidence limitations](docs/assets/forgegate-dashboard-overview.jpg)
+
+![ForgeGate local Dashboard separating candidate state, engineering decision, hardware claim, and append-only audit history](docs/assets/forgegate-dashboard-candidate-detail.jpg)
+
+Both Dashboard images are real Windows Chrome captures using one generic local
+fixture. The [portfolio evidence gallery](docs/PORTFOLIO_EVIDENCE.md) retains
+the candidate-list, strict-validation-error, and 129-record pagination images,
+plus exact sample inputs, output cross-checks, dimensions, SHA-256 digests, and
+claim boundaries. These captures demonstrate only the implemented Alpha
+interaction surface; they are not hardware, evidence-authenticity, production,
+or release-approval evidence.
+
 For plugin inspection, API authentication, candidate persistence, bundle
 signing, and GitHub gate commands, use the [CLI and workflow guide](docs/DEMO.md)
 and architecture index rather than copying unreviewed commands from screenshots.
@@ -149,6 +193,11 @@ and reporting instructions are documented in [SECURITY.md](SECURITY.md).
 
 - The authenticated API is loopback-only and has no TLS, reverse-proxy trust,
   hostile-local-user defense, or remote-deployment approval.
+- The local Web Dashboard is a narrow Alpha surface. Evidence/decision/
+  assurance/plugin/administration workflows are not implemented there, and
+  the exact 100–200% zoom matrix and assistive technologies remain `NOT_RUN`.
+  The Dashboard BFF has a separate generated and drift-checked
+  OpenAPI contract without exposing interactive docs.
 - Sessions, authentication rate state, and trust-store distribution are not
   durable or distributed; time is caller/server supplied rather than trusted.
 - General third-party plugin trust is not established. Native extensions,
@@ -169,11 +218,13 @@ These constraints are product boundaries, not implied future results. See the
 
 The next maturity gates are:
 
-1. freeze a public MSP430 report contract before adding an optional collector;
-2. establish publisher provenance and broader hostile-plugin compatibility;
-3. design TLS/proxy identity, durable security state, retention/export, and
+1. finish the remaining exact-zoom, assistive-technology, and uncommon browser-
+   error checks for the implemented Dashboard slice;
+2. freeze a public MSP430 report contract before adding an optional collector;
+3. establish publisher provenance and broader hostile-plugin compatibility;
+4. design TLS/proxy identity, durable security state, retention/export, and
    managed key lifecycle before considering non-loopback deployment; and
-4. consider GitHub Checks, signed CI provenance, OIDC, and artifact publication
+5. consider GitHub Checks, signed CI provenance, OIDC, and artifact publication
    only as separately authorized integrations.
 
 Completed acceptance-level work and remaining tasks are tracked in

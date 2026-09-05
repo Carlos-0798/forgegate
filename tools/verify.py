@@ -6,6 +6,7 @@ import sys
 from pathlib import Path
 
 from forgegate.api import create_api_app
+from forgegate.dashboard.openapi import create_dashboard_openapi
 from forgegate.schema_registry import ARTIFACT_SCHEMAS, SCHEMAS, schema_filename
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
@@ -55,6 +56,19 @@ def verify_committed_openapi() -> None:
     print("\nCommitted OpenAPI contract: PASS", flush=True)
 
 
+def verify_committed_dashboard_openapi() -> None:
+    expected = json.dumps(create_dashboard_openapi(), indent=2, sort_keys=True) + "\n"
+    path = REPOSITORY_ROOT / "schemas/forgegate.dashboard-openapi.v1.json"
+    if not path.is_file():
+        raise SystemExit(f"missing committed Dashboard OpenAPI contract: {path}")
+    if path.read_text(encoding="utf-8") != expected:
+        raise SystemExit(
+            "Dashboard OpenAPI drift: "
+            f"{path}; run `python -m forgegate export-dashboard-openapi {path}`"
+        )
+    print("\nCommitted Dashboard OpenAPI contract: PASS", flush=True)
+
+
 def main() -> int:
     python = sys.executable
     commands = [
@@ -63,6 +77,8 @@ def main() -> int:
         [python, "-m", "ruff", "format", "--check", "."],
         [python, "-m", "mypy", "src", "tools"],
         [python, "-m", "pytest", "--cov=forgegate", "--cov-branch"],
+        [python, "tools/dashboard_assets.py", "--check"],
+        [python, "tools/interaction_smoke.py"],
         [
             python,
             "-m",
@@ -138,6 +154,7 @@ def main() -> int:
         run(command)
     verify_committed_schemas()
     verify_committed_openapi()
+    verify_committed_dashboard_openapi()
     print("\nForgeGate development verification: PASS", flush=True)
     return 0
 

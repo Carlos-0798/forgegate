@@ -1,0 +1,1804 @@
+{
+  "components": {
+    "schemas": {
+      "ApiAuthChallenge": {
+        "additionalProperties": false,
+        "properties": {
+          "challenge_id": {
+            "pattern": "^chal-[0-9a-f]{32}$",
+            "title": "Challenge Id",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "identity_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Identity Id",
+            "type": "string"
+          },
+          "issued_at": {
+            "format": "date-time",
+            "title": "Issued At",
+            "type": "string"
+          },
+          "nonce_base64": {
+            "maxLength": 44,
+            "minLength": 44,
+            "title": "Nonce Base64",
+            "type": "string"
+          },
+          "project_ids": {
+            "items": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Project Ids",
+            "type": "array"
+          },
+          "role": {
+            "$ref": "#/components/schemas/IdentityRole"
+          },
+          "schema_version": {
+            "const": "forgegate.api-auth-challenge.v1",
+            "default": "forgegate.api-auth-challenge.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "server_instance_id": {
+            "pattern": "^api-[0-9a-f]{32}$",
+            "title": "Server Instance Id",
+            "type": "string"
+          },
+          "trust_store_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Trust Store Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "server_instance_id",
+          "trust_store_id",
+          "identity_id",
+          "role",
+          "project_ids",
+          "nonce_base64",
+          "issued_at",
+          "expires_at"
+        ],
+        "title": "ApiAuthChallenge",
+        "type": "object"
+      },
+      "ApiChallengeRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "identity_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Identity Id",
+            "type": "string"
+          },
+          "project_ids": {
+            "items": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Project Ids",
+            "type": "array"
+          },
+          "role": {
+            "$ref": "#/components/schemas/IdentityRole"
+          }
+        },
+        "required": [
+          "identity_id",
+          "role",
+          "project_ids"
+        ],
+        "title": "ApiChallengeRequest",
+        "type": "object"
+      },
+      "ApiSessionCreateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "challenge_id": {
+            "pattern": "^chal-[0-9a-f]{32}$",
+            "title": "Challenge Id",
+            "type": "string"
+          },
+          "signature_base64": {
+            "maxLength": 88,
+            "minLength": 88,
+            "title": "Signature Base64",
+            "type": "string"
+          }
+        },
+        "required": [
+          "challenge_id",
+          "signature_base64"
+        ],
+        "title": "ApiSessionCreateRequest",
+        "type": "object"
+      },
+      "AuditActor": {
+        "additionalProperties": false,
+        "properties": {
+          "authenticated_at": {
+            "format": "date-time",
+            "title": "Authenticated At",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "identity_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Identity Id",
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "producer",
+              "operator"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.audit-actor.v1",
+            "default": "forgegate.audit-actor.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "session_id": {
+            "pattern": "^sess-[0-9a-f]{32}$",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "trust_store_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Trust Store Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "identity_id",
+          "display_name",
+          "role",
+          "session_id",
+          "trust_store_id",
+          "authenticated_at"
+        ],
+        "title": "AuditActor",
+        "type": "object"
+      },
+      "AuditEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "actor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AuditActor"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "candidate_id": {
+            "anyOf": [
+              {
+                "pattern": "^cand-[0-9a-f]{24}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Candidate Id"
+          },
+          "event_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Event Id",
+            "type": "string"
+          },
+          "event_type": {
+            "$ref": "#/components/schemas/AuditEventType"
+          },
+          "occurred_at": {
+            "format": "date-time",
+            "title": "Occurred At",
+            "type": "string"
+          },
+          "project_id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.audit-event.v1",
+            "default": "forgegate.audit-event.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "sequence": {
+            "minimum": 1.0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "subject_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Subject Fingerprint",
+            "type": "string"
+          },
+          "subject_id": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Subject Id",
+            "type": "string"
+          },
+          "subject_schema_version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Subject Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "event_id",
+          "sequence",
+          "event_type",
+          "occurred_at",
+          "project_id",
+          "subject_schema_version",
+          "subject_id",
+          "subject_fingerprint"
+        ],
+        "title": "AuditEvent",
+        "type": "object"
+      },
+      "AuditEventPage": {
+        "additionalProperties": false,
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/AuditEvent"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "next_after_sequence": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next After Sequence"
+          },
+          "schema_version": {
+            "const": "forgegate.audit-event-page.v1",
+            "default": "forgegate.audit-event-page.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "events",
+          "has_more"
+        ],
+        "title": "AuditEventPage",
+        "type": "object"
+      },
+      "AuditEventType": {
+        "enum": [
+          "project.registered",
+          "project.profile-revised",
+          "candidate.created",
+          "candidate.transitioned",
+          "candidate.evidence-bound",
+          "candidate.evaluation-recorded",
+          "candidate.attestation-recorded"
+        ],
+        "title": "AuditEventType",
+        "type": "string"
+      },
+      "CandidateCreateCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "commit_sha": {
+            "pattern": "^[0-9a-fA-F]{7,64}$",
+            "title": "Commit Sha",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "project_id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "release_track": {
+            "default": "pull-request",
+            "pattern": "^[a-z][a-z0-9_-]{1,63}$",
+            "title": "Release Track",
+            "type": "string"
+          },
+          "source_branch": {
+            "default": "main",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Source Branch",
+            "type": "string"
+          },
+          "version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "project_id",
+          "version",
+          "commit_sha",
+          "created_at"
+        ],
+        "title": "CandidateCreateCommand",
+        "type": "object"
+      },
+      "CandidateDocument": {
+        "discriminator": {
+          "mapping": {
+            "forgegate.release-candidate.v1": "#/components/schemas/ReleaseCandidate",
+            "forgegate.release-candidate.v2": "#/components/schemas/ProfileBoundReleaseCandidate"
+          },
+          "propertyName": "schema_version"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/ReleaseCandidate"
+          },
+          {
+            "$ref": "#/components/schemas/ProfileBoundReleaseCandidate"
+          }
+        ]
+      },
+      "CandidateStatus": {
+        "enum": [
+          "DRAFT",
+          "COLLECTING",
+          "READY",
+          "EVALUATING",
+          "PASS",
+          "FAIL",
+          "REVIEW",
+          "ERROR"
+        ],
+        "title": "CandidateStatus",
+        "type": "string"
+      },
+      "CollectorConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "optional": {
+            "default": false,
+            "title": "Optional",
+            "type": "boolean"
+          },
+          "path": {
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Path",
+            "type": "string"
+          },
+          "type": {
+            "$ref": "#/components/schemas/CollectorType"
+          }
+        },
+        "required": [
+          "type",
+          "path"
+        ],
+        "title": "CollectorConfig",
+        "type": "object"
+      },
+      "CollectorType": {
+        "enum": [
+          "junit",
+          "coverage_xml",
+          "lcov",
+          "sarif",
+          "benchmark_json",
+          "manual_approval"
+        ],
+        "title": "CollectorType",
+        "type": "string"
+      },
+      "DashboardActivationCompleted": {
+        "additionalProperties": false,
+        "properties": {
+          "browser_delivery": {
+            "const": "PENDING_BROWSER_POLL",
+            "default": "PENDING_BROWSER_POLL",
+            "title": "Browser Delivery",
+            "type": "string"
+          },
+          "principal": {
+            "$ref": "#/components/schemas/DashboardPrincipal"
+          },
+          "schema_version": {
+            "const": "forgegate.dashboard-activation-completed.v1",
+            "default": "forgegate.dashboard-activation-completed.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status": {
+            "const": "AUTHENTICATED",
+            "default": "AUTHENTICATED",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "principal"
+        ],
+        "title": "DashboardActivationCompleted",
+        "type": "object"
+      },
+      "DashboardActivationStart": {
+        "additionalProperties": false,
+        "properties": {
+          "activation_code": {
+            "pattern": "^FG-[A-Z2-7]{5}-[A-Z2-7]{5}$",
+            "title": "Activation Code",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "poll_after_seconds": {
+            "default": 1,
+            "maximum": 5.0,
+            "minimum": 1.0,
+            "title": "Poll After Seconds",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "forgegate.dashboard-activation-start.v1",
+            "default": "forgegate.dashboard-activation-start.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "activation_code",
+          "expires_at"
+        ],
+        "title": "DashboardActivationStart",
+        "type": "object"
+      },
+      "DashboardActivationStatus": {
+        "additionalProperties": false,
+        "properties": {
+          "csrf_token": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Za-z0-9_-]{43}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Csrf Token"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "principal": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DashboardPrincipal"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "schema_version": {
+            "const": "forgegate.dashboard-activation-status.v1",
+            "default": "forgegate.dashboard-activation-status.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "PENDING",
+              "CHALLENGE_ISSUED",
+              "AUTHENTICATED"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "expires_at"
+        ],
+        "title": "DashboardActivationStatus",
+        "type": "object"
+      },
+      "DashboardLogoutResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "schema_version": {
+            "const": "forgegate.dashboard-logout.v1",
+            "default": "forgegate.dashboard-logout.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "session_id": {
+            "pattern": "^sess-[0-9a-f]{32}$",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "status": {
+            "const": "SESSION_ENDED",
+            "default": "SESSION_ENDED",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id"
+        ],
+        "title": "DashboardLogoutResponse",
+        "type": "object"
+      },
+      "DashboardOverview": {
+        "additionalProperties": false,
+        "properties": {
+          "api_version": {
+            "const": "v1",
+            "default": "v1",
+            "title": "Api Version",
+            "type": "string"
+          },
+          "database_schema_version": {
+            "minimum": 1.0,
+            "title": "Database Schema Version",
+            "type": "integer"
+          },
+          "deployment": {
+            "const": "loopback-local",
+            "default": "loopback-local",
+            "title": "Deployment",
+            "type": "string"
+          },
+          "forgegate_version": {
+            "title": "Forgegate Version",
+            "type": "string"
+          },
+          "hardware_access": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Hardware Access",
+            "type": "string"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Limitations",
+            "type": "array"
+          },
+          "principal": {
+            "$ref": "#/components/schemas/DashboardPrincipal"
+          },
+          "schema_version": {
+            "const": "forgegate.dashboard-overview.v1",
+            "default": "forgegate.dashboard-overview.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "forgegate_version",
+          "database_schema_version",
+          "limitations",
+          "principal"
+        ],
+        "title": "DashboardOverview",
+        "type": "object"
+      },
+      "DashboardPrincipal": {
+        "additionalProperties": false,
+        "properties": {
+          "authenticated_at": {
+            "format": "date-time",
+            "title": "Authenticated At",
+            "type": "string"
+          },
+          "display_name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Display Name",
+            "type": "string"
+          },
+          "expires_at": {
+            "format": "date-time",
+            "title": "Expires At",
+            "type": "string"
+          },
+          "identity_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Identity Id",
+            "type": "string"
+          },
+          "project_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 100,
+            "minItems": 1,
+            "title": "Project Ids",
+            "type": "array"
+          },
+          "role": {
+            "enum": [
+              "operator",
+              "producer"
+            ],
+            "title": "Role",
+            "type": "string"
+          },
+          "session_id": {
+            "pattern": "^sess-[0-9a-f]{32}$",
+            "title": "Session Id",
+            "type": "string"
+          },
+          "trust_store_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Trust Store Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "identity_id",
+          "display_name",
+          "role",
+          "project_ids",
+          "trust_store_id",
+          "authenticated_at",
+          "expires_at"
+        ],
+        "title": "DashboardPrincipal",
+        "type": "object"
+      },
+      "DashboardSessionResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "csrf_token": {
+            "pattern": "^[A-Za-z0-9_-]{43}$",
+            "title": "Csrf Token",
+            "type": "string"
+          },
+          "principal": {
+            "$ref": "#/components/schemas/DashboardPrincipal"
+          },
+          "schema_version": {
+            "const": "forgegate.dashboard-session.v1",
+            "default": "forgegate.dashboard-session.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status": {
+            "const": "AUTHENTICATED",
+            "default": "AUTHENTICATED",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "principal",
+          "csrf_token"
+        ],
+        "title": "DashboardSessionResponse",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "IdentityRole": {
+        "enum": [
+          "producer",
+          "operator"
+        ],
+        "title": "IdentityRole",
+        "type": "string"
+      },
+      "OutputConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "json": {
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Json",
+            "type": "string"
+          },
+          "markdown": {
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Markdown",
+            "type": "string"
+          }
+        },
+        "required": [
+          "json",
+          "markdown"
+        ],
+        "title": "OutputConfig",
+        "type": "object"
+      },
+      "ProfileBoundReleaseCandidate": {
+        "additionalProperties": false,
+        "description": "Candidate bound to the exact immutable project profile used at creation.",
+        "properties": {
+          "candidate_id": {
+            "pattern": "^cand-[0-9a-f]{24}$",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "commit_sha": {
+            "pattern": "^[0-9a-fA-F]{7,64}$",
+            "title": "Commit Sha",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "evaluated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluated At"
+          },
+          "evaluation_id": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluation Id"
+          },
+          "project_id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "project_profile_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Project Profile Id",
+            "type": "string"
+          },
+          "project_profile_version": {
+            "minimum": 1.0,
+            "title": "Project Profile Version",
+            "type": "integer"
+          },
+          "release_track": {
+            "pattern": "^[a-z][a-z0-9_-]{1,63}$",
+            "title": "Release Track",
+            "type": "string"
+          },
+          "revision": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "forgegate.release-candidate.v2",
+            "default": "forgegate.release-candidate.v2",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_branch": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Source Branch",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CandidateStatus",
+            "default": "DRAFT"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "project_id",
+          "version",
+          "commit_sha",
+          "source_branch",
+          "release_track",
+          "created_at",
+          "updated_at",
+          "project_profile_id",
+          "project_profile_version"
+        ],
+        "title": "ProfileBoundReleaseCandidate",
+        "type": "object"
+      },
+      "ProjectConfig": {
+        "additionalProperties": false,
+        "properties": {
+          "collectors": {
+            "items": {
+              "$ref": "#/components/schemas/CollectorConfig"
+            },
+            "minItems": 1,
+            "title": "Collectors",
+            "type": "array"
+          },
+          "outputs": {
+            "$ref": "#/components/schemas/OutputConfig"
+          },
+          "project": {
+            "$ref": "#/components/schemas/ProjectIdentity"
+          },
+          "release_tracks": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/ReleaseTrack"
+            },
+            "minProperties": 1,
+            "title": "Release Tracks",
+            "type": "object"
+          },
+          "schema_version": {
+            "const": "forgegate.project.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "schema_version",
+          "project",
+          "release_tracks",
+          "collectors",
+          "outputs"
+        ],
+        "title": "ProjectConfig",
+        "type": "object"
+      },
+      "ProjectIdentity": {
+        "additionalProperties": false,
+        "properties": {
+          "default_branch": {
+            "default": "main",
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Default Branch",
+            "type": "string"
+          },
+          "id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Id",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "repository": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repository"
+          }
+        },
+        "required": [
+          "id",
+          "name"
+        ],
+        "title": "ProjectIdentity",
+        "type": "object"
+      },
+      "RegisteredProject": {
+        "additionalProperties": false,
+        "description": "Immutable first-version registration of one ForgeGate project profile.",
+        "properties": {
+          "config": {
+            "additionalProperties": true,
+            "type": "object"
+          },
+          "config_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Config Fingerprint",
+            "type": "string"
+          },
+          "profile_version": {
+            "const": 1,
+            "default": 1,
+            "title": "Profile Version",
+            "type": "integer"
+          },
+          "project_id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "registered_at": {
+            "format": "date-time",
+            "title": "Registered At",
+            "type": "string"
+          },
+          "registration_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Registration Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.registered-project.v1",
+            "default": "forgegate.registered-project.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "registration_id",
+          "project_id",
+          "config",
+          "config_fingerprint",
+          "registered_at"
+        ],
+        "title": "RegisteredProject",
+        "type": "object"
+      },
+      "RegisteredProjectPage": {
+        "additionalProperties": false,
+        "description": "Bounded lexicographic page of immutable registered projects.",
+        "properties": {
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "next_after_project_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z][a-z0-9-]{1,62}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next After Project Id"
+          },
+          "projects": {
+            "items": {
+              "$ref": "#/components/schemas/RegisteredProject"
+            },
+            "maxItems": 200,
+            "title": "Projects",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "forgegate.registered-project-page.v1",
+            "default": "forgegate.registered-project-page.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "projects",
+          "has_more"
+        ],
+        "title": "RegisteredProjectPage",
+        "type": "object"
+      },
+      "ReleaseCandidate": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_id": {
+            "pattern": "^cand-[0-9a-f]{24}$",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "commit_sha": {
+            "pattern": "^[0-9a-fA-F]{7,64}$",
+            "title": "Commit Sha",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "evaluated_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluated At"
+          },
+          "evaluation_id": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Evaluation Id"
+          },
+          "project_id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "release_track": {
+            "pattern": "^[a-z][a-z0-9_-]{1,63}$",
+            "title": "Release Track",
+            "type": "string"
+          },
+          "revision": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "forgegate.release-candidate.v1",
+            "default": "forgegate.release-candidate.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_branch": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Source Branch",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CandidateStatus",
+            "default": "DRAFT"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "project_id",
+          "version",
+          "commit_sha",
+          "source_branch",
+          "release_track",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "ReleaseCandidate",
+        "type": "object"
+      },
+      "ReleaseCandidatePage": {
+        "additionalProperties": false,
+        "description": "Bounded project-scoped page of current candidate snapshots.",
+        "properties": {
+          "candidates": {
+            "items": {
+              "$ref": "#/components/schemas/CandidateDocument"
+            },
+            "maxItems": 200,
+            "title": "Candidates",
+            "type": "array"
+          },
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "next_after_candidate_id": {
+            "anyOf": [
+              {
+                "pattern": "^cand-[0-9a-f]{24}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next After Candidate Id"
+          },
+          "project_id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.release-candidate-page.v1",
+            "default": "forgegate.release-candidate-page.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "project_id",
+          "candidates",
+          "has_more"
+        ],
+        "title": "ReleaseCandidatePage",
+        "type": "object"
+      },
+      "ReleaseTrack": {
+        "additionalProperties": false,
+        "properties": {
+          "policy": {
+            "maxLength": 512,
+            "minLength": 1,
+            "title": "Policy",
+            "type": "string"
+          }
+        },
+        "required": [
+          "policy"
+        ],
+        "title": "ReleaseTrack",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Build-time contract only. The BFF uses an opaque HttpOnly Dashboard cookie plus exact Origin and anti-CSRF checks; this document is not served as interactive documentation.",
+    "summary": "Same-origin local Dashboard boundary",
+    "title": "ForgeGate Dashboard BFF",
+    "version": "0.1.0a1"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/app/api/activation": {
+      "get": {
+        "operationId": "pollDashboardActivation",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardActivationStatus"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Poll Dashboard Activation"
+      }
+    },
+    "/app/api/activations": {
+      "post": {
+        "operationId": "startDashboardActivation",
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardActivationStart"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Start Dashboard Activation"
+      }
+    },
+    "/app/api/activations/{activation_code}/challenge": {
+      "post": {
+        "operationId": "issueDashboardActivationChallenge",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activation_code",
+            "required": true,
+            "schema": {
+              "pattern": "^FG-[A-Z2-7]{5}-[A-Z2-7]{5}$",
+              "title": "Activation Code",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiChallengeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiAuthChallenge"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Issue Dashboard Activation Challenge"
+      }
+    },
+    "/app/api/activations/{activation_code}/complete": {
+      "post": {
+        "operationId": "completeDashboardActivation",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "activation_code",
+            "required": true,
+            "schema": {
+              "pattern": "^FG-[A-Z2-7]{5}-[A-Z2-7]{5}$",
+              "title": "Activation Code",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApiSessionCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardActivationCompleted"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Complete Dashboard Activation"
+      }
+    },
+    "/app/api/audit-events": {
+      "get": {
+        "operationId": "listDashboardAuditEvents",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after_sequence",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "After Sequence",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "candidate_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Candidate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuditEventPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Dashboard Audit Events"
+      }
+    },
+    "/app/api/candidates": {
+      "post": {
+        "operationId": "createDashboardCandidate",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CandidateCreateCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateDocument"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Dashboard Candidate"
+      }
+    },
+    "/app/api/candidates/{candidate_id}": {
+      "get": {
+        "operationId": "getDashboardCandidate",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CandidateDocument"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Dashboard Candidate"
+      }
+    },
+    "/app/api/overview": {
+      "get": {
+        "operationId": "getDashboardOverview",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardOverview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Dashboard Overview"
+      }
+    },
+    "/app/api/projects": {
+      "get": {
+        "operationId": "listDashboardProjects",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "after_project_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "After Project Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RegisteredProjectPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Dashboard Projects"
+      }
+    },
+    "/app/api/projects/{project_id}/candidates": {
+      "get": {
+        "operationId": "listDashboardCandidates",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after_candidate_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "After Candidate Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReleaseCandidatePage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Dashboard Candidates"
+      }
+    },
+    "/app/api/session": {
+      "delete": {
+        "operationId": "endDashboardSession",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardLogoutResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "End Dashboard Session"
+      },
+      "get": {
+        "operationId": "getDashboardSession",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardSessionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Get Dashboard Session"
+      }
+    }
+  }
+}

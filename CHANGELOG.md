@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+- Implemented the narrow same-origin, loopback-only local Web Dashboard with
+  one-time CLI activation, an HttpOnly cookie BFF, exact Origin/Host and CSRF
+  controls, and Overview, Projects, and Candidates pages.
+- Added strict TypeScript/Vite build-only tooling, content-hashed packaged
+  assets, a canonical SHA-256 asset inventory, CI/clean-wheel drift checks, and
+  structural guards against executable HTML, persistent browser storage,
+  service workers, and dynamic evaluation.
+- Added a separate deterministic Dashboard BFF OpenAPI export with explicit
+  operation IDs, committed-byte drift checks, and installed-wheel comparison.
+- Added 38 focused Dashboard/BFF/client/CLI/contract tests and recorded a Microsoft Edge
+  keyboard path plus a 390 px responsive browser check. Full Chrome, exact zoom,
+  assistive-technology, error-state, and installed-wheel browser acceptance
+  remains explicitly incomplete.
+
 ## 0.1.0a1 — 2026-09-03
 
 - Added bounded JSON/XML/YAML structural preflights, strict duplicate-key YAML
@@ -29,6 +45,9 @@
 - Added contribution guidance plus evidence-aware Issue and pull-request
   templates, and extended the source-distribution gate to retain the new
   documentation assets while excluding local resume-handoff artifacts.
+- Added a 33-check expected-versus-actual interaction smoke for the complete
+  CLI decision exit contract and authenticated loopback REST boundary, and
+  integrated it into development and source-distribution verification.
 - This is a private Windows Alpha test candidate, not a public release,
   production-deployment approval, or hardware-verification claim.
 

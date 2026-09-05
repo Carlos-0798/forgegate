@@ -6,8 +6,8 @@ independently reproducible, not to replace the full verification suite.
 
 ## Evidence boundary
 
-- Baseline implementation commit: `5b146d822dc20699db1efd79dac176aa27211d47`
-- Reproduced: 2026-09-03
+- Remote presentation baseline: `690123efcba79a699f356a73a557f804a8267ec9`
+- Reproduced: 2026-09-04
 - Host: Windows 11
 - Python: 3.12.10
 - Evidence level: `LOCAL_HOST_TEST`
@@ -88,7 +88,32 @@ The command returns exit code `0`. The PASS applies only to this committed
 generic policy/evidence fixture at the explicit timestamp. ForgeGate does not
 rerun the producer's tests or authenticate the producer while evaluating it.
 
-## 3. Run the accepted quality gates
+## 3. Run the interaction acceptance matrix
+
+```powershell
+.\.venv\Scripts\python.exe tools\interaction_smoke.py
+```
+
+The command creates an ephemeral Ed25519 operator identity and temporary
+SQLite database, then compares 33 expected and actual outcomes:
+
+| Surface | Samples | Expected result |
+|---|---|---|
+| CLI | project validation | exit `0`, `VALID` output |
+| CLI | PASS / FAIL / REVIEW / ERROR | decisions and exits `0` / `1` / `2` / `3` |
+| REST | health and request correlation | HTTP `200`, exact API/product metadata, echoed request ID |
+| REST | Swagger UI and ReDoc | HTTP `404`; deliberately disabled, not a missing dashboard |
+| REST | unauthenticated read | HTTP `401`, `API_AUTHENTICATION_REQUIRED` |
+| REST | challenge and session | HTTP `201` after a real Ed25519 signature exchange |
+| REST | project registration, replay, read | `201` / `201` / `200`, identical documents |
+| REST | unknown request field | HTTP `422`, `API_REQUEST_VALIDATION_FAILED` |
+
+Successful output ends with `result: PASS`, `33` passed, `0` failed,
+`LOCAL_HOST_TEST`, and `hardware_access: NOT_PERFORMED`. The report never
+prints the generated private key or Bearer token, retains neither, and deletes
+the temporary database when the process exits.
+
+## 4. Run the accepted quality gates
 
 ```powershell
 .\.venv\Scripts\python.exe tools\verify.py
@@ -100,12 +125,42 @@ workflow. The hosted jobs do not execute the local Podman/WSL2 hostile fixtures.
 Current results and exceptions belong in the
 [verification matrix](VERIFICATION_MATRIX.md), not in this walkthrough.
 
+## 5. Open the authenticated local Dashboard
+
+Prerequisite: an initialized database containing at least one registered
+project, plus an owner-managed `forgegate.trust-store.v1`, matching public
+identity document, and existing Ed25519 private key. Keep these files under an
+ignored local directory such as `work/`; never commit the private key.
+
+```powershell
+.\.venv\Scripts\forgegate.exe dashboard `
+  --database work\forgegate.db `
+  --trust-store work\trust-store.json
+```
+
+Open the printed loopback `/app/` URL, choose **Start local activation**, then
+approve its short code from a second terminal:
+
+```powershell
+.\.venv\Scripts\forgegate.exe dashboard-activate FG-ABCDE-FGHJK `
+  --identity work\operator-identity.json `
+  --private-key work\operator-private-key.pem `
+  --role operator `
+  --project sample-api
+```
+
+The page then exposes only the implemented Overview, Projects, and Candidates
+slice. Stop the first terminal process explicitly when finished. The current
+manual test boundary is retained in the
+[Dashboard acceptance matrix](DASHBOARD_ACCEPTANCE_MATRIX.md).
+
 ## Deeper workflows
 
 - [Candidate lifecycle](architecture/CANDIDATE_LIFECYCLE.md)
 - [Evidence assembly](architecture/EVIDENCE_BUNDLE_ASSEMBLY.md)
 - [Portable assurance bundles](architecture/PORTABLE_ASSURANCE_BUNDLES.md)
 - [Authenticated local API](architecture/AUTHENTICATED_LOCAL_API.md)
+- [Authenticated local Dashboard](architecture/LOCAL_WEB_DASHBOARD.md)
 - [GitHub Actions gate](architecture/GITHUB_ACTIONS_GATE.md)
 - [Windows plugin sandbox](architecture/WINDOWS_PLUGIN_SANDBOX.md)
 - [Plugin operator workflow](architecture/PLUGIN_OPERATOR_WORKFLOW.md)

@@ -327,3 +327,46 @@
   sample-policy PASS through the pinned Podman/WSL2 fixture.
 - [x] Verify sample-plugin independence and ForgeGate uninstall, then complete
   the security, privacy, claim, and delivery-document audit.
+
+## Phase 23 — local Web Dashboard design gate
+
+- [x] Freeze a same-origin, loopback-only Dashboard architecture over the
+  existing authentication and application services.
+- [x] Define the browser/CLI activation boundary without exposing a private key
+  or raw API Bearer token to browser JavaScript.
+- [x] Define interaction states, evidence/status presentation, error recovery,
+  keyboard/zoom expectations, and explicit non-goals.
+- [x] Record the Dashboard threat model and automated plus manual Windows
+  acceptance matrix while preserving all current product limitations.
+
+Phase 23 is design evidence only. It implements no page, static asset bundle,
+browser session, Dashboard route, or browser test.
+
+## Phase 24 — authenticated local Dashboard vertical slice
+
+- [x] Add `forgegate dashboard` with loopback-only startup, explicit service
+  lifecycle, safe port validation, and clean-wheel packaged static assets.
+- [x] Implement one-time companion CLI activation and a same-origin
+  cookie-authenticated BFF with exact Host/Origin and CSRF controls.
+- [x] Implement Overview, Projects, and Candidates pages using the existing
+  application/domain services and bounded cursor contracts.
+- [x] Commit a deterministic Dashboard BFF OpenAPI contract with explicit
+  operation IDs, local drift verification, and installed-wheel comparison.
+- [x] Prove candidate creation review, exact idempotent replay, changed-payload
+  conflict, and safe refresh/back/forward behavior. Stale-revision recovery is
+  not applicable until a revision-mutating Dashboard command is introduced.
+- [ ] Complete adversarial-content, credential-exposure, role/scope, cache,
+  API-drift, Edge/Chrome, keyboard, focus, zoom, and clean-wheel acceptance.
+
+The automated boundary, Microsoft Edge keyboard and complete modal-focus path,
+129-record six-page cursor traversal, browser-rendered 409/413/422/429/500
+recovery, in-app-browser 390 px layout check, clean-wheel asset/install smoke,
+an installed-wheel Edge read path, and Chrome core/focus/large-data/restart/
+responsive runs pass. Uncommon statuses use an isolated zero-write
+presentation harness and are not authentic operational-failure evidence.
+Exact 100/125/150/175/200% zoom and assistive-technology runs remain `NOT_RUN`
+or partial; Phase 24 therefore remains open rather than overstating full UI
+acceptance.
+
+Evidence upload, policy execution, assurance export, plugin execution, session
+administration, and trust-store administration remain outside this slice.

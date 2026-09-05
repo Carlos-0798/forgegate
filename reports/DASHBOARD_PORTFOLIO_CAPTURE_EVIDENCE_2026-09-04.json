@@ -1,0 +1,128 @@
+{
+  "record_format": "forgegate-portfolio-capture-evidence-v1",
+  "capture_date_local": "2026-09-04",
+  "source_checkpoint": "ed205c7",
+  "environment": {
+    "browser": "Google Chrome",
+    "host": "Windows",
+    "network_scope": "loopback-only",
+    "product_version": "0.1.0a1",
+    "evidence_level": "LOCAL_BROWSER_TEST"
+  },
+  "fixture": {
+    "classification": "GENERIC_EPHEMERAL_TEST_DATA",
+    "project_id": "sample-api",
+    "identity_display_name": "ForgeGate portfolio operator",
+    "candidate": {
+      "candidate_id": "cand-051b03522342f686e76597ec",
+      "version": "portfolio-alpha-1.0.0",
+      "commit_sha": "7777777777777777777777777777777777777777",
+      "source_branch": "portfolio/readme-evidence",
+      "release_track": "pull-request",
+      "status": "DRAFT",
+      "revision": 0,
+      "evaluation_id": null,
+      "project_profile_version": 1,
+      "hardware_access": "NOT_PERFORMED"
+    }
+  },
+  "browser_validation_case": {
+    "input": {
+      "version": "portfolio-invalid-track",
+      "commit_sha": "8888888888888888888888888888888888888888",
+      "source_branch": "portfolio/error-example",
+      "release_track": "INVALID!"
+    },
+    "expected": {
+      "http_status": 422,
+      "error_code": "API_REQUEST_VALIDATION_FAILED",
+      "candidate_count_unchanged": true,
+      "audit_count_unchanged": true
+    },
+    "actual": {
+      "http_status": 422,
+      "error_code": "API_REQUEST_VALIDATION_FAILED",
+      "request_id": "dashboard-a7544a47-988b-483e-b2dd-7968c3919107",
+      "candidate_count_before": 1,
+      "candidate_count_after": 1,
+      "audit_event_count_before": 2,
+      "audit_event_count_after": 2,
+      "result": "PASS"
+    }
+  },
+  "cli_cross_check": {
+    "candidate_ids": [
+      "cand-051b03522342f686e76597ec"
+    ],
+    "audit_events": [
+      {
+        "sequence": 1,
+        "event_type": "project.registered"
+      },
+      {
+        "sequence": 2,
+        "event_type": "candidate.created",
+        "candidate_id": "cand-051b03522342f686e76597ec"
+      }
+    ],
+    "invalid_candidate_present": false
+  },
+  "assets": [
+    {
+      "path": "docs/assets/forgegate-dashboard-overview.jpg",
+      "media_type": "image/jpeg",
+      "surface": "authenticated authority and limitations overview",
+      "width": 1254,
+      "height": 1281,
+      "bytes": 116662,
+      "sha256": "75ab59d2bf64e52b0479743a1e7b185aae227b1a0778981b20ebb693b48a9bdb"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-candidates.jpg",
+      "media_type": "image/jpeg",
+      "surface": "single generic candidate list",
+      "width": 1254,
+      "height": 1281,
+      "bytes": 73728,
+      "sha256": "6a46f301f8d563faf01c16a3a6c42e6385c1c821deaa29936aeefb7db67ffaca"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-candidate-detail.jpg",
+      "media_type": "image/jpeg",
+      "surface": "candidate detail and append-only audit event",
+      "width": 1254,
+      "height": 1281,
+      "bytes": 108817,
+      "sha256": "311eaf3c1c438691a9c0d46176eceaa10082893fc2ca72c5d2f17a5ec9e04f2c"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-validation-error.jpg",
+      "media_type": "image/jpeg",
+      "surface": "strict validation failure and safe recovery",
+      "width": 1254,
+      "height": 1281,
+      "bytes": 75950,
+      "sha256": "30da6753bfa208c23c2f543d576dd7073ab31bc5d3951a331ea7682660d24b4c"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-alpha.jpg",
+      "media_type": "image/jpeg",
+      "surface": "large generic pagination fixture",
+      "width": 1265,
+      "height": 712,
+      "bytes": 80173,
+      "sha256": "09776b433ad66325d97df2055ab7872e4cd3ab35b31c81ec7beb514c032187e1"
+    }
+  ],
+  "boundaries": {
+    "private_key_or_token_visible": false,
+    "personal_data_used": false,
+    "hardware_access": "NOT_PERFORMED",
+    "physical_measurement": "NOT_PERFORMED",
+    "evidence_authenticity_proven": false,
+    "production_readiness_proven": false,
+    "remote_deployment_proven": false,
+    "public_release_authorized": false,
+    "full_accessibility_conformance_proven": false
+  }
+}

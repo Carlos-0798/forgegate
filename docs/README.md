@@ -8,8 +8,9 @@ analysis, compatibility contracts, and historical acceptance evidence.
 1. [Project status](PROJECT_STATUS.md) — current maturity and accepted baseline
 2. [Verification matrix](VERIFICATION_MATRIX.md) — evidence level for each capability
 3. [Roadmap](ROADMAP.md) — completed and remaining acceptance gates
-4. [Reproducible CLI walkthrough](DEMO.md) — small generic example with exact output
-5. [Security policy](../SECURITY.md) — supported scope and responsible reporting
+4. [Reproducible interaction walkthrough](DEMO.md) — generic CLI/API examples with expected output
+5. [Portfolio evidence gallery](PORTFOLIO_EVIDENCE.md) — retained screenshots, exact fixture data, hashes, and claim boundaries
+6. [Security policy](../SECURITY.md) — supported scope and responsible reporting
 
 ## Product and trust model
 
@@ -45,6 +46,22 @@ analysis, compatibility contracts, and historical acceptance evidence.
 - [Authenticated local API](architecture/AUTHENTICATED_LOCAL_API.md)
 - [Local session lifecycle](architecture/LOCAL_SESSION_LIFECYCLE.md)
 - [Local API security boundaries](architecture/LOCAL_API_SECURITY_BOUNDARIES.md)
+
+## Local Dashboard
+
+- [Dashboard UX requirements](product/DASHBOARD_UX_REQUIREMENTS.md)
+- [Local Web Dashboard architecture](architecture/LOCAL_WEB_DASHBOARD.md)
+- [Dashboard threat model](security/DASHBOARD_THREAT_MODEL.md)
+- [Dashboard acceptance matrix](DASHBOARD_ACCEPTANCE_MATRIX.md)
+
+These documents govern the implemented Phase 24 activation, Overview, Projects,
+and Candidates slice. The packaged frontend and browser-for-frontend session
+boundary are present. Edge and Chrome keyboard/focus, pagination, responsive,
+409/413/422/429/500 recovery, and clean-console paths pass; uncommon statuses
+use an isolated zero-write presentation harness. The acceptance matrix
+preserves the remaining exact zoom, assistive-technology, and Remote Desktop
+checks as `NOT_RUN` or partial rather than inferring full UI acceptance. A
+separate installed-wheel Edge read path passes.
 
 ## CI and plugins
 
