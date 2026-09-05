@@ -189,6 +189,8 @@ def test_dashboard_static_assets_headers_and_contract_boundary(
         if name.endswith(".js")
     ]
     assert scripts
+    assert all("Your Dashboard session expired" in script for script in scripts)
+    assert all("--role ROLE" in script for script in scripts)
     assert not any(
         unsafe in script
         for script in scripts

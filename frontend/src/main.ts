@@ -123,6 +123,7 @@ let currentRoute: Route = routeFromHash();
 let projects: RegisteredProject[] = [];
 let selectedProjectId: string | null = null;
 let activationTimer: number | null = null;
+let sessionExpiryTimer: number | null = null;
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -177,6 +178,25 @@ async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
 function clearActivationTimer(): void {
   if (activationTimer !== null) window.clearTimeout(activationTimer);
   activationTimer = null;
+}
+
+function clearSessionExpiryTimer(): void {
+  if (sessionExpiryTimer !== null) window.clearTimeout(sessionExpiryTimer);
+  sessionExpiryTimer = null;
+}
+
+function scheduleSessionExpiry(): void {
+  clearSessionExpiryTimer();
+  if (session === null) return;
+  const expiresAt = new Date(session.principal.expires_at).valueOf();
+  const delay = expiresAt - Date.now();
+  if (!Number.isFinite(expiresAt) || delay <= 0) {
+    renderActivation("Your Dashboard session expired. Start a new local activation to continue.");
+    return;
+  }
+  sessionExpiryTimer = window.setTimeout(() => {
+    renderActivation("Your Dashboard session expired. Start a new local activation to continue.");
+  }, delay);
 }
 
 function showProblem(container: HTMLElement, error: unknown, recovery: string): void {
@@ -295,10 +315,10 @@ function shortHash(value: string): string {
 async function loadSession(): Promise<void> {
   try {
     session = await api<DashboardSession>("/app/api/session");
+    scheduleSessionExpiry();
     await renderRoute();
   } catch (error) {
     if (error instanceof RequestProblem && error.status === 401) {
-      session = null;
       renderActivation();
       return;
     }
@@ -308,8 +328,12 @@ async function loadSession(): Promise<void> {
   }
 }
 
-function renderActivation(): void {
+function renderActivation(notice?: string): void {
   clearActivationTimer();
+  clearSessionExpiryTimer();
+  session = null;
+  projects = [];
+  selectedProjectId = null;
   const main = el("main", "activation-shell");
   main.id = "workspace";
   main.tabIndex = -1;
@@ -325,6 +349,11 @@ function renderActivation(): void {
       "This browser starts unauthenticated. Approve a short-lived session from the ForgeGate CLI; your private key and API token never enter this page."
     )
   );
+  if (notice !== undefined) {
+    const status = el("p", "session-notice", notice);
+    status.setAttribute("role", "status");
+    card.append(status);
+  }
   const boundary = el("div", "boundary-grid");
   for (const [label, value] of [
     ["Network", "Loopback only"],
@@ -374,9 +403,12 @@ async function startActivation(card: HTMLElement): Promise<void> {
     const command = el(
       "code",
       "command",
-      `forgegate dashboard-activate ${activation.activation_code} --identity IDENTITY.json --private-key KEY.pem --role operator --project PROJECT_ID`
+      `forgegate dashboard-activate ${activation.activation_code} --identity IDENTITY.json --private-key KEY.pem --role ROLE --project PROJECT_ID`
     );
-    panel.append(command, el("p", "muted", "The terminal command will display and authorize the exact role and project scopes."));
+    panel.append(
+      command,
+      el("p", "muted", "Replace ROLE with producer or operator. The terminal will display and authorize the exact role and project scopes.")
+    );
     actions.replaceChildren(panel);
     pollActivation(Math.max(activation.poll_after_seconds, 1));
   } catch (error) {
@@ -391,6 +423,7 @@ function pollActivation(delaySeconds: number): void {
       if (state.status === "AUTHENTICATED" && state.principal !== null && state.csrf_token !== null) {
         clearActivationTimer();
         session = { status: "AUTHENTICATED", principal: state.principal, csrf_token: state.csrf_token };
+        scheduleSessionExpiry();
         await renderRoute();
         return;
       }
@@ -418,10 +451,7 @@ async function logoutSession(): Promise<void> {
   } catch {
     // Local protected state is cleared even if the server session already expired.
   }
-  session = null;
-  projects = [];
-  selectedProjectId = null;
-  renderActivation();
+  renderActivation("The Dashboard session ended. Start a new local activation when you are ready.");
 }
 
 async function renderRoute(): Promise<void> {
@@ -473,7 +503,7 @@ async function renderOverview(): Promise<void> {
     columns.append(authority, boundaries);
     main.append(metrics, columns);
   } catch (error) {
-    handleProtectedProblem(main, error, "Reload the Overview page.");
+    if (handleProtectedProblem(main, error, "Reload the Overview page.")) return;
   }
   shell(main);
 }
@@ -518,7 +548,7 @@ async function renderProjects(): Promise<void> {
       main.append(grid);
     }
   } catch (error) {
-    handleProtectedProblem(main, error, "Reload the authorized project list.");
+    if (handleProtectedProblem(main, error, "Reload the authorized project list.")) return;
   }
   shell(main);
 }
@@ -575,7 +605,7 @@ async function renderCandidates(): Promise<void> {
       main.append(candidateTable(result.candidates, main));
     }
   } catch (error) {
-    handleProtectedProblem(main, error, "Reload the candidate list and confirm the selected project scope.");
+    if (handleProtectedProblem(main, error, "Reload the candidate list and confirm the selected project scope.")) return;
   }
   shell(main);
 }
@@ -778,15 +808,18 @@ async function showCandidateDetail(main: HTMLElement, candidateId: string): Prom
   }
 }
 
-function handleProtectedProblem(container: HTMLElement, error: unknown, recovery: string): void {
+function handleProtectedProblem(container: HTMLElement, error: unknown, recovery: string): boolean {
   if (error instanceof RequestProblem && error.status === 401) {
-    session = null;
-    renderActivation();
-    return;
+    renderActivation("Your Dashboard session ended or expired. Start a new local activation to continue.");
+    return true;
   }
   showProblem(container, error, recovery);
+  return false;
 }
 
 window.addEventListener("hashchange", () => void renderRoute());
-window.addEventListener("beforeunload", clearActivationTimer);
+window.addEventListener("beforeunload", () => {
+  clearActivationTimer();
+  clearSessionExpiryTimer();
+});
 void loadSession();

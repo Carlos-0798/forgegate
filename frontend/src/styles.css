@@ -233,6 +233,15 @@ code {
   max-width: 46rem;
 }
 
+.session-notice {
+  max-width: 46rem;
+  padding: 0.85rem 1rem;
+  border: 1px solid rgb(245 184 92 / 55%);
+  border-radius: 0.7rem;
+  color: var(--text);
+  background: rgb(245 184 92 / 8%);
+}
+
 .button {
   min-height: 2.65rem;
   padding: 0.65rem 1rem;

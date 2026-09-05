@@ -505,4 +505,7 @@ are recorded in `reports/INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md`.
 The Phase 23 design gate remains recorded in
 `reports/PHASE_23_LOCAL_WEB_DASHBOARD_DESIGN_GATE.md`. The subsequent
 implementation and exact PASS/NOT_RUN boundaries are recorded in
-`reports/PHASE_24_AUTHENTICATED_LOCAL_DASHBOARD_ACCEPTANCE_REPORT.md`.
+`reports/PHASE_24_AUTHENTICATED_LOCAL_DASHBOARD_ACCEPTANCE_REPORT.md`. The
+follow-up operator/producer samples, persisted-output cross-check, and corrected
+expiry/restart recovery are recorded in
+`reports/PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md`.

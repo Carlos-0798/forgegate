@@ -15,11 +15,15 @@ authentication, Overview, authorized Projects, and project-scoped Candidates
 with reviewed creation, detail, and append-only audit inspection.
 
 The implementation, security boundary, focused automation, full repository
-quality gate, packaging smoke, one real Microsoft Edge keyboard path, and an
-installed-wheel Edge read path pass.
+quality gate, packaging smoke, one real Microsoft Edge keyboard path, an
+installed-wheel Edge read path, and the follow-up in-app-browser manual
+interaction run pass.
 This report does not mark Phase 24 fully accepted because Chrome, the exact zoom
 matrix, assistive-technology checks, and every browser error state were not
 executed.
+
+The detailed input/output record is in
+`reports/PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md`.
 
 ## Implemented boundary
 
@@ -74,9 +78,12 @@ was retained.
 | Initial page | Clear unauthenticated state | Activation explanation and action rendered | PASS |
 | CLI companion approval | Browser-bound authenticated session | One-time code approved; Overview loaded | PASS |
 | Keyboard navigation | Core path without a mouse | Microsoft Edge completed activation, Projects, Candidates, create/review/confirm/detail/audit | PASS |
-| Focus entry | Logical initial/dialog target | Skip link and activation action ordered; create dialog focused Version; review focused Confirm | PARTIAL |
-| Candidate creation | One DRAFT plus one audit event | DRAFT, revision 1, `NOT_EVALUATED`, hardware `NOT_PERFORMED`, and `candidate.created` shown | PASS |
-| Refresh/back/forward | No duplicate mutation | Three existing rows remained three; no new write observed | PASS |
+| Focus entry/return | Logical initial/dialog target | Skip link and activation action ordered; create dialog focused Version; review focused Confirm; explicit Cancel returned focus to Create candidate | PARTIAL |
+| Candidate creation | One DRAFT plus one audit event | DRAFT, candidate revision 0, profile version 1, `NOT_EVALUATED`, hardware `NOT_PERFORMED`, and `candidate.created` shown | PASS |
+| Refresh/back/forward | No duplicate mutation | Prior run retained three rows; the follow-up valid sample retained exactly four rows after reload with one matching audit event | PASS |
+| Invalid samples | Clear client/server rejection and no unexpected write | Blank required fields and uppercase SHA stayed client-side; unknown track rendered `STORE_RELEASE_TRACK_NOT_FOUND` and left the list at three | PASS |
+| Producer boundary | Read-only candidate access | Create action absent; candidate fields visible; operator-only audit limitation explicit | PASS |
+| Logout/expiry/restart | Clear protected state and actionable recovery | Explicit logout, natural 60-second expiry, and service-restart 401 all returned to activation with distinct guidance | PASS |
 | Responsive narrow view | No page-level horizontal overflow | 390 × 844 viewport had 375 px body/document scroll width; table/nav used intentional inner scrolling | PASS |
 | Browser console | No application warning/error | No warning or error recorded | PASS |
 | Installed-wheel browser | Packaged assets and BFF load | Edge authenticated and read Overview, Projects, and Candidates from a dedicated wheel-only environment | PASS |
@@ -97,6 +104,12 @@ was retained.
 4. Producer detail attempted an operator-only audit request. Producer sessions
    now render an explicit audit-permission boundary while preserving read-only
    candidate detail.
+5. Natural expiry left cached project data visible, and the following 401
+   activation render could be overwritten by the route's stale partial page.
+   A server-expiry timer now clears protected state proactively, and handled
+   401 paths return before any outer render.
+6. The activation command example hard-coded `operator`, which was misleading
+   for producer sessions. It now uses a documented `ROLE` placeholder.
 
 ## Remaining acceptance work
 
@@ -104,8 +117,9 @@ The complete Phase 24 exit gate requires:
 
 1. Chrome core-flow execution on the supported Windows host;
 2. Edge and Chrome checks at 100%, 125%, 150%, 175%, and 200% zoom;
-3. full modal containment, Escape behavior, and invoking-control focus return;
-4. browser-driven 401/403/409/413/422/429/500 and session-expiry recovery;
+3. full modal containment and an observable Escape-key run;
+4. browser-driven 403/409/413/422/429/500 recovery (401, logout, natural
+   expiry, and restart recovery now pass);
 5. bounded-large-data, high-contrast, screen-reader, and Remote Desktop checks;
 6. a retained generic-data screenshot only after all visible claims are
    rechecked for portfolio use.
