@@ -57,6 +57,8 @@ production, public-release, evidence-authenticity, or remote-deployment proof.
 | MSP430 Windows connection | Enumerate TI/MSP interfaces; non-writing COM4 open/close and sustained-open observation | Stable connection without changing the board | COM4 and COM5 remained Windows `OK`; COM4 passed 10/10 open/close cycles and a 10-second sustained open; zero reads/writes, DTR/RTS disabled | PASS — CONNECTION ONLY |
 | Post-connection Dashboard | Recheck health and hardware claim | Service healthy; external observation must not become ForgeGate hardware evidence | Health remained `ok`; Overview continued to show `Hardware NOT_PERFORMED` and the no-hardware/no-measurement limitation | PASS |
 | Late MSP430 follow-up | Re-enumerate after the bounded passing window | Report any later absence without extending the PASS claim | COM4/COM5 were absent; retained PnP entries showed problem 45 and `Present=false`; three two-second port samples were empty while Dashboard health remained `ok` | CONNECTION LOST / USER CHECK REQUIRED |
+| MSP430 reconnection | Repeat a longer no-write/no-read host observation after user reconnection | Record bounded recovery without erasing the earlier absence | COM4/COM5 and the TI USB composite device returned `OK`, problem code 0, and `Present=true`; 25/25 COM4 opens, 90/90 two-second presence samples, and 30 sustained-open seconds passed over 216.1 seconds | PASS — BOUNDED CONNECTION |
+| Post-reconnection Dashboard | Reauthenticate and inspect the authoritative Overview | Service stays healthy and the external port result is not promoted to hardware evidence | Chrome showed `Healthy`, `0.1.0a1`, API `v1`, DB schema `v8`, operator scope `sample-api`, and `Hardware NOT_PERFORMED` | PASS |
 | Review round-trip | Enter a valid draft, review it, then return to edit | All draft fields retained without writing | Initial run cleared Version and Commit SHA; implementation was corrected and repeated Chrome run restored both exact values with a no-submit notice | PASS AFTER FIX |
 | Injected 409 | Version `ui-error-409` in isolated fault harness | No automatic retry; reload and re-review guidance | `STORE_IDEMPOTENCY_CONFLICT`, status 409, request ID, focused alert, disabled Confirm, restored draft, zero write | PASS — PRESENTATION |
 | Injected 413 | Version `ui-error-413` in isolated fault harness | State the 4 MiB limit and require a smaller reviewed request | `API_BODY_TOO_LARGE`, status 413, request ID, focused alert, disabled Confirm, restored draft, zero write | PASS — PRESENTATION |
@@ -129,7 +131,14 @@ candidate count remained unchanged. The external COM4 observation is recorded
 separately and does not change ForgeGate's `Hardware NOT_PERFORMED` claim.
 The later follow-up found that Windows no longer enumerated COM4/COM5. The
 bounded connection observation therefore remains valid only for its measured
-window and does not establish long-duration stability.
+window and does not establish long-duration stability. After the user
+reconnected the board, a second 216.1-second observation passed 25/25 COM4
+open/close cycles, 90/90 two-second COM4/COM5 presence samples, and 30 seconds
+of sustained COM4 opening. The earlier absence remains retained, and the new
+result still does not establish uninterrupted long-duration stability,
+protocol correctness, firmware behavior, physical measurement, or ForgeGate
+collector execution. A fresh Chrome activation then confirmed `Service
+Healthy` and `Hardware NOT_PERFORMED` remained visible together.
 
 An isolated Chrome fault-presentation run then exercised 409, 413, 429, and
 500 responses through the real Dashboard UI. Every case rendered its exact

@@ -64,6 +64,68 @@
     "dashboard_health_status": "ok",
     "interpretation": "The board disconnected or lost USB enumeration after the bounded passing observation; long-duration connection stability is not established."
   },
+  "reconnection_observation": {
+    "initial_enumeration_captured_at": "2026-09-05T03:53:25.6783054Z",
+    "extended_observation_started_at": "2026-09-05T03:55:10.7572801Z",
+    "extended_observation_ended_at": "2026-09-05T03:58:46.8587469Z",
+    "elapsed_seconds": 216.1,
+    "windows_device_state": {
+      "application_uart": {
+        "port": "COM4",
+        "status": "OK",
+        "problem_code": 0,
+        "present": true
+      },
+      "debug_interface": {
+        "port": "COM5",
+        "status": "OK",
+        "problem_code": 0,
+        "present": true
+      },
+      "ti_usb_composite_device": {
+        "usb_vid": "2047",
+        "usb_pid": "0013",
+        "status": "OK",
+        "problem_code": 0,
+        "present": true
+      }
+    },
+    "application_uart_open_close": {
+      "attempts": 25,
+      "successes": 25,
+      "failures": 0
+    },
+    "passive_presence_sampling": {
+      "samples": 90,
+      "sample_interval_seconds": 2,
+      "application_uart_missing_samples": 0,
+      "debug_interface_missing_samples": 0
+    },
+    "application_uart_sustained_open": {
+      "requested_seconds": 30,
+      "successful_samples": 30,
+      "closed_samples": 0,
+      "application_uart_missing_samples": 0,
+      "debug_interface_missing_samples": 0,
+      "minimum_bytes_waiting": 19,
+      "maximum_bytes_waiting": 181
+    },
+    "safety_boundary": {
+      "bytes_read": 0,
+      "writes_sent": 0,
+      "serial_commands_sent": 0,
+      "debug_sessions_opened": 0,
+      "firmware_operations": 0,
+      "dtr_enabled": false,
+      "rts_enabled": false,
+      "serial_configuration_note": "COM4 used 9600 8N1 only to exercise the Windows port handle; protocol and baud correctness were not evaluated."
+    },
+    "dashboard_health_status": "ok",
+    "browser_overview_reauthenticated_at": "2026-09-05T04:00:03.709454Z",
+    "browser_visible_service_status": "Healthy",
+    "browser_visible_hardware_claim": "NOT_PERFORMED",
+    "interpretation": "The reconnected board remained enumerated throughout this 216.1-second host-side observation. The earlier absence remains retained counterevidence, so long-duration stability, payload correctness, firmware behavior, and ForgeGate hardware integration are not established."
+  },
   "dashboard_observation": {
     "health_status": "ok",
     "forgegate_version": "0.1.0a1",
@@ -75,7 +137,7 @@
     "visible_limitation": "No hardware access or physical measurement is performed.",
     "candidate_rows_after_non_mutating_ui_test": 3
   },
-  "outcome": "PASS_BOUNDED_CONNECTION_OBSERVATION_THEN_DEVICE_NOT_PRESENT",
+  "outcome": "PASS_BOUNDED_RECONNECTION_OBSERVATION_AFTER_REPORTED_ABSENCE",
   "boundaries": {
     "firmware_written": false,
     "serial_command_sent": false,
