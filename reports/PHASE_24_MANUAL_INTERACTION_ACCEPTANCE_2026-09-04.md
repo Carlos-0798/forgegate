@@ -56,6 +56,7 @@ production, public-release, evidence-authenticity, or remote-deployment proof.
 | Chrome restart/reflow | Restart service; then set 390 × 844 viewport | Clear stale session and preserve actions without page overflow | Restart returned to activation; narrow document width was 375 px and Previous/Next/Create remained visible | PASS |
 | MSP430 Windows connection | Enumerate TI/MSP interfaces; non-writing COM4 open/close and sustained-open observation | Stable connection without changing the board | COM4 and COM5 remained Windows `OK`; COM4 passed 10/10 open/close cycles and a 10-second sustained open; zero reads/writes, DTR/RTS disabled | PASS — CONNECTION ONLY |
 | Post-connection Dashboard | Recheck health and hardware claim | Service healthy; external observation must not become ForgeGate hardware evidence | Health remained `ok`; Overview continued to show `Hardware NOT_PERFORMED` and the no-hardware/no-measurement limitation | PASS |
+| Late MSP430 follow-up | Re-enumerate after the bounded passing window | Report any later absence without extending the PASS claim | COM4/COM5 were absent; retained PnP entries showed problem 45 and `Present=false`; three two-second port samples were empty while Dashboard health remained `ok` | CONNECTION LOST / USER CHECK REQUIRED |
 | Review round-trip | Enter a valid draft, review it, then return to edit | All draft fields retained without writing | Initial run cleared Version and Commit SHA; implementation was corrected and repeated Chrome run restored both exact values with a no-submit notice | PASS AFTER FIX |
 | Injected 409 | Version `ui-error-409` in isolated fault harness | No automatic retry; reload and re-review guidance | `STORE_IDEMPOTENCY_CONFLICT`, status 409, request ID, focused alert, disabled Confirm, restored draft, zero write | PASS — PRESENTATION |
 | Injected 413 | Version `ui-error-413` in isolated fault harness | State the 4 MiB limit and require a smaller reviewed request | `API_BODY_TOO_LARGE`, status 413, request ID, focused alert, disabled Confirm, restored draft, zero write | PASS — PRESENTATION |
@@ -126,6 +127,9 @@ announces that no request has been submitted, and retains opener-focus behavior
 on Cancel. The repeated Chrome run restored the exact sample values and the
 candidate count remained unchanged. The external COM4 observation is recorded
 separately and does not change ForgeGate's `Hardware NOT_PERFORMED` claim.
+The later follow-up found that Windows no longer enumerated COM4/COM5. The
+bounded connection observation therefore remains valid only for its measured
+window and does not establish long-duration stability.
 
 An isolated Chrome fault-presentation run then exercised 409, 413, 429, and
 500 responses through the real Dashboard UI. Every case rendered its exact

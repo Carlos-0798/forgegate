@@ -49,6 +49,21 @@
     "rts_enabled": false,
     "elapsed_seconds": 19.05
   },
+  "follow_up_observation": {
+    "captured_at": "2026-09-05T03:21:27.5396725Z",
+    "application_uart_present": false,
+    "debug_interface_present": false,
+    "windows_problem_code": 45,
+    "dotnet_port_samples": [
+      [],
+      [],
+      []
+    ],
+    "sample_interval_seconds": 2,
+    "device_rescan": "NOT_PERFORMED_ACCESS_DENIED",
+    "dashboard_health_status": "ok",
+    "interpretation": "The board disconnected or lost USB enumeration after the bounded passing observation; long-duration connection stability is not established."
+  },
   "dashboard_observation": {
     "health_status": "ok",
     "forgegate_version": "0.1.0a1",
@@ -60,7 +75,7 @@
     "visible_limitation": "No hardware access or physical measurement is performed.",
     "candidate_rows_after_non_mutating_ui_test": 3
   },
-  "outcome": "PASS_LOCAL_USB_UART_CONNECTION_OBSERVATION",
+  "outcome": "PASS_BOUNDED_CONNECTION_OBSERVATION_THEN_DEVICE_NOT_PRESENT",
   "boundaries": {
     "firmware_written": false,
     "serial_command_sent": false,
