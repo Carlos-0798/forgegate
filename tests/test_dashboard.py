@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+import hashlib
 import json
 import re
 import shutil
@@ -157,6 +158,54 @@ def _activate_manager(manager: DashboardSessionManager) -> tuple[str, str]:
     assert polled.status == "AUTHENTICATED"
     assert dashboard_cookie is not None
     return started.activation_code, dashboard_cookie
+
+
+def test_dashboard_portfolio_capture_record_matches_retained_generic_assets(
+    repository_root: Path,
+) -> None:
+    evidence_path = (
+        repository_root / "reports" / "DASHBOARD_PORTFOLIO_CAPTURE_EVIDENCE_2026-09-04.json"
+    )
+    evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+
+    assert evidence["record_format"] == "forgegate-portfolio-capture-evidence-v1"
+    assert evidence["environment"]["evidence_level"] == "LOCAL_BROWSER_TEST"
+    assert evidence["fixture"]["classification"] == "GENERIC_EPHEMERAL_TEST_DATA"
+    assert evidence["fixture"]["candidate"]["status"] == "DRAFT"
+    assert evidence["fixture"]["candidate"]["evaluation_id"] is None
+    assert evidence["fixture"]["candidate"]["hardware_access"] == "NOT_PERFORMED"
+
+    validation = evidence["browser_validation_case"]
+    assert validation["actual"]["result"] == "PASS"
+    assert validation["actual"]["http_status"] == 422
+    assert validation["actual"]["error_code"] == "API_REQUEST_VALIDATION_FAILED"
+    assert validation["actual"]["candidate_count_before"] == 1
+    assert validation["actual"]["candidate_count_after"] == 1
+    assert validation["actual"]["audit_event_count_before"] == 2
+    assert validation["actual"]["audit_event_count_after"] == 2
+    assert evidence["cli_cross_check"]["invalid_candidate_present"] is False
+
+    gallery = (repository_root / "docs" / "PORTFOLIO_EVIDENCE.md").read_text(encoding="utf-8")
+    readme = (repository_root / "README.md").read_text(encoding="utf-8")
+    for asset in evidence["assets"]:
+        payload = (repository_root / asset["path"]).read_bytes()
+        assert len(payload) == asset["bytes"]
+        assert hashlib.sha256(payload).hexdigest() == asset["sha256"]
+        assert asset["path"].endswith(".jpg")
+        assert asset["media_type"] == "image/jpeg"
+        assert payload.startswith(b"\xff\xd8\xff")
+        assert Path(asset["path"]).name in gallery
+
+    assert "docs/PORTFOLIO_EVIDENCE.md" in readme
+    assert "docs/assets/forgegate-dashboard-overview.jpg" in readme
+    assert "docs/assets/forgegate-dashboard-candidate-detail.jpg" in readme
+
+    boundaries = evidence["boundaries"]
+    assert boundaries["private_key_or_token_visible"] is False
+    assert boundaries["personal_data_used"] is False
+    assert boundaries["hardware_access"] == "NOT_PERFORMED"
+    assert boundaries["production_readiness_proven"] is False
+    assert boundaries["public_release_authorized"] is False
 
 
 def test_dashboard_static_assets_headers_and_contract_boundary(

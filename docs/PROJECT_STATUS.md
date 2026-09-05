@@ -356,7 +356,7 @@
   source/wheel inclusion checks, locked build dependencies, and CI drift gates;
 - separate deterministic Dashboard BFF OpenAPI export with explicit operation
   IDs, committed-byte drift detection, and installed-wheel comparison;
-- 39 focused Dashboard tests plus real Microsoft Edge and Chrome keyboard/focus
+- 40 focused Dashboard tests plus real Microsoft Edge and Chrome keyboard/focus
   operation, complete 129-record cursor pagination, browser-rendered 422
   recovery, and Chrome/in-app-browser 390 px responsive/clean-console runs
   using generic local data;
@@ -398,9 +398,9 @@ artifact payload/replay export, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 819 passed, 3 skipped (Windows symlink creation unavailable)
+- pytest: 820 passed, 3 skipped (Windows symlink creation unavailable)
 - branch-aware coverage: 95.20% across 9,565 statements and 2,634 branches
-- Dashboard focus: 39 passed; 98.49% branch-aware coverage across 557
+- Dashboard focus: 40 passed; 98.49% branch-aware coverage across 557
   statements and 106 branches
 - Dashboard browser checkpoint: Microsoft Edge and Chrome keyboard creation/
   read, modal Tab containment/Escape/focus return, 129-record six-page

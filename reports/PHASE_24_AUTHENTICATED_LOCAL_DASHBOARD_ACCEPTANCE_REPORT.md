@@ -53,9 +53,9 @@ The detailed input/output record is in
 
 | Check | Actual result | Boundary |
 |---|---|---|
-| Dashboard focus | 39 passed | BFF, activation/session, cursor pagination, assets, roles/scopes, client, CLI, and BFF contract |
+| Dashboard focus | 40 passed | BFF, activation/session, cursor pagination, assets/evidence integrity, roles/scopes, client, CLI, and BFF contract |
 | Dashboard package coverage | 98.49% | 557 statements, 106 branches |
-| Full repository suite | 819 passed, 3 skipped | Existing Windows symlink creation remains unavailable |
+| Full repository suite | 820 passed, 3 skipped | Existing Windows symlink creation remains unavailable |
 | Full branch-aware coverage | 95.20% | 9,565 statements, 2,634 branches |
 | Static quality | PASS | Ruff, formatting, strict mypy across 84 source/tool files |
 | Frontend static check | PASS | TypeScript strict mode |
@@ -96,7 +96,7 @@ was retained.
 | Chrome | Same core flow | Chrome passed activation, Overview, Projects, Candidates, focus, pagination, 422 recovery, valid creation/detail/audit, service-restart recovery, 390 × 844 layout, and clean-console checks | PASS |
 | Exact zoom matrix | Reachable actions/limitations at 100–200% | Browser zoom could not be set reliably by the available controller | NOT_RUN |
 | Screen reader/high contrast/Remote Desktop | Explicit manual evidence | Not executed | NOT_RUN |
-| Portfolio screenshot | Generic and claim-accurate retained capture | Retained `docs/assets/forgegate-dashboard-alpha.png` after visible-claim review; README explicitly limits the image to the local Alpha interaction surface | PASS |
+| Portfolio screenshots | Generic and claim-accurate retained captures | Retained the Chrome Overview, candidate, detail/audit, validation-error, and large-pagination JPEGs with an indexed evidence record; README and gallery explicitly limit them to the local Alpha interaction surface | PASS |
 
 ## Defects found and corrected during acceptance
 

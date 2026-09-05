@@ -4,7 +4,7 @@ include AGENTS.md
 include CHANGELOG.md
 include CONTRIBUTING.md
 include SECURITY.md
-recursive-include docs *.md *.svg *.png
+recursive-include docs *.md *.svg *.jpg
 include package.json
 include pnpm-lock.yaml
 recursive-include frontend *.html *.css *.ts *.json

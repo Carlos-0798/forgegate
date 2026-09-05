@@ -81,7 +81,7 @@
 | Authenticated local API | Ed25519 challenge, Bearer session, trust recheck | PASS — local host, loopback only |
 | User interaction acceptance | deterministic CLI plus authenticated REST smoke | PASS — 33/33 expected outputs; ephemeral identity/database; Swagger/ReDoc deliberately return 404 |
 | Local Web Dashboard design | architecture, UX requirements, threat model, acceptance matrix | DESIGN PASS — Phase 23 frozen; Phase 24 implementation preserves the defined same-origin boundary |
-| Authenticated local Web Dashboard | clean wheel, adversarial automation, Edge/Chrome, keyboard, focus, pagination, and zoom evidence | IMPLEMENTED / PARTIAL ACCEPTANCE — 39 focused tests, Edge and Chrome keyboard/focus, 129-record cursor pagination, 422 recovery, Chrome 390 px/restart, installed-wheel Edge read, and in-app-browser 390 px checks pass; exact zoom and assistive technology are `NOT_RUN` |
+| Authenticated local Web Dashboard | clean wheel, adversarial automation, Edge/Chrome, keyboard, focus, pagination, and zoom evidence | IMPLEMENTED / PARTIAL ACCEPTANCE — 40 focused tests, Edge and Chrome keyboard/focus, 129-record cursor pagination, 422 recovery, Chrome 390 px/restart, installed-wheel Edge read, and in-app-browser 390 px checks pass; exact zoom and assistive technology are `NOT_RUN` |
 | API role/project authorization | producer/operator and cross-project adversarial tests | PASS — exact session scopes; producer read-only |
 | Authenticated audit actor | API write/readback, event identity, token absence | PASS — successful writes only |
 | Session replay/expiry/capacity | one-time challenge, bounded memory, restart semantics | PASS — local host |

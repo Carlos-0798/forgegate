@@ -122,12 +122,19 @@ run:
   forbidden write);
 - high contrast, screen reader, and Remote Desktop.
 
-A generic-data Windows local-browser capture is now retained at
-`docs/assets/forgegate-dashboard-alpha.png`. Its README caption limits the
-claim to the implemented Alpha interaction surface and explicitly excludes
-hardware, production, and release-approval evidence. The source-distribution
-smoke test explicitly requires the PNG so packaged README rendering cannot
-silently lose the capture.
+Five generic-data Windows Chrome captures are retained under `docs/assets/`
+and indexed by `docs/PORTFOLIO_EVIDENCE.md`: authority/limitations, candidate
+list, candidate detail/audit, validation recovery, and the earlier large-data
+pagination fixture. Captions and the machine-readable capture record limit the
+claim to the implemented Alpha interaction surface and explicitly exclude
+hardware, evidence-authenticity, production, and release-approval evidence.
+The source-distribution smoke test explicitly requires every JPEG so packaged
+README rendering cannot silently lose the captures.
+
+The retention audit also found that the browser emits JPEG bytes by default;
+the earlier `.png` extension did not match its content. All retained browser
+captures now use `.jpg`, and an automated test binds each file's JPEG marker,
+byte length, and SHA-256 digest to the capture record.
 
 Two-tab stale-revision recovery remains not applicable until the Dashboard
 exposes a revision-mutating transition, binding, or evaluation command.

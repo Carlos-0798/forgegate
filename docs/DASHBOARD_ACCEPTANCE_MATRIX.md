@@ -98,7 +98,7 @@ as PASS, FAIL, or NOT_RUN; they are never inferred from Chromium automation.
 | FGD-M07 | NOT_APPLICABLE | No revision-mutating UI exists in this slice. |
 | FGD-M08 | PASS | Detail view visibly distinguished request completion, DRAFT, `NOT_EVALUATED`, and hardware `NOT_PERFORMED`. |
 | FGD-M09 | PASS | CLI and page copy require explicit service shutdown; closing a tab makes no shutdown claim. |
-| FGD-M10 | PASS | A generic-data Windows local-browser capture is retained at `docs/assets/forgegate-dashboard-alpha.png`; its README caption explicitly excludes hardware, production, and release-approval evidence. |
+| FGD-M10 | PASS | Generic-data Windows Chrome captures are retained as JPEG assets and indexed by `docs/PORTFOLIO_EVIDENCE.md`; captions and the machine-readable capture record explicitly exclude hardware, evidence-authenticity, production, and release-approval claims. |
 
 Additional environments: Microsoft Edge PASS for the recorded core, complete
 modal-focus, large-data, 422-recovery, and installed-wheel read paths; Chrome

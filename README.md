@@ -60,13 +60,13 @@ dependency.
 
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 819 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
+| Full Python suite | 820 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
 | Branch-aware coverage | 95.20% across 9,565 statements and 2,634 branches | Local host test |
 | Static quality | Ruff, formatting, and strict mypy passed across 84 source/tool files | Local host test |
 | Contracts | 41 document and 2 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
-| Dashboard automation | 39 focused tests passed; Dashboard package reached 98.49% branch-aware coverage | Local host test; security, session, cursor pagination, asset, BFF, contract, and CLI boundary |
+| Dashboard automation | 40 focused tests passed; Dashboard package reached 98.49% branch-aware coverage | Local host test; security, session, cursor pagination, asset/evidence integrity, BFF, contract, and CLI boundary |
 | Dashboard browser interaction | Edge and Chrome keyboard/focus, 129-record pagination, 390 px responsive, 422 recovery, and clean-console paths passed; installed-wheel Edge read passed | Windows local browser test; exact zoom matrix and assistive technology remain `NOT_RUN` |
 | Windows plugin controls | 18/18 clean-wheel controls passed with the fixed pure-Python fixture | Live local WSL2/Podman test; no general publisher or plugin trust claim |
 | Cross-platform CI | `verify.py`, `release_smoke.py`, and the generic Action smoke passed | [GitHub Actions run 33839976122](https://github.com/Carlos-0798/forgegate/actions/runs/33839976122); hosted CI did not run live Podman fixtures |
@@ -156,11 +156,17 @@ execution, assurance export, plugin execution, and administration remain
 visibly planned. Swagger UI and ReDoc stay disabled; the committed,
 drift-checked OpenAPI document remains the direct API reference.
 
-![ForgeGate local Dashboard showing the bounded release-candidate workspace](docs/assets/forgegate-dashboard-alpha.png)
+![ForgeGate local Dashboard showing service health, authenticated authority, and explicit evidence limitations](docs/assets/forgegate-dashboard-overview.jpg)
 
-The Dashboard image is a real Windows local-browser capture using generic
-acceptance-fixture records. It demonstrates the implemented Alpha interaction
-surface only; it is not hardware, production, or release-approval evidence.
+![ForgeGate local Dashboard separating candidate state, engineering decision, hardware claim, and append-only audit history](docs/assets/forgegate-dashboard-candidate-detail.jpg)
+
+Both Dashboard images are real Windows Chrome captures using one generic local
+fixture. The [portfolio evidence gallery](docs/PORTFOLIO_EVIDENCE.md) retains
+the candidate-list, strict-validation-error, and 129-record pagination images,
+plus exact sample inputs, output cross-checks, dimensions, SHA-256 digests, and
+claim boundaries. These captures demonstrate only the implemented Alpha
+interaction surface; they are not hardware, evidence-authenticity, production,
+or release-approval evidence.
 
 For plugin inspection, API authentication, candidate persistence, bundle
 signing, and GitHub gate commands, use the [CLI and workflow guide](docs/DEMO.md)

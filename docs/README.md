@@ -9,7 +9,8 @@ analysis, compatibility contracts, and historical acceptance evidence.
 2. [Verification matrix](VERIFICATION_MATRIX.md) — evidence level for each capability
 3. [Roadmap](ROADMAP.md) — completed and remaining acceptance gates
 4. [Reproducible interaction walkthrough](DEMO.md) — generic CLI/API examples with expected output
-5. [Security policy](../SECURITY.md) — supported scope and responsible reporting
+5. [Portfolio evidence gallery](PORTFOLIO_EVIDENCE.md) — retained screenshots, exact fixture data, hashes, and claim boundaries
+6. [Security policy](../SECURITY.md) — supported scope and responsible reporting
 
 ## Product and trust model
 
@@ -55,10 +56,11 @@ analysis, compatibility contracts, and historical acceptance evidence.
 
 These documents govern the implemented Phase 24 activation, Overview, Projects,
 and Candidates slice. The packaged frontend and browser-for-frontend session
-boundary are present; the acceptance matrix preserves the remaining Chrome,
-zoom, focus, error-state, and assistive-technology checks as `NOT_RUN` or
-partial rather than inferring full UI acceptance. A separate installed-wheel
-Edge read path passes.
+boundary are present. Edge and Chrome keyboard/focus, pagination, responsive,
+422 recovery, and clean-console paths pass; the acceptance matrix preserves the
+remaining exact zoom, uncommon browser-error, assistive-technology, and Remote
+Desktop checks as `NOT_RUN` or partial rather than inferring full UI
+acceptance. A separate installed-wheel Edge read path passes.
 
 ## CI and plugins
 
