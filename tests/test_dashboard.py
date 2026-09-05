@@ -191,6 +191,9 @@ def test_dashboard_static_assets_headers_and_contract_boundary(
     assert scripts
     assert all("Your Dashboard session expired" in script for script in scripts)
     assert all("--role ROLE" in script for script in scripts)
+    assert all("Candidate pages" in script for script in scripts)
+    assert all("Previous page" in script and "Next page" in script for script in scripts)
+    assert all("candidate-dialog-title" in script for script in scripts)
     assert not any(
         unsafe in script
         for script in scripts
@@ -351,6 +354,50 @@ def test_dashboard_project_candidate_replay_conflict_and_audit(
     assert conflict.json()["error"]["code"] == "STORE_IDEMPOTENCY_CONFLICT"
     assert [event["event_type"] for event in audit.json()["events"]] == ["candidate.created"]
     assert missing_scope.status_code == 403
+
+
+def test_dashboard_candidate_pages_are_bounded_and_cursor_complete(
+    tmp_path: Path,
+    repository_root: Path,
+) -> None:
+    with _dashboard_client(tmp_path, repository_root) as client:
+        activated = _activate(client)
+        created_ids = set()
+        for index in range(3):
+            response = client.post(
+                "/app/api/candidates",
+                headers={
+                    **ORIGIN_HEADER,
+                    "X-ForgeGate-CSRF": activated["csrf_token"],
+                    "Idempotency-Key": f"dashboard:candidate:page-{index}",
+                },
+                json=_candidate_payload(
+                    version=f"1.2.{index}",
+                    commit_sha=f"{index + 1:x}" * 40,
+                ),
+            )
+            assert response.status_code == 201, response.text
+            created_ids.add(response.json()["candidate_id"])
+
+        first = client.get("/app/api/projects/sample-api/candidates?limit=2")
+        assert first.status_code == 200, first.text
+        first_document = first.json()
+        second = client.get(
+            "/app/api/projects/sample-api/candidates",
+            params={
+                "limit": 2,
+                "after_candidate_id": first_document["next_after_candidate_id"],
+            },
+        )
+        assert second.status_code == 200, second.text
+        second_document = second.json()
+
+    first_ids = {item["candidate_id"] for item in first_document["candidates"]}
+    second_ids = {item["candidate_id"] for item in second_document["candidates"]}
+    assert len(first_ids) == 2 and first_document["has_more"] is True
+    assert len(second_ids) == 1 and second_document["has_more"] is False
+    assert first_ids.isdisjoint(second_ids)
+    assert first_ids | second_ids == created_ids
 
 
 def test_dashboard_producer_is_read_only_and_cannot_query_audit(

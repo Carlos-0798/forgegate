@@ -2,7 +2,7 @@
 
 - Product: ForgeGate Windows Local Alpha
 - Surface: authenticated loopback Web Dashboard
-- Browser: Codex in-app browser on Windows
+- Browsers: Microsoft Edge and Codex in-app browser on Windows
 - Fixture: generic `sample-api` project and local ephemeral acceptance identity
 - Hardware access: **NOT_PERFORMED**
 - Remote/GitHub action: **NOT_PERFORMED**
@@ -40,6 +40,13 @@ production, public-release, evidence-authenticity, or remote-deployment proof.
 | Natural expiry | 60-second session | Automatic clear and comprehensible recovery | At expiry, identity/project/candidate state disappeared and the activation page announced expiry | PASS |
 | Service restart | Restart server while browser session remains | Next protected request returns to activation | A 401 cleared stale protected state and rendered the activation page without being overwritten | PASS |
 | Role guidance | Start activation | Example must not imply operator-only use | Command uses `--role ROLE`; supporting copy says producer or operator | PASS |
+| Modal containment | Shift+Tab from first field; Tab from last action | Focus remains inside the modal | Edge moved Version → Review request → Version without escaping after the correction | PASS |
+| Escape and return | Press Escape from the first field | Dialog closes and visible focus returns to its opener | Dialog count became zero; Create candidate regained focus with a solid focus outline | PASS |
+| Large candidate set | Traverse all pages for 129 candidates | Every row reachable once; controls terminate safely | Six pages contained 25/25/25/25/25/4 rows, 129 unique versions, zero cross-page duplicates, and disabled Next on the last page | PASS |
+| Server validation | Track `INVALID!` with otherwise valid fields | 422 is distinct, actionable, and non-mutating | `API_REQUEST_VALIDATION_FAILED`, safe next step, and request ID rendered; total remained unchanged | PASS |
+| Follow-up valid create | Version `ui-acceptance-20260904`; SHA `3333333333333333333333333333333333333333`; branch `acceptance/browser-chain`; track `pull-request` | One exact DRAFT and audit event | Created `cand-9c77d4d795e4d4ec5f12c004`; revision `0`, `NOT_EVALUATED`, profile `1`, hardware `NOT_PERFORMED`, one `candidate.created` | PASS |
+| Narrow large-data view | 390 × 844 viewport with 25-row page | No page-level horizontal overflow; paging remains reachable | Document scroll width 375 px at 390 px viewport; both paging controls remained visible | PASS |
+| Browser console | Complete follow-up workflows | No application warning/error | Edge and in-app browser warning/error logs were empty | PASS |
 
 ## Persisted-output cross-check
 
@@ -56,6 +63,10 @@ database and returned:
 The rejected unknown-track request produced no fourth row. The later valid
 request produced the only fourth row. The original fixture database was not
 modified; the run used a copied ignored work database.
+
+The separate large-data fixture began with 128 candidates. The rejected 422
+sample did not change that count. The follow-up valid sample produced the sole
+129th candidate and exactly one matching audit event.
 
 ## Defect discovered and corrected
 
@@ -74,19 +85,32 @@ handled 401, and provides distinct expired/session-ended guidance. A repeated
 The run also replaced the activation example's hard-coded `operator` role with
 an explicit `ROLE` placeholder so the producer path is not misleading.
 
+The remaining acceptance run found two additional frontend defects. The
+candidate page discarded the service cursor after its first 100 rows, so later
+records were unreachable. It now exposes bounded 25-row Previous/Next pages,
+resets cursor history at session/project boundaries, and announces the page.
+Edge also showed that reverse Tab could escape from the first modal field to
+the page body. An explicit two-direction focus trap, accessible dialog name,
+Escape handler, and opener-focus restoration now pass the repeated keyboard
+run.
+
 ## Remaining manual boundary
 
 The following items remain `NOT_RUN` or partial and are not inferred from this
 run:
 
 - Chrome core flow and the Edge/Chrome 100–200% exact zoom matrix;
-- full modal Tab containment and an observable Escape-key run (explicit Cancel
-  focus return passed, but the available controller did not produce an
-  observable Escape event);
-- browser-driven 403, 409, 413, 422, 429, and 500 rendering;
-- bounded-large-data visual review, high contrast, screen reader, and Remote
-  Desktop;
-- a retained portfolio screenshot.
+- browser-driven 409, 413, 429, and 500 rendering (401, 404, and 422 now have
+  browser records; producer authority prevents the normal UI from issuing a
+  forbidden write);
+- high contrast, screen reader, and Remote Desktop.
+
+A generic-data Windows local-browser capture is now retained at
+`docs/assets/forgegate-dashboard-alpha.png`. Its README caption limits the
+claim to the implemented Alpha interaction surface and explicitly excludes
+hardware, production, and release-approval evidence. The source-distribution
+smoke test explicitly requires the PNG so packaged README rendering cannot
+silently lose the capture.
 
 Two-tab stale-revision recovery remains not applicable until the Dashboard
 exposes a revision-mutating transition, binding, or evaluation command.

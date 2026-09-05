@@ -5,7 +5,8 @@
 This matrix defines the gate for the implemented narrow local Web Dashboard.
 The Phase 24 implementation and automated boundary are present, but the full
 manual cross-browser exit gate is not yet accepted. Design completion, unit
-coverage, clean packaging, and one browser run remain separate evidence.
+coverage, clean packaging, Edge focus/large-data execution, and an unexecuted
+Chrome/assistive-technology matrix remain separate evidence.
 
 ## Phase 23 design gate
 
@@ -80,31 +81,32 @@ as PASS, FAIL, or NOT_RUN; they are never inferred from Chromium automation.
 | FGD-A11 | PASS | Structural/response checks and the inspected browser DOM/console exposed no key, Bearer token, signature, or persistent credential store. |
 | FGD-A12 | PASS | Automation plus explicit logout, natural 60-second expiry, and service-restart/401 browser runs clear protected state and return to activation. Manual administrator revocation remains a separate unexecuted scenario. |
 | FGD-A13–A14 | PASS | Producer write/audit denial and exact project-scope enforcement pass. |
-| FGD-A15–A19 | PASS | Bounded service queries, exact detail/create/audit, replay, and changed-payload conflict pass automation; one reviewed create path passed in Edge. |
+| FGD-A15–A19 | PASS | Bounded service queries, exact detail/create/audit, replay, and changed-payload conflict pass automation; Edge traversed all six pages of a 129-record set with zero duplicate versions and performed another reviewed create/readback. |
 | FGD-A20 | NOT_APPLICABLE | This slice exposes no revision-mutating command; stale-revision UI becomes mandatory with the first such command. |
 | FGD-A21 | PASS | Edge refresh/back/forward retained three rows and issued no observed duplicate mutation. |
 | FGD-A22 | PASS | Dynamic values use text-node APIs only; executable HTML APIs/storage/service-worker/eval patterns are rejected by a committed asset test and CSP. |
-| FGD-A23 | PARTIAL | Browser runs now cover 401 recovery and the unknown-track 404 error with stable code, safe next step, and request ID; 403/409/413/422/429/500 are not all browser-driven. |
-| FGD-A24–A25 | PASS | UI separates request/candidate/decision/hardware/limitations and holds one bounded project/candidate page without persistent caches. |
+| FGD-A23 | PARTIAL | Browser runs cover 401 recovery, unknown-track 404, and strict-body 422 with stable code, safe next step, and request ID; 409/413/429/500 are not browser-driven. Producer authority prevents the normal UI from issuing a forbidden write. |
+| FGD-A24–A25 | PASS | UI separates request/candidate/decision/hardware/limitations and uses bounded 25-row cursor pages; six-page forward traversal and one backward page produced no duplicate or unreachable row. |
 | FGD-A26 | PASS | A separate generated Dashboard BFF OpenAPI document has explicit operation IDs, committed-byte drift checks, and installed-wheel comparison. |
 | FGD-A27 | PASS | Full verification and clean release smoke pass at this checkpoint. |
 | FGD-M01 | PASS | Initial loading and unauthenticated activation frame rendered without a blank/unfinished state. |
 | FGD-M02 | PASS | Microsoft Edge keyboard-only path covered activation, project/candidate navigation, review, confirmation, detail, and audit. |
-| FGD-M03 | PARTIAL | Logical initial/dialog focus and explicit Cancel return to Create candidate passed; complete Tab containment and an observable Escape-key run remain `NOT_RUN`. |
+| FGD-M03 | PASS | Edge kept Shift+Tab/Tab inside the dialog, Escape closed it, and visible focus returned to Create candidate; the dialog retained a semantic accessible name. |
 | FGD-M04 | NOT_RUN | Exact 100/125/150/175/200% browser zoom matrix was not executed. |
-| FGD-M05 | PARTIAL | Loading, empty, ordinary DRAFT data, and unknown-track error presentation passed; full status/error matrix and bounded-large-data visual state remain `NOT_RUN`. |
+| FGD-M05 | PASS | Loading, empty, ordinary DRAFT, 404/422 error recovery, and a 129-record six-page state remained distinguishable and recoverable; the broader A23 uncommon-error matrix remains partial. |
 | FGD-M06 | PASS | A 60-second session automatically removed identity/project/candidate state and announced expiry with a clear reactivation action. |
 | FGD-M07 | NOT_APPLICABLE | No revision-mutating UI exists in this slice. |
 | FGD-M08 | PASS | Detail view visibly distinguished request completion, DRAFT, `NOT_EVALUATED`, and hardware `NOT_PERFORMED`. |
 | FGD-M09 | PASS | CLI and page copy require explicit service shutdown; closing a tab makes no shutdown claim. |
-| FGD-M10 | NOT_RUN | The generic-data Dashboard was visually inspected, but no portfolio screenshot is retained. |
+| FGD-M10 | PASS | A generic-data Windows local-browser capture is retained at `docs/assets/forgegate-dashboard-alpha.png`; its README caption explicitly excludes hardware, production, and release-approval evidence. |
 
-Additional environments: Microsoft Edge PASS for the recorded core path and
-installed-wheel read path;
-in-app browser PASS for the 390 × 844 responsive check and the follow-up
-operator/producer input-output, logout, expiry, and restart flows. Chrome, high
-contrast, screen reader, Remote Desktop, Firefox, macOS, and Linux browser runs
-are `NOT_RUN`.
+Additional environments: Microsoft Edge PASS for the recorded core, complete
+modal-focus, large-data, 422-recovery, and installed-wheel read paths; in-app
+browser PASS for the 390 × 844 responsive/large-page check and the follow-up
+operator/producer input-output, logout, expiry, and restart flows. Chrome is
+installed with its enabled integration but was not running, so no Chrome result
+is inferred. Exact zoom, high contrast, screen reader, Remote Desktop, Firefox,
+macOS, and Linux browser runs are `NOT_RUN`.
 
 The exact follow-up samples and persisted-output cross-check are recorded in
 `reports/PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md`.

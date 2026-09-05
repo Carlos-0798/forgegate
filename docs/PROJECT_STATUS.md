@@ -356,8 +356,11 @@
   source/wheel inclusion checks, locked build dependencies, and CI drift gates;
 - separate deterministic Dashboard BFF OpenAPI export with explicit operation
   IDs, committed-byte drift detection, and installed-wheel comparison;
-- 38 focused Dashboard tests plus real Microsoft Edge keyboard operation and an
-  in-app-browser 390 px responsive/clean-console run using generic local data.
+- 39 focused Dashboard tests plus real Microsoft Edge keyboard/focus operation,
+  complete 129-record cursor pagination, browser-rendered 422 recovery, and an
+  in-app-browser 390 px responsive/clean-console run using generic local data;
+- a retained generic-data Windows Dashboard screenshot with explicit Alpha,
+  non-hardware, non-production claim boundaries and verified sdist inclusion.
 
 ## Designed, not implemented
 
@@ -394,14 +397,15 @@ artifact payload/replay export, and hardware access.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 818 passed, 3 skipped (Windows symlink creation unavailable)
+- pytest: 819 passed, 3 skipped (Windows symlink creation unavailable)
 - branch-aware coverage: 95.20% across 9,565 statements and 2,634 branches
-- Dashboard focus: 38 passed; 98.49% branch-aware coverage across 557
+- Dashboard focus: 39 passed; 98.49% branch-aware coverage across 557
   statements and 106 branches
-- Dashboard browser checkpoint: Microsoft Edge complete keyboard creation/read
-  path PASS; installed-wheel Edge read path PASS; in-app-browser 390 px
-  responsive and console check PASS; Chrome, exact zoom, and assistive
-  technology `NOT_RUN`
+- Dashboard browser checkpoint: Microsoft Edge keyboard creation/read, modal
+  Tab containment/Escape/focus return, 129-record six-page traversal, and 422
+  recovery PASS; installed-wheel Edge read and in-app-browser 390 px
+  responsive/clean-console checks plus generic portfolio capture PASS; Chrome,
+  exact zoom, and assistive technology `NOT_RUN`
 - Plugin execution contract focus: 8 passed across plan authority, protocol
   sequencing, legal transitions, terminal replay, resource limits, JSON
   loading, and content-derived identity; no process started

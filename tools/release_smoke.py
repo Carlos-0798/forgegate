@@ -36,6 +36,7 @@ REQUIRED_SDIST_PATHS = (
     "docs/VERIFICATION_MATRIX.md",
     "docs/DASHBOARD_ACCEPTANCE_MATRIX.md",
     "docs/assets/forgegate-cli-demo.svg",
+    "docs/assets/forgegate-dashboard-alpha.png",
     "docs/architecture/ARTIFACT_AND_JUNIT_SLICE.md",
     "docs/architecture/BENCHMARK_JSON_COLLECTOR.md",
     "docs/architecture/COVERAGE_COLLECTORS.md",

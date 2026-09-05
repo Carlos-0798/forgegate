@@ -122,6 +122,8 @@ let session: DashboardSession | null = null;
 let currentRoute: Route = routeFromHash();
 let projects: RegisteredProject[] = [];
 let selectedProjectId: string | null = null;
+let candidateCursor: string | null = null;
+let candidateCursorHistory: Array<string | null> = [];
 let activationTimer: number | null = null;
 let sessionExpiryTimer: number | null = null;
 
@@ -140,6 +142,31 @@ function button(text: string, className = "button secondary"): HTMLButtonElement
   const node = el("button", className, text);
   node.type = "button";
   return node;
+}
+
+function resetCandidatePagination(): void {
+  candidateCursor = null;
+  candidateCursorHistory = [];
+}
+
+function keepFocusInsideDialog(dialog: HTMLDialogElement, event: KeyboardEvent): void {
+  if (event.key !== "Tab") return;
+  const focusable = Array.from(
+    dialog.querySelectorAll<HTMLElement>(
+      'button:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])'
+    )
+  );
+  const first = focusable[0];
+  const last = focusable.at(-1);
+  if (first === undefined || last === undefined) return;
+  const active = document.activeElement;
+  if (event.shiftKey && (active === first || !dialog.contains(active))) {
+    event.preventDefault();
+    last.focus();
+  } else if (!event.shiftKey && (active === last || !dialog.contains(active))) {
+    event.preventDefault();
+    first.focus();
+  }
 }
 
 function routeFromHash(): Route {
@@ -334,6 +361,7 @@ function renderActivation(notice?: string): void {
   session = null;
   projects = [];
   selectedProjectId = null;
+  resetCandidatePagination();
   const main = el("main", "activation-shell");
   main.id = "workspace";
   main.tabIndex = -1;
@@ -540,6 +568,7 @@ async function renderProjects(): Promise<void> {
         const openCandidates = button("Open candidates", "button secondary");
         openCandidates.addEventListener("click", () => {
           selectedProjectId = project.project_id;
+          resetCandidatePagination();
           window.location.hash = "#/candidates";
         });
         card.append(heading, details, openCandidates);
@@ -581,13 +610,14 @@ async function renderCandidates(): Promise<void> {
     }
     selector.addEventListener("change", () => {
       selectedProjectId = selector.value;
+      resetCandidatePagination();
       void renderCandidates();
     });
     selectorWrap.append(selector);
     toolbar.append(selectorWrap);
     if (session?.principal.role === "operator") {
       const create = button("Create candidate", "button primary");
-      create.addEventListener("click", () => openCandidateDialog(main));
+      create.addEventListener("click", () => openCandidateDialog(main, create));
       toolbar.append(create);
     } else {
       const readOnly = el("p", "muted", "Producer sessions are read-only.");
@@ -598,16 +628,61 @@ async function renderCandidates(): Promise<void> {
     const projectId = selectedProjectId ?? visible[0]?.project_id;
     if (projectId === undefined) return;
     selectedProjectId = projectId;
-    const result = await api<CandidatePage>(`/app/api/projects/${encodeURIComponent(projectId)}/candidates?limit=100`);
+    const query = new URLSearchParams({ limit: "25" });
+    if (candidateCursor !== null) query.set("after_candidate_id", candidateCursor);
+    const result = await api<CandidatePage>(
+      `/app/api/projects/${encodeURIComponent(projectId)}/candidates?${query.toString()}`
+    );
     if (result.candidates.length === 0) {
-      main.append(emptyState("No candidates yet", "Create the first reviewed candidate request for this project."));
+      main.append(
+        emptyState(
+          candidateCursor === null ? "No candidates yet" : "No candidates on this page",
+          candidateCursor === null
+            ? "Create the first reviewed candidate request for this project."
+            : "Return to the previous page and reload the authoritative list."
+        )
+      );
     } else {
       main.append(candidateTable(result.candidates, main));
     }
+    main.append(candidatePager(result));
   } catch (error) {
     if (handleProtectedProblem(main, error, "Reload the candidate list and confirm the selected project scope.")) return;
   }
   shell(main);
+}
+
+function candidatePager(result: CandidatePage): HTMLElement {
+  const pager = el("nav", "pager");
+  pager.setAttribute("aria-label", "Candidate pages");
+  const status = el(
+    "p",
+    "pager-status",
+    `Page ${candidateCursorHistory.length + 1} · ${result.candidates.length} candidates shown`
+  );
+  status.setAttribute("aria-live", "polite");
+  const controls = el("div", "pager-actions");
+  const previous = button("Previous page", "button quiet");
+  previous.disabled = candidateCursorHistory.length === 0;
+  previous.addEventListener("click", () => {
+    previous.disabled = true;
+    next.disabled = true;
+    candidateCursor = candidateCursorHistory.pop() ?? null;
+    void renderCandidates();
+  });
+  const next = button("Next page", "button secondary");
+  next.disabled = !result.has_more || result.next_after_candidate_id === null;
+  next.addEventListener("click", () => {
+    if (result.next_after_candidate_id === null) return;
+    previous.disabled = true;
+    next.disabled = true;
+    candidateCursorHistory.push(candidateCursor);
+    candidateCursor = result.next_after_candidate_id;
+    void renderCandidates();
+  });
+  controls.append(previous, next);
+  pager.append(status, controls);
+  return pager;
 }
 
 function candidateTable(candidates: Candidate[], main: HTMLElement): HTMLElement {
@@ -643,11 +718,14 @@ function candidateTable(candidates: Candidate[], main: HTMLElement): HTMLElement
   return wrapper;
 }
 
-function openCandidateDialog(main: HTMLElement): void {
+function openCandidateDialog(main: HTMLElement, returnFocus?: HTMLElement): void {
   const dialog = el("dialog", "review-dialog");
+  dialog.setAttribute("aria-labelledby", "candidate-dialog-title");
   const form = el("form", "candidate-form");
   form.method = "dialog";
-  form.append(el("p", "eyebrow", "DRAFT REQUEST"), el("h2", undefined, "Create release candidate"), el("p", "muted", "Client checks guide this draft. ForgeGate remains authoritative."));
+  const heading = el("h2", undefined, "Create release candidate");
+  heading.id = "candidate-dialog-title";
+  form.append(el("p", "eyebrow", "DRAFT REQUEST"), heading, el("p", "muted", "Client checks guide this draft. ForgeGate remains authoritative."));
   const version = field("Version", "version", "1.0.0", "text", true);
   const commit = field("Commit SHA", "commit", "40 or 64 lowercase hexadecimal characters", "text", true);
   commit.input.addEventListener("input", () => commit.input.setCustomValidity(""));
@@ -674,13 +752,21 @@ function openCandidateDialog(main: HTMLElement): void {
       return;
     }
     commit.input.setCustomValidity("");
-    renderCandidateReview(dialog, values);
+    renderCandidateReview(dialog, values, returnFocus);
   });
   controls.append(cancel, review);
   form.append(controls);
   dialog.append(form);
   main.append(dialog);
-  dialog.addEventListener("close", () => dialog.remove(), { once: true });
+  dialog.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    dialog.close();
+  });
+  dialog.addEventListener("keydown", (event) => keepFocusInsideDialog(dialog, event));
+  dialog.addEventListener("close", () => {
+    dialog.remove();
+    if (returnFocus?.isConnected) returnFocus.focus();
+  }, { once: true });
   dialog.showModal();
   version.input.focus();
 }
@@ -701,9 +787,15 @@ function field(label: string, name: string, placeholder: string, type: string, r
   return { wrapper, input };
 }
 
-function renderCandidateReview(dialog: HTMLDialogElement, values: Record<string, string>): void {
+function renderCandidateReview(
+  dialog: HTMLDialogElement,
+  values: Record<string, string>,
+  returnFocus?: HTMLElement
+): void {
   const review = el("section", "review-panel");
-  review.append(el("p", "eyebrow", "REVIEWED COMMAND"), el("h2", undefined, "Confirm one durable write"), el("p", "muted", "A successful request creates one DRAFT candidate and one append-only audit event. It does not collect evidence or make a release decision."));
+  const heading = el("h2", undefined, "Confirm one durable write");
+  heading.id = "candidate-dialog-title";
+  review.append(el("p", "eyebrow", "REVIEWED COMMAND"), heading, el("p", "muted", "A successful request creates one DRAFT candidate and one append-only audit event. It does not collect evidence or make a release decision."));
   const details = el("dl", "definition-list");
   details.append(
     definition("Project", values.project_id ?? ""),
@@ -720,7 +812,7 @@ function renderCandidateReview(dialog: HTMLDialogElement, values: Record<string,
   back.addEventListener("click", () => {
     dialog.close();
     const workspace = document.querySelector<HTMLElement>("#workspace");
-    if (workspace !== null) openCandidateDialog(workspace);
+    if (workspace !== null) openCandidateDialog(workspace, returnFocus);
   });
   const confirm = button("Confirm creation", "button primary");
   const idempotencyKey = `dashboard:candidate:${crypto.randomUUID()}`;
@@ -742,6 +834,7 @@ function renderCandidateReview(dialog: HTMLDialogElement, values: Record<string,
       const done = button("Inspect candidate", "button primary");
       done.addEventListener("click", async () => {
         dialog.close();
+        resetCandidatePagination();
         await renderCandidates();
         const workspace = document.querySelector<HTMLElement>("#workspace");
         if (workspace !== null) void showCandidateDetail(workspace, created.candidate_id);

@@ -60,14 +60,14 @@ dependency.
 
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 818 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
+| Full Python suite | 819 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
 | Branch-aware coverage | 95.20% across 9,565 statements and 2,634 branches | Local host test |
 | Static quality | Ruff, formatting, and strict mypy passed across 84 source/tool files | Local host test |
 | Contracts | 41 document and 2 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
-| Dashboard automation | 38 focused tests passed; Dashboard package reached 98.49% branch-aware coverage | Local host test; security, session, asset, BFF, contract, and CLI boundary |
-| Dashboard browser interaction | Core keyboard workflow passed in Microsoft Edge; an installed-wheel Edge read path, 390 px responsive check, and clean checkout-browser console passed | Windows local browser test; Chrome, exact zoom matrix, and assistive technology remain `NOT_RUN` |
+| Dashboard automation | 39 focused tests passed; Dashboard package reached 98.49% branch-aware coverage | Local host test; security, session, cursor pagination, asset, BFF, contract, and CLI boundary |
+| Dashboard browser interaction | Edge keyboard/focus and 129-record pagination paths passed; installed-wheel Edge read, 390 px responsive, 422 recovery, and clean-console checks passed | Windows local browser test; Chrome, exact zoom matrix, and assistive technology remain `NOT_RUN` |
 | Windows plugin controls | 18/18 clean-wheel controls passed with the fixed pure-Python fixture | Live local WSL2/Podman test; no general publisher or plugin trust claim |
 | Cross-platform CI | `verify.py`, `release_smoke.py`, and the generic Action smoke passed | [GitHub Actions run 33839976122](https://github.com/Carlos-0798/forgegate/actions/runs/33839976122); hosted CI did not run live Podman fixtures |
 | Hardware/device behavior | Not exercised by ForgeGate | Out of scope |
@@ -156,6 +156,12 @@ execution, assurance export, plugin execution, and administration remain
 visibly planned. Swagger UI and ReDoc stay disabled; the committed,
 drift-checked OpenAPI document remains the direct API reference.
 
+![ForgeGate local Dashboard showing the bounded release-candidate workspace](docs/assets/forgegate-dashboard-alpha.png)
+
+The Dashboard image is a real Windows local-browser capture using generic
+acceptance-fixture records. It demonstrates the implemented Alpha interaction
+surface only; it is not hardware, production, or release-approval evidence.
+
 For plugin inspection, API authentication, candidate persistence, bundle
 signing, and GitHub gate commands, use the [CLI and workflow guide](docs/DEMO.md)
 and architecture index rather than copying unreviewed commands from screenshots.
@@ -206,8 +212,8 @@ These constraints are product boundaries, not implied future results. See the
 
 The next maturity gates are:
 
-1. finish the remaining cross-browser, zoom, focus, error-state, and installed-
-   wheel browser checks for the implemented Dashboard slice;
+1. finish the remaining Chrome, exact-zoom, assistive-technology, and uncommon
+   browser-error checks for the implemented Dashboard slice;
 2. freeze a public MSP430 report contract before adding an optional collector;
 3. establish publisher provenance and broader hostile-plugin compatibility;
 4. design TLS/proxy identity, durable security state, retention/export, and
