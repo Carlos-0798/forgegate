@@ -2,15 +2,16 @@
 
 - Date: 2026-09-05
 - Version: 0.1.0a1
-- Stage: Phase 26 read-only Dashboard assurance-review slice implemented and
-  browser-tested; Phase 25 owner-assisted unplug/replug completed, while Phase
-  24's broader exact-zoom/assistive-technology gate remains partially complete
+- Stage: Phase 27 reviewed Dashboard workflow and artifact-only MSP430 report
+  collector implemented and browser/package tested; Windows high contrast,
+  spoken Narrator output, and a real Remote Desktop run remain environment gates
 - Product maturity: testable Windows Alpha with generic initialization,
   local CLI/API release-assurance flow, software-peer collection, audited
   aggregation, durable lifecycle binding, offline GitHub gating, and a
   live-tested Windows-only brokered plugin path, a narrow authenticated local
-  Dashboard with Evidence/Decision/Assurance review, and an optional read-only
-  MSP430 status monitor; not production-ready
+  Dashboard with reviewed lifecycle/evidence/evaluation/attestation actions,
+  an optional read-only MSP430 status monitor, and a separate strict MSP430
+  validation-report collector; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
 - Hardware evidence: owner-authorized input-only COM4 UART status observation;
   no command, firmware/debug action, physical measurement validation, release
@@ -357,8 +358,8 @@
   attestation/bundle identity, and explicit limitation/evidence labels;
 - content-hashed deterministic frontend assets, canonical SHA-256 inventory,
   source/wheel inclusion checks, locked build dependencies, and CI drift gates;
-- separate deterministic Dashboard BFF OpenAPI export with explicit operation
-  IDs, committed-byte drift detection, and installed-wheel comparison;
+- separate deterministic Dashboard BFF OpenAPI export with 17 explicit
+  operation IDs, committed-byte drift detection, and installed-wheel comparison;
 - optional `msp430` dependency and domain-neutral live-status provider boundary;
   an independently implemented MSP430 UART v1 parser validates ASCII framing,
   128-byte lines, field ranges, and CRC-16/CCITT-FALSE without importing the
@@ -373,23 +374,36 @@
   retention and a visible warning that device reports are not ForgeGate diagnoses;
 - one project-scoped, authenticated assurance-review BFF response joining the
   retained candidate history, evidence binding, exact policy material,
-  evaluation, attestation, and portable bundle identity without a new browser
-  mutation surface;
-- read-only Evidence, Decision, and Assurance pages with candidate-bound deep
+  evaluation, attestation, and portable bundle identity for authoritative
+  post-command review;
+- Evidence, Decision, and Assurance pages with candidate-bound deep
   links, exact expected/actual rule values, referenced evidence IDs, lifecycle
   transitions, missing-stage states, and explicit assurance limitations;
-- 45 focused Dashboard tests plus real Microsoft Edge and Chrome keyboard/focus
+- operator-only same-origin Dashboard commands for expected-revision lifecycle
+  transitions, immutable evidence binding, frozen-policy evaluation, and
+  deterministic terminal attestation generation, each behind reviewed
+  confirmation, CSRF, project scope, and authoritative reload;
+- bounded browser-local JSON selection that sends complete evidence-assembly or
+  policy-material documents without exposing a client path to the server;
+- 46 focused Dashboard tests plus real Microsoft Edge and Chrome keyboard/focus
   operation, complete 129-record cursor pagination, browser-rendered
   409/413/422/429/500 recovery, and Chrome/in-app-browser 390 px
   responsive/clean-console runs using generic local data; uncommon statuses
   use a zero-write test-only presentation harness;
-- a retained generic-data Windows Dashboard screenshot with explicit Alpha,
-  non-hardware, non-production claim boundaries and verified sdist inclusion.
+- native Edge 100/125/150/175/200% zoom with no root horizontal overflow,
+  reachable reviewed actions, and a keyboard-contained 200% confirmation
+  dialog; bounded Narrator keyboard/semantic testing without spoken capture;
+- strict `forgegate.msp430-validation-report.v1` artifact loading and
+  normalization with exact commit, hardware-context, source-hash, correction,
+  and evidence-level checks, no serial/device access, and no trust promotion;
+- retained generic-data Windows Dashboard workflow and exact-zoom screenshots
+  with explicit Alpha, non-hardware, non-production claim boundaries and
+  verified sdist inclusion.
 
 ## Designed, not implemented
 
-- later Dashboard evidence import/collection, policy execution, assurance export, plugin
-  execution, session/trust administration, and revision-mutating workflows;
+- later automatic Dashboard evidence collection, assurance export, plugin
+  execution, and session/trust administration;
 - publisher signatures/trust, remote plugin acquisition, automatic install,
   and an independent production plugin repository;
 - native-extension and separately packaged plugin-dependency support;
@@ -399,9 +413,9 @@
 
 ## Not implemented
 
-full Dashboard exact-zoom/assistive-technology acceptance; browser-side
-evidence collection, policy execution, attestation/export, and plugin/admin
-commands; non-loopback/TLS
+full Dashboard assistive-technology acceptance (high contrast, spoken Narrator
+output, and a real Remote Desktop session); automatic browser-side evidence
+collection, attestation/export, and plugin/admin commands; non-loopback/TLS
 API deployment, reverse-proxy trust, hostile-local-user
 defense, managed online revocation, durable/distributed sessions, per-client
 network rate controls, distributed rate state, HTTP artifact collection and
@@ -412,7 +426,7 @@ plugins, Linux/macOS plugin execution,
 custom GitHub Checks/PR annotations/API writes,
 managed/encrypted/hardware-backed key custody, trusted timestamps, online
 revocation, CI workload identity federation, database authorization,
-backup/repair, MSP430 evidence collector and retained telemetry history,
+backup/repair, retained MSP430 telemetry history,
 Studio Phase 5
 human-readable report ingestion, authenticated provenance/signatures, source
 artifact payload/replay export, hardware control, and physical measurement
@@ -424,20 +438,21 @@ validation.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 843 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.33% across 9,958 statements and 2,714 branches
+- pytest: 878 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.23% across 10,389 statements and 2,810 branches
 - MSP430 live-status focus: 17 passed across parser, state classification,
   staleness, invalid/recovery, counters, dependency/I/O failure, and input-only
   monitor lifecycle
-- Dashboard focus: 45 passed; 98.31% branch-aware coverage across 601
+- Dashboard focus: 46 passed; 98.37% branch-aware coverage across 626
   statements and 110 branches
 - Dashboard browser checkpoint: Microsoft Edge and Chrome keyboard creation/
   read, modal Tab containment/Escape/focus return, 129-record six-page
   traversal, and 409/413/422/429/500 recovery PASS; Chrome service-restart
   recovery and 390 px responsive/clean-console checks, installed-wheel Edge
   read, in-app-browser 390 px check, and generic portfolio capture PASS;
-  uncommon statuses use a zero-write test-only presentation harness; exact
-  zoom and assistive technology `NOT_RUN`
+  uncommon statuses use a zero-write test-only presentation harness; native
+  Edge 100–200% zoom PASS, bounded Narrator keyboard/semantic checks PASS,
+  while spoken output, high contrast, and a real Remote Desktop run remain open
 - MSP430 browser checkpoint: authenticated Devices page displayed connection
   `CONNECTED`, heartbeat `NORMAL`, device health `FAULT`, and flags `0015`;
   one-second polling resumed after Overview navigation, the status sequence
@@ -455,6 +470,13 @@ validation.
   `NORMAL`; `0015` decoded to DS18B20 missing, NTC unavailable/range, and
   INA219 communication, while 17 additional frames arrived with zero new
   protocol errors, gaps, or reconnects in the fresh process
+- Phase 27 browser checkpoint: one generic Edge candidate completed reviewed
+  DRAFT→COLLECTING→READY→EVALUATING→PASS→attestation writes with audit sequence
+  5–12; a mismatched-commit assembly was rejected before durable binding, and
+  two discovered presentation defects were corrected and retested
+- MSP430 validation-report collector focus: 34 passed across strict loading,
+  evidence mapping, commit/hardware/correction invariants, assembly integration,
+  CLI, Schema drift, and adversarial limits; no hardware was accessed
 - Plugin execution contract focus: 8 passed across plan authority, protocol
   sequencing, legal transitions, terminal replay, resource limits, JSON
   loading, and content-derived identity; no process started
@@ -479,9 +501,12 @@ validation.
 - committed JSON Schema, direct API OpenAPI, and Dashboard BFF OpenAPI drift
   checks: PASS
 - project/policy/candidate/transition example documents: VALID
-- forty-one canonical versioned document Schemas plus Benchmark and Analog
-  Validation artifact Schemas: drift-checked and parsed
+- forty-one canonical versioned document Schemas plus Benchmark, Analog
+  Validation, and MSP430 validation-report artifact Schemas: drift-checked and
+  parsed
 - complete sdist manifest and ForgeGate/sample-plugin wheel builds: PASS
+- clean-wheel MSP430 report collection, Dashboard 17-operation OpenAPI export,
+  installed-package workflow, optional `pyserial` install, and uninstall: PASS
 - Windows sandbox focus: 20 passed across probe failure isolation, client/server
   identity, rootless/local/WSL requirements, command controls, strict verifier
   JSON/output handling, public loading, and CLI behavior

@@ -59,6 +59,8 @@ from forgegate.collectors import (
     JUnitCollectionRequest,
     JUnitCollector,
     LcovCollector,
+    Msp430ValidationCollectionRequest,
+    Msp430ValidationReportCollector,
     SarifCollectionRequest,
     SarifCollector,
 )
@@ -1556,6 +1558,31 @@ def collect_analog_validation(
         typer.echo(f"ERROR: {exc}", err=True)
         raise typer.Exit(code=3) from exc
     _emit_collection(AnalogValidationResultCollector(registry).collect(request))
+
+
+@app.command("collect-msp430-validation")
+def collect_msp430_validation(
+    source_path: Annotated[str, typer.Argument(help="Artifact path relative to --root")],
+    commit: Annotated[str, typer.Option("--commit")],
+    collected_at: Annotated[str, typer.Option("--collected-at")],
+    root: Annotated[Path, typer.Option("--root", file_okay=False, resolve_path=True)] = Path("."),
+    trust: Annotated[EvidenceTrust, typer.Option("--trust")] = EvidenceTrust.UNSIGNED_LOCAL,
+    scope: Annotated[str, typer.Option("--scope")] = "msp430-validation",
+) -> None:
+    """Collect a versioned MSP430 validation report without reading or controlling hardware."""
+    try:
+        registry = ArtifactRegistry(root)
+        request = Msp430ValidationCollectionRequest(
+            source_path=source_path,
+            execution_context=ExecutionContext(commit_sha=commit),
+            collected_at=datetime.fromisoformat(collected_at.replace("Z", "+00:00")),
+            trust=trust,
+            scope=scope,
+        )
+    except (ArtifactBoundaryError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    _emit_collection(Msp430ValidationReportCollector(registry).collect(request))
 
 
 def _coverage_inputs(

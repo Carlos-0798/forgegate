@@ -2,8 +2,9 @@
 
 ## Status and scope
 
-This threat model governs the implemented Phase 24 local Dashboard slice,
-Phase 25 optional read-only live monitor, and Phase 26 assurance review.
+This threat model governs the implemented Phase 24 local Dashboard shell,
+Phase 25 optional read-only live monitor, Phase 26 assurance review, and Phase
+27 reviewed candidate write workflow.
 Origin/Host/CSRF, browser-bound activation, session, role/scope, header, static-
 asset, safe-rendering, and generated BFF-contract drift controls have local
 automated evidence. Portions of the manual browser exit gate remain incomplete,
@@ -60,7 +61,10 @@ user trustworthy.
 | Large retained evidence or policy result freezes the page | Keep the server response inside existing bounded parsing/storage contracts and render tables in fixed 25-row pages | Source/asset assertions and visible pager state |
 | Firmware fault labels are mistaken for diagnoses | Decode only the versioned UART v1 bit map, retain unknown bits, and state that labels are upstream device reports | Known/unknown-bit tests and live page wording |
 | Sensitive diagnostics leak | Stable code/request ID only; redact token, signature, key, absolute path, header, body, and traceback | Log/DOM/error-fixture scan |
-| Unsafe file import | No upload in first slice; later bounded staging contract, strict parsing, create-new publication, cleanup, and no server path input | Route absence plus future separate gate |
+| Unsafe evidence or policy import | Browser accepts one local JSON file below 3.9 MB, checks the exact schema and frozen candidate identity, sends no local path, and performs no automatic retry; the BFF repeats strict domain, hash, role, scope, and 4 MiB validation | Mismatch/oversize/strict-model tests plus real-browser 422 recovery and reviewed positive flow |
+| Tampered assembly identity or artifact receipt | Existing `EvidenceBundleAssembly` validation recomputes the assembly identity and verifies ordered evidence IDs, artifact membership, receipts, and warning disposition before the binding transaction | Domain and Dashboard BFF adversarial tests |
+| Policy substitution between review and evaluation | Imported material carries exact project profile ID/version, release track, policy bytes, artifact digest, and material fingerprint; server evaluates the submitted frozen document inside the existing transaction | Profile/track/material mismatch tests and exact policy evaluation readback |
+| Ambiguous failure causes an unsafe retry | 409/413/500 disable the submitted command; 429 retains one idempotency key through its cooldown; completion requires explicit authoritative reload | Focused BFF tests and browser presentation matrix |
 | Unbounded list or response exhausts UI | Existing cursor/limit contracts, bounded caches, table virtualization only when required | Maximum page and pagination tests |
 | Authentication activation is hijacked | One-time short expiry, browser binding, exact requested principal/scope review, non-secret display code with rate limits | replay, wrong-browser, expiry, and scope-mismatch tests |
 | Local server launched on unsafe address | Fixed loopback validation; wildcard/external addresses rejected | launch tests for IPv4/IPv6/wildcard cases |
@@ -103,9 +107,10 @@ them from the repository status, README, screenshots, or portfolio claims.
 
 ## Security exit gate
 
-The current candidate-creation write passes the automated controls below, but
-the complete Dashboard exit gate remains partial until every applicable item is
-recorded in the acceptance matrix:
+The current candidate creation, lifecycle, evidence-binding, evaluation, and
+attestation writes pass the automated controls below. Environment-specific
+manual checks retain their own PASS/PARTIAL/NOT_RUN state in the acceptance
+matrix:
 
 1. private keys and raw Bearer tokens do not cross into browser JavaScript;
 2. foreign Origin, invalid Host, missing CSRF, role, scope, replay, and stale

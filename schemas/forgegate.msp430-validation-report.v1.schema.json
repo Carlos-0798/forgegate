@@ -1,0 +1,514 @@
+{
+  "$defs": {
+    "CalibrationStatus": {
+      "enum": [
+        "CURRENT",
+        "NOT_REQUIRED",
+        "UNKNOWN"
+      ],
+      "title": "CalibrationStatus",
+      "type": "string"
+    },
+    "Msp430Check": {
+      "additionalProperties": false,
+      "properties": {
+        "actual": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Actual"
+        },
+        "expected": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Expected"
+        },
+        "id": {
+          "pattern": "^[a-z][a-z0-9._-]{1,127}$",
+          "title": "Id",
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/$defs/Msp430CheckStatus"
+        },
+        "summary": {
+          "maxLength": 500,
+          "minLength": 1,
+          "title": "Summary",
+          "type": "string"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        }
+      },
+      "required": [
+        "id",
+        "status",
+        "summary",
+        "actual",
+        "expected"
+      ],
+      "title": "Msp430Check",
+      "type": "object"
+    },
+    "Msp430CheckStatus": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "NOT_RUN",
+        "ERROR"
+      ],
+      "title": "Msp430CheckStatus",
+      "type": "string"
+    },
+    "Msp430ConnectionScope": {
+      "enum": [
+        "NONE",
+        "LAUNCHPAD_ONLY",
+        "EXTERNAL_BENCH"
+      ],
+      "title": "Msp430ConnectionScope",
+      "type": "string"
+    },
+    "Msp430EvidenceLevel": {
+      "enum": [
+        "HOST_TEST",
+        "TARGET_BUILD",
+        "LAUNCHPAD_HIL",
+        "BENCH_MEASURED"
+      ],
+      "title": "Msp430EvidenceLevel",
+      "type": "string"
+    },
+    "Msp430HardwareAccess": {
+      "enum": [
+        "NOT_PERFORMED",
+        "READ_ONLY_TELEMETRY",
+        "CONTROLLED_TEST_COMMANDS"
+      ],
+      "title": "Msp430HardwareAccess",
+      "type": "string"
+    },
+    "Msp430HardwareBoundary": {
+      "additionalProperties": false,
+      "properties": {
+        "access": {
+          "$ref": "#/$defs/Msp430HardwareAccess"
+        },
+        "board_connected": {
+          "title": "Board Connected",
+          "type": "boolean"
+        },
+        "board_model": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Board Model",
+          "type": "string"
+        },
+        "connection_scope": {
+          "$ref": "#/$defs/Msp430ConnectionScope"
+        },
+        "external_components": {
+          "items": {
+            "type": "string"
+          },
+          "title": "External Components",
+          "type": "array"
+        },
+        "instruments": {
+          "items": {
+            "$ref": "#/$defs/Msp430Instrument"
+          },
+          "title": "Instruments",
+          "type": "array"
+        },
+        "physical_measurements": {
+          "title": "Physical Measurements",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "board_model",
+        "board_connected",
+        "access",
+        "connection_scope",
+        "physical_measurements",
+        "external_components",
+        "instruments"
+      ],
+      "title": "Msp430HardwareBoundary",
+      "type": "object"
+    },
+    "Msp430Instrument": {
+      "additionalProperties": false,
+      "properties": {
+        "calibration_reference": {
+          "anyOf": [
+            {
+              "maxLength": 255,
+              "minLength": 1,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Calibration Reference"
+        },
+        "calibration_status": {
+          "$ref": "#/$defs/CalibrationStatus"
+        },
+        "instrument_id": {
+          "pattern": "^[a-z][a-z0-9._-]{1,127}$",
+          "title": "Instrument Id",
+          "type": "string"
+        },
+        "model": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Model",
+          "type": "string"
+        }
+      },
+      "required": [
+        "instrument_id",
+        "model",
+        "calibration_status"
+      ],
+      "title": "Msp430Instrument",
+      "type": "object"
+    },
+    "Msp430Metric": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "pattern": "^[a-z][a-z0-9._-]{1,127}$",
+          "title": "Name",
+          "type": "string"
+        },
+        "unit": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Unit",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "name",
+        "value",
+        "unit"
+      ],
+      "title": "Msp430Metric",
+      "type": "object"
+    },
+    "Msp430Outcome": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "INCOMPLETE",
+        "ERROR"
+      ],
+      "title": "Msp430Outcome",
+      "type": "string"
+    },
+    "Msp430Producer": {
+      "additionalProperties": false,
+      "properties": {
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ],
+      "title": "Msp430Producer",
+      "type": "object"
+    },
+    "Msp430ReviewCorrection": {
+      "additionalProperties": false,
+      "properties": {
+        "correction_id": {
+          "pattern": "^[a-z][a-z0-9._-]{1,127}$",
+          "title": "Correction Id",
+          "type": "string"
+        },
+        "original_artifact_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Original Artifact Sha256",
+          "type": "string"
+        },
+        "original_outcome": {
+          "$ref": "#/$defs/Msp430Outcome"
+        },
+        "rationale": {
+          "maxLength": 1000,
+          "minLength": 1,
+          "title": "Rationale",
+          "type": "string"
+        }
+      },
+      "required": [
+        "correction_id",
+        "original_outcome",
+        "original_artifact_sha256",
+        "rationale"
+      ],
+      "title": "Msp430ReviewCorrection",
+      "type": "object"
+    },
+    "Msp430Run": {
+      "additionalProperties": false,
+      "properties": {
+        "duration_seconds": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "ge": 0,
+          "title": "Duration Seconds"
+        },
+        "ended_at": {
+          "title": "Ended At",
+          "type": "string"
+        },
+        "evidence_level": {
+          "$ref": "#/$defs/Msp430EvidenceLevel"
+        },
+        "outcome": {
+          "$ref": "#/$defs/Msp430Outcome"
+        },
+        "run_id": {
+          "pattern": "^[a-z][a-z0-9._-]{1,127}$",
+          "title": "Run Id",
+          "type": "string"
+        },
+        "started_at": {
+          "title": "Started At",
+          "type": "string"
+        }
+      },
+      "required": [
+        "run_id",
+        "evidence_level",
+        "started_at",
+        "ended_at",
+        "duration_seconds",
+        "outcome"
+      ],
+      "title": "Msp430Run",
+      "type": "object"
+    },
+    "Msp430SourceArtifact": {
+      "additionalProperties": false,
+      "properties": {
+        "media_type": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Media Type",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "name",
+        "media_type",
+        "sha256",
+        "size_bytes"
+      ],
+      "title": "Msp430SourceArtifact",
+      "type": "object"
+    },
+    "Msp430Subject": {
+      "additionalProperties": false,
+      "properties": {
+        "commit_sha": {
+          "pattern": "^[0-9a-fA-F]{7,64}$",
+          "title": "Commit Sha",
+          "type": "string"
+        },
+        "firmware_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Firmware Version",
+          "type": "string"
+        },
+        "target": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Target",
+          "type": "string"
+        }
+      },
+      "required": [
+        "commit_sha",
+        "target",
+        "firmware_version"
+      ],
+      "title": "Msp430Subject",
+      "type": "object"
+    }
+  },
+  "$id": "urn:forgegate:compatibility:msp430-validation-report:v1",
+  "additionalProperties": false,
+  "properties": {
+    "checks": {
+      "items": {
+        "$ref": "#/$defs/Msp430Check"
+      },
+      "minItems": 1,
+      "title": "Checks",
+      "type": "array"
+    },
+    "corrections": {
+      "items": {
+        "$ref": "#/$defs/Msp430ReviewCorrection"
+      },
+      "title": "Corrections",
+      "type": "array"
+    },
+    "hardware": {
+      "$ref": "#/$defs/Msp430HardwareBoundary"
+    },
+    "limitations": {
+      "items": {
+        "type": "string"
+      },
+      "minItems": 1,
+      "title": "Limitations",
+      "type": "array"
+    },
+    "metrics": {
+      "items": {
+        "$ref": "#/$defs/Msp430Metric"
+      },
+      "title": "Metrics",
+      "type": "array"
+    },
+    "producer": {
+      "$ref": "#/$defs/Msp430Producer"
+    },
+    "run": {
+      "$ref": "#/$defs/Msp430Run"
+    },
+    "schema_version": {
+      "const": "forgegate.msp430-validation-report.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_artifacts": {
+      "items": {
+        "$ref": "#/$defs/Msp430SourceArtifact"
+      },
+      "minItems": 1,
+      "title": "Source Artifacts",
+      "type": "array"
+    },
+    "subject": {
+      "$ref": "#/$defs/Msp430Subject"
+    }
+  },
+  "required": [
+    "schema_version",
+    "producer",
+    "subject",
+    "run",
+    "checks",
+    "metrics",
+    "hardware",
+    "source_artifacts",
+    "corrections",
+    "limitations"
+  ],
+  "title": "MSP430 validation report v1 compatibility contract",
+  "type": "object"
+}

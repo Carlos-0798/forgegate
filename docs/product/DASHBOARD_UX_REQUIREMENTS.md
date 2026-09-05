@@ -2,9 +2,10 @@
 
 ## Status and evidence boundary
 
-- Status: narrow Phase 24 slice, Phase 25 optional live status, and Phase 26
-  read-only assurance review implemented; the exact zoom and
-  assistive-technology exit gates remain incomplete
+- Status: Phase 27 reviewed candidate workflow implemented over the Phase 24
+  authenticated shell, Phase 25 optional live status, and Phase 26 assurance
+  review; exact Edge zoom is accepted while the remaining environment-specific
+  assistive checks retain their individual results
 - Target: a local, browser-based control plane for the Windows Alpha
 - Product evidence: local host automation plus partial real-browser acceptance
 - Hardware evidence: optional input-only UART status observation; no device
@@ -25,12 +26,12 @@ services. It must not contain a second policy engine, lifecycle implementation,
 or evidence-normalization path.
 
 The implemented slices cover authenticated local access, service status,
-optional device status, project discovery, candidate discovery, candidate
-creation, candidate detail, audit history, bound-evidence inspection,
-explainable policy results, retained attestations, and portable-assurance
-identity. Evidence import, decision execution, assurance export, plugin
-execution, trust-store administration, and file publication remain separate
-later gates.
+optional device status, project discovery, candidate discovery and creation,
+reviewed lifecycle transitions, local JSON evidence binding, local JSON policy
+evaluation, attestation generation, candidate detail, audit history,
+bound-evidence inspection, explainable policy results, and portable-assurance
+identity. Assurance export, plugin execution, trust-store administration, and
+file publication remain separate later gates.
 
 ## Non-goals
 
@@ -77,7 +78,7 @@ The navigation model is:
 9. **Audit & security** — project/candidate audit events, security-event
    journal, session state, and trust-store status.
 
-Items 1–7 are implemented for their stated read-only or bounded-create slices.
+Items 1–7 are implemented for their stated read-only and reviewed-write slices.
 Candidate audit history is embedded in item 4; dedicated Plugins and Audit &
 security workspaces remain planned.
 
@@ -158,9 +159,15 @@ logical reading order.
 
 ## Files, downloads, and retained state
 
-- The first vertical slice accepts no browser-selected artifact path or upload.
-- Future imports require an explicit bounded upload/staging API; a browser path
-  is never interpreted as a server path.
+- Evidence and policy commands accept one explicitly selected, bounded local
+  JSON document. The browser reads the bytes and transmits the reviewed JSON;
+  the browser path is never retained or interpreted as a server path.
+- Evidence import requires the exact assembly schema and candidate commit;
+  policy import requires the exact material schema, release track, project
+  profile identity, and profile version. The server repeats all structural,
+  identity, hash, authority, and domain validation.
+- The client limit is 3,900,000 bytes so the JSON request remains below the
+  service's 4 MiB envelope. A 413 never retries automatically.
 - Downloads display the exact content identity, decision, assurance level, and
   limitations before starting.
 - Browser download completion is not presented as remote publication, backup,
@@ -186,6 +193,13 @@ logical reading order.
 - Windows Edge and Chrome are checked at 100%, 125%, 150%, 175%, and 200% zoom.
 - High contrast, screen reader, Remote Desktop, and other unexecuted checks are
   recorded as NOT_RUN rather than PASS.
+
+The 2026-09-05 Edge run executed 100%, 125%, 150%, 175%, and 200% exactly. The
+root retained zero horizontal overflow, the primary write action stayed
+horizontally reachable, navigation and workspace did not overlap, and the 200%
+review dialog retained its focus loop and Escape return. Narrator was launched
+for an input-only keyboard/semantic pass; spoken-output accuracy was not
+captured and therefore remains a bounded, not certification-level, result.
 
 ## Page Definition of Done
 

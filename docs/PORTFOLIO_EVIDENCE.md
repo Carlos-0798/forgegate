@@ -9,8 +9,8 @@ measurement, or production environment.
 
 ## Evidence boundary
 
-- Environment: Google Chrome and Codex in-app browser on Windows, loopback-only
-  ForgeGate Dashboard
+- Environment: Microsoft Edge, Google Chrome, and Codex in-app browser on
+  Windows, loopback-only ForgeGate Dashboard
 - Evidence level: `LOCAL_BROWSER_TEST`
 - Product status: private Windows Alpha `0.1.0a1`
 - Hardware access: candidate-workflow captures `NOT_PERFORMED`; Devices capture
@@ -23,6 +23,7 @@ The exact fixture values, output cross-checks, image dimensions, and SHA-256
 digests are retained in the
 [Dashboard capture record](../reports/DASHBOARD_PORTFOLIO_CAPTURE_EVIDENCE_2026-09-04.json),
 the [Phase 26 assurance-review record](../reports/DASHBOARD_ASSURANCE_REVIEW_EVIDENCE_2026-09-05.json),
+the [Phase 27 interaction record](../reports/DASHBOARD_PHASE27_INTERACTION_EVIDENCE_2026-09-05.json),
 the [MSP430 live-status record](../reports/PHASE_25_MSP430_LIVE_STATUS_EVIDENCE_2026-09-05.json),
 and the [owner-assisted unplug/replug follow-up](../reports/MSP430_MANUAL_UNPLUG_REPLUG_EVIDENCE_2026-09-05.json).
 
@@ -120,16 +121,46 @@ an external load. The capture supports live transport and page-presentation
 claims only. It does not validate sensor values, firmware correctness, release
 evidence, or long-duration stability.
 
+## 10. Reviewed candidate workflow
+
+![ForgeGate Dashboard showing one completed reviewed candidate workflow at PASS revision 4](assets/forgegate-dashboard-reviewed-workflow-pass.jpg)
+
+The Phase 27 Edge run created one generic `sample-api` candidate, separately
+reviewed every lifecycle transition, bound an exact evidence assembly,
+evaluated frozen policy material, and generated an immutable unsigned-local
+attestation. The candidate table and detail were reloaded from authoritative
+state and both displayed PASS revision 4.
+
+![ForgeGate Dashboard tracing the reviewed workflow to its retained policy decision](assets/forgegate-dashboard-reviewed-workflow-decision.jpg)
+
+![ForgeGate Dashboard showing the reviewed workflow's unsigned-local attestation and explicit limitations](assets/forgegate-dashboard-reviewed-workflow-assurance.jpg)
+
+These images support implemented interaction and traceability claims. They do
+not authenticate the generic evidence producer, publish a release, approve
+deployment, or validate hardware.
+
+## 11. Exact Edge zoom
+
+The same candidate workspace was checked with native Edge zoom at 100%, 125%,
+150%, 175%, and 200%. The machine record retains six JPEG hashes, including the
+200% reviewed-command dialog. Root horizontal overflow stayed zero and the
+required action, limitations, focus loop, and Escape return remained reachable.
+Only the 200% dialog image is highlighted here; the remaining zoom images are
+retained for audit rather than crowding the landing page.
+
+![ForgeGate reviewed command at 200 percent Edge zoom](assets/forgegate-dashboard-zoom-200-dialog.jpg)
+
 ## What these artifacts support
 
 They support the narrow claim that the authenticated, loopback-only Dashboard
 implements activation, Overview, Devices, Projects, candidate list/create/
-detail/audit, and candidate-bound Evidence/Decision/Assurance review,
+detail/audit, reviewed lifecycle/evidence/evaluation/attestation writes, and
+candidate-bound Evidence/Decision/Assurance review,
 including visible evidence boundaries and actionable validation errors, on the
 tested Windows browser setup. The Devices capture also supports an
 owner-authorized, input-only MSP430 UART status observation.
 
 They do not support claims of sensor or hardware-behavior validation, evidence authenticity,
 production readiness, public release, non-loopback security, full
-accessibility conformance, browser-side collection/evaluation/export, or
+accessibility conformance, automatic browser-side collection, assurance export, or
 completion of the planned Plugins and Security pages.

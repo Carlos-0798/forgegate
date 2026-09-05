@@ -2,12 +2,11 @@
 
 ## Status
 
-This matrix defines the gate for the implemented narrow local Web Dashboard.
-The Phase 24 authenticated slice, Phase 25 optional live monitor, and Phase 26
-read-only assurance review are present, but the full manual UI exit gate is not
-yet accepted. Design completion, unit coverage, clean packaging, Edge/Chrome
-execution, and the unexecuted exact-zoom/assistive-technology matrix remain
-separate evidence.
+This matrix defines the gate for the implemented local Web Dashboard. The Phase
+24 authenticated slice, Phase 25 optional live monitor, Phase 26 assurance
+review, and Phase 27 reviewed candidate workflow are present. Design,
+automation, packaging, real-browser interaction, exact zoom, and each assistive
+environment remain separate evidence; no result implies WCAG certification.
 
 ## Phase 23 design gate
 
@@ -52,6 +51,11 @@ separate evidence.
 | FGD-A27 | Existing product regression | `tools/verify.py` and `tools/release_smoke.py` remain PASS |
 | FGD-A28 | Candidate assurance review | One authorized query returns the exact candidate, transition history, evidence binding, policy material/evaluation, attestation, and portable identity without mutation |
 | FGD-A29 | Firmware fault presentation | Known UART v1 bits receive versioned labels; unknown bits remain visible without invented meaning |
+| FGD-A30 | Reviewed lifecycle writes | DRAFT→COLLECTING→READY→EVALUATING uses exact revision, one confirmation, one idempotency key, and authoritative reload |
+| FGD-A31 | Reviewed evidence binding | Exact v1 assembly and candidate commit are checked in the browser and fully revalidated by the server before one immutable binding |
+| FGD-A32 | Reviewed policy evaluation | Exact frozen profile material is imported and the existing domain engine records the terminal decision without frontend recomputation |
+| FGD-A33 | Reviewed attestation | One terminal candidate creates or exactly replays one immutable unsigned-local attestation |
+| FGD-A34 | Write recovery | 409/413/500 do not auto-retry; 429 reuses the frozen request only after cooldown; list and detail reload together after success |
 
 ## Phase 24 real-browser and manual Windows acceptance
 
@@ -85,7 +89,7 @@ as PASS, FAIL, or NOT_RUN; they are never inferred from Chromium automation.
 | FGD-A12 | PASS | Automation plus explicit logout, natural 60-second expiry, and service-restart/401 browser runs clear protected state and return to activation. Manual administrator revocation remains a separate unexecuted scenario. |
 | FGD-A13–A14 | PASS | Producer write/audit denial and exact project-scope enforcement pass. |
 | FGD-A15–A19 | PASS | Bounded service queries, exact detail/create/audit, replay, and changed-payload conflict pass automation; Edge traversed all six pages of a 129-record set with zero duplicate versions and performed another reviewed create/readback. |
-| FGD-A20 | NOT_APPLICABLE | This slice exposes no revision-mutating command; stale-revision UI becomes mandatory with the first such command. |
+| FGD-A20 | PASS | The Phase 27 transition/evaluation endpoints require exact revisions; stale state returns 409 and the reviewed browser command requires authoritative reload and re-review. |
 | FGD-A21 | PASS | Edge refresh/back/forward retained three rows and issued no observed duplicate mutation. |
 | FGD-A22 | PASS | Dynamic values use text-node APIs only; executable HTML APIs/storage/service-worker/eval patterns are rejected by a committed asset test and CSP. |
 | FGD-A23 | PASS | Browser runs cover 401 recovery, unknown-track 404, strict-body 422, and isolated test-harness 409/413/429/500 with stable status/code, safe next step, request ID, focused alert, zero write, and a three-second 429 action hold. Producer authority prevents the normal UI from issuing a forbidden write. The injected statuses are presentation evidence, not authentic operational-failure evidence. |
@@ -97,23 +101,38 @@ as PASS, FAIL, or NOT_RUN; they are never inferred from Chromium automation.
 | FGD-M01 | PASS | Initial loading and unauthenticated activation frame rendered without a blank/unfinished state. |
 | FGD-M02 | PASS | Microsoft Edge keyboard-only path covered activation, project/candidate navigation, review, confirmation, detail, and audit. |
 | FGD-M03 | PASS | Edge kept Shift+Tab/Tab inside the dialog, Escape closed it, and visible focus returned to Create candidate; the dialog retained a semantic accessible name. |
-| FGD-M04 | NOT_RUN | Exact 100/125/150/175/200% browser zoom matrix was not executed. |
+| FGD-M04 | PASS — Edge | Exact 100/125/150/175/200% runs used browser-native zoom. At every level the root had zero horizontal overflow, the required write action remained horizontally reachable, navigation and workspace did not overlap, and no checked text was horizontally clipped. At 200% the review dialog had no internal horizontal overflow and retained its complete focus loop. |
 | FGD-M05 | PASS | Loading, empty, ordinary DRAFT, 404/422 error recovery, and a 129-record six-page state remained distinguishable and recoverable; the broader A23 uncommon-error matrix remains partial. |
 | FGD-M06 | PASS | A 60-second session automatically removed identity/project/candidate state and announced expiry with a clear reactivation action. |
-| FGD-M07 | NOT_APPLICABLE | No revision-mutating UI exists in this slice. |
+| FGD-M07 | PASS — automation plus reviewed browser recovery | Stale revisions fail with 409, never overwrite, and require closing/reloading the reviewed command. The real browser also rejected a commit-mismatched evidence assembly before transmission. |
 | FGD-M08 | PASS | Detail view visibly distinguished request completion, DRAFT, `NOT_EVALUATED`, and hardware `NOT_PERFORMED`. |
 | FGD-M09 | PASS | CLI and page copy require explicit service shutdown; closing a tab makes no shutdown claim. |
 | FGD-M10 | PASS | Generic-data Windows Chrome captures are retained as JPEG assets and indexed by `docs/PORTFOLIO_EVIDENCE.md`; captions and the machine-readable capture record explicitly exclude hardware, evidence-authenticity, production, and release-approval claims. |
 
 Additional environments: Microsoft Edge PASS for the recorded core, complete
-modal-focus, large-data, 422-recovery, and installed-wheel read paths; Chrome
+modal-focus, exact 100–200% zoom, large-data, 422-recovery, and installed-wheel read paths; Chrome
 PASS for activation, Overview/Projects/Candidates, complete modal focus,
 129-record pagination, 422 recovery, authoritative writes/readbacks, service-
 restart recovery, 390 × 844 layout, and clean console; in-app browser PASS for
 the 390 × 844 responsive/large-page check and follow-up operator/producer
-input-output, logout, expiry, and restart flows. Exact zoom, high contrast,
-screen reader, Remote Desktop, Firefox, macOS, and Linux browser runs are
-`NOT_RUN`.
+input-output, logout, expiry, and restart flows. Windows Narrator was launched
+for a bounded keyboard/semantic pass: focus stayed visible on actionable
+elements and the page exposed named landmarks, headings, buttons, links,
+tables, and live regions, but spoken-output accuracy was not recorded. High
+contrast, Remote Desktop, Firefox, macOS, and Linux browser runs remain
+`NOT_RUN` until separately executed.
+
+## 2026-09-05 Phase 27 reviewed-write and accessibility follow-up
+
+| Scope | Result | Actual observation / boundary |
+|---|---|---|
+| Full candidate write workflow | PASS | An isolated Edge operator session performed DRAFT→COLLECTING, immutable evidence binding, READY→EVALUATING, exact policy evaluation to PASS, and immutable unsigned-local attestation. Audit sequence 5–12 retained creation, transitions, binding, evaluation, and attestation. |
+| Mismatched evidence import | PASS | A valid assembly carrying a different candidate commit was rejected visibly with `DASHBOARD_IMPORT_INVALID`/422 before any binding. |
+| Authoritative UI reload | PASS after correction | Manual testing found the table could retain the prior state while detail reloaded. The completion action now reloads the entire candidate workspace; the table and detail both showed PASS revision 4. |
+| Reviewed-dialog focus | PASS after correction | Confirmation receives initial focus, Tab and Shift+Tab wrap between dialog actions, Escape closes, and focus returns to the invoking command. |
+| Exact Edge zoom | PASS | Native 100/125/150/175/200% levels corresponded to DPR 1.5/1.875/2.25/2.625/3.0 on the 150%-scaled host. All measured layout invariants passed and six screenshots were retained. |
+| Windows Narrator | BOUNDED PASS / SPOKEN OUTPUT NOT RECORDED | Narrator ran while system-level Tab traversal reached the primary command and three review links; semantic audit found one page H1, named controls, named tables, landmarks, textual status, and polite/assertive live regions. Audio wording and announcement timing were not captured, so no full screen-reader conformance claim is made. |
+| Remote Desktop | NOT_RUN | Current Windows session is interactive logon type 2, not RemoteInteractive type 10. A real RDP client/session is required. |
 
 The exact follow-up samples and persisted-output cross-check are recorded in
 `reports/PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md`.
