@@ -2,7 +2,7 @@
 
 - Product surface: ForgeGate Windows Local Alpha and an externally connected TI/MSP board
 - Authorization: user-authorized local connection and Dashboard interaction testing
-- Connection result: **PASS DURING BOUNDED OBSERVATION / DEVICE ABSENT ON LATER FOLLOW-UP**
+- Connection result: **PASS DURING INITIAL BOUNDED OBSERVATION / DEVICE ABSENT ON FOLLOW-UP / PASS AFTER USER RECONNECTION**
 - ForgeGate hardware integration: **NOT PERFORMED**
 - Firmware, protocol, and physical measurement result: **NOT EVALUATED**
 
@@ -32,10 +32,31 @@ seconds apart returned no ports. An attempted device rescan was rejected by
 Windows because the current process was not elevated. The Dashboard remained
 healthy throughout.
 
-Consequently, this run does **not** establish long-duration connection
-stability. The board was stable for the measured 10-cycle/10-second window and
-then became absent. A physical USB/power/cable check and a longer repeated
-observation are required before calling the connection stable.
+The absence remains retained counterevidence and prevents treating the initial
+bounded PASS as proof of continuous connection stability.
+
+### User reconnection and extended observation
+
+After the user reconnected the board, Windows again reported COM4, COM5, and
+the TI USB composite device as `Present=true`, status `OK`, and problem code
+`0`. A second no-write/no-read observation ran from
+`2026-09-05T03:55:10Z` through `2026-09-05T03:58:46Z` (216.1 seconds):
+
+- COM4 completed 25 of 25 open/close cycles without an exception;
+- 90 samples at two-second intervals found zero COM4 or COM5 absences;
+- COM4 remained open for 30 of 30 one-second samples while both interfaces
+  remained enumerated; and
+- the receive-queue count ranged from 19 to 181 bytes, without reading or
+  parsing any byte.
+
+COM4 was configured as 9600 8N1 only to exercise the Windows port handle. No
+claim is made that this configuration matches the firmware protocol. DTR and
+RTS remained disabled, zero commands and zero payload bytes were sent, no
+payload bytes were read, COM5 was not opened, and no firmware action occurred.
+
+This establishes stability only for the measured 216.1-second reconnection
+window. It does not erase the earlier disappearance or establish long-duration
+USB stability, payload correctness, firmware behavior, or physical measurement.
 
 ## Dashboard interaction result
 
@@ -53,6 +74,9 @@ The authenticated Chrome session passed the following non-mutating checks:
 | Return to edit | Draft values must survive review round-trip | A defect was found, corrected, rebuilt, and retested; Version and Commit SHA were restored exactly | PASS AFTER FIX |
 | Cancel | No durable write and focus restored | Dialog closed, Create candidate regained focus, and the row count remained three | PASS |
 | Late device follow-up | Board should still enumerate if the connection remained continuous | COM4/COM5 absent; retained PnP entries showed problem 45 and `Present=false`; Dashboard remained healthy | CONNECTION LOST / USER CHECK REQUIRED |
+| Reconnection enumeration | User-reconnected board should enumerate cleanly | COM4, COM5, and the TI USB composite device returned `Present=true`, problem code 0, and `OK` | PASS — RECONNECTED |
+| Extended connection window | Repeated handle and presence checks should remain error-free | 25/25 COM4 open/close cycles, 90/90 two-second presence samples, and 30/30 sustained-open seconds passed in 216.1 seconds | PASS — BOUNDED HOST CONNECTION |
+| Reauthenticated Dashboard | Service and evidence boundary should remain accurate after the device test | Overview showed `Healthy`, `0.1.0a1`, API `v1`, DB schema `v8`, and `Hardware NOT_PERFORMED` | PASS |
 
 The updated Dashboard static-resource allowlist required one controlled service
 restart after rebuilding. The service returned healthy on the same loopback
@@ -78,6 +102,6 @@ The machine-readable companion record is
 [`MSP430_CONNECTION_OBSERVATION_2026-09-04.json`](MSP430_CONNECTION_OBSERVATION_2026-09-04.json).
 It deliberately omits the board's unique serial number and contains explicit
 false values for firmware writes, serial writes/reads, protocol validation,
-physical measurements, and release-evidence import. It also records the later
-device absence so the bounded PASS cannot be mistaken for long-duration
-stability.
+physical measurements, and release-evidence import. It also records both the
+later device absence and the subsequent bounded reconnection pass so neither
+observation can be mistaken for uninterrupted long-duration stability.
