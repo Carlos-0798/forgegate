@@ -793,6 +793,262 @@
         "title": "CollectionIssue",
         "type": "object"
       },
+      "CollectionJobEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "actor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AuditActor"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "record": {
+            "$ref": "#/components/schemas/CollectionJobRecord"
+          }
+        },
+        "required": [
+          "record"
+        ],
+        "title": "CollectionJobEvent",
+        "type": "object"
+      },
+      "CollectionJobRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "authority": {
+            "const": "LOCAL_CLI_NOT_AUTHENTICATED",
+            "default": "LOCAL_CLI_NOT_AUTHENTICATED",
+            "title": "Authority",
+            "type": "string"
+          },
+          "candidate_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Candidate Fingerprint",
+            "type": "string"
+          },
+          "candidate_id": {
+            "pattern": "^cand-[0-9a-f]{24}$",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "candidate_write": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Candidate Write",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "enum": [
+                  "JOB_EXECUTION_FAILED",
+                  "JOB_LEASE_EXPIRED"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "job_id": {
+            "pattern": "^job-[0-9a-f]{32}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "lease_expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lease Expires At"
+          },
+          "project_id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "request_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Request Fingerprint",
+            "type": "string"
+          },
+          "result_fingerprint": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Fingerprint"
+          },
+          "revision": {
+            "default": 0,
+            "maximum": 2.0,
+            "minimum": 0.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "forgegate.collection-job.v1",
+            "default": "forgegate.collection-job.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_bytes": {
+            "default": "retained_pending",
+            "enum": [
+              "retained_pending",
+              "released_logically"
+            ],
+            "title": "Source Bytes",
+            "type": "string"
+          },
+          "state": {
+            "default": "QUEUED",
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "SUCCEEDED",
+              "REVIEW_REQUIRED",
+              "REJECTED",
+              "FAILED",
+              "CANCELLED",
+              "INTERRUPTED"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "candidate_id",
+          "project_id",
+          "candidate_fingerprint",
+          "request_fingerprint",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CollectionJobRecord",
+        "type": "object"
+      },
+      "CollectionJobResult": {
+        "additionalProperties": false,
+        "properties": {
+          "assembly": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvidenceBundleAssembly"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "candidate_write": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Candidate Write",
+            "type": "string"
+          },
+          "collections": {
+            "items": {
+              "$ref": "#/components/schemas/CollectionResult"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Collections",
+            "type": "array"
+          },
+          "job_id": {
+            "pattern": "^job-[0-9a-f]{32}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "producer_authentication": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Producer Authentication",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.collection-job-result.v1",
+            "default": "forgegate.collection-job-result.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_artifact_bytes": {
+            "const": "not_embedded",
+            "default": "not_embedded",
+            "title": "Source Artifact Bytes",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "collections",
+          "assembly"
+        ],
+        "title": "CollectionJobResult",
+        "type": "object"
+      },
+      "CollectionJobReview": {
+        "additionalProperties": false,
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/CollectionJobEvent"
+            },
+            "maxItems": 3,
+            "minItems": 1,
+            "title": "Events",
+            "type": "array"
+          },
+          "record": {
+            "$ref": "#/components/schemas/CollectionJobRecord"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CollectionJobResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "record",
+          "events",
+          "result"
+        ],
+        "title": "CollectionJobReview",
+        "type": "object"
+      },
       "CollectionReceipt": {
         "additionalProperties": false,
         "properties": {
@@ -1451,6 +1707,72 @@
           "collected_at"
         ],
         "title": "DashboardJUnitPreviewRequest",
+        "type": "object"
+      },
+      "DashboardJobCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "maximum": 2.0,
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "expected_revision"
+        ],
+        "title": "DashboardJobCommand",
+        "type": "object"
+      },
+      "DashboardJobPage": {
+        "additionalProperties": false,
+        "properties": {
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "jobs": {
+            "items": {
+              "$ref": "#/components/schemas/CollectionJobRecord"
+            },
+            "title": "Jobs",
+            "type": "array"
+          },
+          "next_after_job_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next After Job Id"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "enabled",
+          "project_id",
+          "jobs",
+          "next_after_job_id",
+          "has_more",
+          "observed_at"
+        ],
+        "title": "DashboardJobPage",
         "type": "object"
       },
       "DashboardLogoutResponse": {
@@ -4241,6 +4563,294 @@
           }
         },
         "summary": "Advance Dashboard Candidate"
+      }
+    },
+    "/app/api/jobs": {
+      "get": {
+        "operationId": "listDashboardJobs",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after_job_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^job-[0-9a-f]{32}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "After Job Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "candidate_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^cand-[0-9a-f]{24}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Candidate Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 25,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardJobPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Jobs"
+      }
+    },
+    "/app/api/jobs/{job_id}": {
+      "get": {
+        "operationId": "reviewDashboardJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^job-[0-9a-f]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionJobReview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Show Job"
+      }
+    },
+    "/app/api/jobs/{job_id}/cancel": {
+      "post": {
+        "operationId": "cancelDashboardJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^job-[0-9a-f]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardJobCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionJobRecord"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Job"
+      }
+    },
+    "/app/api/jobs/{job_id}/recover": {
+      "post": {
+        "operationId": "recoverDashboardJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^job-[0-9a-f]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardJobCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionJobRecord"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Recover Job"
       }
     },
     "/app/api/live-status": {

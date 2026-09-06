@@ -122,6 +122,7 @@ def create_api_app(
     dashboard_session_manager: DashboardSessionManager | None = None,
     dashboard_static_root: Path | None = None,
     dashboard_live_status_provider: LiveStatusProvider | None = None,
+    dashboard_job_store_path: Path | None = None,
 ) -> FastAPI:
     if authenticator is None and not contract_only:
         raise ValueError("authenticated API construction requires an ApiAuthenticator")
@@ -844,6 +845,7 @@ def create_api_app(
             session_manager=dashboard_session_manager,
             static_root=dashboard_static_root,
             live_status_provider=dashboard_live_status_provider,
+            job_store_path=dashboard_job_store_path,
         )
     return app
 

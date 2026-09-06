@@ -601,8 +601,19 @@ separate gates; host regressions do not replace actual OS acceptance.
 - [x] Document quotas, local-file authority, logical deletion, source replay
   limitations and the absence of coordinated job backup/retention management.
 
-Next engineering slice: authenticated project-scoped Dashboard job visibility
-and reviewed job actions, with explicit local-store configuration and a genuine
-browser acceptance matrix. Do not expose the local CLI file-authority model as
-an HTTP authorization mechanism. Automatic workers and retention/backup services
-require separate lifecycle design and acceptance.
+## Phase 35 — authenticated Dashboard job management
+
+- [x] Opt-in existing-store configuration, operator/project authorization and
+  scoped list/detail/result views; no automatic initialization or migration.
+- [x] Same-origin/CSRF and reviewed-revision cancellation and expired recovery;
+  atomically retain the authenticated actor without inferring historical actors.
+- [x] Explicit transactional v1-to-v2 job-store upgrade and rollback tests.
+- [x] Pagination/filter/error/late-response frontend regressions and isolated
+  real Edge expected-value, confirmation, recovery and 409 conflict checks.
+- [x] Package assets, schemas, operation guidance and synthetic screenshot evidence.
+
+Next engineering slice: reviewed browser job submission with exact report-byte,
+candidate revision and warning-consent contracts, followed by explicitly controlled
+execution. Keep manual preview distinct from durable retention. Automatic workers,
+cooperative shutdown, and job retention/backup services require separate lifecycle
+design and acceptance. Native assistive-technology gates remain open.

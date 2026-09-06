@@ -1,7 +1,45 @@
 import "./styles.css";
 
 type Role = "operator" | "producer";
-type Route = "overview" | "devices" | "projects" | "candidates" | "evidence" | "decision" | "assurance" | "audit";
+type Route = "overview" | "devices" | "projects" | "candidates" | "evidence" | "decision" | "assurance" | "audit" | "jobs";
+
+interface CollectionJob {
+  job_id: string;
+  candidate_id: string;
+  project_id: string;
+  state: string;
+  revision: number;
+  created_at: string;
+  updated_at: string;
+  lease_expires_at: string | null;
+  result_fingerprint: string | null;
+  request_fingerprint: string;
+  error_code: string | null;
+  source_bytes: string;
+  authority: string;
+}
+
+interface JobPage {
+  enabled: boolean;
+  project_id: string;
+  jobs: CollectionJob[];
+  next_after_job_id: string | null;
+  has_more: boolean;
+  observed_at: string;
+}
+
+interface JobReview {
+  record: CollectionJob;
+  events: Array<{ record: CollectionJob; actor: AuditEvent["actor"] }>;
+  result: {
+    collections: Array<{
+      collector_name: string; status: string; evidence: EvidenceRecord[];
+      warnings: Array<{code: string; message: string}>;
+      rejected_records: Array<{code: string; message: string}>;
+    }>;
+    assembly: { assembly_id: string; warning_disposition: string } | null;
+  } | null;
+}
 
 interface Principal {
   session_id: string;
@@ -300,6 +338,7 @@ let liveStatusTimer: number | null = null;
 let liveStatusGeneration = 0;
 let lastLiveAnnouncement = "";
 let auditViewGeneration = 0;
+let jobsViewGeneration = 0;
 
 const MAX_DASHBOARD_IMPORT_BYTES = 3_900_000;
 
@@ -348,7 +387,7 @@ function keepFocusInsideDialog(dialog: HTMLDialogElement, event: KeyboardEvent):
 function routeFromHash(): Route {
   const candidate = window.location.hash.replace(/^#\/?/, "").split("?", 1)[0];
   return candidate === "devices" || candidate === "projects" || candidate === "candidates" ||
-    candidate === "evidence" || candidate === "decision" || candidate === "assurance" || candidate === "audit"
+    candidate === "evidence" || candidate === "decision" || candidate === "assurance" || candidate === "audit" || candidate === "jobs"
     ? candidate
     : "overview";
 }
@@ -619,6 +658,7 @@ function shell(content: HTMLElement): void {
     ["devices", "Devices", "Live read-only status"],
     ["projects", "Projects", "Immutable profiles"],
     ["candidates", "Candidates", "Release work and audit"],
+    ["jobs", "Jobs", "Collection lifecycle"],
     ["evidence", "Evidence", "Bound records and sources"],
     ["decision", "Decision", "Rules and explanations"],
     ["assurance", "Assurance", "Attestation and limits"],
@@ -692,6 +732,7 @@ async function loadSession(): Promise<void> {
 }
 
 function renderActivation(notice?: string): void {
+  jobsViewGeneration += 1;
   auditViewGeneration += 1;
   clearActivationTimer();
   clearSessionExpiryTimer();
@@ -848,6 +889,7 @@ async function logoutSession(): Promise<void> {
 }
 
 async function renderRoute(): Promise<void> {
+  jobsViewGeneration += 1;
   auditViewGeneration += 1;
   if (session === null) {
     renderActivation();
@@ -859,6 +901,7 @@ async function renderRoute(): Promise<void> {
   if (currentRoute === "devices") await renderDevices();
   if (currentRoute === "projects") await renderProjects();
   if (currentRoute === "audit") await renderAudit();
+  if (currentRoute === "jobs") await renderJobs();
   if (currentRoute === "candidates") await renderCandidates();
   if (currentRoute === "evidence") await renderEvidence();
   if (currentRoute === "decision") await renderDecision();
@@ -1256,6 +1299,227 @@ async function renderAudit(): Promise<void> {
     if (!active()) return;
     handleProtectedProblem(results, error, "Check the project scope, then use Refresh audit page. No write was performed.");
   }
+}
+
+function jobsHash(projectId: string, candidateId = "", after = "", jobId = ""): string {
+  const params = new URLSearchParams({ project_id: projectId });
+  if (candidateId) params.set("candidate_id", candidateId);
+  if (after) params.set("after_job_id", after);
+  if (jobId) params.set("job_id", jobId);
+  return `#/jobs?${params.toString()}`;
+}
+
+async function renderJobs(): Promise<void> {
+  const generation = ++jobsViewGeneration;
+  const owner = session;
+  const route = window.location.hash;
+  const active = () => generation === jobsViewGeneration && session === owner && window.location.hash === route;
+  const main = page("Collection jobs", "DURABLE LOCAL TASKS", "Inspect retained report tasks. Completion is not a policy PASS. Refresh to observe progress from the CLI.");
+  if (owner?.principal.role !== "operator") {
+    main.append(emptyState("Operator session required", "Job results and management require an authorized operator. No job request was sent."));
+    shell(main);
+    return;
+  }
+  const scopes = owner.principal.project_ids;
+  const query = new URLSearchParams(route.split("?", 2)[1] ?? "");
+  const projectId = query.get("project_id") ?? scopes[0] ?? "";
+  const candidateId = query.get("candidate_id") ?? "";
+  const after = query.get("after_job_id") ?? "";
+  const jobId = query.get("job_id") ?? "";
+  if (!scopes.includes(projectId) || (candidateId !== "" && !/^cand-[0-9a-f]{24}$/.test(candidateId)) ||
+      [after, jobId].some(value => value !== "" && !/^job-[0-9a-f]{32}$/.test(value))) {
+    main.append(emptyState("Invalid job selection", "Choose an authorized project and complete candidate/job identifiers."));
+    const reset = el("a", "button secondary", "Reset job filters");
+    reset.href = "#/jobs";
+    main.append(reset);
+    shell(main);
+    return;
+  }
+  const form = el("form", "toolbar audit-filters");
+  const projectLabel = el("label", "field");
+  projectLabel.append(el("span", undefined, "Job project"));
+  const selector = el("select");
+  for (const scope of scopes) {
+    const option = el("option", undefined, scope);
+    option.value = scope;
+    selector.append(option);
+  }
+  selector.value = projectId;
+  projectLabel.append(selector);
+  const candidateLabel = el("label", "field");
+  candidateLabel.append(el("span", undefined, "Candidate ID (optional)"));
+  const candidateInput = el("input");
+  candidateInput.value = candidateId;
+  candidateInput.pattern = "cand-[0-9a-f]{24}";
+  candidateInput.maxLength = 29;
+  candidateLabel.append(candidateInput);
+  selector.addEventListener("change", () => { candidateInput.value = ""; });
+  const apply = button("Apply job filters", "button primary");
+  apply.type = "submit";
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+    if (candidateInput.value && !/^cand-[0-9a-f]{24}$/.test(candidateInput.value)) { candidateInput.reportValidity(); return; }
+    const next = jobsHash(selector.value, candidateInput.value);
+    if (window.location.hash === next) void renderJobs();
+    else window.location.hash = next;
+  });
+  const refresh = button("Refresh jobs", "button secondary");
+  refresh.addEventListener("click", () => void renderJobs());
+  form.append(projectLabel, candidateLabel, apply, refresh);
+  main.append(form, el("p", "command-boundary", "Submission and execution remain CLI-only. No automatic worker, evidence binding, test execution, hardware access or release decision occurs here. Pending raw reports stay in the configured local store; logical release is not secure erasure."));
+  const results = el("section", "job-results");
+  results.setAttribute("aria-live", "polite");
+  results.append(el("p", "muted", "Loading retained tasks…"));
+  main.append(results);
+  shell(main);
+  try {
+    if (jobId) {
+      const review = await api<JobReview>(`/app/api/jobs/${jobId}?${new URLSearchParams({ project_id: projectId })}`);
+      if (!active()) return;
+      results.replaceChildren();
+      const back = el("a", "button quiet", "Back to project jobs");
+      back.href = jobsHash(projectId, candidateId, after);
+      results.append(back, renderJobDetail(main, review));
+      return;
+    }
+    const params = new URLSearchParams({ project_id: projectId, limit: "25" });
+    if (candidateId) params.set("candidate_id", candidateId);
+    if (after) params.set("after_job_id", after);
+    const page = await api<JobPage>(`/app/api/jobs?${params}`);
+    if (!active()) return;
+    results.replaceChildren();
+    if (!page.enabled) {
+      results.append(emptyState("Job store not enabled", "Start an isolated or explicitly approved Dashboard with --job-store pointing to an existing v2 store. No file was created or migrated. Existing services do not gain this capability automatically."));
+      return;
+    }
+    results.append(el("p", "pager-status", `${page.jobs.length} jobs shown · ${page.has_more ? "More jobs available" : "End of matching jobs"} · Read at ${formatDate(page.observed_at)}`));
+    if (!page.jobs.length) results.append(emptyState("No matching jobs", "Submit a report task with the local CLI, or change the filter. Empty results do not prove successful collection."));
+    for (const job of page.jobs) {
+      const item = el("article", "panel job-card");
+      const link = el("a", "button quiet", `Inspect ${job.job_id}`);
+      link.href = jobsHash(projectId, candidateId, after, job.job_id);
+      item.append(statusBadge(job.state), el("p", "mono", job.candidate_id), el("p", "muted", `Revision ${job.revision} · Updated ${formatDate(job.updated_at)}`), link);
+      results.append(item);
+    }
+    const pager = el("nav", "pager");
+    pager.setAttribute("aria-label", "Job pages");
+    const first = el("a", "button quiet", "First job page");
+    first.href = jobsHash(projectId, candidateId);
+    pager.append(first);
+    if (page.has_more && page.next_after_job_id) {
+      const next = el("a", "button secondary", "Next job page");
+      next.href = jobsHash(projectId, candidateId, page.next_after_job_id);
+      pager.append(next);
+    }
+    pager.append(el("p", "muted", "Sorted by job ID, not time. Browser Back restores filters; no snapshot total is claimed."));
+    results.append(pager);
+  } catch (error) {
+    if (active()) handleProtectedProblem(results, error, "Refresh jobs to inspect authoritative state. Do not automatically retry a write.");
+  }
+}
+
+function renderJobDetail(main: HTMLElement, review: JobReview): HTMLElement {
+  const job = review.record;
+  const panel = el("section", "panel job-detail");
+  panel.append(el("h2", undefined, "Retained task"), statusBadge(job.state));
+  const details = el("dl", "definition-list");
+  for (const [label, value] of Object.entries({
+    "Job ID": job.job_id, "Project": job.project_id, "Candidate": job.candidate_id,
+    "Revision": String(job.revision), "Updated": formatDate(job.updated_at),
+    "Lease expires": job.lease_expires_at ? formatDate(job.lease_expires_at) : "No active lease",
+    "Creation authority": job.authority, "Source bytes": job.source_bytes,
+    "Request fingerprint": job.request_fingerprint, "Result fingerprint": job.result_fingerprint ?? "No result",
+    "Error code": job.error_code ?? "None recorded"
+  })) details.append(definition(label, value, true));
+  panel.append(details);
+  const candidate = el("a", "button secondary", "Review candidate evidence separately");
+  candidate.href = candidateReviewHash("evidence", job.candidate_id);
+  panel.append(candidate);
+  if (["QUEUED", "RUNNING"].includes(job.state)) {
+    const cancel = button("Review cancellation", "button secondary");
+    cancel.addEventListener("click", () => reviewJobAction(main, job, "cancel", cancel));
+    panel.append(cancel);
+  }
+  if (job.state === "RUNNING") {
+    const recover = button("Review interruption recovery", "button secondary");
+    recover.addEventListener("click", () => reviewJobAction(main, job, "recover", recover));
+    panel.append(recover, el("p", "muted", "Recovery is accepted only after the server lease expires. It records INTERRUPTED; it does not restart execution."));
+  }
+  panel.append(el("h3", undefined, "State history and recorded actors"));
+  for (const event of review.events) {
+    panel.append(el("p", "job-event", `Revision ${event.record.revision} · ${event.record.state} · ${formatDate(event.record.updated_at)} · ${event.actor ? `${event.actor.display_name} (${event.actor.role}) · ${event.actor.identity_id}` : "Actor not recorded — no identity inferred"}`));
+  }
+  panel.append(el("h3", undefined, "Collection output — not a policy decision"));
+  if (review.result === null) {
+    panel.append(el("p", "muted", "No retained collection result. This is not an empty successful test run."));
+  } else {
+    panel.append(el("p", "mono", `Assembly: ${review.result.assembly?.assembly_id ?? "Not available"}`), el("p", "muted", "Source report bytes are not embedded. Binding requires a separate reviewed operation; this page cannot promote a result to PASS."));
+    for (const collection of review.result.collections) {
+      const item = el("section", "job-output");
+      item.append(el("h4", undefined, collection.collector_name), statusBadge(collection.status), el("p", "muted", `Showing first ${Math.min(25, collection.evidence.length)} of ${collection.evidence.length} normalized records. Use jobs result CLI for the complete exact document.`));
+      for (const evidence of collection.evidence.slice(0, 25)) {
+        item.append(el("p", "mono", `${evidence.kind} · ${evidence.scope} · ${evidence.trust} / ${evidence.verification_level}`), el("pre", "job-values", JSON.stringify(evidence.value, null, 2)));
+      }
+      const issues = [...collection.warnings, ...collection.rejected_records];
+      item.append(el("p", "muted", `${issues.length} issues; first ${Math.min(25, issues.length)} shown.`));
+      for (const issue of issues.slice(0, 25)) item.append(el("p", undefined, `${issue.code}: ${issue.message}`));
+      panel.append(item);
+    }
+  }
+  return panel;
+}
+
+function reviewJobAction(main: HTMLElement, job: CollectionJob, action: "cancel" | "recover", returnFocus: HTMLElement): void {
+  const owner = session;
+  if (owner?.principal.role !== "operator") return;
+  const route = window.location.hash;
+  const generation = jobsViewGeneration;
+  const dialog = el("dialog", "review-dialog");
+  dialog.setAttribute("aria-labelledby", "job-action-title");
+  const active = () => dialog.open && dialog.isConnected && session === owner && window.location.hash === route && generation === jobsViewGeneration;
+  let busy = false;
+  const heading = el("h2", undefined, action === "cancel" ? "Confirm task cancellation" : "Confirm interruption recovery");
+  heading.id = "job-action-title";
+  dialog.append(heading, el("p", "command-boundary", action === "cancel" ? "This revokes result publication and logically releases pending input. It does not kill the parser, securely erase bytes, or change candidate evidence." : "Only an expired running lease can become INTERRUPTED. No retry or execution is started."));
+  const details = el("dl", "definition-list");
+  details.append(definition("Job", job.job_id, true), definition("Project", job.project_id), definition("Reviewed revision", String(job.revision)), definition("Operator", owner.principal.display_name));
+  const status = el("div", "dialog-status");
+  status.setAttribute("aria-live", "polite");
+  const controls = el("div", "dialog-actions");
+  const close = button("Back without changes", "button quiet");
+  close.addEventListener("click", () => dialog.close());
+  const confirm = button(action === "cancel" ? "Confirm cancellation" : "Confirm recovery", "button primary");
+  confirm.addEventListener("click", async () => {
+    if (!active() || busy || confirm.disabled) return;
+    busy = true;
+    confirm.disabled = true;
+    close.disabled = true;
+    status.replaceChildren(el("p", "muted", "Submitting the reviewed command once…"));
+    try {
+      const result = await api<CollectionJob>(`/app/api/jobs/${job.job_id}/${action}?${new URLSearchParams({ project_id: job.project_id })}`, { method: "POST", headers: { "X-ForgeGate-CSRF": owner.csrf_token }, body: JSON.stringify({ expected_revision: job.revision }) });
+      if (!active()) return;
+      status.replaceChildren(el("p", undefined, `Recorded ${result.state} at revision ${result.revision}. The authenticated operator was retained with this event.`));
+    } catch (error) {
+      if (!active()) return;
+      if (handleProtectedProblem(status, error, "Outcome may be uncertain. Close and refresh before creating another command; no automatic retry occurs.")) return;
+    } finally {
+      busy = false;
+      if (active()) {
+        const reload = button("Close and refresh jobs", "button primary");
+        reload.addEventListener("click", () => { dialog.close(); void renderJobs(); });
+        controls.replaceChildren(reload);
+        reload.focus();
+      }
+    }
+  });
+  controls.append(close, confirm);
+  dialog.append(details, status, controls);
+  dialog.addEventListener("cancel", event => { event.preventDefault(); if (!busy) dialog.close(); });
+  dialog.addEventListener("keydown", event => keepFocusInsideDialog(dialog, event));
+  dialog.addEventListener("close", () => { dialog.remove(); if (returnFocus.isConnected) returnFocus.focus(); });
+  main.append(dialog);
+  dialog.showModal();
+  close.focus();
 }
 
 function emptyState(title: string, description: string): HTMLElement {

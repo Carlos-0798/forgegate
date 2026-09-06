@@ -1173,3 +1173,8 @@ td {
     background: Highlight;
   }
 }
+/* Job identities and normalized values must remain readable at narrow widths. */
+.job-card, .job-detail { margin-block: 1rem; overflow-wrap: anywhere; }
+.job-detail > .button { margin: .35rem .5rem .35rem 0; }
+.job-values { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; }
+.job-output { border-top: 1px solid var(--line); padding-block: 1rem; }

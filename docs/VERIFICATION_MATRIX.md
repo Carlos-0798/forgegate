@@ -2,6 +2,8 @@
 
 | Capability | Planned evidence | Current status |
 |---|---|---|
+| Dashboard job management | 16 additional Python and 17 frontend regressions; isolated real Edge | LOCAL PASS — scoped list/detail/results, confirmed cancel/recover, actor history and real 409; no browser submit/run, new OS accessibility or hardware claim |
+| Job-store v1-to-v2 migration | historical byte preservation, actor absence, rollback and independent CLI processes | LOCAL PASS — explicit upgrade only; startup never migrates |
 | Candidate-store backup and offline verification | 27 focused regressions, WAL transaction fixture, cold domain reads and clean-wheel commands | LOCAL PASS — no-overwrite, exact retained rows, hash/schema/integrity checks and limits; no automatic restore or arbitrary-backup domain proof |
 | Windows Dashboard startup and diagnostics | 28 focused host/PowerShell cases, actual HTTP and clean-wheel smoke | PASS — foreground start/stop/restart, missing/empty inputs, occupied port and argument/exit-code checks; no watchdog or ownership guarantee |
 | Runtime HTTP observation | retained path-free receipt, exact installed HTML | PASS — Dashboard reachable, API-only rejected, stopped fixtures refused; no authenticated-browser, database-integrity or hardware claim from the probe |
@@ -15,7 +17,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — forty-one document plus three artifact schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — forty-four document plus three artifact schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Analog Validation result Schema mirror | committed upstream-consumer contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
@@ -81,7 +83,7 @@
 | Request correlation and error sanitization | generated/supplied/invalid IDs + injected exception | PASS — local host |
 | Loopback-only API bind | IPv4/IPv6/localhost allowlist + external-address rejection | PASS — local host |
 | OpenAPI 3.1 contract | committed byte comparison + installed-wheel export | PASS — drift-checked |
-| Dashboard BFF OpenAPI contract | separate build-time export + committed byte and installed-wheel comparison | PASS — 20 paths / 21 `/app/api/` operations with explicit operation IDs; not served as interactive docs |
+| Dashboard BFF OpenAPI contract | separate build-time export + committed byte and installed-wheel comparison | PASS — 24 paths / 25 `/app/api/` operations with explicit operation IDs; not served as interactive docs |
 | Authenticated local API | Ed25519 challenge, Bearer session, trust recheck | PASS — local host, loopback only |
 | User interaction acceptance | deterministic CLI plus authenticated REST smoke | PASS — 33/33 expected outputs; ephemeral identity/database; Swagger/ReDoc deliberately return 404 |
 | Local Web Dashboard design | architecture, UX requirements, threat model, acceptance matrix | DESIGN PASS — Phase 23 frozen; Phase 24 implementation preserves the defined same-origin boundary |
@@ -179,7 +181,7 @@
 | Structured-input pre-materialization bounds | JSON token, XML event, and YAML event adversarial tests | PASS — byte plus node/element/depth limits; duplicate YAML keys rejected |
 | Plugin output pre-materialization bounds | trusted in-container exporter plus bounded host archive inspection | PASS — clean-wheel live dual snapshots; no archive extraction |
 | Development dependency advisory audit | constrained pip/pytest bootstrap plus `pip-audit` | PASS — no known advisory in resolved registry dependencies; editable local project excluded |
-| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.49% exceeds exact 95.00% threshold |
+| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.53% exceeds exact 95.00% threshold |
 
 See `reports/INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md` for the latest
 expected-versus-actual CLI/API check and

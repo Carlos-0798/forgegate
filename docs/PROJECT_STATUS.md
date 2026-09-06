@@ -2,10 +2,15 @@
 
 - Date: 2026-09-06
 - Version: 0.1.0a1
-- Stage: Phase 34 durable local report job engine and CLI implemented, with
+- Stage: Phase 35 opt-in operator Dashboard job list/detail/results, reviewed
+  cancellation and expired-lease recovery implemented. Explicit job-store v2
+  migration adds event actors without rewriting historical records; no automatic
+  worker, browser submission/execution, evidence binding or service restart.
+  Phase 34 durable local report job engine and CLI implemented, with
   separate v1 storage, explicit execution/cancellation, expired-lease recovery,
-  bounded pending input retention and independent result export. No Dashboard
-  job UI, automatic worker, candidate mutation or coordinated job backup.
+  bounded pending input retention and independent result export. Phase 34 itself
+  added no Dashboard UI; automatic workers, candidate mutation by jobs and
+  coordinated job backup remain absent.
   Phase 33 combined JUnit + Cobertura/LCOV browser preview, original-JSON
   binding and generic policy workflow implemented locally. Real Edge combined
   Cobertura/LCOV PASS, low-coverage FAIL and the scoped negative-input matrix
@@ -42,14 +47,16 @@ package jobs, but its final generic Action job did not start because GitHub
 reported an account payment/spending-limit restriction. The overall run is
 not green. Billing changes require owner action; local acceptance is separate.
 
-Per the owner's current instruction, Phase 32 work is local-only. No GitHub
+Per the owner's current instruction, Phases 32–35 work is local-only. No GitHub
 inspection, push, PR creation or merge was performed for this checkpoint.
 
 ## Implemented
 
-- durable local CLI collection jobs in a separate v1 SQLite file, with bounded
+- opt-in operator-only Dashboard jobs with scope filtering, paged list/detail,
+  exact result inspection, reviewed cancellation/recovery and event attribution;
+- durable local CLI collection jobs in a separate v2 SQLite file, with bounded
   pending input, idempotent replay, explicit execution/cancellation, manual
-  expired-lease recovery and result export; no Dashboard queue or automatic worker;
+  expired-lease recovery and result export; no browser submission or automatic worker;
 - current-schema SQLite backup through a pinned read transaction and Online
   Backup API, checked before atomic create-if-absent file publication; independent
   offline verification on a disposable copy, optional expected-hash comparison,
@@ -480,6 +487,11 @@ remaining OS assistive checks are separate.
 
 ## Accepted local checkpoint
 
+- Phase 35: 16 additional Python and 17 frontend job-management regressions;
+  isolated actual Edge pagination, result inspection, Escape/focus return,
+  cancellation/actor retention, expired recovery and real revision-conflict checks.
+  See [acceptance evidence](../reports/PHASE_35_DASHBOARD_JOBS_ACCEPTANCE.md).
+  Original port 8131 and MSP430 runtime left untouched; GitHub remains paused.
 - Phase 34: 32 focused job regressions and independent-process CLI acceptance;
   exact replay, exclusive claim, cancellation/late-result ordering, expired-only
   recovery, candidate rechecks, quotas, corruption rejection and separate binding.
@@ -512,14 +524,14 @@ remaining OS assistive checks are separate.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 1033 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.49% across 11,164 statements and 2,994 branches
+- pytest: 1049 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.53% across 11,312 statements and 3,032 branches
 - MSP430 live-status focus: 17 passed across parser, state classification,
   staleness, invalid/recovery, counters, dependency/I/O failure, and input-only
   monitor lifecycle
 - Historical Phase 30 Dashboard focus: 80 passed with 98.60% branch-aware coverage across 728
   statements and 130 branches
-- Frontend host regressions: 73 passed, including 30 combined-collection/import,
+- Frontend host regressions: 90 passed, including 17 jobs and 30 combined-collection/import,
   18 JUnit collection, 12 Audit and 13 activation cases; separate from Python
   coverage and browser tests
 - Phase 30 browser checkpoint: real Edge file selection, independent binding,
@@ -595,7 +607,7 @@ remaining OS assistive checks are separate.
   Validation, and MSP430 validation-report artifact Schemas: drift-checked and
   parsed
 - complete sdist manifest and ForgeGate/sample-plugin wheel builds: PASS
-- clean-wheel MSP430 report collection, Dashboard OpenAPI export (20 paths, 21 operations),
+- clean-wheel MSP430 report collection, Dashboard OpenAPI export (24 paths, 25 operations),
   installed-package workflow, optional `pyserial` install, and uninstall: PASS
 - Windows sandbox focus: 20 passed across probe failure isolation, client/server
   identity, rootless/local/WSL requirements, command controls, strict verifier

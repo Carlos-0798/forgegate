@@ -1,9 +1,11 @@
-# Durable local collection jobs (Phase 34)
+# Durable local collection jobs (Phases 34–35)
 
-This is an explicit **local CLI** task lifecycle, not a Dashboard task center,
-authenticated worker API, scheduler, service, or production queue. It adds no
-device access. The candidate store remains schema v9; jobs use a separate v1
-SQLite file. Existing browser previews remain ephemeral and unchanged.
+Submission/execution use an explicit **local CLI** task lifecycle, not a worker
+service, scheduler or production queue. Phase 35 adds an opt-in authenticated
+[Dashboard management view](DASHBOARD_JOBS.md), not browser submission/execution.
+It adds no device access. The candidate store remains schema v9; new job stores
+use a separate v2 SQLite file. Existing browser previews remain ephemeral.
+Legacy v1 jobs require explicit `jobs migrate STORE` before Dashboard use.
 
 ## Small reproducible acceptance
 
@@ -113,8 +115,9 @@ and result commands exit 0, operational/input failures 3, CLI usage errors 2.
 
 ## Evidence and data protection boundaries
 
-- File possession authorizes this local tool: `LOCAL_CLI_NOT_AUTHENTICATED`.
-  No browser role or Ed25519 producer identity is implied.
+- File possession authorizes the CLI: `LOCAL_CLI_NOT_AUTHENTICATED` creation
+  authority. Browser management instead requires the authenticated operator and
+  project/CSRF checks documented separately; it records actors on new events.
 - The candidate must still match before and after parsing. No candidate data,
   audit event, policy decision or binding is written by a job. Review/export an
   assembly and use the existing separate binding workflow, with its own guards.
@@ -146,8 +149,8 @@ mutations. Exceptions in execution persist only `JOB_EXECUTION_FAILED`.
 
 ## Deferred gates
 
-Authenticated, project-scoped Dashboard job list/detail/submission/cancellation,
-safe browser warning review, cooperative worker shutdown, scheduled execution,
-lease renewal, private artifact lifecycle/backup UI, and real-browser task
-acceptance remain separate future work. Existing MSP430 live telemetry is not
+Browser job submission/execution, safe durable warning review, cooperative worker
+shutdown, scheduled execution, lease renewal and private artifact lifecycle/backup
+UI remain separate future work. Phase 35 list/detail/cancel/recover and its scoped
+real-browser acceptance are documented separately. Existing MSP430 live telemetry is not
 connected to this report queue and does not become release evidence.

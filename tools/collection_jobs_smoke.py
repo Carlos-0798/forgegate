@@ -6,9 +6,11 @@ import base64
 import hashlib
 import json
 import os
+import sqlite3
 import subprocess
 import sys
 import tempfile
+from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -156,6 +158,38 @@ def main() -> int:
         cancelled = invoke(root, "cancel", str(store), str(cancelled["job_id"]), "--revision", "0")
         assert isinstance(cancelled, dict) and cancelled["state"] == "CANCELLED"
         assert len(invoke(root, "list", str(store))) == 2
+        # Exercise the explicit legacy upgrade from a NEW synthetic fixture only.
+        # Historical record bytes and absent actor attribution must be preserved.
+        with closing(sqlite3.connect(store)) as connection, connection:
+            before = connection.execute(
+                "SELECT record FROM events ORDER BY job_id, revision"
+            ).fetchall()
+            connection.execute("ALTER TABLE events DROP COLUMN actor")
+            connection.execute("PRAGMA user_version = 1")
+        env = os.environ.copy()
+        env.pop("PYTHONPATH", None)
+        for _ in range(2):
+            migrated = subprocess.run(
+                [sys.executable, "-m", "forgegate", "jobs", "migrate", str(store)],
+                cwd=root,
+                env=env,
+                capture_output=True,
+                timeout=30,
+                check=False,
+            )
+            assert migrated.returncode == 0
+        with closing(sqlite3.connect(store)) as connection:
+            assert connection.execute("PRAGMA user_version").fetchone()[0] == 2
+            assert (
+                connection.execute("SELECT record FROM events ORDER BY job_id, revision").fetchall()
+                == before
+            )
+            assert (
+                connection.execute(
+                    "SELECT COUNT(*) FROM events WHERE actor IS NOT NULL"
+                ).fetchone()[0]
+                == 0
+            )
         receipt = {
             "schema_version": "forgegate.collection-job-smoke.v1",
             "result": "PASS",
@@ -170,6 +204,8 @@ def main() -> int:
                 "candidate_history_unchanged",
                 "explicit_cancel",
                 "list_retained_jobs",
+                "explicit_v1_v2_migration_preserves_records",
+                "migration_replay_does_not_infer_actors",
                 "temporary_store_cleanup",
             ],
             "expected_test_summary": {"total": 4, "failures": 1},

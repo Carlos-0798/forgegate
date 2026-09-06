@@ -16,6 +16,7 @@ from pydantic import Field, model_validator
 
 from forgegate.application import CandidateApplication
 from forgegate.assembly.models import EvidenceBundleAssembly
+from forgegate.audit.models import AuditActor
 from forgegate.candidates import CandidateStoreError
 from forgegate.candidates.models import CANDIDATE_ID_PATTERN, FINGERPRINT_PATTERN
 from forgegate.canonical import canonical_json, sha256_fingerprint
@@ -137,6 +138,17 @@ class CollectionJobResult(StrictModel):
         return "REVIEW_REQUIRED" if self.assembly is None else "SUCCEEDED"
 
 
+class CollectionJobEvent(StrictModel):
+    record: CollectionJobRecord
+    actor: AuditActor | None = None
+
+
+class CollectionJobReview(StrictModel):
+    record: CollectionJobRecord
+    events: list[CollectionJobEvent] = Field(min_length=1, max_length=3)
+    result: CollectionJobResult | None
+
+
 def _json(model: StrictModel) -> str:
     return canonical_json(model.model_dump(mode="json"))
 
@@ -173,7 +185,7 @@ def _candidate(application: CandidateApplication, request: CollectionJobRequest)
 
 
 class CollectionJobStore:
-    """Separate v1 SQLite store. Local file possession is authority, not an identity."""
+    """Separate SQLite store; v2 adds actor metadata without rewriting v1 records."""
 
     def __init__(self, path: Path) -> None:
         if path.is_symlink() or not path.parent.is_dir():
@@ -188,14 +200,14 @@ class CollectionJobStore:
             with closing(sqlite3.connect(self.path)) as con:
                 con.executescript(f"""
                     PRAGMA application_id={APP_ID};
-                    PRAGMA user_version=1;
+                    PRAGMA user_version=2;
                     CREATE TABLE jobs (
                         job_id TEXT PRIMARY KEY, request_key TEXT UNIQUE NOT NULL,
                         record TEXT NOT NULL, input TEXT, result TEXT, lease TEXT
                     );
                     CREATE TABLE events (
                         job_id TEXT NOT NULL REFERENCES jobs(job_id),
-                        revision INTEGER NOT NULL, record TEXT NOT NULL,
+                        revision INTEGER NOT NULL, record TEXT NOT NULL, actor TEXT,
                         PRIMARY KEY(job_id, revision)
                     );
                     CREATE TRIGGER events_no_update BEFORE UPDATE ON events
@@ -214,10 +226,9 @@ class CollectionJobStore:
                 raise JobError("JOB_STORE_PATH_INVALID")
             con = sqlite3.connect(self.path.as_uri() + "?mode=rw", uri=True, timeout=5)
             con.row_factory = sqlite3.Row
-            if (
-                con.execute("PRAGMA application_id").fetchone()[0] != APP_ID
-                or con.execute("PRAGMA user_version").fetchone()[0] != 1
-            ):
+            if con.execute("PRAGMA application_id").fetchone()[0] != APP_ID or con.execute(
+                "PRAGMA user_version"
+            ).fetchone()[0] not in (1, 2):
                 raise JobError("JOB_STORE_VERSION_INVALID")
             con.execute("PRAGMA synchronous=FULL")
             con.execute("PRAGMA foreign_keys=ON")
@@ -229,6 +240,23 @@ class CollectionJobStore:
         finally:
             if con is not None:
                 con.close()
+
+    def require_dashboard_store(self) -> None:
+        with self._transaction() as con:
+            if con.execute("PRAGMA user_version").fetchone()[0] != 2:
+                raise JobError("JOB_STORE_MIGRATION_REQUIRED")
+            # Validate schema without initializing or upgrading a configured file.
+            con.execute("SELECT job_id,revision,record,actor FROM events LIMIT 1")
+
+    def migrate(self) -> None:
+        """Explicit transactional v1-to-v2 upgrade; preserve raw rows, infer no actor."""
+        with self._transaction() as con:
+            if con.execute("PRAGMA user_version").fetchone()[0] == 2:
+                return
+            for row in con.execute("SELECT job_id FROM jobs").fetchall():
+                self._read(con, row[0])
+            con.execute("ALTER TABLE events ADD COLUMN actor TEXT")
+            con.execute("PRAGMA user_version=2")
 
     def _read(
         self, con: sqlite3.Connection, job_id: str
@@ -294,12 +322,46 @@ class CollectionJobStore:
                 "INSERT INTO jobs VALUES(?,?,?,?,NULL,NULL)",
                 (record.job_id, key, _json(record), payload),
             )
-            con.execute("INSERT INTO events VALUES(?,?,?)", (record.job_id, 0, _json(record)))
+            con.execute(
+                "INSERT INTO events(job_id,revision,record) VALUES(?,?,?)",
+                (record.job_id, 0, _json(record)),
+            )
             return record
 
     def show(self, job_id: str) -> CollectionJobRecord:
         with self._transaction() as con:
             return self._read(con, job_id)[0]
+
+    def review(self, job_id: str, *, project_id: str) -> CollectionJobReview:
+        with self._transaction() as con:
+            record, row = self._read(con, job_id)
+            if record.project_id != project_id:
+                raise JobError("JOB_NOT_FOUND")
+            try:
+                events: list[CollectionJobEvent] = []
+                for event in con.execute(
+                    "SELECT * FROM events WHERE job_id=? ORDER BY revision", (job_id,)
+                ):
+                    snapshot = CollectionJobRecord.model_validate_json(event["record"])
+                    _require(snapshot.job_id == job_id and snapshot.project_id == project_id)
+                    _require(
+                        snapshot.revision == len(events) and _json(snapshot) == event["record"]
+                    )
+                    actor_raw = dict(event).get("actor")
+                    actor = None if actor_raw is None else AuditActor.model_validate_json(actor_raw)
+                    if actor is not None:
+                        _require(actor.role == "operator" and _json(actor) == actor_raw)
+                    events.append(CollectionJobEvent(record=snapshot, actor=actor))
+                _require(len(events) == record.revision + 1 and events[-1].record == record)
+                return CollectionJobReview(
+                    record=record,
+                    events=events,
+                    result=None
+                    if row["result"] is None
+                    else CollectionJobResult.model_validate_json(row["result"]),
+                )
+            except ValueError as exc:
+                raise JobError("JOB_STORE_CORRUPT") from exc
 
     def list_jobs(self, *, after: str = "", limit: int = 25) -> list[CollectionJobRecord]:
         if not 1 <= limit <= 100:
@@ -311,7 +373,12 @@ class CollectionJobStore:
             return [self._read(con, row[0])[0] for row in ids]
 
     def _update(
-        self, con: sqlite3.Connection, old: CollectionJobRecord, **changes: object
+        self,
+        con: sqlite3.Connection,
+        old: CollectionJobRecord,
+        *,
+        actor: AuditActor | None = None,
+        **changes: object,
     ) -> CollectionJobRecord:
         now = _now()
         if now < old.updated_at:
@@ -325,9 +392,21 @@ class CollectionJobStore:
             }
         )
         con.execute("UPDATE jobs SET record=? WHERE job_id=?", (_json(record), old.job_id))
-        con.execute(
-            "INSERT INTO events VALUES(?,?,?)", (record.job_id, record.revision, _json(record))
-        )
+        if actor is None:
+            con.execute(
+                "INSERT INTO events(job_id,revision,record) VALUES(?,?,?)",
+                (record.job_id, record.revision, _json(record)),
+            )
+        else:
+            actor = AuditActor.model_validate_json(actor.model_dump_json())
+            if actor.role != "operator" or actor.authenticated_at > now:
+                raise JobError("JOB_ACTOR_INVALID")
+            if con.execute("PRAGMA user_version").fetchone()[0] != 2:
+                raise JobError("JOB_STORE_MIGRATION_REQUIRED")
+            con.execute(
+                "INSERT INTO events(job_id,revision,record,actor) VALUES(?,?,?,?)",
+                (record.job_id, record.revision, _json(record), _json(actor)),
+            )
         if record.state not in ACTIVE:
             con.execute("UPDATE jobs SET input=NULL,lease=NULL WHERE job_id=?", (old.job_id,))
         return record
@@ -394,22 +473,41 @@ class CollectionJobStore:
             con.execute("UPDATE jobs SET result=? WHERE job_id=?", (payload, job_id))
             return record
 
-    def cancel(self, job_id: str, revision: int) -> CollectionJobRecord:
+    def cancel(
+        self,
+        job_id: str,
+        revision: int,
+        *,
+        actor: AuditActor | None = None,
+        project_id: str | None = None,
+    ) -> CollectionJobRecord:
         with self._transaction() as con:
             old, _ = self._read(con, job_id)
+            if project_id is not None and old.project_id != project_id:
+                raise JobError("JOB_NOT_FOUND")
             if old.state not in ACTIVE or old.revision != revision:
                 raise JobError("JOB_STATE_CONFLICT")
             return self._update(
                 con,
                 old,
+                actor=actor,
                 state="CANCELLED",
                 lease_expires_at=None,
                 source_bytes="released_logically",
             )
 
-    def recover(self, job_id: str, revision: int) -> CollectionJobRecord:
+    def recover(
+        self,
+        job_id: str,
+        revision: int,
+        *,
+        actor: AuditActor | None = None,
+        project_id: str | None = None,
+    ) -> CollectionJobRecord:
         with self._transaction() as con:
             old, _ = self._read(con, job_id)
+            if project_id is not None and old.project_id != project_id:
+                raise JobError("JOB_NOT_FOUND")
             if (
                 old.state != "RUNNING"
                 or old.revision != revision
@@ -420,6 +518,7 @@ class CollectionJobStore:
             return self._update(
                 con,
                 old,
+                actor=actor,
                 state="INTERRUPTED",
                 lease_expires_at=None,
                 source_bytes="released_logically",

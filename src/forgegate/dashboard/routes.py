@@ -92,6 +92,7 @@ def install_dashboard_routes(
     session_manager: DashboardSessionManager | None = None,
     static_root: Path | None = None,
     live_status_provider: LiveStatusProvider | None = None,
+    job_store_path: Path | None = None,
 ) -> DashboardSessionManager:
     manager = session_manager or DashboardSessionManager(authenticator)
     status_provider = live_status_provider or DisabledLiveStatusProvider()
@@ -683,6 +684,15 @@ def install_dashboard_routes(
             )
         )
 
+    from forgegate.dashboard.jobs import install_job_routes
+
+    install_job_routes(
+        app,
+        application=application,
+        authenticator=authenticator,
+        manager=manager,
+        store_path=job_store_path,
+    )
     app.state.dashboard_session_manager = manager
     app.state.dashboard_static_root = assets_root
     app.state.dashboard_live_status_provider = status_provider

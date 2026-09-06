@@ -1,0 +1,32 @@
+{
+  "phase": 35,
+  "date": "2026-09-06",
+  "verification": "LOCAL_HOST_AND_ACTUAL_EDGE_SYNTHETIC",
+  "hardware_access": "NOT_PERFORMED",
+  "github_operations": "NOT_PERFORMED",
+  "original_service_restarted": false,
+  "browser_fixture": {
+    "jobs": 27,
+    "pages": [25, 2],
+    "expired_lease": "SEEDED_NOT_OBSERVED_CRASH",
+    "candidate_status_after": "COLLECTING",
+    "candidate_revision_after": 1,
+    "candidate_transitions_after": 1,
+    "candidate_evidence_binding_after": null,
+    "completed_summary": {"total": 4, "failures": 1, "passed": 3, "errors": 0, "skipped": 0, "duration_seconds": 0.5},
+    "warning_total": 1,
+    "warning_codes": ["JUNIT_DECLARED_COUNT_MISMATCH", "JUNIT_DURATION_INCOMPLETE"],
+    "rejection_code": "JUNIT_FORBIDDEN_DECLARATION",
+    "cancellation": {"state": "CANCELLED", "revision": 1, "actor": "Synthetic job operator"},
+    "recovery": {"state": "INTERRUPTED", "revision": 2, "actor": "Synthetic job operator"},
+    "conflict": {"http_status": 409, "code": "JOB_STATE_CONFLICT", "retained_events": 2, "auto_retry": false}
+  },
+  "screenshots_sha256": {
+    "docs/assets/phase35-job-result.png": "c9ee242a096aa882dddc46fe8bd139ad51d1c92496dc3d0418bf526a2dca4613",
+    "docs/assets/phase35-job-cancelled.png": "b53b53f4174a7bc343d1796ab8f41cc30166f678ede8fe88d0dd0f195dcaa0b2",
+    "docs/assets/phase35-job-recovered.png": "f4a738fcfcf02cc3efd5cf6f5c31b5317277efd3d25f08697bd285f1660fdbc9",
+    "docs/assets/phase35-job-conflict.png": "e4178e723d04a601ce48d35bdb8d29219571a0c12a20bd22ca90e20ff9a3a9a1"
+  },
+  "job_completion_is_policy_pass": false,
+  "native_accessibility_test": "NOT_PERFORMED_THIS_PHASE"
+}

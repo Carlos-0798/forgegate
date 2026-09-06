@@ -29,6 +29,7 @@ analysis, compatibility contracts, and historical acceptance evidence.
 - [Evidence bundle assembly](architecture/EVIDENCE_BUNDLE_ASSEMBLY.md)
 - [Candidate evidence binding](architecture/CANDIDATE_EVIDENCE_BINDING.md)
 - [Durable local collection jobs](COLLECTION_JOBS.md) — CLI lifecycle, restart/cancel semantics and private data boundaries
+- [Dashboard job management](DASHBOARD_JOBS.md) — explicit store upgrade/configuration, operator-only inspection and reviewed actions
 - [Policy engine](architecture/POLICY_ENGINE.md)
 - [Candidate lifecycle](architecture/CANDIDATE_LIFECYCLE.md)
 - [Attestations](architecture/ATTESTATIONS.md)

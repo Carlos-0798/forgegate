@@ -55,7 +55,15 @@ def initialize(store: Path) -> None:
     """Create a NEW private job database; existing files are never overwritten."""
     with _guard():
         CollectionJobStore(store).initialize()
-    typer.echo("CREATED collection-job store v1; local file authority only")
+    typer.echo("CREATED collection-job store v2; local file authority only")
+
+
+@jobs_app.command("migrate")
+def migrate(store: Path) -> None:
+    """Explicit v1-to-v2 actor-column migration; existing history stays unattributed."""
+    with _guard():
+        CollectionJobStore(store).migrate()
+    typer.echo("VALID collection-job store v2; no historical actor inferred")
 
 
 @jobs_app.command("submit")

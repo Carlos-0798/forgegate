@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Added opt-in authenticated Dashboard job inspection, project pagination,
+  reviewed cancellation and expired-lease recovery with atomic actor attribution.
+  Added explicit job-store v1-to-v2 migration without rewriting historical records,
+  frontend/authorization regressions and actual Edge synthetic acceptance.
+  Submission/execution remain CLI-only; no automatic worker or hardware change.
 - Added a separate durable local collection-job store and CLI with idempotent
   submission, bounded pending source retention, explicit run/cancel/recover,
   exact result export and fail-closed candidate rechecks. No Dashboard job UI,

@@ -655,6 +655,15 @@ def dashboard(
     ],
     host: Annotated[str, typer.Option("--host")] = "127.0.0.1",
     port: Annotated[int, typer.Option("--port", min=1, max=65535)] = 8000,
+    job_store: Annotated[
+        Path | None,
+        typer.Option(
+            "--job-store",
+            exists=True,
+            dir_okay=False,
+            help="Use an existing v2 job store; no automatic migration or execution.",
+        ),
+    ] = None,
     session_ttl_seconds: Annotated[
         int,
         typer.Option("--session-ttl-seconds", min=60, max=3600),
@@ -710,6 +719,7 @@ def dashboard(
             authenticator=authenticator,
             dashboard=True,
             dashboard_live_status_provider=monitor,
+            dashboard_job_store_path=job_store,
         )
     except (CandidateStoreError, IdentityError, ValueError) as exc:
         typer.echo(f"ERROR: {exc}", err=True)
