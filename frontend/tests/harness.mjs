@@ -19,6 +19,8 @@ export async function harness(origin = "http://127.0.0.1:8131") {
     textContent = "";
     className = "";
     disabled = false;
+    open = false;
+    isConnected = true;
     constructor(tag) { this.tag = tag; }
     append(...children) { this.children.push(...children); }
     replaceChildren(...children) { this.children = children; }
@@ -28,6 +30,9 @@ export async function harness(origin = "http://127.0.0.1:8131") {
     click() { if (!this.disabled) for (const fn of this.listeners.click ?? []) fn(); }
     get firstElementChild() { return this.children[0] ?? null; }
     reportValidity() { return false; }
+    showModal() { this.open = true; }
+    close() { this.open = false; for (const fn of this.listeners.close ?? []) fn(); }
+    remove() { this.isConnected = false; }
     querySelector(selector) {
       const matches = (node) => selector.startsWith(".")
         ? node.className.split(" ").includes(selector.slice(1)) : node.tag === selector;
@@ -47,6 +52,7 @@ export async function harness(origin = "http://127.0.0.1:8131") {
   let timerId = 0;
   const context = createContext({
     exports: {}, require: () => ({}), Headers, URL, URLSearchParams, crypto: webcrypto,
+    TextDecoder, btoa,
     document: {
       querySelector: () => root, createElement: (tag) => new Element(tag),
       get activeElement() { return activeElement; }

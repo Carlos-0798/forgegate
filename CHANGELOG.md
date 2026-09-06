@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Added bounded single-JUnit Dashboard preview with exact-byte hashing, original
+  declared source time, explicit warning consent and separate immutable binding.
+  No filesystem path, raw-byte retention, queue, hardware or trust promotion.
+- Added 27 Python and 18 frontend host regressions and synthetic PASS/FAIL/
+  warning/rejected inputs. Real Edge upload acceptance remains open pending
+  owner-managed browser-extension file permission; form-only capture retained.
 - Added an operator-only project Audit workspace with candidate filters,
   stable cursor links, full event/subject identities, recorded actors,
   text-only details, and explicit partial-preview/unknown-actor boundaries.

@@ -220,3 +220,14 @@ A Dashboard capability is complete only when:
 - a clean wheel serves the same static assets and API contract;
 - documentation, screenshots, and labels match the implemented behavior; and
 - every untested environment and assurance limitation remains explicit.
+
+## Bounded JUnit collection
+
+The Phase 30 form is a manual preview, not an automatic job. Its contract is
+[defined separately](../DASHBOARD_COLLECTION_CONTRACT.md). The UI must retain
+original report time, show unsigned_local / declared, distinguish collection
+status from policy decision, require explicit warning retention and another
+confirmation for immutable binding. Closing the dialog discards the preview
+without promising to cancel an already submitted server request. Missing-file
+validation and focus return were observed in Edge; upload completion is still
+an open manual gate.

@@ -193,6 +193,18 @@ mutation, release-audit event, remote publication, or hardware access.
 
 ## What these artifacts support
 
+### Phase 30 form-only evidence
+
+![Real Edge JUnit import form with explicit evidence limits, before file upload](assets/forgegate-dashboard-junit-import-form.jpg)
+
+This unedited Edge viewport shows the new form against a separate synthetic
+fixture database. Required-file validation, Escape and focus return were also
+checked. Extension file access blocked automated file selection; this capture
+is not an uploaded-result or completed-workflow claim. Details and the image
+hash are in the [Phase 30 report](../reports/PHASE_30_JUNIT_COLLECTION_ACCEPTANCE.md).
+
+### Previously accepted workflows
+
 They support the narrow claim that the authenticated, loopback-only Dashboard
 implements activation, Overview, Devices, Projects, candidate list/create/
 detail/audit, reviewed lifecycle/evidence/evaluation/attestation writes, and

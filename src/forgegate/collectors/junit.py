@@ -9,7 +9,7 @@ from typing import Any
 
 from pydantic import Field, field_validator
 
-from forgegate.artifacts import ArtifactError, ArtifactRegistry, RegisteredArtifact
+from forgegate.artifacts import ArtifactError, ArtifactSource, RegisteredArtifact
 from forgegate.bounded_parsing import StructureLimitError, enforce_xml_structure_limits
 from forgegate.collectors.base import (
     CollectionIssue,
@@ -75,7 +75,7 @@ class JUnitSummary:
 class JUnitCollector:
     def __init__(
         self,
-        registry: ArtifactRegistry,
+        registry: ArtifactSource,
         *,
         max_elements: int = DEFAULT_MAX_XML_ELEMENTS,
         max_depth: int = DEFAULT_MAX_XML_DEPTH,

@@ -2,6 +2,7 @@
 
 | Capability | Planned evidence | Current status |
 |---|---|---|
+| Bounded Dashboard JUnit preview | 27 Python and 18 frontend host regressions; real Edge file flow | HOST PASS / BROWSER PARTIAL — counts/hash, rejection/warnings, auth/scope/CSRF, immutable binding and fixture policy chain pass; Edge form, missing-file validation and Escape/focus pass; upload blocked by extension file-access setting, no browser end-to-end claim |
 | Package imports on Python 3.12 | clean virtual environment | PASS — wheel clean-install smoke |
 | Repeatable Windows setup | PowerShell bootstrap + constraints | PASS |
 | Linux/macOS setup script | shell syntax + future CI | SYNTAX PASS; execution NOT RUN |
@@ -77,11 +78,11 @@
 | Request correlation and error sanitization | generated/supplied/invalid IDs + injected exception | PASS — local host |
 | Loopback-only API bind | IPv4/IPv6/localhost allowlist + external-address rejection | PASS — local host |
 | OpenAPI 3.1 contract | committed byte comparison + installed-wheel export | PASS — drift-checked |
-| Dashboard BFF OpenAPI contract | separate build-time export + committed byte and installed-wheel comparison | PASS — eighteen `/app/api/` operations with explicit operation IDs; not served as interactive docs |
+| Dashboard BFF OpenAPI contract | separate build-time export + committed byte and installed-wheel comparison | PASS — nineteen `/app/api/` operations with explicit operation IDs; not served as interactive docs |
 | Authenticated local API | Ed25519 challenge, Bearer session, trust recheck | PASS — local host, loopback only |
 | User interaction acceptance | deterministic CLI plus authenticated REST smoke | PASS — 33/33 expected outputs; ephemeral identity/database; Swagger/ReDoc deliberately return 404 |
 | Local Web Dashboard design | architecture, UX requirements, threat model, acceptance matrix | DESIGN PASS — Phase 23 frozen; Phase 24 implementation preserves the defined same-origin boundary |
-| Authenticated local Web Dashboard | clean wheel, adversarial automation, Edge/Chrome, keyboard, focus, pagination, zoom, and bounded assistive evidence | IMPLEMENTED / PARTIAL ASSISTIVE ACCEPTANCE — 53 focused tests, Edge and Chrome keyboard/focus, 129-record cursor pagination, 409/413/422/429/500 recovery, Chrome 390 px/restart, installed-wheel Edge read, candidate-bound assurance review/export, in-app-browser 390 px, and native Edge 100–200% zoom pass; Narrator keyboard/semantics is bounded PASS, while spoken output, high contrast, and real Remote Desktop remain unexecuted |
+| Authenticated local Web Dashboard | clean wheel, adversarial automation, Edge/Chrome, keyboard, focus, pagination, zoom, and bounded assistive evidence | IMPLEMENTED / PARTIAL MANUAL ACCEPTANCE — 80 focused tests; prior Edge/Chrome core workflow, keyboard/focus, pagination, error recovery and Edge 100–200% zoom pass. Phase 30 raw-file upload awaits extension access; spoken Narrator output, high contrast and real Remote Desktop remain unexecuted |
 | Dashboard Evidence/Decision/Assurance review | authenticated BFF tests + generic PASS local-browser fixture | PASS — candidate-bound deep links expose retained binding/assembly records, exact policy material, expected/actual rule values, evidence references, attestation/bundle IDs, lifecycle chain, and explicit limitations |
 | Reviewed Dashboard write workflow | operator BFF tests + isolated Edge end-to-end candidate | PASS — DRAFT→COLLECTING→READY→EVALUATING→PASS→attestation with per-command confirmation, CSRF, project scope, idempotency/stale protection, and authoritative reload; mismatched-commit assembly rejected before write |
 | Dashboard portable assurance export | operator BFF tests + real Edge download + offline CLI verification | PASS — reviewed candidate/revision/bundle identity, deterministic bounded rootless ZIP, exact three-member archive, stale/replay/authorization rejection, no durable mutation, and database-independent verification; no upload or publication |
@@ -158,7 +159,7 @@
 | Installed identity workflow | ephemeral key derive/trust/sign/replay/verify smoke | PASS — clean-wheel local host |
 | Trusted timestamp/managed online revocation | managed external infrastructure | NOT IMPLEMENTED — signed/auth times are not trusted; API reload is explicit from one fixed local file |
 | Source-artifact producer chain | producer-signed artifact receipts | NOT IMPLEMENTED — signature covers retained bundle only |
-| HTTP artifact loading/file publication | no loader/output path; nested metadata is not dereferenced | OUT OF SCOPE |
+| HTTP server-path artifact loading/file publication | no loader/output path; nested metadata is not dereferenced | OUT OF SCOPE — Phase 30 accepts bounded uploaded JUnit bytes only, in memory |
 | MSP430 validation-report compatibility | frozen artifact contract, strict collector, Schema/CLI/assembly tests | PASS — 34 focused tests and clean-wheel collection; HIL remains `system_observed`, bench promotion requires complete physical context and calibration provenance, and the collector never opens serial or controls hardware |
 | Physical device control | explicit owner-approved procedure | OUT OF SCOPE — live monitor is input-only |
 | Generic project initialization | clean-wheel `forgegate init`, strict model validation, overwrite rejection | PASS — path-free receipt; no hardware requested |
@@ -166,7 +167,7 @@
 | Structured-input pre-materialization bounds | JSON token, XML event, and YAML event adversarial tests | PASS — byte plus node/element/depth limits; duplicate YAML keys rejected |
 | Plugin output pre-materialization bounds | trusted in-container exporter plus bounded host archive inspection | PASS — clean-wheel live dual snapshots; no archive extraction |
 | Development dependency advisory audit | constrained pip/pytest bootstrap plus `pip-audit` | PASS — no known advisory in resolved registry dependencies; editable local project excluded |
-| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.21% exceeds exact 95.00% threshold |
+| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.25% exceeds exact 95.00% threshold |
 
 See `reports/INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md` for the latest
 expected-versus-actual CLI/API check and

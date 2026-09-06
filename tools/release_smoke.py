@@ -36,6 +36,16 @@ REQUIRED_SDIST_PATHS = (
     "docs/VERIFICATION_MATRIX.md",
     "docs/DASHBOARD_ACCEPTANCE_MATRIX.md",
     "docs/PORTFOLIO_EVIDENCE.md",
+    "docs/DASHBOARD_COLLECTION_CONTRACT.md",
+    "docs/assets/forgegate-dashboard-junit-import-form.jpg",
+    "examples/dashboard-junit/forgegate.yaml",
+    "examples/dashboard-junit/policies/pull-request.yaml",
+    "examples/dashboard-junit/pass.xml",
+    "examples/dashboard-junit/fail.xml",
+    "examples/dashboard-junit/warning.xml",
+    "examples/dashboard-junit/rejected.xml",
+    "frontend/tests/collection.test.mjs",
+    "tools/manual_dashboard_collection.py",
     "docs/assets/forgegate-cli-demo.svg",
     "docs/assets/forgegate-dashboard-alpha.jpg",
     "docs/assets/forgegate-dashboard-candidate-detail.jpg",
@@ -695,6 +705,10 @@ def main(
             )
         dashboard_openapi = json.loads(exported_dashboard_openapi.read_text(encoding="utf-8"))
         dashboard_operations = {
+            (
+                "/app/api/candidates/{candidate_id}/junit-preview",
+                "post",
+            ): "previewDashboardCandidateJUnit",
             ("/app/api/candidates", "post"): "createDashboardCandidate",
             (
                 "/app/api/candidates/{candidate_id}/transitions",
@@ -718,6 +732,25 @@ def main(
                 raise SystemExit(
                     f"installed wheel is missing Dashboard BFF operation: {operation_id}"
                 )
+        run(
+            [
+                str(python),
+                "-c",
+                "import base64; from datetime import datetime, timezone; "
+                "from forgegate.dashboard.collection import "
+                "DashboardJUnitPreviewRequest, preview_junit; "
+                "r=preview_junit('fixture', DashboardJUnitPreviewRequest("
+                "expected_revision=1, reported_commit='a'*40, "
+                "content_base64=base64.b64encode(b'<testsuite tests=\"2\"/>').decode(), "
+                "source_tool='installed-fixture', source_version='1', "
+                "collected_at=datetime(2026,1,1,tzinfo=timezone.utc))); "
+                "assert r.assembly is not None; "
+                "assert r.collection.evidence[0].value['passed']==2; "
+                "assert r.collection.evidence[0].verification_level=='declared'; "
+                "assert r.persistence=='NOT_RETAINED'; print('installed JUnit preview: PASS')",
+            ],
+            cwd=root,
+        )
         if (
             dashboard_openapi["paths"]["/app/api/live-status"]["get"]["operationId"]
             != "getDashboardLiveStatus"

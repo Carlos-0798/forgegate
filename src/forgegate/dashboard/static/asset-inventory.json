@@ -2,13 +2,13 @@
   "assets": [
     {
       "path": ".vite/manifest.json",
-      "sha256": "ec017a002f04ad1c57448addd5bc587fd4327d8794a7b14027676796fcdff20b",
+      "sha256": "dc03d99c90d8c038386acfdd4c073421972ee22f9e4937ec44bcfe47de23ed47",
       "size_bytes": 185
     },
     {
-      "path": "assets/index-C0e2PEp0.js",
-      "sha256": "7abc24050c61164b016950175c55d4c97cb72582ce40e9c83f8d814a48a80d32",
-      "size_bytes": 58180
+      "path": "assets/index-BV2PA2cL.js",
+      "sha256": "d31727ec5cff07602e692ca0ddd5b3c17bb7c93bcfccb71fdffb8e3750c40a0e",
+      "size_bytes": 63560
     },
     {
       "path": "assets/index-Dr2KMm71.css",
@@ -17,7 +17,7 @@
     },
     {
       "path": "index.html",
-      "sha256": "3b45d5dfaddaf75771550739492f08329e49e3061bc6372904dab6769a6ac441",
+      "sha256": "b43f752bfea69d0618209d57097a5de7565d9647c6ba907196e5ddf22ccf1c38",
       "size_bytes": 1025
     },
     {

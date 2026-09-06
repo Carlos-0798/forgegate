@@ -211,3 +211,13 @@ contrast, spoken screen-reader output, and Remote Desktop retain their exact
 recorded status; complete accessibility certification is not claimed. Passing
 UI tests will not change hardware, producer-authenticity, trusted-time,
 non-loopback, or production claims.
+
+## Phase 30 bounded JUnit preview
+
+`POST /app/api/candidates/{candidate_id}/junit-preview` accepts bounded exact
+report bytes, not a server path. It reuses the existing JUnit parser and
+assembler through an `ArtifactSource` protocol with a single in-memory artifact.
+The existing filesystem registry remains unchanged. No upload is published or
+retained; the existing reviewed binding command remains the only persistence
+step. See [the collection contract](../DASHBOARD_COLLECTION_CONTRACT.md).
+Real-browser upload acceptance is still open; host tests do not close that gate.

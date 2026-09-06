@@ -42,6 +42,11 @@ from forgegate.candidates import (
 from forgegate.candidates.models import CANDIDATE_ID_PATTERN
 from forgegate.candidates.store import STORE_SCHEMA_VERSION
 from forgegate.dashboard.assets import validate_dashboard_assets
+from forgegate.dashboard.collection import (
+    DashboardJUnitPreview,
+    DashboardJUnitPreviewRequest,
+    preview_junit,
+)
 from forgegate.dashboard.models import (
     DashboardActivationCompleted,
     DashboardActivationStart,
@@ -396,6 +401,36 @@ def install_dashboard_routes(
             idempotency_key=idempotency_key,
             actor=principal.audit_actor(),
         )
+
+    @app.post(
+        "/app/api/candidates/{candidate_id}/junit-preview",
+        response_model=DashboardJUnitPreview,
+        operation_id="previewDashboardCandidateJUnit",
+        include_in_schema=False,
+    )
+    def preview_dashboard_candidate_junit(
+        request: Request,
+        candidate_id: Annotated[str, ApiPath(pattern=CANDIDATE_ID_PATTERN)],
+        command: DashboardJUnitPreviewRequest,
+        csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> DashboardJUnitPreview:
+        _dashboard_write_principal(
+            manager, authenticator, application, request, candidate_id, csrf_token
+        )
+        candidate = application.get_candidate(candidate_id)
+        if candidate.revision != command.expected_revision:
+            raise CandidateStoreError("STORE_REVISION_CONFLICT", "reload candidate before preview")
+        if candidate.status != "COLLECTING" or (
+            application.get_history(candidate_id).evidence_binding is not None
+        ):
+            raise CandidateStoreError(
+                "STORE_REVISION_CONFLICT", "preview requires an unbound COLLECTING candidate"
+            )
+        if candidate.commit_sha != command.reported_commit:
+            raise CandidateStoreError(
+                "STORE_REVISION_CONFLICT", "reported commit does not match the selected candidate"
+            )
+        return preview_junit(candidate_id, command)
 
     @app.post(
         "/app/api/candidates/{candidate_id}/evidence",

@@ -505,3 +505,24 @@ This is release-operation history, not a complete security-event workspace,
 tamper-proof logging, telemetry history, or physical measurement evidence.
 Automatic collection, plugin/admin workflows and remaining assistive checks
 remain later gates.
+
+## Phase 30 — bounded raw JUnit Dashboard collection
+
+- [x] Freeze the file, authorization, declared source/time, warning consent,
+  in-memory processing, cancellation and recovery boundaries before execution.
+- [x] Reuse the JUnit collector and assembler through an exact-byte source
+  interface; add no new report parser, policy engine, database or dependency.
+- [x] Add one candidate-scoped preview endpoint with a 1 MiB decoded cap,
+  explicit revision/commit, original report time, and fixed low-trust labels.
+- [x] Add a browser form, counts/issues preview, explicit warning retention and
+  separate reviewed binding; reject stale responses after leaving the preview.
+- [x] Add generic positive/negative examples and test the API chain through
+  binding, policy PASS/FAIL/REVIEW, attestation and archive generation.
+- [x] Check the actual Edge form, missing-file validation, Escape and focus
+  restoration; retain an unedited screenshot with no uploaded-result claim.
+- [ ] Complete real-browser file selection, warning review, binding and policy
+  workflow after the owner enables extension file access.
+
+Do not call this a durable task center, multi-report upload, raw-artifact store,
+source authentication, test execution or hardware validation. Do not start the
+next collector until this slice's real-browser acceptance is complete.

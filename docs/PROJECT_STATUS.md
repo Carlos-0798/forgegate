@@ -2,8 +2,9 @@
 
 - Date: 2026-09-06
 - Version: 0.1.0a1
-- Stage: Phase 29 project Audit workspace implemented over the Phase 28
-  assurance export and activation recovery; Windows high contrast,
+- Stage: Phase 30 bounded JUnit preview and separate binding implemented;
+  real-browser upload acceptance awaits the owner's extension file-access setting.
+  Phase 29 project Audit remains available; Windows high contrast,
   spoken Narrator output, and a real Remote Desktop run remain environment gates
 - Product maturity: testable Windows Alpha with generic initialization,
   local CLI/API release-assurance flow, software-peer collection, audited
@@ -29,6 +30,9 @@ not green. Billing changes require owner action; local acceptance is separate.
 
 ## Implemented
 
+- bounded operator-only JUnit upload preview using the existing collector and
+  assembler, in-memory exact bytes, declared-only evidence, original report time,
+  explicit warning retention and separate reviewed binding; no durable job queue;
 - operator-only project Audit workspace with candidate filtering, stable
   25-event cursor links, full record/actor inspection, no inferred actor,
   explicit preview truncation, and candidate-to-audit navigation;
@@ -367,7 +371,7 @@ not green. Billing changes require owner action; local acceptance is separate.
   attestation/bundle identity, and explicit limitation/evidence labels;
 - content-hashed deterministic frontend assets, canonical SHA-256 inventory,
   source/wheel inclusion checks, locked build dependencies, and CI drift gates;
-- separate deterministic Dashboard BFF OpenAPI export with 18 explicit
+- separate deterministic Dashboard BFF OpenAPI export with 19 explicit
   operation IDs, committed-byte drift detection, and installed-wheel comparison;
 - optional `msp430` dependency and domain-neutral live-status provider boundary;
   an independently implemented MSP430 UART v1 parser validates ASCII framing,
@@ -397,7 +401,7 @@ not green. Billing changes require owner action; local acceptance is separate.
 - operator-reviewed portable assurance download using a deterministic bounded
   three-file ZIP, exact candidate revision and bundle identity, same-origin/
   CSRF/project-role controls, no accepted path, and no server-side file write;
-- 48 focused Dashboard tests plus real Microsoft Edge and Chrome keyboard/focus
+- 80 focused Dashboard tests plus previously retained Microsoft Edge and Chrome keyboard/focus
   operation, complete 129-record cursor pagination, browser-rendered
   409/413/422/429/500 recovery, and Chrome/in-app-browser 390 px
   responsive/clean-console runs using generic local data; uncommon statuses
@@ -442,7 +446,8 @@ backup/repair, retained MSP430 telemetry history,
 Studio Phase 5
 human-readable report ingestion, authenticated provenance/signatures, source
 artifact payload/replay export, hardware control, and physical measurement
-validation.
+validation. Phase 30 adds only manual single-JUnit preview, not automatic or
+multi-format collection; full real-browser upload acceptance remains open.
 
 ## Accepted local checkpoint
 
@@ -453,15 +458,18 @@ validation.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 887 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.21% across 10,431 statements and 2,824 branches
+- pytest: 914 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.25% across 10,517 statements and 2,840 branches
 - MSP430 live-status focus: 17 passed across parser, state classification,
   staleness, invalid/recovery, counters, dependency/I/O failure, and input-only
   monitor lifecycle
-- Dashboard focus: 53 passed with 98.42% branch-aware coverage across 644
-  statements and 114 branches
-- Frontend host regressions: 25 passed, including 12 Audit cases and the
-  existing 13 activation cases; separate from Python coverage and browser tests
+- Dashboard focus: 80 passed with 98.60% branch-aware coverage across 728
+  statements and 130 branches
+- Frontend host regressions: 43 passed, including 18 JUnit collection, 12 Audit
+  and 13 activation cases; separate from Python coverage and browser tests
+- Phase 30 browser checkpoint: Edge activation, form, required-file validation,
+  Escape/focus restoration pass. File selection was blocked by the extension
+  file-access setting; full upload-to-binding browser acceptance is not claimed.
 - Phase 29 browser checkpoint: isolated 28-event fixture returned 25 + 3
   events, exact candidate filter returned one, nonexistent ID returned zero,
   refresh/back preserved filters, and keyboard toggled event details
@@ -530,7 +538,7 @@ validation.
   Validation, and MSP430 validation-report artifact Schemas: drift-checked and
   parsed
 - complete sdist manifest and ForgeGate/sample-plugin wheel builds: PASS
-- clean-wheel MSP430 report collection, Dashboard 18-operation OpenAPI export,
+- clean-wheel MSP430 report collection, Dashboard 19-operation OpenAPI export,
   installed-package workflow, optional `pyserial` install, and uninstall: PASS
 - Windows sandbox focus: 20 passed across probe failure isolation, client/server
   identity, rootless/local/WSL requirements, command controls, strict verifier

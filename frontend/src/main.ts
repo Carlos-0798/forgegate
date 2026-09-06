@@ -1792,6 +1792,133 @@ function openJsonCommandImport(
   input.focus();
 }
 
+function openJUnitImport(main: HTMLElement, candidate: Candidate, returnFocus?: HTMLElement): void {
+  const invalid = (message: string): RequestProblem => new RequestProblem(422, "DASHBOARD_JUNIT_INVALID", message, "browser-side", null);
+  const dialog = el("dialog", "review-dialog");
+  dialog.setAttribute("aria-labelledby", "candidate-command-dialog-title");
+  const heading = el("h2", undefined, "Collect JUnit report");
+  heading.id = "candidate-command-dialog-title";
+  const form = el("form", "candidate-form");
+  form.addEventListener("submit", (event) => event.preventDefault());
+  form.append(el("p", "eyebrow", "BOUNDED RAW REPORT PREVIEW"), heading,
+    el("p", "muted", "Select one report, then review before binding. Maximum 1 MiB. No server path, device access, or test execution. Uploaded results remain unsigned_local / declared; source bytes are not retained."),
+    el("p", "command-boundary", "Binding is immutable and contains only this report. Policies requiring coverage, other reports, or stronger verification may reject it. Use CLI multi-report assembly when needed."));
+  const field = (label: string, type: string, value = ""): HTMLInputElement => {
+    const wrap = el("label", "field");
+    const input = el("input");
+    input.type = type;
+    input.required = true;
+    input.value = value;
+    wrap.append(el("span", undefined, label), input);
+    form.append(wrap);
+    return input;
+  };
+  const fileInput = field("JUnit XML report", "file");
+  fileInput.accept = ".xml,application/xml,text/xml";
+  const commit = field("Reported source commit — confirm association", "text", candidate.commit_sha);
+  const tool = field("Reported source tool", "text");
+  const version = field("Reported source version", "text");
+  tool.maxLength = version.maxLength = 120;
+  const time = field("Original report collection time (ISO 8601 with UTC offset)", "text");
+  time.placeholder = "2026-09-06T12:00:00Z";
+  const status = el("div", "dialog-status");
+  status.setAttribute("aria-live", "polite");
+  const controls = el("div", "dialog-actions");
+  const cancel = button("Close preview", "button quiet");
+  cancel.addEventListener("click", () => dialog.close());
+  const collect = button("Preview report — no binding", "button primary");
+  controls.append(cancel, collect);
+  form.append(status, controls);
+  dialog.append(form);
+  dialog.addEventListener("cancel", (event) => { event.preventDefault(); dialog.close(); });
+  dialog.addEventListener("keydown", (event) => keepFocusInsideDialog(dialog, event));
+  dialog.addEventListener("close", () => {
+    dialog.remove();
+    if (returnFocus?.isConnected) returnFocus.focus();
+  }, { once: true });
+  const owner = session;
+  const route = window.location.hash;
+  const current = (): boolean => dialog.open && dialog.isConnected && session === owner && window.location.hash === route;
+  collect.addEventListener("click", async () => {
+    if (!form.reportValidity() || session === null || !current()) return;
+    collect.disabled = true;
+    for (const input of [fileInput, commit, tool, version, time]) input.disabled = true;
+    status.replaceChildren(el("p", "muted", "Reading the selected report. Closing discards the preview; an already submitted server request may finish."));
+    const file = fileInput.files?.[0];
+    try {
+      if (file === undefined || file.size === 0 || file.size > 1048576) throw invalid("Choose one non-empty XML file no larger than 1 MiB.");
+      if (commit.value !== candidate.commit_sha) throw invalid("Reported commit must match this candidate. A matching declaration does not authenticate the report.");
+      if (!/(Z|[+-]\d{2}:\d{2})$/i.test(time.value) || !Number.isFinite(Date.parse(time.value)) || Date.parse(time.value) > Date.now()) throw invalid("Provide the original collection time with a UTC offset, not a future time.");
+      const bytes = await file.arrayBuffer();
+      const fingerprint = await sha256Hex(bytes);
+      if (!current()) return;
+      let binary = "";
+      for (const byte of new Uint8Array(bytes)) binary += String.fromCharCode(byte);
+      const command = {
+        expected_revision: candidate.revision, reported_commit: commit.value,
+        content_base64: btoa(binary), source_tool: tool.value, source_version: version.value,
+        collected_at: time.value, retain_warnings: false
+      };
+      const preview = async (retainWarnings: boolean): Promise<void> => {
+        if (!current() || owner === null) return;
+        controls.replaceChildren(cancel);
+        status.replaceChildren(el("p", "muted", "Parsing with the bounded server collector; no candidate state is being changed…"));
+        try {
+          const result = await api<Record<string, unknown>>(`/app/api/candidates/${encodeURIComponent(candidate.candidate_id)}/junit-preview`, {
+            method: "POST", headers: { "X-ForgeGate-CSRF": owner.csrf_token },
+            body: JSON.stringify({ ...command, retain_warnings: retainWarnings })
+          });
+          if (!current()) return;
+          if (result.schema_version !== "forgegate.dashboard-junit-preview.v1" || result.candidate_id !== candidate.candidate_id || result.expected_revision !== candidate.revision || !isJsonObject(result.collection)) throw invalid("Unexpected preview identity; nothing was bound.");
+          const collection = result.collection;
+          const artifacts = Array.isArray(collection.artifacts) ? collection.artifacts : [];
+          if (!isJsonObject(artifacts[0]) || artifacts[0].sha256 !== fingerprint || artifacts[0].size_bytes !== bytes.byteLength) throw invalid("Preview report hash or size mismatch; nothing was bound.");
+          status.replaceChildren(el("h3", undefined, `Collection ${String(collection.status)} — not a release decision`),
+            definition("Report SHA-256", fingerprint, true),
+            el("p", "muted", "Preview only — not retained. Original report time and caller-declared source metadata are preserved."));
+          const records = Array.isArray(collection.evidence) ? collection.evidence : [];
+          for (const record of records) {
+            if (isJsonObject(record)) status.append(el("pre", "mono", JSON.stringify(record.value, null, 2)));
+          }
+          const warnings = Array.isArray(collection.warnings) ? collection.warnings : [];
+          const rejected = Array.isArray(collection.rejected_records) ? collection.rejected_records : [];
+          for (const issue of [...warnings, ...rejected]) {
+            if (isJsonObject(issue)) status.append(el("p", "command-boundary", `${String(issue.code)}: ${String(issue.message)}`));
+          }
+          if (isJsonObject(result.assembly)) {
+            const assembly = result.assembly;
+            const review = button("Review immutable binding", "button primary");
+            review.addEventListener("click", () => {
+              if (!current()) return;
+              const mutation = evidenceImportMutation(candidate, assembly, file, fingerprint);
+              mutation.summary = "Bind this single-report assembly. Source bytes are not retained, reported metadata is unverified, and evidence stays unsigned_local / declared. This does not mark the candidate READY or PASS.";
+              mutation.details = mutation.details.map(([label, value, mono]) => [label === "Selected file SHA-256" ? "Original report SHA-256" : label, value, mono ?? false]);
+              renderReviewedMutation(dialog, candidate, mutation);
+            });
+            controls.append(review);
+            review.focus();
+          } else if (collection.status === "COMPLETE" && warnings.length > 0 && !retainWarnings) {
+            const retain = button("Retain these warnings and preview again", "button primary");
+            retain.addEventListener("click", () => { retain.disabled = true; void preview(true); });
+            controls.append(retain);
+            retain.focus();
+          }
+        } catch (error) {
+          if (!current()) return;
+          handleProtectedProblem(status, error, "Close and reopen collection to retry manually. Nothing was bound by this preview.");
+        }
+      };
+      await preview(false);
+    } catch (error) {
+      if (!current()) return;
+      showProblem(status, error, "Close and reopen collection with a valid report and source metadata.");
+    }
+  });
+  main.append(dialog);
+  dialog.showModal();
+  fileInput.focus();
+}
+
 function evidenceImportMutation(
   candidate: Candidate,
   assembly: Record<string, unknown>,
@@ -1938,6 +2065,11 @@ function candidateWorkflowPanel(
   const next = button(label, "button primary");
   next.addEventListener("click", () => action?.(next));
   panel.append(next);
+  if (candidate.status === "COLLECTING" && review.evidence_binding === null) {
+    const collect = button("Collect JUnit report", "button quiet");
+    collect.addEventListener("click", () => openJUnitImport(main, candidate, collect));
+    panel.append(collect);
+  }
   return panel;
 }
 

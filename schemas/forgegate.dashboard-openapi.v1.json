@@ -851,6 +851,69 @@
         "title": "CollectionReceipt",
         "type": "object"
       },
+      "CollectionResult": {
+        "additionalProperties": false,
+        "properties": {
+          "artifacts": {
+            "items": {
+              "$ref": "#/components/schemas/ArtifactReference"
+            },
+            "title": "Artifacts",
+            "type": "array"
+          },
+          "collector_name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Collector Name",
+            "type": "string"
+          },
+          "collector_version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Collector Version",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRecord"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "rejected_records": {
+            "items": {
+              "$ref": "#/components/schemas/CollectionIssue"
+            },
+            "title": "Rejected Records",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CollectionStatus"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/CollectionIssue"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "collector_name",
+          "collector_version",
+          "status"
+        ],
+        "title": "CollectionResult",
+        "type": "object"
+      },
+      "CollectionStatus": {
+        "enum": [
+          "COMPLETE",
+          "REJECTED"
+        ],
+        "title": "CollectionStatus",
+        "type": "string"
+      },
       "CollectorConfig": {
         "additionalProperties": false,
         "properties": {
@@ -1164,6 +1227,111 @@
           "limitations"
         ],
         "title": "DashboardCandidateAssuranceReview",
+        "type": "object"
+      },
+      "DashboardJUnitPreview": {
+        "additionalProperties": false,
+        "properties": {
+          "assembly": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvidenceBundleAssembly"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "candidate_id": {
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "collection": {
+            "$ref": "#/components/schemas/CollectionResult"
+          },
+          "expected_revision": {
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "persistence": {
+            "const": "NOT_RETAINED",
+            "default": "NOT_RETAINED",
+            "title": "Persistence",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.dashboard-junit-preview.v1",
+            "default": "forgegate.dashboard-junit-preview.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_artifact_bytes": {
+            "const": "not_retained",
+            "default": "not_retained",
+            "title": "Source Artifact Bytes",
+            "type": "string"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "expected_revision",
+          "collection",
+          "assembly"
+        ],
+        "title": "DashboardJUnitPreview",
+        "type": "object"
+      },
+      "DashboardJUnitPreviewRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "collected_at": {
+            "format": "date-time",
+            "title": "Collected At",
+            "type": "string"
+          },
+          "content_base64": {
+            "maxLength": 1398104,
+            "minLength": 4,
+            "title": "Content Base64",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "reported_commit": {
+            "pattern": "^[0-9a-fA-F]{7,64}$",
+            "title": "Reported Commit",
+            "type": "string"
+          },
+          "retain_warnings": {
+            "default": false,
+            "title": "Retain Warnings",
+            "type": "boolean"
+          },
+          "source_tool": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Source Tool",
+            "type": "string"
+          },
+          "source_version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Source Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "reported_commit",
+          "content_base64",
+          "source_tool",
+          "source_version",
+          "collected_at"
+        ],
+        "title": "DashboardJUnitPreviewRequest",
         "type": "object"
       },
       "DashboardLogoutResponse": {
@@ -3702,6 +3870,72 @@
           }
         },
         "summary": "Bind Dashboard Candidate Evidence"
+      }
+    },
+    "/app/api/candidates/{candidate_id}/junit-preview": {
+      "post": {
+        "operationId": "previewDashboardCandidateJUnit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "pattern": "^cand-[0-9a-f]{24}$",
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardJUnitPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardJUnitPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Dashboard Candidate Junit"
       }
     },
     "/app/api/candidates/{candidate_id}/transitions": {
