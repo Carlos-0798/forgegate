@@ -6,8 +6,12 @@
   declared source time, explicit warning consent and separate immutable binding.
   No filesystem path, raw-byte retention, queue, hardware or trust promotion.
 - Added 27 Python and 18 frontend host regressions and synthetic PASS/FAIL/
-  warning/rejected inputs. Real Edge upload acceptance remains open pending
-  owner-managed browser-extension file permission; form-only capture retained.
+  warning/rejected inputs. Real Edge upload, reviewed binding, policy PASS/FAIL,
+  warning-consent and forbidden-XML rejection now pass with retained screenshots.
+- Fixed shared profile-authorized policy content failing on a second candidate.
+  Schema v9 removes only global material-ID uniqueness, preserving candidate
+  binding uniqueness and immutable guards. Explicit migration from v1-v8,
+  retained-row preservation, rollback and same-database reuse are tested.
 - Added an operator-only project Audit workspace with candidate filters,
   stable cursor links, full event/subject identities, recorded actors,
   text-only details, and explicit partial-preview/unknown-actor boundaries.

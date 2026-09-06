@@ -582,7 +582,7 @@ def test_dashboard_activation_session_overview_and_logout(
     assert session.status_code == overview.status_code == 200
     assert session.json()["principal"]["role"] == "operator"
     assert session.json()["csrf_token"] == activated["csrf_token"]
-    assert overview.json()["database_schema_version"] == 8
+    assert overview.json()["database_schema_version"] == 9
     assert overview.json()["hardware_access"] == "NOT_PERFORMED"
     assert len(overview.json()["limitations"]) == 4
     assert wrong_csrf.status_code == 403

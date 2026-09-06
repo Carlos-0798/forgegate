@@ -34,18 +34,18 @@ def _payload(content: bytes = REPORT) -> dict:
     }
 
 
-def _create(client, headers, *, collecting=True):
+def _create(client, headers, *, collecting=True, suffix="default"):
     created = client.post(
         "/app/api/candidates",
-        json=_candidate_payload(),
-        headers={**headers, "Idempotency-Key": "collection:create"},
+        json={**_candidate_payload(), "version": f"collection-{suffix}"},
+        headers={**headers, "Idempotency-Key": f"collection:create:{suffix}"},
     )
     assert created.status_code == 201, created.text
     cid = created.json()["candidate_id"]
     if collecting:
         transitioned = client.post(
             f"/app/api/candidates/{cid}/transitions",
-            headers={**headers, "Idempotency-Key": "collection:advance"},
+            headers={**headers, "Idempotency-Key": f"collection:advance:{suffix}"},
             json={
                 "to_status": "COLLECTING",
                 "expected_revision": 0,
@@ -281,53 +281,55 @@ def test_raw_preview_to_bound_policy_and_assurance(tmp_path, repository_root, fi
         )
         session = _activate(client)
         headers = {**ORIGIN_HEADER, "X-ForgeGate-CSRF": session["csrf_token"]}
-        cid = _create(client, headers)
-        preview = client.post(
-            f"/app/api/candidates/{cid}/junit-preview",
-            headers=headers,
-            json=_payload((root / fixture).read_bytes()),
-        )
-        assert preview.status_code == 200, preview.text
-        assert (
-            client.post(
-                f"/app/api/candidates/{cid}/evidence",
-                headers={**headers, "Idempotency-Key": "chain:bind"},
-                json={
-                    "assembly": preview.json()["assembly"],
-                    "bound_at": datetime.now(UTC).isoformat(),
-                },
-            ).status_code
-            == 200
-        )
-        for revision, target in [(1, "READY"), (2, "EVALUATING")]:
+        # Two candidates must reuse the exact same profile-authorized material.
+        for iteration in range(2):
+            cid = _create(client, headers, suffix=f"{fixture}-{iteration}")
+            preview = client.post(
+                f"/app/api/candidates/{cid}/junit-preview",
+                headers=headers,
+                json=_payload((root / fixture).read_bytes()),
+            )
+            assert preview.status_code == 200, preview.text
             assert (
                 client.post(
-                    f"/app/api/candidates/{cid}/transitions",
-                    headers={**headers, "Idempotency-Key": f"chain:{target}"},
+                    f"/app/api/candidates/{cid}/evidence",
+                    headers={**headers, "Idempotency-Key": f"chain:{iteration}:bind"},
                     json={
-                        "expected_revision": revision,
-                        "to_status": target,
-                        "occurred_at": datetime.now(UTC).isoformat(),
+                        "assembly": preview.json()["assembly"],
+                        "bound_at": datetime.now(UTC).isoformat(),
                     },
                 ).status_code
                 == 200
             )
-        material = application.materialize_policy(cid, root)
-        response = client.post(
-            f"/app/api/candidates/{cid}/evaluate",
-            headers={**headers, "Idempotency-Key": "chain:evaluate"},
-            json={
-                "policy_material": material.model_dump(mode="json"),
-                "expected_revision": 3,
-                "evaluated_at": datetime.now(UTC).isoformat(),
-            },
-        )
-        assert response.status_code == 200, response.text
-        assert response.json()["evaluation"]["decision"] == expected
-        application.attest_candidate(cid, CandidateAttestCommand(issued_at=datetime.now(UTC)))
-        bundle = application.get_assurance_bundle(cid)
-        assert bundle is not None
-        assert render_assurance_bundle_archive(bundle).startswith(b"PK")
+            for revision, target in [(1, "READY"), (2, "EVALUATING")]:
+                assert (
+                    client.post(
+                        f"/app/api/candidates/{cid}/transitions",
+                        headers={**headers, "Idempotency-Key": f"chain:{iteration}:{target}"},
+                        json={
+                            "expected_revision": revision,
+                            "to_status": target,
+                            "occurred_at": datetime.now(UTC).isoformat(),
+                        },
+                    ).status_code
+                    == 200
+                )
+            material = application.materialize_policy(cid, root)
+            response = client.post(
+                f"/app/api/candidates/{cid}/evaluate",
+                headers={**headers, "Idempotency-Key": f"chain:{iteration}:evaluate"},
+                json={
+                    "policy_material": material.model_dump(mode="json"),
+                    "expected_revision": 3,
+                    "evaluated_at": datetime.now(UTC).isoformat(),
+                },
+            )
+            assert response.status_code == 200, response.text
+            assert response.json()["evaluation"]["decision"] == expected
+            application.attest_candidate(cid, CandidateAttestCommand(issued_at=datetime.now(UTC)))
+            bundle = application.get_assurance_bundle(cid)
+            assert bundle is not None
+            assert render_assurance_bundle_archive(bundle).startswith(b"PK")
 
 
 def test_default_ci_policy_does_not_promote_uploaded_declarations(repository_root):

@@ -1596,8 +1596,8 @@
             "type": "string"
           },
           "store_schema": {
-            "const": "forgegate.candidate-store.v8",
-            "default": "forgegate.candidate-store.v8",
+            "const": "forgegate.candidate-store.v9",
+            "default": "forgegate.candidate-store.v9",
             "title": "Store Schema",
             "type": "string"
           }

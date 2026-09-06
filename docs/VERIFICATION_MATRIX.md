@@ -2,7 +2,7 @@
 
 | Capability | Planned evidence | Current status |
 |---|---|---|
-| Bounded Dashboard JUnit preview | 27 Python and 18 frontend host regressions; real Edge file flow | HOST PASS / BROWSER PARTIAL — counts/hash, rejection/warnings, auth/scope/CSRF, immutable binding and fixture policy chain pass; Edge form, missing-file validation and Escape/focus pass; upload blocked by extension file-access setting, no browser end-to-end claim |
+| Bounded Dashboard JUnit preview | 27 Python and 18 frontend host regressions; real Edge file flow | PASS — exact counts/hash, immutable binding and synthetic PASS/FAIL chains; real Edge warning consent and forbidden-XML rejection; shared-policy reuse fixed and migration rollback tested |
 | Package imports on Python 3.12 | clean virtual environment | PASS — wheel clean-install smoke |
 | Repeatable Windows setup | PowerShell bootstrap + constraints | PASS |
 | Linux/macOS setup script | shell syntax + future CI | SYNTAX PASS; execution NOT RUN |
@@ -82,7 +82,7 @@
 | Authenticated local API | Ed25519 challenge, Bearer session, trust recheck | PASS — local host, loopback only |
 | User interaction acceptance | deterministic CLI plus authenticated REST smoke | PASS — 33/33 expected outputs; ephemeral identity/database; Swagger/ReDoc deliberately return 404 |
 | Local Web Dashboard design | architecture, UX requirements, threat model, acceptance matrix | DESIGN PASS — Phase 23 frozen; Phase 24 implementation preserves the defined same-origin boundary |
-| Authenticated local Web Dashboard | clean wheel, adversarial automation, Edge/Chrome, keyboard, focus, pagination, zoom, and bounded assistive evidence | IMPLEMENTED / PARTIAL MANUAL ACCEPTANCE — 80 focused tests; prior Edge/Chrome core workflow, keyboard/focus, pagination, error recovery and Edge 100–200% zoom pass. Phase 30 raw-file upload awaits extension access; spoken Narrator output, high contrast and real Remote Desktop remain unexecuted |
+| Authenticated local Web Dashboard | clean wheel, adversarial automation, Edge/Chrome, keyboard, focus, pagination, zoom, and bounded assistive evidence | IMPLEMENTED / PARTIAL MANUAL ACCEPTANCE — 80 focused tests; prior core workflow, keyboard/focus, pagination, error recovery and Edge 100–200% zoom pass. Phase 30 raw JUnit Edge workflow passes; spoken Narrator output, high contrast and real Remote Desktop remain unexecuted |
 | Dashboard Evidence/Decision/Assurance review | authenticated BFF tests + generic PASS local-browser fixture | PASS — candidate-bound deep links expose retained binding/assembly records, exact policy material, expected/actual rule values, evidence references, attestation/bundle IDs, lifecycle chain, and explicit limitations |
 | Reviewed Dashboard write workflow | operator BFF tests + isolated Edge end-to-end candidate | PASS — DRAFT→COLLECTING→READY→EVALUATING→PASS→attestation with per-command confirmation, CSRF, project scope, idempotency/stale protection, and authoritative reload; mismatched-commit assembly rejected before write |
 | Dashboard portable assurance export | operator BFF tests + real Edge download + offline CLI verification | PASS — reviewed candidate/revision/bundle identity, deterministic bounded rootless ZIP, exact three-member archive, stale/replay/authorization rejection, no durable mutation, and database-independent verification; no upload or publication |
@@ -145,7 +145,7 @@
 | Legacy candidate profile semantics | v5 migration and corruption tests | PASS — v1 remains readable with no fabricated binding |
 | Exact policy material | byte/hash/model/adversarial tests | PASS — local host, exact profile-authorized bytes retained |
 | Material-bound evaluation v2 | application/store/CLI/REST integration | PASS — material/profile/evidence/time bound atomically |
-| SQLite v1-v7-to-v8 migration | migration and legacy semantics | PASS — no historical policy/security event fabricated |
+| SQLite v1-v8-to-v9 migration | migration and legacy semantics | PASS — no historical policy/security event fabricated; shared policy content permitted across candidates, retained rows unchanged, immutable guards restored and mid-migration failures rolled back |
 | Path-free REST policy workflow | strict material request + retained readback | PASS — no client-selected server policy path |
 | Portable assurance document | strict model/Schema/cross-document identity tests | PASS — profile, evidence, material, evaluation, lifecycle, and attestation bound |
 | Content-addressed publication | exact replay/conflict/member/tamper tests | PASS — canonical JSON/Markdown/manifest bytes |

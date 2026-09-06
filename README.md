@@ -80,13 +80,13 @@ never converted into candidate evidence.
 
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 914 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
-| Branch-aware coverage | 95.25% across 10,517 statements and 2,840 branches | Local host test |
+| Full Python suite | 918 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
+| Branch-aware coverage | 95.25% across 10,520 statements and 2,840 branches | Local host test |
 | Static quality | Ruff, formatting, and strict mypy passed across 93 source/tool files | Local host test |
 | Contracts | 41 document and 3 artifact JSON Schemas plus direct-API and 19-operation Dashboard-BFF OpenAPI passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
-| Dashboard automation | 80 focused Python tests and 43 TypeScript host interaction tests passed; Dashboard Python package reached 98.60% branch-aware coverage | Local host test; includes raw JUnit preview and separately bound fixture policy flow; not completed browser upload acceptance |
+| Dashboard automation | 80 focused Python tests and 43 TypeScript host interaction tests passed; Dashboard Python package reached 98.60% branch-aware coverage | Local host test; real Edge JUnit PASS/FAIL, warning-consent and rejected-input acceptance is separately retained |
 | Dashboard browser interaction | Full reviewed Edge workflow, Edge/Chrome keyboard/focus, 129-record pagination, 390 px responsive, 409/413/422/429/500 recovery, exact Edge 100–200% zoom, and clean-console paths passed | Windows local browser test; uncommon errors use a zero-write presentation harness; Narrator is bounded PASS, while spoken output, high contrast, and real Remote Desktop remain open |
 | MSP430 report collector | 34 focused tests plus clean-wheel CLI collection passed; one LaunchPad HIL migration fixture produced 17 normalized records with retained warnings | Local artifact test; the fixture is a historical upstream result, not a new run or physical-measurement claim |
 | MSP430 live status | COM4 opened input-only at 115200 8-N-1; authenticated Devices page showed `CONNECTED`, heartbeat `NORMAL`, device `FAULT`, flags `0015`; sequence advanced 58007→58017 over 10 seconds with 10 accepted frames and no sequence gap | Owner-authorized Windows physical-device observation; one earlier invalid frame was rejected, no command or firmware/debug action, measurement validation, release evidence, or long-duration stability claim |
@@ -204,10 +204,12 @@ immutable binding confirmation. This is not automatic test execution, a durable
 job queue, or multi-report collection. Original bytes are not retained.
 See the [collection contract](docs/DASHBOARD_COLLECTION_CONTRACT.md) and
 [synthetic acceptance samples](examples/dashboard-junit/README.md).
-The first Edge run verified the form, required-file validation and Escape/focus
-return; file upload was blocked by the browser-extension file-access setting,
-so end-to-end browser acceptance remains open. Backend and frontend host tests
-are recorded separately in the [Phase 30 report](reports/PHASE_30_JUNIT_COLLECTION_ACCEPTANCE.md).
+Real Edge acceptance now covers file selection, PASS/FAIL policy workflows,
+warning consent and forbidden-XML rejection using explicitly synthetic samples.
+It found and corrected a shared-policy binding defect; SQLite schema v9 permits
+multiple candidates to reuse exact policy content while preserving one immutable
+binding per candidate. Existing databases require a backup and explicit migration.
+See the [Phase 30 report](reports/PHASE_30_JUNIT_COLLECTION_ACCEPTANCE.md).
 
 MSP430 monitoring is an optional dependency and must be enabled explicitly. The
 monitor enumerates and opens only the selected application UART, sets DTR/RTS

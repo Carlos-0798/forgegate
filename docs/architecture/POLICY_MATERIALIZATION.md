@@ -71,6 +71,12 @@ failure without claiming a policy result.
 
 ## Migration and limitations
 
+Current schema v9 corrects a v7/v8 binding constraint: multiple candidates with
+the same frozen profile may legitimately have identical material IDs. Each
+candidate still has exactly one immutable material row. Explicit migration
+preserves its content, binding time and all associated history without changing
+the `forgegate.policy-material.v1` content-derived identity contract.
+
 Validated v1-v6 stores migrate explicitly to v7. The new requirement marker
 defaults to zero for every historical candidate, and no material row is
 created. This preserves old reads and exact v1 evaluation backfill semantics

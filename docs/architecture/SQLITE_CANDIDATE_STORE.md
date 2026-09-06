@@ -8,11 +8,11 @@ the original v1 document for legacy/stateless compatibility. The store does not
 contain upstream AFE/MSP430 internals.
 
 `SQLiteCandidateRepository` owns one local database file. Initialization sets a
-ForgeGate application ID, schema version 8, WAL journaling, FULL synchronous
+ForgeGate application ID, schema version 9, WAL journaling, FULL synchronous
 durability, foreign keys, and a bounded busy timeout. A future schema version is
 rejected. An existing schema-v1, schema-v2, schema-v3, or schema-v4 store is
 never changed by `init-store`; the owner must run the explicit, validated
-`migrate-store` operation. Validated schema-v5, schema-v6, and schema-v7 stores
+`migrate-store` operation. Validated schema-v5 through schema-v8 stores
 follow the same explicit migration rule.
 
 ## Tables and ordering
@@ -49,8 +49,17 @@ follow the same explicit migration rule.
   bodies;
 - `forgegate_metadata` identifies the exact storage schema.
 
-Schema v8 retains the v5 `(project_id, candidate_id)` discovery index, v6
+Schema v9 retains the v5 `(project_id, candidate_id)` discovery index, v6
 version-ordered project-profile index, and v7 policy-material records.
+
+Schema v9 removes the incorrect global uniqueness of policy `material_id`.
+That ID identifies profile-authorized content, not a candidate. The candidate
+primary key, foreign key, exact material validation and immutable update/delete
+guards remain. Migration rebuilds only this table inside one transaction and
+copies all five retained columns unchanged; it rewrites no release history.
+Stop writers, create and verify a SQLite-consistent backup, then run
+`forgegate candidate migrate-store DATABASE` before restarting the upgraded
+service. Migration is explicit, never an automatic server-start side effect.
 
 Database triggers reject candidate deletion, identity rewriting, non-unit
 current-revision updates, and every update/delete of snapshot, transition, and

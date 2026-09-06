@@ -520,8 +520,10 @@ remain later gates.
   binding, policy PASS/FAIL/REVIEW, attestation and archive generation.
 - [x] Check the actual Edge form, missing-file validation, Escape and focus
   restoration; retain an unedited screenshot with no uploaded-result claim.
-- [ ] Complete real-browser file selection, warning review, binding and policy
-  workflow after the owner enables extension file access.
+- [x] Complete real Edge file selection, warning review, binding and policy
+  PASS/FAIL workflows with synthetic inputs and retained actual screenshots.
+- [x] Correct shared policy-content reuse across candidates; preserve immutable
+  candidate bindings through an explicit, rollback-tested v8-to-v9 migration.
 
 Do not call this a durable task center, multi-report upload, raw-artifact store,
 source authentication, test execution or hardware validation. Do not start the

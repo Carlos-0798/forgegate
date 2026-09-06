@@ -193,15 +193,29 @@ mutation, release-audit event, remote publication, or hardware access.
 
 ## What these artifacts support
 
-### Phase 30 form-only evidence
+### Phase 30 bounded JUnit browser acceptance
 
 ![Real Edge JUnit import form with explicit evidence limits, before file upload](assets/forgegate-dashboard-junit-import-form.jpg)
 
 This unedited Edge viewport shows the new form against a separate synthetic
 fixture database. Required-file validation, Escape and focus return were also
-checked. Extension file access blocked automated file selection; this capture
-is not an uploaded-result or completed-workflow claim. Details and the image
-hash are in the [Phase 30 report](../reports/PHASE_30_JUNIT_COLLECTION_ACCEPTANCE.md).
+checked. This original capture remains form-only evidence; the follow-up below
+completed actual file uploads and independent reviewed decisions.
+
+![Synthetic JUnit input correctly produces FAIL with expected zero failures and actual one](assets/forgegate-dashboard-junit-fail-decision.jpg)
+
+![A second candidate reuses the same policy and correctly produces PASS after the binding constraint fix](assets/forgegate-dashboard-junit-pass-decision.jpg)
+
+![Count mismatch and unavailable duration require explicit warning retention](assets/forgegate-dashboard-junit-warning-consent.jpg)
+
+![Forbidden XML declarations are rejected without offering evidence binding](assets/forgegate-dashboard-junit-rejected.jpg)
+
+These unedited Edge captures use only the committed synthetic examples, not
+upstream test results or physical measurements. The PASS is specific to the
+fixture policy, which intentionally accepts declared evidence; it is not a
+ForgeGate release approval. The [original shared-policy failure](assets/forgegate-dashboard-shared-policy-error.jpg)
+and its schema-v9 correction are retained with exact hashes and expected/actual
+results in the [Phase 30 report](../reports/PHASE_30_JUNIT_COLLECTION_ACCEPTANCE.md).
 
 ### Previously accepted workflows
 

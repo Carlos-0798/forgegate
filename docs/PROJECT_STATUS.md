@@ -3,7 +3,8 @@
 - Date: 2026-09-06
 - Version: 0.1.0a1
 - Stage: Phase 30 bounded JUnit preview and separate binding implemented;
-  real-browser upload acceptance awaits the owner's extension file-access setting.
+  real Edge PASS/FAIL, warning-consent and rejection acceptance completed.
+  Shared-policy reuse corrected with explicit SQLite v8-to-v9 migration.
   Phase 29 project Audit remains available; Windows high contrast,
   spoken Narrator output, and a real Remote Desktop run remain environment gates
 - Product maturity: testable Windows Alpha with generic initialization,
@@ -79,7 +80,7 @@ not green. Billing changes require owner action; local acceptance is separate.
   commit, decision, and timestamp;
 - stateless `candidate create` and `candidate transition` CLI previews with
   generic DRAFT/EVALUATING fixtures and structural/evaluation-bound Goldens;
-- SQLite candidate-store schema v8 with ForgeGate application identity, WAL,
+- SQLite candidate-store schema v9 with ForgeGate application identity, WAL,
   FULL synchronous durability, foreign keys, exact-version validation, and
   explicit read/write transactions;
 - append-only canonical candidate snapshots, content-addressed transitions,
@@ -447,7 +448,7 @@ Studio Phase 5
 human-readable report ingestion, authenticated provenance/signatures, source
 artifact payload/replay export, hardware control, and physical measurement
 validation. Phase 30 adds only manual single-JUnit preview, not automatic or
-multi-format collection; full real-browser upload acceptance remains open.
+multi-format collection. Its bounded real-browser upload acceptance now passes.
 
 ## Accepted local checkpoint
 
@@ -458,8 +459,8 @@ multi-format collection; full real-browser upload acceptance remains open.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 914 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.25% across 10,517 statements and 2,840 branches
+- pytest: 918 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.25% across 10,520 statements and 2,840 branches
 - MSP430 live-status focus: 17 passed across parser, state classification,
   staleness, invalid/recovery, counters, dependency/I/O failure, and input-only
   monitor lifecycle
@@ -467,9 +468,11 @@ multi-format collection; full real-browser upload acceptance remains open.
   statements and 130 branches
 - Frontend host regressions: 43 passed, including 18 JUnit collection, 12 Audit
   and 13 activation cases; separate from Python coverage and browser tests
-- Phase 30 browser checkpoint: Edge activation, form, required-file validation,
-  Escape/focus restoration pass. File selection was blocked by the extension
-  file-access setting; full upload-to-binding browser acceptance is not claimed.
+- Phase 30 browser checkpoint: real Edge file selection, independent binding,
+  lifecycle and policy PASS/FAIL, explicit warning retention, forbidden-XML
+  rejection and unchanged canceled-preview state pass. Shared-policy reuse
+  initially failed, then passed after schema v9 migration; four new migration
+  tests prove retained-row preservation and transactional rollback.
 - Phase 29 browser checkpoint: isolated 28-event fixture returned 25 + 3
   events, exact candidate filter returned one, nonexistent ID returned zero,
   refresh/back preserved filters, and keyboard toggled event details

@@ -959,7 +959,7 @@ def candidate_list(
 def candidate_init_store(
     database: Annotated[Path, typer.Argument(dir_okay=False)],
 ) -> None:
-    """Initialize or validate a local SQLite WAL candidate store at schema v8."""
+    """Initialize or validate a local SQLite WAL candidate store at schema v9."""
     try:
         repository = SQLiteCandidateRepository(database)
         repository.initialize()
@@ -973,7 +973,7 @@ def candidate_init_store(
 def candidate_migrate_store(
     database: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],
 ) -> None:
-    """Explicitly migrate a validated candidate store from schema v1-v7 to v8."""
+    """Explicitly migrate a validated candidate store from schema v1-v8 to v9."""
     try:
         repository = SQLiteCandidateRepository(database)
         repository.migrate()
