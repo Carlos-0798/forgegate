@@ -453,3 +453,25 @@ embed source artifact bytes, approve deployment, or validate hardware.
 Phase 27 adds engineering workflow capability but does not add automatic
 collection, server filesystem browsing, assurance export, remote publication,
 producer authentication, MSP430 control, or physical measurement validation.
+
+## Phase 28 — candidate-bound Dashboard assurance export
+
+- [x] Freeze an operator-only, project-scoped, same-origin and CSRF-protected
+  export request bound to the current candidate revision and bundle identity.
+- [x] Render the existing portable assurance contract as a deterministic,
+  bounded, uncompressed ZIP with exactly three root regular-file members.
+- [x] Accept no server path, client path, filename, URL, archive option, or
+  remote destination; create no server-side export file or release-state event.
+- [x] Add reviewed confirmation, response identity/media/size checks, browser
+  download, visible recovery, modal containment, and focus return.
+- [x] Reject producer, missing-origin, missing-CSRF, stale-revision,
+  wrong-bundle, and unknown-field requests while preserving authoritative state.
+- [x] Download the ZIP through real Microsoft Edge, extract it, and pass the
+  existing database-independent offline verifier with retained hashes and
+  portfolio-safe screenshots.
+- [x] Pass 882 full-suite tests at 95.21% branch-aware coverage, 48 focused
+  Dashboard tests at 98.41%, all contract gates, and clean-wheel release smoke.
+
+Phase 28 delivers local artifact download only. It does not add automatic
+collection, source-artifact payload export, producer authentication, trusted
+time, remote publication, deployment approval, or hardware validation.

@@ -29,6 +29,7 @@ from forgegate.application import (
     CandidateEvaluationResult,
     CandidateQuery,
 )
+from forgegate.assurance import render_assurance_bundle_archive
 from forgegate.attestations import ReleaseAttestation
 from forgegate.audit import AuditEventPage
 from forgegate.candidates import (
@@ -44,6 +45,7 @@ from forgegate.dashboard.models import (
     DashboardActivationCompleted,
     DashboardActivationStart,
     DashboardActivationStatus,
+    DashboardAssuranceExportRequest,
     DashboardCandidateAssuranceReview,
     DashboardLogoutResponse,
     DashboardOverview,
@@ -542,6 +544,55 @@ def install_dashboard_routes(
                 ),
                 "An unsigned local decision is not deployment approval or hardware validation.",
             ),
+        )
+
+    @app.post(
+        "/app/api/candidates/{candidate_id}/assurance-export",
+        response_class=Response,
+        operation_id="exportDashboardCandidateAssurance",
+        include_in_schema=False,
+        responses={
+            status.HTTP_200_OK: {
+                "description": "Deterministic portable assurance ZIP",
+                "content": {"application/zip": {"schema": {"type": "string", "format": "binary"}}},
+            }
+        },
+    )
+    def export_dashboard_candidate_assurance(
+        request: Request,
+        candidate_id: str,
+        command: DashboardAssuranceExportRequest,
+        csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> Response:
+        _dashboard_write_principal(
+            manager,
+            authenticator,
+            application,
+            request,
+            candidate_id,
+            csrf_token,
+        )
+        candidate = application.get_candidate(candidate_id)
+        if candidate.revision != command.expected_revision:
+            raise CandidateStoreError(
+                "STORE_REVISION_CONFLICT",
+                "candidate revision changed before assurance export",
+            )
+        bundle = application.get_assurance_bundle(candidate_id)
+        if bundle.bundle_id != command.expected_bundle_id:
+            raise CandidateStoreError(
+                "STORE_REVISION_CONFLICT",
+                "assurance bundle identity changed before export",
+            )
+        archive = render_assurance_bundle_archive(bundle)
+        filename = f"assurance-{bundle.bundle_id.removeprefix('sha256:')}.zip"
+        return Response(
+            content=archive,
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "X-ForgeGate-Assurance-Bundle": bundle.bundle_id,
+            },
         )
 
     @app.get(

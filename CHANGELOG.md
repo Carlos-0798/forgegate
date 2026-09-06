@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Added an operator-reviewed, candidate-bound Dashboard assurance download as
+  a deterministic bounded three-file ZIP with no server path or filesystem
+  publication surface.
+- Added exact revision/bundle identity, Origin, CSRF, project/role, response
+  identity/media/size, and offline-verification gates plus retained Edge
+  download screenshots and machine evidence.
 - Added operator-only Dashboard commands for reviewed expected-revision
   transitions, immutable evidence binding, exact policy evaluation, and
   deterministic terminal attestation generation.

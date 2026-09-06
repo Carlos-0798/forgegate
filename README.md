@@ -12,8 +12,9 @@ reviewable release decisions.
 
 > **Testable Windows Alpha `0.1.0a1`** — the end-to-end local CLI assurance
 > workflow, reviewed local Dashboard actions, optional read-only MSP430 live
-> status, artifact-only MSP430 report collection, and brokered Windows plugin
-> path are implemented. The product is not production-ready.
+> status, artifact-only MSP430 report collection, candidate-bound assurance
+> download, and brokered Windows plugin path are implemented. The product is
+> not production-ready.
 
 The current checkpoint demonstrates:
 
@@ -25,8 +26,8 @@ The current checkpoint demonstrates:
 - an Ed25519-authenticated, project-authorized, loopback-only REST API;
 - a same-origin local Dashboard for activation, status, project discovery,
   candidate creation, reviewed lifecycle/evidence/evaluation/attestation
-  actions, audit and assurance inspection, and optional live device status
-  without browser-held signing keys;
+  actions, audit and assurance inspection, operator-reviewed portable bundle
+  download, and optional live device status without browser-held signing keys;
 - offline GitHub Actions gating without GitHub API write permissions; and
 - rootless Podman/WSL2 isolation for the exact Windows plugin runs that passed
   the retained hostile-fixture checks.
@@ -77,18 +78,18 @@ never converted into candidate evidence.
 
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 878 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
-| Branch-aware coverage | 95.23% across 10,389 statements and 2,810 branches | Local host test |
+| Full Python suite | 882 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
+| Branch-aware coverage | 95.21% across 10,429 statements and 2,824 branches | Local host test |
 | Static quality | Ruff, formatting, and strict mypy passed across 91 source/tool files | Local host test |
-| Contracts | 41 document and 3 artifact JSON Schemas plus direct-API and 17-operation Dashboard-BFF OpenAPI passed drift checks | Local host test |
+| Contracts | 41 document and 3 artifact JSON Schemas plus direct-API and 18-operation Dashboard-BFF OpenAPI passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
-| Dashboard automation | 46 focused tests passed; Dashboard package reached 98.37% branch-aware coverage | Local host test; sessions, authorization, reviewed writes, pagination, recovery, assurance review, asset integrity, BFF, contract, and CLI boundaries |
+| Dashboard automation | 48 focused tests passed; Dashboard package reached 98.41% branch-aware coverage | Local host test; sessions, authorization, reviewed writes, pagination, recovery, assurance review/export, asset integrity, BFF, contract, and CLI boundaries |
 | Dashboard browser interaction | Full reviewed Edge workflow, Edge/Chrome keyboard/focus, 129-record pagination, 390 px responsive, 409/413/422/429/500 recovery, exact Edge 100–200% zoom, and clean-console paths passed | Windows local browser test; uncommon errors use a zero-write presentation harness; Narrator is bounded PASS, while spoken output, high contrast, and real Remote Desktop remain open |
 | MSP430 report collector | 34 focused tests plus clean-wheel CLI collection passed; one LaunchPad HIL migration fixture produced 17 normalized records with retained warnings | Local artifact test; the fixture is a historical upstream result, not a new run or physical-measurement claim |
 | MSP430 live status | COM4 opened input-only at 115200 8-N-1; authenticated Devices page showed `CONNECTED`, heartbeat `NORMAL`, device `FAULT`, flags `0015`; sequence advanced 58007→58017 over 10 seconds with 10 accepted frames and no sequence gap | Owner-authorized Windows physical-device observation; one earlier invalid frame was rejected, no command or firmware/debug action, measurement validation, release evidence, or long-duration stability claim |
 | Windows plugin controls | 18/18 clean-wheel controls passed with the fixed pure-Python fixture | Live local WSL2/Podman test; no general publisher or plugin trust claim |
-| Cross-platform CI | `verify.py`, `release_smoke.py`, and the generic Action smoke passed | [GitHub Actions run 33839976122](https://github.com/Carlos-0798/forgegate/actions/runs/33839976122); hosted CI did not run live Podman fixtures |
+| Cross-platform CI | `verify.py`, `release_smoke.py`, and the generic Action smoke passed | [GitHub Actions run 33999452478](https://github.com/Carlos-0798/forgegate/actions/runs/33999452478); hosted CI did not run live Podman fixtures |
 | Hardware/device behavior | Connection and UART heartbeat status observed only | Device control and measurement validation remain out of scope |
 
 See the [verification matrix](docs/VERIFICATION_MATRIX.md) for capability-level
@@ -176,9 +177,11 @@ Devices, Projects, candidate list/create/detail/audit, Evidence, Decision, and
 Assurance for one selected candidate. An operator can explicitly review and
 confirm each legal lifecycle transition, bind a complete local evidence-
 assembly JSON document, evaluate exact policy-material JSON, and generate the
-terminal attestation. Automatic collection, server-side file browsing,
-assurance export, plugin execution, and administration remain CLI/API work or
-visibly planned. Swagger UI and ReDoc stay disabled; the committed,
+terminal attestation. An operator can then review the current revision, bundle
+identity, exact member set, and limitations before downloading the deterministic
+portable ZIP; the server accepts no output path and writes no export file.
+Automatic collection, server-side file browsing, plugin execution, and
+administration remain CLI/API work or visibly planned. Swagger UI and ReDoc stay disabled; the committed,
 drift-checked OpenAPI document remains the direct API reference.
 
 MSP430 monitoring is an optional dependency and must be enabled explicitly. The
@@ -226,6 +229,14 @@ Overview, candidate, validation-error, pagination, assurance, and zoom captures.
 None proves producer authenticity, hardware correctness, deployment approval,
 or production readiness.
 
+![ForgeGate reviewed portable assurance download showing the exact candidate revision, bundle ID, canonical members, and evidence boundary](docs/assets/forgegate-dashboard-assurance-export-confirm.jpg)
+
+The Phase 28 Edge run downloaded the candidate-bound ZIP, extracted exactly the
+three canonical members, and passed the existing database-independent verifier.
+The [machine record](reports/DASHBOARD_PHASE28_ASSURANCE_EXPORT_EVIDENCE_2026-09-05.json)
+retains the archive hash, response contract, negative authorization/stale-state
+results, screenshot hashes, and explicit non-claims.
+
 For plugin inspection, API authentication, candidate persistence, bundle
 signing, and GitHub gate commands, use the [CLI and workflow guide](docs/DEMO.md)
 and architecture index rather than copying unreviewed commands from screenshots.
@@ -253,8 +264,9 @@ and reporting instructions are documented in [SECURITY.md](SECURITY.md).
   hostile-local-user defense, or remote-deployment approval.
 - The local Web Dashboard is a narrow Alpha surface. Evidence, decision, and
   assurance review plus explicit candidate transitions, evidence binding,
-  policy evaluation, and attestation generation are implemented. Automatic
-  collection, server-side browsing, export, plugin, and administration
+  policy evaluation, attestation generation, and candidate-bound portable ZIP
+  download are implemented. Automatic collection, server-side browsing,
+  source-artifact export, plugin, and administration
   workflows are not. Exact 100–200% Edge zoom passes; spoken Narrator output,
   Windows high contrast, and a real Remote Desktop run remain unexecuted.
   The Dashboard BFF has a separate generated and drift-checked
@@ -284,8 +296,8 @@ The next maturity gates are:
 
 1. complete Windows high-contrast, spoken Narrator-output, and real Remote
    Desktop evidence without claiming full accessibility certification;
-2. add automatic collection or assurance export only after their file,
-   authorization, progress, cancellation, and recovery contracts are frozen;
+2. add automatic collection only after its file, authorization, progress,
+   cancellation, and recovery contracts are frozen;
 3. align future MSP430 report revisions through the frozen artifact contract
    while keeping live UART status separate from evidence;
 4. establish publisher provenance and broader hostile-plugin compatibility;

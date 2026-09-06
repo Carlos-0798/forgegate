@@ -2,14 +2,16 @@
 
 - Date: 2026-09-05
 - Version: 0.1.0a1
-- Stage: Phase 27 reviewed Dashboard workflow and artifact-only MSP430 report
-  collector implemented and browser/package tested; Windows high contrast,
+- Stage: Phase 28 operator-reviewed, candidate-bound assurance ZIP export
+  implemented and Edge/offline tested after the Phase 27 workflow and MSP430
+  collector; Windows high contrast,
   spoken Narrator output, and a real Remote Desktop run remain environment gates
 - Product maturity: testable Windows Alpha with generic initialization,
   local CLI/API release-assurance flow, software-peer collection, audited
   aggregation, durable lifecycle binding, offline GitHub gating, and a
   live-tested Windows-only brokered plugin path, a narrow authenticated local
   Dashboard with reviewed lifecycle/evidence/evaluation/attestation actions,
+  candidate-bound portable assurance download,
   an optional read-only MSP430 status monitor, and a separate strict MSP430
   validation-report collector; not production-ready
 - Highest ForgeGate-owned evidence: LOCAL_HOST_TEST
@@ -18,7 +20,7 @@
   evidence, or production claim
 - Remote/publication status: private `Carlos-0798/forgegate`; repository changes
   are synchronized through reviewed pull requests and required CI. The latest
-  previously accepted cross-platform run was 33839976122; no public release,
+  previously accepted cross-platform run was 33999452478; no public release,
   License, or LinkedIn publication is authorized
 
 ## Implemented
@@ -358,7 +360,7 @@
   attestation/bundle identity, and explicit limitation/evidence labels;
 - content-hashed deterministic frontend assets, canonical SHA-256 inventory,
   source/wheel inclusion checks, locked build dependencies, and CI drift gates;
-- separate deterministic Dashboard BFF OpenAPI export with 17 explicit
+- separate deterministic Dashboard BFF OpenAPI export with 18 explicit
   operation IDs, committed-byte drift detection, and installed-wheel comparison;
 - optional `msp430` dependency and domain-neutral live-status provider boundary;
   an independently implemented MSP430 UART v1 parser validates ASCII framing,
@@ -385,7 +387,10 @@
   confirmation, CSRF, project scope, and authoritative reload;
 - bounded browser-local JSON selection that sends complete evidence-assembly or
   policy-material documents without exposing a client path to the server;
-- 46 focused Dashboard tests plus real Microsoft Edge and Chrome keyboard/focus
+- operator-reviewed portable assurance download using a deterministic bounded
+  three-file ZIP, exact candidate revision and bundle identity, same-origin/
+  CSRF/project-role controls, no accepted path, and no server-side file write;
+- 48 focused Dashboard tests plus real Microsoft Edge and Chrome keyboard/focus
   operation, complete 129-record cursor pagination, browser-rendered
   409/413/422/429/500 recovery, and Chrome/in-app-browser 390 px
   responsive/clean-console runs using generic local data; uncommon statuses
@@ -402,8 +407,8 @@
 
 ## Designed, not implemented
 
-- later automatic Dashboard evidence collection, assurance export, plugin
-  execution, and session/trust administration;
+- later automatic Dashboard evidence collection, plugin execution, and
+  session/trust administration;
 - publisher signatures/trust, remote plugin acquisition, automatic install,
   and an independent production plugin repository;
 - native-extension and separately packaged plugin-dependency support;
@@ -415,7 +420,7 @@
 
 full Dashboard assistive-technology acceptance (high contrast, spoken Narrator
 output, and a real Remote Desktop session); automatic browser-side evidence
-collection, attestation/export, and plugin/admin commands; non-loopback/TLS
+collection, source-artifact export, and plugin/admin commands; non-loopback/TLS
 API deployment, reverse-proxy trust, hostile-local-user
 defense, managed online revocation, durable/distributed sessions, per-client
 network rate controls, distributed rate state, HTTP artifact collection and
@@ -438,13 +443,13 @@ validation.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 878 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.23% across 10,389 statements and 2,810 branches
+- pytest: 882 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.21% across 10,429 statements and 2,824 branches
 - MSP430 live-status focus: 17 passed across parser, state classification,
   staleness, invalid/recovery, counters, dependency/I/O failure, and input-only
   monitor lifecycle
-- Dashboard focus: 46 passed; 98.37% branch-aware coverage across 626
-  statements and 110 branches
+- Dashboard focus: 48 passed with 98.41% branch-aware coverage across 642
+  statements and 114 branches
 - Dashboard browser checkpoint: Microsoft Edge and Chrome keyboard creation/
   read, modal Tab containment/Escape/focus return, 129-record six-page
   traversal, and 409/413/422/429/500 recovery PASS; Chrome service-restart
@@ -474,6 +479,11 @@ validation.
   DRAFT→COLLECTING→READY→EVALUATING→PASS→attestation writes with audit sequence
   5–12; a mismatched-commit assembly was rejected before durable binding, and
   two discovered presentation defects were corrected and retested
+- Phase 28 browser checkpoint: the same generic completed candidate displayed
+  its exact revision/bundle/member boundary before one Edge download; the
+  15,448-byte ZIP extracted to exactly three files and `verify-assurance`
+  returned `VALID`, with no server path, state mutation, publication, or
+  hardware access
 - MSP430 validation-report collector focus: 34 passed across strict loading,
   evidence mapping, commit/hardware/correction invariants, assembly integration,
   CLI, Schema drift, and adversarial limits; no hardware was accessed
@@ -488,8 +498,8 @@ validation.
 - API security-event focus: 5 passed, covering contracts, persistence,
   migration, access, saturation, privacy, and control behavior
 - authenticated-identity focus: 22 passed; identity package 96.48%
-- portable-assurance focus: 17 passed; assurance models 100% and portable
-  publication/verifier 95%
+- portable-assurance focus: 19 passed;
+  deterministic ZIP and offline extraction are included
 - project-profile revision focus: 5 passed, including migration, corruption,
   REST, and CLI contracts
 - Analog Validation collector focus: 59 passed; 100% across 431 statements and
@@ -505,7 +515,7 @@ validation.
   Validation, and MSP430 validation-report artifact Schemas: drift-checked and
   parsed
 - complete sdist manifest and ForgeGate/sample-plugin wheel builds: PASS
-- clean-wheel MSP430 report collection, Dashboard 17-operation OpenAPI export,
+- clean-wheel MSP430 report collection, Dashboard 18-operation OpenAPI export,
   installed-package workflow, optional `pyserial` install, and uninstall: PASS
 - Windows sandbox focus: 20 passed across probe failure isolation, client/server
   identity, rootless/local/WSL requirements, command controls, strict verifier
@@ -521,10 +531,10 @@ validation.
 - repository-external ForgeGate installation plus sample-plugin
   install/discover/uninstall independence smoke: PASS
 - Git Bash shell-script syntax check: PASS
-- latest accepted GitHub Actions baseline: merge run 33839976122
+- latest accepted GitHub Actions baseline: merge run 33999452478
   PASS on Windows, Ubuntu, and macOS; each platform completed `verify.py` over
   783 collected tests and `release_smoke.py` for checkpoint commit
-  `690123efcba79a699f356a73a557f804a8267ec9`, and the dependent Ubuntu job
+  `32e961ce72a5ce4497010fbc22a53b0aab090571`, and the dependent Ubuntu job
   passed the real composite Action against the generic fixture; the local
   Podman hostile fixtures were not run or claimed by hosted CI
 - private GitHub synchronization: `main` pushed with noreply commit identity;
@@ -587,3 +597,7 @@ implementation and exact PASS/NOT_RUN boundaries are recorded in
 follow-up operator/producer samples, persisted-output cross-check, and corrected
 expiry/restart recovery are recorded in
 `reports/PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md`.
+The candidate-bound portable ZIP implementation, Edge download, and offline
+verification are recorded in
+`reports/PHASE_28_DASHBOARD_ASSURANCE_EXPORT_ACCEPTANCE_REPORT.md` and
+`reports/DASHBOARD_PHASE28_ASSURANCE_EXPORT_EVIDENCE_2026-09-05.json`.

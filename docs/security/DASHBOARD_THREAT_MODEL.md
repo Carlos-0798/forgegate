@@ -3,8 +3,8 @@
 ## Status and scope
 
 This threat model governs the implemented Phase 24 local Dashboard shell,
-Phase 25 optional read-only live monitor, Phase 26 assurance review, and Phase
-27 reviewed candidate write workflow.
+Phase 25 optional read-only live monitor, Phase 26 assurance review, Phase 27
+reviewed candidate write workflow, and Phase 28 assurance export.
 Origin/Host/CSRF, browser-bound activation, session, role/scope, header, static-
 asset, safe-rendering, and generated BFF-contract drift controls have local
 automated evidence. Portions of the manual browser exit gate remain incomplete,
@@ -65,6 +65,10 @@ user trustworthy.
 | Tampered assembly identity or artifact receipt | Existing `EvidenceBundleAssembly` validation recomputes the assembly identity and verifies ordered evidence IDs, artifact membership, receipts, and warning disposition before the binding transaction | Domain and Dashboard BFF adversarial tests |
 | Policy substitution between review and evaluation | Imported material carries exact project profile ID/version, release track, policy bytes, artifact digest, and material fingerprint; server evaluates the submitted frozen document inside the existing transaction | Profile/track/material mismatch tests and exact policy evaluation readback |
 | Ambiguous failure causes an unsafe retry | 409/413/500 disable the submitted command; 429 retains one idempotency key through its cooldown; completion requires explicit authoritative reload | Focused BFF tests and browser presentation matrix |
+| Browser exports a stale or substituted assurance artifact | Require operator/project authority, exact Origin, CSRF, current candidate revision, and regenerated bundle ID before returning bytes | Stale-revision, wrong-bundle, producer-denial, and real-browser identity checks |
+| Export reads or writes an attacker-selected path | Accept no path, filename, URL, archive option, or remote destination; render bounded bytes in memory and let the browser choose local handling | Strict unknown-field rejection and fixed response filename/member tests |
+| ZIP traversal, ambiguity, or decompression risk | Generate exactly three root regular-file entries with fixed names, timestamps, permissions, and stored compression; retain existing member and verifier limits | Deterministic ZIP, exact-member, size-failure, extraction, and offline verification tests |
+| Browser accepts the wrong response as assurance | Check response bundle header, media type, and aggregate size before creating the object URL; derive the filename from the reviewed bundle ID | TypeScript source guard plus Edge download and offline verification |
 | Unbounded list or response exhausts UI | Existing cursor/limit contracts, bounded caches, table virtualization only when required | Maximum page and pagination tests |
 | Authentication activation is hijacked | One-time short expiry, browser binding, exact requested principal/scope review, non-secret display code with rate limits | replay, wrong-browser, expiry, and scope-mismatch tests |
 | Local server launched on unsafe address | Fixed loopback validation; wildcard/external addresses rejected | launch tests for IPv4/IPv6/wildcard cases |
@@ -97,8 +101,8 @@ packaged product.
 - durable/distributed Dashboard sessions and rate state;
 - managed key custody, TPM/HSM integration, trusted timestamps, and online
   revocation;
-- artifact upload/download publication, remote acquisition, and browser-native
-  filesystem integration;
+- artifact upload, remote acquisition, arbitrary filesystem integration, and
+  remote publication; Phase 28 permits only a bounded local browser download;
 - generalized third-party plugin publisher trust and native plugin execution;
 - formal penetration testing, WCAG certification, and production support.
 
@@ -107,8 +111,9 @@ them from the repository status, README, screenshots, or portfolio claims.
 
 ## Security exit gate
 
-The current candidate creation, lifecycle, evidence-binding, evaluation, and
-attestation writes pass the automated controls below. Environment-specific
+The current candidate creation, lifecycle, evidence-binding, evaluation,
+attestation, and assurance-export paths pass the automated controls below.
+Environment-specific
 manual checks retain their own PASS/PARTIAL/NOT_RUN state in the acceptance
 matrix:
 

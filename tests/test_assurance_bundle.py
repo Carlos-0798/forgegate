@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import zipfile
 from datetime import UTC, datetime
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +24,7 @@ from forgegate.assurance import (
     AssuranceBundle,
     AssuranceBundleError,
     publish_assurance_bundle,
+    render_assurance_bundle_archive,
     render_assurance_bundle_json,
     render_assurance_bundle_readme,
     verify_assurance_bundle,
@@ -293,6 +296,50 @@ def test_publish_verify_and_exact_replay_without_database(
         "README.md",
         "assurance-bundle.json",
     }
+
+
+def test_assurance_archive_is_deterministic_rootless_and_offline_verifiable(
+    tmp_path: Path,
+    repository_root: Path,
+) -> None:
+    application, candidate_id = _completed_application(tmp_path, repository_root)
+    bundle = application.get_assurance_bundle(candidate_id)
+
+    first = render_assurance_bundle_archive(bundle)
+    second = render_assurance_bundle_archive(bundle)
+    target = tmp_path / ("assurance-" + bundle.bundle_id.removeprefix("sha256:"))
+    target.mkdir()
+    with zipfile.ZipFile(BytesIO(first)) as archive:
+        assert archive.namelist() == ["README.md", "assurance-bundle.json", "manifest.json"]
+        assert all(info.date_time == (1980, 1, 1, 0, 0, 0) for info in archive.infolist())
+        assert all(info.compress_type == zipfile.ZIP_STORED for info in archive.infolist())
+        assert all(info.external_attr >> 16 == 0o100644 for info in archive.infolist())
+        assert all(
+            "/" not in info.filename and "\\" not in info.filename for info in archive.infolist()
+        )
+        archive.extractall(target)
+
+    application.repository.database_path.unlink()
+    verified = verify_assurance_bundle(target)
+    assert first == second
+    assert verified.bundle == bundle
+
+
+def test_archive_render_rejects_oversized_canonical_member(
+    tmp_path: Path,
+    repository_root: Path,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    application, candidate_id = _completed_application(tmp_path, repository_root)
+    bundle = application.get_assurance_bundle(candidate_id)
+    monkeypatch.setattr(
+        portable_module,
+        "render_assurance_bundle_json",
+        lambda _: "x" * (portable_module.MAX_ASSURANCE_JSON_BYTES + 1),
+    )
+
+    with pytest.raises(AssuranceBundleError, match="FILE_TOO_LARGE"):
+        render_assurance_bundle_archive(bundle)
 
 
 @pytest.mark.parametrize("member", ["README.md", "assurance-bundle.json", "manifest.json"])

@@ -261,6 +261,11 @@ interface ApiProblem {
   error?: { code?: string; message?: string; request_id?: string };
 }
 
+interface AssuranceDownload {
+  blob: Blob;
+  filename: string;
+}
+
 class RequestProblem extends Error {
   constructor(
     readonly status: number,
@@ -376,16 +381,84 @@ async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
   });
   const payload: unknown = await response.json().catch(() => ({}));
   if (!response.ok) {
-    const problem = payload as ApiProblem;
-    throw new RequestProblem(
-      response.status,
-      problem.error?.code ?? "DASHBOARD_REQUEST_FAILED",
-      problem.error?.message ?? "The local service rejected the request.",
-      problem.error?.request_id ?? response.headers.get("X-Request-ID") ?? "unavailable",
-      retryAfterSeconds(response)
-    );
+    throw requestProblem(response, payload);
   }
   return payload as T;
+}
+
+function requestProblem(response: Response, payload: unknown): RequestProblem {
+  const problem = payload as ApiProblem;
+  return new RequestProblem(
+    response.status,
+    problem.error?.code ?? "DASHBOARD_REQUEST_FAILED",
+    problem.error?.message ?? "The local service rejected the request.",
+    problem.error?.request_id ?? response.headers.get("X-Request-ID") ?? "unavailable",
+    retryAfterSeconds(response)
+  );
+}
+
+async function downloadAssuranceArchive(
+  candidateId: string,
+  revision: number,
+  bundleId: string
+): Promise<AssuranceDownload> {
+  if (session === null) throw new Error("Dashboard session is unavailable");
+  const response = await fetch(
+    `/app/api/candidates/${encodeURIComponent(candidateId)}/assurance-export`,
+    {
+      method: "POST",
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: {
+        "Accept": "application/zip",
+        "Content-Type": "application/json",
+        "X-ForgeGate-CSRF": session.csrf_token,
+        "X-Request-ID": requestId()
+      },
+      body: JSON.stringify({ expected_revision: revision, expected_bundle_id: bundleId })
+    }
+  );
+  if (!response.ok) {
+    const payload: unknown = await response.json().catch(() => ({}));
+    throw requestProblem(response, payload);
+  }
+  const returnedBundleId = response.headers.get("X-ForgeGate-Assurance-Bundle");
+  const mediaType = response.headers.get("Content-Type")?.split(";", 1)[0];
+  if (returnedBundleId !== bundleId || mediaType !== "application/zip") {
+    throw new RequestProblem(
+      500,
+      "DASHBOARD_EXPORT_RESPONSE_INVALID",
+      "The local service returned an unexpected assurance archive identity or media type.",
+      response.headers.get("X-Request-ID") ?? "unavailable",
+      null
+    );
+  }
+  const blob = await response.blob();
+  if (blob.size === 0 || blob.size > 16_924_672) {
+    throw new RequestProblem(
+      500,
+      "DASHBOARD_EXPORT_RESPONSE_INVALID",
+      "The local service returned an empty or oversized assurance archive.",
+      response.headers.get("X-Request-ID") ?? "unavailable",
+      null
+    );
+  }
+  return {
+    blob,
+    filename: `assurance-${bundleId.replace(/^sha256:/, "")}.zip`
+  };
+}
+
+function saveLocalDownload(download: AssuranceDownload): void {
+  const url = URL.createObjectURL(download.blob);
+  const link = el("a");
+  link.href = url;
+  link.download = download.filename;
+  link.hidden = true;
+  document.body.append(link);
+  link.click();
+  link.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
 function clearActivationTimer(): void {
@@ -421,7 +494,7 @@ function scheduleSessionExpiry(): void {
 
 function problemRecovery(problem: RequestProblem | null, fallback: string): string {
   if (problem?.status === 409) {
-    return "Reload authoritative state, review the changed values, and submit a new request. This write will not be retried automatically.";
+    return "Reload authoritative state, review the changed values, and submit a new request. This operation will not be retried automatically.";
   }
   if (problem?.status === 413) {
     return "Reduce the request below the stated 4 MiB service limit, then review it before trying again.";
@@ -2025,6 +2098,94 @@ async function renderDecision(): Promise<void> {
   shell(main);
 }
 
+function openAssuranceExportDialog(
+  main: HTMLElement,
+  review: CandidateAssuranceReview,
+  returnFocus?: HTMLElement
+): void {
+  const bundleId = review.assurance_bundle_id;
+  if (bundleId === null) return;
+  const dialog = el("dialog", "review-dialog");
+  dialog.setAttribute("aria-labelledby", "assurance-export-dialog-title");
+  dialog.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    dialog.close();
+  });
+  dialog.addEventListener("keydown", (event) => keepFocusInsideDialog(dialog, event));
+  dialog.addEventListener("close", () => {
+    dialog.remove();
+    if (returnFocus?.isConnected) returnFocus.focus();
+  }, { once: true });
+
+  const panel = el("section", "review-panel");
+  const heading = el("h2", undefined, "Confirm portable assurance download");
+  heading.id = "assurance-export-dialog-title";
+  panel.append(
+    el("p", "eyebrow", "REVIEWED LOCAL EXPORT"),
+    heading,
+    el("p", "muted", "ForgeGate will render the exact retained bundle as one deterministic ZIP. The server receives no output path and writes no export file.")
+  );
+  const details = el("dl", "definition-list");
+  details.append(
+    definition("Candidate", review.candidate.candidate_id, true),
+    definition("Candidate revision", String(review.candidate.revision)),
+    definition("Bundle ID", bundleId, true),
+    definition("Archive members", "README.md · assurance-bundle.json · manifest.json"),
+    definition("Assurance", review.assurance ?? "unsigned_local"),
+    definition("Source artifact bytes", review.source_artifact_bytes ?? "not_embedded")
+  );
+  const boundary = el(
+    "p",
+    "command-boundary",
+    "This creates a browser download only. It does not change retained state, publish to GitHub, authenticate producers, embed referenced source artifacts, deploy software, or control hardware."
+  );
+  const status = el("div", "dialog-status");
+  status.setAttribute("aria-live", "polite");
+  const controls = el("div", "dialog-actions");
+  const cancel = button("Cancel", "button quiet");
+  cancel.addEventListener("click", () => dialog.close());
+  const confirm = button("Download verified ZIP", "button primary");
+  confirm.addEventListener("click", async () => {
+    cancel.disabled = true;
+    confirm.disabled = true;
+    status.replaceChildren(el("p", "muted", "Rendering the candidate-bound archive…"));
+    try {
+      const download = await downloadAssuranceArchive(
+        review.candidate.candidate_id,
+        review.candidate.revision,
+        bundleId
+      );
+      saveLocalDownload(download);
+      heading.textContent = "Download requested";
+      const eyebrow = panel.querySelector<HTMLElement>(".eyebrow");
+      if (eyebrow !== null) eyebrow.textContent = "EXPORT COMPLETED";
+      status.replaceChildren(
+        statusBadge("Archive ready"),
+        el("p", undefined, `${download.filename} was handed to the browser. Verify the extracted directory with forgegate verify-assurance before relying on it.`)
+      );
+      const done = button("Done", "button primary");
+      done.addEventListener("click", () => dialog.close());
+      controls.replaceChildren(done);
+      done.focus();
+    } catch (error) {
+      showProblem(
+        status,
+        error,
+        "Close this review, reload Assurance, and confirm the current bundle identity before trying again."
+      );
+      cancel.disabled = false;
+      cancel.textContent = "Close and reload";
+      cancel.addEventListener("click", () => void renderAssurance(), { once: true });
+    }
+  });
+  controls.append(cancel, confirm);
+  panel.append(details, boundary, status, controls);
+  dialog.append(panel);
+  main.append(dialog);
+  dialog.showModal();
+  confirm.focus();
+}
+
 async function renderAssurance(): Promise<void> {
   loadingPage("Assurance");
   const main = page(
@@ -2068,6 +2229,20 @@ async function renderAssurance(): Promise<void> {
       boundaries.append(list);
       columns.append(identity, boundaries);
 
+      const exportPanel = el("section", "workflow-panel");
+      exportPanel.append(
+        el("p", "eyebrow", "PORTABLE DELIVERY"),
+        el("h3", undefined, "Download an offline-verifiable bundle"),
+        el("p", "muted", "The ZIP uses the content-derived bundle ID as its filename and contains only the canonical three-file portable contract.")
+      );
+      if (session?.principal.role === "operator" && review.assurance_bundle_id !== null) {
+        const exportButton = button("Review assurance download", "button primary");
+        exportButton.addEventListener("click", () => openAssuranceExportDialog(main, review, exportButton));
+        exportPanel.append(exportButton);
+      } else {
+        exportPanel.append(el("p", "command-boundary", "An operator session is required to export this complete assurance artifact. Producer sessions remain read-only review sessions."));
+      }
+
       const transitions = el("section", "panel transition-panel");
       transitions.append(el("p", "eyebrow", "IMMUTABLE LIFECYCLE"), el("h3", undefined, "Candidate transition chain"));
       const timeline = el("ol", "timeline");
@@ -2081,7 +2256,7 @@ async function renderAssurance(): Promise<void> {
         timeline.append(item);
       }
       transitions.append(timeline);
-      main.append(summary, columns, transitions);
+      main.append(summary, columns, exportPanel, transitions);
     }
   } catch (error) {
     if (handleProtectedProblem(main, error, "Return to Candidates and confirm the selected candidate is in scope.")) return;
