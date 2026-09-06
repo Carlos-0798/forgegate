@@ -217,7 +217,19 @@ ForgeGate release approval. The [original shared-policy failure](assets/forgegat
 and its schema-v9 correction are retained with exact hashes and expected/actual
 results in the [Phase 30 report](../reports/PHASE_30_JUNIT_COLLECTION_ACCEPTANCE.md).
 
-### Previously accepted workflows
+### Phase 31 Windows runtime evidence
+
+This phase changes CLI/Windows operation support, not the browser UI. Retained
+evidence is an [actual HTTP JSON receipt](../reports/PHASE_31_RUNTIME_HTTP_RECEIPT.json)
+and [startup/recovery acceptance report](../reports/PHASE_31_WINDOWS_RUNTIME_ACCEPTANCE.md),
+not a reused screenshot presented as a new page. The receipt SHA-256 is
+`52fdf80f90374cc8f747a9f5458b12f04e0865fbf73cef58555016ae06c63715`
+(UTF-8/LF text, matching the committed bytes).
+It shows a temporary Dashboard returning 200/200, an API-only fixture returning
+200/404, and refused connections after owned fixtures stop. These are local
+software tests, not uptime, browser-interaction or hardware evidence.
+
+### Previously accepted browser workflows
 
 They support the narrow claim that the authenticated, loopback-only Dashboard
 implements activation, Overview, Devices, Projects, candidate list/create/

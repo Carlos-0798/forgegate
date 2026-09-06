@@ -49,6 +49,7 @@ analysis, compatibility contracts, and historical acceptance evidence.
 
 ## Local Dashboard
 
+- [Windows startup, diagnostics and recovery](WINDOWS_DASHBOARD_OPERATIONS.md)
 - [Dashboard UX requirements](product/DASHBOARD_UX_REQUIREMENTS.md)
 - [Local Web Dashboard architecture](architecture/LOCAL_WEB_DASHBOARD.md)
 - [Dashboard assurance export](architecture/DASHBOARD_ASSURANCE_EXPORT.md)

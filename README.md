@@ -22,6 +22,8 @@ The current checkpoint demonstrates:
   Analog Validation Studio artifacts;
 - a bounded operator-only JUnit browser preview with exact-byte hashing,
   explicit warning retention, and separate immutable evidence binding;
+- loopback HTTP/HTML diagnostics and an explicit Windows foreground launcher
+  with [startup and recovery guidance](docs/WINDOWS_DASHBOARD_OPERATIONS.md);
 - deterministic policy decisions over commit-bound evidence;
 - immutable project profiles, release candidates, and append-only audit history;
 - content-addressed attestations and portable assurance bundles;
@@ -80,9 +82,9 @@ never converted into candidate evidence.
 
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 918 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
-| Branch-aware coverage | 95.25% across 10,520 statements and 2,840 branches | Local host test |
-| Static quality | Ruff, formatting, and strict mypy passed across 93 source/tool files | Local host test |
+| Full Python suite | 946 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
+| Branch-aware coverage | 95.28% across 10,592 statements and 2,852 branches | Local host test |
+| Static quality | Ruff, formatting, and strict mypy passed across 95 source/tool files | Local host test |
 | Contracts | 41 document and 3 artifact JSON Schemas plus direct-API and 19-operation Dashboard-BFF OpenAPI passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
@@ -210,6 +212,11 @@ It found and corrected a shared-policy binding defect; SQLite schema v9 permits
 multiple candidates to reuse exact policy content while preserving one immutable
 binding per candidate. Existing databases require a backup and explicit migration.
 See the [Phase 30 report](reports/PHASE_30_JUNIT_COLLECTION_ACCEPTANCE.md).
+
+For startup diagnosis, use `python -m forgegate dashboard-check --port 8131`.
+The [Windows operation guide](docs/WINDOWS_DASHBOARD_OPERATIONS.md) and
+[Phase 31 report](reports/PHASE_31_WINDOWS_RUNTIME_ACCEPTANCE.md) cover the
+foreground launcher, failures and safe restart; this is not a background service.
 
 MSP430 monitoring is an optional dependency and must be enabled explicitly. The
 monitor enumerates and opens only the selected application UART, sets DTR/RTS

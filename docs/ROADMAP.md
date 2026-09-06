@@ -528,3 +528,23 @@ remain later gates.
 Do not call this a durable task center, multi-report upload, raw-artifact store,
 source authentication, test execution or hardware validation. Do not start the
 next collector until this slice's real-browser acceptance is complete.
+
+## Phase 31 — Windows startup and diagnostic recovery
+
+- [x] Add loopback-only, unauthenticated CLI diagnostics with bounded response
+  bodies, explicit HTTP/HTML outcomes, exit codes and non-ownership labels.
+- [x] Provide an existing-workspace PowerShell launcher with literal paths,
+  missing/empty-file and advisory port checks; retain foreground shutdown and
+  process exit behavior without automatic migration or credential changes.
+- [x] Exercise actual local Dashboard/API-only/stopped cases and the installed
+  command in clean-wheel smoke; preserve a path-free JSON receipt.
+- [x] Test native Windows PowerShell error/argument behavior, spaced paths,
+  startup, Ctrl+C shutdown and restarting the same isolated database.
+- [x] Document recovery, consistent-backup boundaries, fresh session activation,
+  private logs and the distinction between reachability and successful use.
+
+This is not background supervision, reboot persistence, service installation,
+automatic crash recovery, database repair, browser acceptance or device testing.
+Those operating modes require a separate lifecycle/ownership design. Durable
+collection jobs and artifact retention remain later engineering slices, not
+implied by the current synchronous preview or runtime diagnostic.

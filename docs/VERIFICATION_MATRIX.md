@@ -2,6 +2,8 @@
 
 | Capability | Planned evidence | Current status |
 |---|---|---|
+| Windows Dashboard startup and diagnostics | 28 focused host/PowerShell cases, actual HTTP and clean-wheel smoke | PASS — foreground start/stop/restart, missing/empty inputs, occupied port and argument/exit-code checks; no watchdog or ownership guarantee |
+| Runtime HTTP observation | retained path-free receipt, exact installed HTML | PASS — Dashboard reachable, API-only rejected, stopped fixtures refused; no authenticated-browser, database-integrity or hardware claim from the probe |
 | Bounded Dashboard JUnit preview | 27 Python and 18 frontend host regressions; real Edge file flow | PASS — exact counts/hash, immutable binding and synthetic PASS/FAIL chains; real Edge warning consent and forbidden-XML rejection; shared-policy reuse fixed and migration rollback tested |
 | Package imports on Python 3.12 | clean virtual environment | PASS — wheel clean-install smoke |
 | Repeatable Windows setup | PowerShell bootstrap + constraints | PASS |
@@ -167,7 +169,7 @@
 | Structured-input pre-materialization bounds | JSON token, XML event, and YAML event adversarial tests | PASS — byte plus node/element/depth limits; duplicate YAML keys rejected |
 | Plugin output pre-materialization bounds | trusted in-container exporter plus bounded host archive inspection | PASS — clean-wheel live dual snapshots; no archive extraction |
 | Development dependency advisory audit | constrained pip/pytest bootstrap plus `pip-audit` | PASS — no known advisory in resolved registry dependencies; editable local project excluded |
-| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.25% exceeds exact 95.00% threshold |
+| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.28% exceeds exact 95.00% threshold |
 
 See `reports/INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md` for the latest
 expected-versus-actual CLI/API check and

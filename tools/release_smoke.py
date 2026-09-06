@@ -17,6 +17,10 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_SDIST_PATHS = (
+    "tools/start_dashboard.ps1",
+    "tools/dashboard_runtime_smoke.py",
+    "tests/test_dashboard_runtime.py",
+    "docs/WINDOWS_DASHBOARD_OPERATIONS.md",
     "AGENTS.md",
     "CHANGELOG.md",
     "CONTRIBUTING.md",
@@ -1468,6 +1472,7 @@ def main(
             ],
             cwd=root,
         )
+        run([str(python), str(REPOSITORY_ROOT / "tools/dashboard_runtime_smoke.py")], cwd=root)
         run([str(python), "-m", "forgegate", "doctor"], cwd=root)
         run(
             [

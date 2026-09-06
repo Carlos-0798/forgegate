@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Added `dashboard-check` with bounded, unauthenticated health/HTML checks,
+  actionable failure states and explicit non-ownership/non-hardware labels.
+- Added a Windows foreground launcher for existing database/trust files,
+  advisory exclusive-port checks, literal paths and child exit-code propagation.
+  No auto-start, watchdog, migration, process termination or automatic login.
+- Added actual local HTTP/installed-wheel smoke and Windows PowerShell tests;
+  recovery guidance preserves the existing schema and credential boundaries.
 - Added bounded single-JUnit Dashboard preview with exact-byte hashing, original
   declared source time, explicit warning consent and separate immutable binding.
   No filesystem path, raw-byte retention, queue, hardware or trust promotion.

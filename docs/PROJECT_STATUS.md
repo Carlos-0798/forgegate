@@ -2,7 +2,9 @@
 
 - Date: 2026-09-06
 - Version: 0.1.0a1
-- Stage: Phase 30 bounded JUnit preview and separate binding implemented;
+- Stage: Phase 31 Windows startup, HTTP/HTML diagnostics and controlled recovery
+  support implemented; explicit foreground lifecycle, not an uptime watchdog.
+  Phase 30 bounded JUnit preview and separate binding implemented;
   real Edge PASS/FAIL, warning-consent and rejection acceptance completed.
   Shared-policy reuse corrected with explicit SQLite v8-to-v9 migration.
   Phase 29 project Audit remains available; Windows high contrast,
@@ -31,6 +33,9 @@ not green. Billing changes require owner action; local acceptance is separate.
 
 ## Implemented
 
+- `dashboard-check` distinguishes health, HTML, refusal, timeout and protocol
+  failures without authentication, database reads or device access; an existing-
+  workspace Windows launcher rejects missing/empty input and busy ports;
 - bounded operator-only JUnit upload preview using the existing collector and
   assembler, in-memory exact bytes, declared-only evidence, original report time,
   explicit warning retention and separate reviewed binding; no durable job queue;
@@ -452,6 +457,10 @@ multi-format collection. Its bounded real-browser upload acceptance now passes.
 
 ## Accepted local checkpoint
 
+- Phase 31: 28 focused host/Windows launcher cases; real isolated Dashboard,
+  API-only and stopped-service HTTP checks; two foreground startup/shutdown
+  cycles on the same synthetic database, with post-run SQLite quick-check OK.
+  No fresh authenticated-browser or MSP430 stability claim is added.
 - Activation follow-up: 13 production-TypeScript host interaction regressions
   pass via `pnpm run test:dashboard` on Node 24.19.0, separately from Python
   coverage; real in-app-browser activation at port 8131 also passes
@@ -459,8 +468,8 @@ multi-format collection. Its bounded real-browser upload acceptance now passes.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 918 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.25% across 10,520 statements and 2,840 branches
+- pytest: 946 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.28% across 10,592 statements and 2,852 branches
 - MSP430 live-status focus: 17 passed across parser, state classification,
   staleness, invalid/recovery, counters, dependency/I/O failure, and input-only
   monitor lifecycle

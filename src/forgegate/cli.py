@@ -625,6 +625,25 @@ def serve(
     )
 
 
+@app.command("dashboard-check")
+def dashboard_check(
+    host: Annotated[str, typer.Option("--host")] = "127.0.0.1",
+    port: Annotated[int, typer.Option("--port", min=1, max=65535)] = 8131,
+    timeout_seconds: Annotated[float, typer.Option("--timeout-seconds", min=0.1, max=10)] = 3.0,
+) -> None:
+    """Check loopback health and exact installed Dashboard HTML without logging in."""
+    from forgegate.dashboard.runtime import check_dashboard
+
+    try:
+        report = check_dashboard(host, port, timeout_seconds=timeout_seconds).to_dict()
+    except ValueError as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=2) from exc
+    typer.echo(json.dumps(report, indent=2, sort_keys=True))
+    if not report["ready"]:
+        raise typer.Exit(code=3)
+
+
 @app.command("dashboard")
 def dashboard(
     database: Annotated[Path, typer.Option("--database", dir_okay=False)],
