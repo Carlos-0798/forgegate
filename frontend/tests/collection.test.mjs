@@ -101,6 +101,8 @@ for (const invalid of ["size", "empty", "commit", "time", "future"]) {
     await click(a, "Preview report — no binding");
     assert.equal(a.requests.length, 1);
     assert.equal(findButton(a.dialog, "Review immutable binding"), undefined);
+    assert.match(a.dialog.text, /Browser validation — not an HTTP response/);
+    assert.match(a.dialog.text, /DASHBOARD_JUNIT_INVALID/);
   });
 }
 

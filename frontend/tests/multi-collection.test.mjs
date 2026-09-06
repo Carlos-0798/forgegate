@@ -50,6 +50,9 @@ for (const kind of ["missing","oversize","empty","time","future","duplicate","fo
   if(kind==="duplicate") a.inputs[5].files[0]=a.inputs[0].files[0];
   if(kind==="format") a.form.querySelector("select").value="sarif";
   await click(a,"Preview reports — no binding"); assert.equal(a.requests.length,1); assert.equal(find(a,"Review immutable binding"),undefined);
+  assert.match(a.dialog.text,/DASHBOARD_COLLECTION_INVALID/);
+  assert.match(a.dialog.text,/Browser validation — not an HTTP response/);
+  assert.doesNotMatch(a.dialog.text,/HTTP status: 422/);
 });
 for (const mismatch of ["count","hash","size","identity"]) test(`mismatched combined ${mismatch} is not bindable`,async()=>{
   const a=await app(), r=response();
@@ -105,4 +108,13 @@ for (const action of ["close","logout","navigate"]) test(`late combined response
 });
 for(const code of [401,409,413,422,429,500]) test(`combined HTTP ${code} does not retry or bind`,async()=>{
   const a=await app(); a.responses.push({status:code}); await click(a,"Preview reports — no binding"); assert.equal(a.requests.length,2); assert.equal(find(a,"Review immutable binding"),undefined);
+  if(code!==401) assert.match(a.dialog.text,new RegExp(`HTTP status: ${code}`));
+});
+
+test("browser import size recovery preserves its exact local limit",async()=>{
+  const a=await harness();
+  runInContext(`showProblem(document.querySelector('#app'),new RequestProblem(413,'DASHBOARD_IMPORT_TOO_LARGE','Too large','browser-side',null,'browser'),'Choose a JSON document no larger than 3,900,000 bytes.');`,a.context);
+  assert.match(a.root.text,/Browser validation — not an HTTP response/);
+  assert.match(a.root.text,/3,900,000 bytes/);
+  assert.doesNotMatch(a.root.text,/HTTP status: 413|stated 4 MiB service limit/);
 });

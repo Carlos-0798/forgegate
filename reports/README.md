@@ -6,6 +6,7 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
+- [Phase 33 actual-browser follow-up](PHASE_33_BROWSER_ACCEPTANCE_FOLLOWUP.md) — LCOV PASS, low-coverage FAIL, 13 scoped cases, local error provenance and Windows asset ordering corrections
 - [Phase 33 combined report collection](PHASE_33_MULTI_REPORT_ACCEPTANCE.md) — bounded JUnit + Cobertura/LCOV, exact JSON binding, real Edge synthetic combined policy PASS, and remaining manual boundaries
 - [Phase 32 candidate-store backup](PHASE_32_STORE_BACKUP_ACCEPTANCE.md) — consistent snapshots, no-overwrite validation and local data-protection boundaries
 - [Phase 30 JUnit collection](PHASE_30_JUNIT_COLLECTION_ACCEPTANCE.md) — bounded raw-report preview, reviewed binding and real Edge PASS/FAIL/warning/rejection acceptance; shared-policy defect corrected with explicit schema v9 migration

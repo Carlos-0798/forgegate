@@ -276,7 +276,8 @@ class RequestProblem extends Error {
     readonly code: string,
     message: string,
     readonly requestId: string,
-    readonly retryAfterSeconds: number | null
+    readonly retryAfterSeconds: number | null,
+    readonly origin: "http" | "browser" = "http"
   ) {
     super(message);
   }
@@ -500,6 +501,7 @@ function scheduleSessionExpiry(): void {
 }
 
 function problemRecovery(problem: RequestProblem | null, fallback: string): string {
+  if (problem?.origin === "browser") return fallback;
   if (problem?.status === 409) {
     return "Reload authoritative state, review the changed values, and submit a new request. This operation will not be retried automatically.";
   }
@@ -519,17 +521,18 @@ function problemRecovery(problem: RequestProblem | null, fallback: string): stri
 
 function showProblem(container: HTMLElement, error: unknown, recovery: string): void {
   const problem = error instanceof RequestProblem ? error : null;
+  const browserValidation = problem?.origin === "browser";
   const panel = el("section", "problem-panel");
   panel.setAttribute("role", "alert");
   panel.setAttribute("aria-live", "assertive");
   panel.tabIndex = -1;
   panel.append(
     el("p", "problem-code", `ERROR [${problem?.code ?? "DASHBOARD_UNEXPECTED_ERROR"}]`),
-    el("h2", undefined, "The request did not complete"),
-    el("p", "problem-status", `HTTP status: ${problem?.status ?? "unavailable"}`),
+    el("h2", undefined, browserValidation ? "Browser validation stopped this action" : "The request did not complete"),
+    el("p", "problem-status", browserValidation ? "Browser validation — not an HTTP response" : `HTTP status: ${problem?.status ?? "unavailable"}`),
     el("p", undefined, problem?.message ?? "An unexpected browser-side error occurred."),
     el("p", "recovery", `Safe next step: ${problemRecovery(problem, recovery)}`),
-    el("p", "request-id", `Request ID: ${problem?.requestId ?? "not available"}`)
+    el("p", "request-id", browserValidation ? "Request ID: not issued by browser validation" : `Request ID: ${problem?.requestId ?? "not available"}`)
   );
   container.replaceChildren(panel);
   panel.focus();
@@ -1756,7 +1759,7 @@ function openJsonCommandImport(
     }
     input.setCustomValidity("");
     if (file.size > MAX_DASHBOARD_IMPORT_BYTES) {
-      showProblem(status, new RequestProblem(413, "DASHBOARD_IMPORT_TOO_LARGE", "The selected JSON document leaves insufficient room inside the 4 MiB request envelope.", "browser-side", null), "Choose a JSON document no larger than 3,900,000 bytes.");
+      showProblem(status, new RequestProblem(413, "DASHBOARD_IMPORT_TOO_LARGE", "The selected JSON document leaves insufficient room inside the 4 MiB request envelope.", "browser-side", null, "browser"), "Choose a JSON document no larger than 3,900,000 bytes.");
       return;
     }
     review.disabled = true;
@@ -1775,7 +1778,7 @@ function openJsonCommandImport(
       renderReviewedMutation(dialog, candidate, mutation);
     } catch (error) {
       const message = error instanceof Error ? error.message : "The selected file is not valid UTF-8 JSON.";
-      showProblem(status, new RequestProblem(422, "DASHBOARD_IMPORT_INVALID", message, "browser-side", null), "Choose the exact versioned JSON document and review it again.");
+      showProblem(status, new RequestProblem(422, "DASHBOARD_IMPORT_INVALID", message, "browser-side", null, "browser"), "Choose the exact versioned JSON document and review it again.");
       review.disabled = false;
     }
   });
@@ -1807,7 +1810,7 @@ function sortedJsonValue(value: unknown): unknown {
 }
 
 function openJUnitImport(main: HTMLElement, candidate: Candidate, returnFocus?: HTMLElement, multi = false): void {
-  const invalid = (message: string): RequestProblem => new RequestProblem(422, "DASHBOARD_JUNIT_INVALID", message, "browser-side", null);
+  const invalid = (message: string): RequestProblem => new RequestProblem(422, multi ? "DASHBOARD_COLLECTION_INVALID" : "DASHBOARD_JUNIT_INVALID", message, "browser-side", null, "browser");
   const dialog = el("dialog", "review-dialog");
   dialog.setAttribute("aria-labelledby", "candidate-command-dialog-title");
   const heading = el("h2", undefined, multi ? "Collect test + coverage reports" : "Collect JUnit report");

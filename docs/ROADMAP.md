@@ -582,5 +582,7 @@ GitHub synchronization is paused by owner instruction; development remains local
 
 Next engineering slice: durable collection task lifecycle, restart recovery,
 explicit cancellation and bounded private artifact retention. This phase is not
-that task center. Real-browser LCOV/negative matrix and remaining OS assistive
-checks remain additional acceptance gates; their host regressions are separate.
+that task center. The scoped real-browser LCOV/negative matrix now passes in
+the Phase 33 follow-up (13 cases). Browser error provenance and Windows
+mixed-case asset ordering were corrected. Remaining OS assistive checks stay
+separate gates; host regressions do not replace actual OS acceptance.

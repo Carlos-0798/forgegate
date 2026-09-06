@@ -81,7 +81,7 @@
 | Request correlation and error sanitization | generated/supplied/invalid IDs + injected exception | PASS — local host |
 | Loopback-only API bind | IPv4/IPv6/localhost allowlist + external-address rejection | PASS — local host |
 | OpenAPI 3.1 contract | committed byte comparison + installed-wheel export | PASS — drift-checked |
-| Dashboard BFF OpenAPI contract | separate build-time export + committed byte and installed-wheel comparison | PASS — nineteen `/app/api/` operations with explicit operation IDs; not served as interactive docs |
+| Dashboard BFF OpenAPI contract | separate build-time export + committed byte and installed-wheel comparison | PASS — 20 paths / 21 `/app/api/` operations with explicit operation IDs; not served as interactive docs |
 | Authenticated local API | Ed25519 challenge, Bearer session, trust recheck | PASS — local host, loopback only |
 | User interaction acceptance | deterministic CLI plus authenticated REST smoke | PASS — 33/33 expected outputs; ephemeral identity/database; Swagger/ReDoc deliberately return 404 |
 | Local Web Dashboard design | architecture, UX requirements, threat model, acceptance matrix | DESIGN PASS — Phase 23 frozen; Phase 24 implementation preserves the defined same-origin boundary |
@@ -163,9 +163,11 @@
 | Trusted timestamp/managed online revocation | managed external infrastructure | NOT IMPLEMENTED — signed/auth times are not trusted; API reload is explicit from one fixed local file |
 | Source-artifact producer chain | producer-signed artifact receipts | NOT IMPLEMENTED — signature covers retained bundle only |
 | HTTP server-path artifact loading/file publication | no loader/output path; nested metadata is not dereferenced | OUT OF SCOPE — bounded uploaded JUnit/Cobertura/LCOV bytes only, in memory |
-| Combined browser collection | strict contract, exact counts, no-write preview, all-or-nothing assembly and separate binding | PASS — host tests; actual Edge Cobertura positive path separately retained |
+| Combined browser collection | strict contract, exact counts, no-write preview, all-or-nothing assembly and separate binding | PASS — host tests; actual Edge Cobertura/LCOV PASS and low-coverage FAIL separately retained |
 | Browser numeric round trip | original assembly JSON; tamper/fingerprint revalidation | PASS — reproduced 422 for 50.0-to-50 conversion, corrected exact-text binding in real Edge |
-| Combined LCOV/negative browser matrix | direct UI runs | OPEN — host-tested but not a fresh full manual matrix this phase |
+| Combined LCOV/negative browser matrix | direct UI runs | PASS — 13 scoped actual-Edge cases in Phase 33 browser follow-up; not exhaustive OS, concurrency or HTTP-injection certification |
+| Local error provenance | actual Edge oversize rejection + host HTTP/local regressions | PASS — local validation does not claim an HTTP response or server request ID |
+| Windows asset canonical order | exact mixed-case hash regression + packaged build | PASS — sort portable path strings, not case-insensitive WindowsPath objects |
 | MSP430 validation-report compatibility | frozen artifact contract, strict collector, Schema/CLI/assembly tests | PASS — 34 focused tests and clean-wheel collection; HIL remains `system_observed`, bench promotion requires complete physical context and calibration provenance, and the collector never opens serial or controls hardware |
 | Physical device control | explicit owner-approved procedure | OUT OF SCOPE — live monitor is input-only |
 | Generic project initialization | clean-wheel `forgegate init`, strict model validation, overwrite rejection | PASS — path-free receipt; no hardware requested |

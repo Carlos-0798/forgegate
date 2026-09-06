@@ -1335,6 +1335,24 @@ def test_dashboard_asset_inventory_detects_tampering(
     assert validate_dashboard_assets(copied).assets
 
 
+def test_dashboard_asset_inventory_uses_portable_case_sensitive_order(tmp_path: Path) -> None:
+    root = tmp_path / "static"
+    (root / "assets").mkdir(parents=True)
+    (root / ".vite").mkdir()
+    paths = (
+        "assets/index-Dr2KMm71.css",
+        "index.html",
+        "assets/index-DWJhUQ6a.js",
+        ".vite/manifest.json",
+    )
+    for relative in paths:
+        (root / relative).write_bytes(b"fixture")
+    inventory = build_dashboard_asset_inventory(root)
+    assert tuple(asset.path for asset in inventory.assets) == tuple(sorted(paths))
+    write_dashboard_asset_inventory(root)
+    assert validate_dashboard_assets(root) == inventory
+
+
 def test_dashboard_asset_inventory_rejects_invalid_document(tmp_path: Path) -> None:
     root = tmp_path / "static"
     root.mkdir()
