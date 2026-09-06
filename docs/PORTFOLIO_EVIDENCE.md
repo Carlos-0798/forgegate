@@ -9,6 +9,14 @@ measurement, or production environment.
 
 ## Evidence boundary
 
+The [Phase 29 project Audit report](../reports/PHASE_29_PROJECT_AUDIT_ACCEPTANCE.md)
+adds a separate generic 28-event fixture and exact screenshot hashes. Its
+operator page does not imply authenticated actors for historical CLI records.
+
+![ForgeGate project Audit workspace with the final three events of a 28-event fixture](assets/forgegate-dashboard-project-audit.png)
+
+![ForgeGate exact audit identities and explicit missing-actor boundary](assets/forgegate-dashboard-audit-detail.png)
+
 - Environment: Microsoft Edge, Google Chrome, and Codex in-app browser on
   Windows, loopback-only ForgeGate Dashboard
 - Evidence level: `LOCAL_BROWSER_TEST`

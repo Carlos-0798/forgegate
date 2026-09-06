@@ -745,6 +745,13 @@ code {
   background: var(--surface);
 }
 
+.audit-filters { flex-wrap: wrap; align-items: end; }
+.audit-filters .field { flex: 1 1 18rem; min-width: 0; }
+.audit-event { margin-top: 1rem; min-width: 0; overflow-wrap: anywhere; }
+.audit-event summary { cursor: pointer; font-weight: 700; line-height: 1.7; }
+.audit-event .definition-list { margin-top: 1rem; }
+.audit-results .pager { flex-wrap: wrap; }
+
 .pager {
   justify-content: space-between;
   gap: 1rem;

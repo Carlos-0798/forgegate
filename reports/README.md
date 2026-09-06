@@ -6,6 +6,7 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
+- [Phase 29 project Audit acceptance](PHASE_29_PROJECT_AUDIT_ACCEPTANCE.md) — complete paginated project/candidate history, recorded actor boundaries, isolated browser fixture and retained captures
 - [Activation recovery follow-up](DASHBOARD_ACTIVATION_RECOVERY_2026-09-06.md) — exact server/port, manual retries, expiry/race regressions, real in-app-browser captures, and the separate GitHub billing blocker
 - [Phase 28 Dashboard assurance-export acceptance](PHASE_28_DASHBOARD_ASSURANCE_EXPORT_ACCEPTANCE_REPORT.md) — operator-reviewed candidate-bound ZIP download, deterministic replay, Edge file creation, and offline verification
 - [Phase 28 Dashboard assurance-export evidence](DASHBOARD_PHASE28_ASSURANCE_EXPORT_EVIDENCE_2026-09-05.json) — exact archive/member identities, negative authorization and stale-state results, screenshot hashes, and explicit non-claims

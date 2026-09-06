@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Added an operator-only project Audit workspace with candidate filters,
+  stable cursor links, full event/subject identities, recorded actors,
+  text-only details, and explicit partial-preview/unknown-actor boundaries.
+- Added 12 frontend and 5 BFF audit regressions; malformed BFF audit filters
+  now return 422 and the committed OpenAPI retains their exact patterns.
 - Fixed Dashboard activation commands to include the actual loopback origin
   and port; added manual retry, explicit code-expiry guidance, rate-window
   waiting without resubmission, and late-response isolation.

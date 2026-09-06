@@ -39,6 +39,7 @@ from forgegate.candidates import (
     CandidateTransitionResult,
     ReleaseCandidatePage,
 )
+from forgegate.candidates.models import CANDIDATE_ID_PATTERN
 from forgegate.candidates.store import STORE_SCHEMA_VERSION
 from forgegate.dashboard.assets import validate_dashboard_assets
 from forgegate.dashboard.models import (
@@ -53,6 +54,7 @@ from forgegate.dashboard.models import (
     DashboardSessionResponse,
 )
 from forgegate.dashboard.sessions import DashboardSessionManager
+from forgegate.domain.models import SLUG_PATTERN
 from forgegate.live_status import DisabledLiveStatusProvider, LiveStatusPage, LiveStatusProvider
 from forgegate.projects import RegisteredProjectPage
 
@@ -603,10 +605,10 @@ def install_dashboard_routes(
     )
     def dashboard_audit_events(
         request: Request,
-        project_id: str,
+        project_id: Annotated[str, Query(pattern=SLUG_PATTERN)],
         after_sequence: Annotated[int, Query(ge=0)] = 0,
         limit: Annotated[int, Query(ge=1, le=200)] = 100,
-        candidate_id: str | None = None,
+        candidate_id: Annotated[str | None, Query(pattern=CANDIDATE_ID_PATTERN)] = None,
     ) -> AuditEventPage:
         _require_same_origin(request, required=False)
         principal = _dashboard_principal(manager, request)

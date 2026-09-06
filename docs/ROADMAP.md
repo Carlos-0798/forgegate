@@ -486,3 +486,22 @@ time, remote publication, deployment approval, or hardware validation.
   activation on port 8131, with screenshot evidence kept separately.
 - [ ] Restore a complete post-merge GitHub CI run after the owner resolves the
   reported billing/spending restriction; never bypass required checks.
+
+## Phase 29 — project Audit workspace
+
+- [x] Add a dedicated operator-only, project-scoped workspace over the existing
+  audit service, without introducing a new data store or write operation.
+- [x] Retain project/candidate/cursor in local deep links; present 25-event
+  pages, first/next navigation and manual refresh without fabricated totals.
+- [x] Display exact subject/event identities and recorded actor metadata;
+  never infer an actor for historical CLI or migration records.
+- [x] Link candidate audit previews to full history and disclose truncation.
+- [x] Reject malformed filter parameters with 422 before model construction;
+  preserve project/role/Origin/session authorization and no-store responses.
+- [x] Verify 12 frontend and 5 BFF cases, 887 full Python tests, real-browser
+  28-event traversal/filter/recovery, and retain portfolio-safe screenshots.
+
+This is release-operation history, not a complete security-event workspace,
+tamper-proof logging, telemetry history, or physical measurement evidence.
+Automatic collection, plugin/admin workflows and remaining assistive checks
+remain later gates.

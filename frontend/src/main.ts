@@ -1,7 +1,7 @@
 import "./styles.css";
 
 type Role = "operator" | "producer";
-type Route = "overview" | "devices" | "projects" | "candidates" | "evidence" | "decision" | "assurance";
+type Route = "overview" | "devices" | "projects" | "candidates" | "evidence" | "decision" | "assurance" | "audit";
 
 interface Principal {
   session_id: string;
@@ -81,6 +81,9 @@ interface AuditEvent {
   project_id: string;
   candidate_id: string | null;
   subject_fingerprint: string;
+  subject_id: string;
+  subject_schema_version: string;
+  actor: { display_name: string; identity_id: string; role: Role } | null;
 }
 
 interface AuditPage {
@@ -294,6 +297,7 @@ let sessionExpiryTimer: number | null = null;
 let liveStatusTimer: number | null = null;
 let liveStatusGeneration = 0;
 let lastLiveAnnouncement = "";
+let auditViewGeneration = 0;
 
 const MAX_DASHBOARD_IMPORT_BYTES = 3_900_000;
 
@@ -342,7 +346,7 @@ function keepFocusInsideDialog(dialog: HTMLDialogElement, event: KeyboardEvent):
 function routeFromHash(): Route {
   const candidate = window.location.hash.replace(/^#\/?/, "").split("?", 1)[0];
   return candidate === "devices" || candidate === "projects" || candidate === "candidates" ||
-    candidate === "evidence" || candidate === "decision" || candidate === "assurance"
+    candidate === "evidence" || candidate === "decision" || candidate === "assurance" || candidate === "audit"
     ? candidate
     : "overview";
 }
@@ -613,7 +617,8 @@ function shell(content: HTMLElement): void {
     ["candidates", "Candidates", "Release work and audit"],
     ["evidence", "Evidence", "Bound records and sources"],
     ["decision", "Decision", "Rules and explanations"],
-    ["assurance", "Assurance", "Attestation and limits"]
+    ["assurance", "Assurance", "Attestation and limits"],
+    ["audit", "Audit", "Project history and actors"]
   ] as const) {
     const link = el("a", currentRoute === route ? "nav-link active" : "nav-link");
     link.href = reviewCandidateId !== null && ["evidence", "decision", "assurance"].includes(route)
@@ -683,6 +688,7 @@ async function loadSession(): Promise<void> {
 }
 
 function renderActivation(notice?: string): void {
+  auditViewGeneration += 1;
   clearActivationTimer();
   clearSessionExpiryTimer();
   clearLiveStatusTimer();
@@ -838,6 +844,7 @@ async function logoutSession(): Promise<void> {
 }
 
 async function renderRoute(): Promise<void> {
+  auditViewGeneration += 1;
   if (session === null) {
     renderActivation();
     return;
@@ -847,6 +854,7 @@ async function renderRoute(): Promise<void> {
   if (currentRoute === "overview") await renderOverview();
   if (currentRoute === "devices") await renderDevices();
   if (currentRoute === "projects") await renderProjects();
+  if (currentRoute === "audit") await renderAudit();
   if (currentRoute === "candidates") await renderCandidates();
   if (currentRoute === "evidence") await renderEvidence();
   if (currentRoute === "decision") await renderDecision();
@@ -1113,6 +1121,137 @@ async function renderProjects(): Promise<void> {
     if (handleProtectedProblem(main, error, "Reload the authorized project list.")) return;
   }
   shell(main);
+}
+
+function auditHash(projectId: string, candidateId = "", afterSequence = 0): string {
+  const query = new URLSearchParams({ project_id: projectId });
+  if (candidateId !== "") query.set("candidate_id", candidateId);
+  if (afterSequence > 0) query.set("after_sequence", String(afterSequence));
+  return `#/audit?${query.toString()}`;
+}
+
+async function renderAudit(): Promise<void> {
+  const generation = ++auditViewGeneration;
+  const authority = session;
+  const active = () => generation === auditViewGeneration && session === authority;
+  const main = page("Project audit", "APPEND-ONLY HISTORY", "Trace retained project and candidate events without changing release state.");
+  if (authority?.principal.role !== "operator") {
+    main.append(emptyState("Operator session required", "Producer sessions cannot read audit events. No audit request was sent."));
+    shell(main);
+    return;
+  }
+  const scopes = authority.principal.project_ids;
+  if (scopes.length === 0) {
+    main.append(emptyState("No project scope", "Activate an operator session with an authorized project."));
+    shell(main);
+    return;
+  }
+  const query = new URLSearchParams(window.location.hash.split("?", 2)[1] ?? "");
+  const projectId = query.get("project_id") ?? (scopes.includes(selectedProjectId ?? "") ? selectedProjectId! : scopes[0]!);
+  const candidateId = query.get("candidate_id") ?? "";
+  const cursorText = query.get("after_sequence") ?? "0";
+  const cursor = Number(cursorText);
+  if (!scopes.includes(projectId) || (candidateId !== "" && !/^cand-[0-9a-f]{24}$/.test(candidateId)) ||
+      !/^\d+$/.test(cursorText) || !Number.isSafeInteger(cursor)) {
+    main.append(emptyState("Invalid audit selection", "The project must be in your scope, the candidate ID must be complete, and the cursor must be a non-negative safe integer."));
+    const reset = el("a", "button secondary", "Reset audit filters");
+    reset.href = "#/audit";
+    main.append(reset);
+    shell(main);
+    return;
+  }
+  const form = el("form", "toolbar audit-filters");
+  const projectLabel = el("label", "field");
+  projectLabel.append(el("span", undefined, "Audit project"));
+  const selector = el("select");
+  for (const scope of scopes) {
+    const option = el("option", undefined, scope);
+    option.value = scope;
+    option.selected = scope === projectId;
+    selector.append(option);
+  }
+  selector.value = projectId;
+  projectLabel.append(selector);
+  const candidateLabel = el("label", "field");
+  candidateLabel.append(el("span", undefined, "Candidate ID (optional)"));
+  const candidateInput = el("input");
+  candidateInput.value = candidateId;
+  candidateInput.placeholder = "All project events";
+  candidateInput.pattern = "cand-[0-9a-f]{24}";
+  candidateInput.maxLength = 29;
+  candidateInput.title = "Use the complete cand- identifier followed by 24 lowercase hexadecimal characters.";
+  candidateLabel.append(candidateInput);
+  selector.addEventListener("change", () => { candidateInput.value = ""; });
+  const apply = button("Apply audit filters", "button primary");
+  apply.type = "submit";
+  form.addEventListener("submit", (event) => {
+    event.preventDefault();
+    if (candidateInput.value !== "" && !/^cand-[0-9a-f]{24}$/.test(candidateInput.value)) {
+      candidateInput.reportValidity();
+      return;
+    }
+    const hash = auditHash(selector.value, candidateInput.value);
+    if (window.location.hash === hash) void renderAudit();
+    else window.location.hash = hash;
+  });
+  const refresh = button("Refresh audit page", "button secondary");
+  refresh.addEventListener("click", () => void renderAudit());
+  form.append(projectLabel, candidateLabel, apply, refresh);
+  main.append(form, el("p", "command-boundary", "Successful retained operations only—not a complete security log. Missing actor metadata is not inferred. Sequence numbers are store-wide and may have gaps; timestamps are supplied values, not trusted time. No hardware or producer-authenticity claim is implied."));
+  const results = el("section", "audit-results");
+  results.setAttribute("aria-live", "polite");
+  results.append(el("p", "muted", "Loading audit events…"));
+  main.append(results);
+  shell(main);
+  try {
+    const params = new URLSearchParams({ project_id: projectId, after_sequence: String(cursor), limit: "25" });
+    if (candidateId !== "") params.set("candidate_id", candidateId);
+    const result = await api<AuditPage>(`/app/api/audit-events?${params.toString()}`);
+    if (!active()) return;
+    results.replaceChildren();
+    results.append(el("p", "pager-status", `${result.events.length} events shown after sequence ${cursor} · ${result.has_more ? "More events available" : "End of matching history"}. Refresh to check for newly appended events.`));
+    if (result.events.length === 0) {
+      results.append(emptyState("No matching audit events", "Clear the candidate filter, return to the first page, or check for newly appended history. This is not proof that an operation succeeded or failed."));
+    }
+    for (const event of result.events) {
+      const item = el("details", "audit-event panel");
+      const summary = el("summary", undefined, `#${event.sequence} · ${event.event_type} · ${formatDate(event.occurred_at)}`);
+      const values = el("dl", "definition-list");
+      values.append(
+        definition("Event ID", event.event_id, true),
+        definition("Project", event.project_id),
+        definition("Candidate", event.candidate_id ?? "Project-level event", true),
+        definition("Subject schema", event.subject_schema_version),
+        definition("Subject ID", event.subject_id, true),
+        definition("Subject fingerprint", event.subject_fingerprint, true),
+        definition("Actor", event.actor?.display_name ?? "Not recorded — no authenticated identity is inferred"),
+        definition("Actor role", event.actor?.role ?? "Not recorded"),
+        definition("Actor identity", event.actor?.identity_id ?? "Not recorded", true)
+      );
+      item.append(summary, values);
+      if (event.candidate_id !== null) {
+        const review = el("a", "button quiet", "Review candidate evidence");
+        review.href = candidateReviewHash("evidence", event.candidate_id);
+        item.append(review);
+      }
+      results.append(item);
+    }
+    const pager = el("nav", "pager");
+    pager.setAttribute("aria-label", "Audit pages");
+    const first = el("a", "button quiet", "First audit page");
+    first.href = auditHash(projectId, candidateId);
+    pager.append(first);
+    if (result.has_more && result.next_after_sequence !== null) {
+      const next = el("a", "button secondary", "Next audit page");
+      next.href = auditHash(projectId, candidateId, result.next_after_sequence);
+      pager.append(next);
+    }
+    pager.append(el("p", "muted", "Browser Back restores the previous filter/cursor. No snapshot total is claimed."));
+    results.append(pager);
+  } catch (error) {
+    if (!active()) return;
+    handleProtectedProblem(results, error, "Check the project scope, then use Refresh audit page. No write was performed.");
+  }
 }
 
 function emptyState(title: string, description: string): HTMLElement {
@@ -1857,6 +1996,12 @@ async function showCandidateDetail(main: HTMLElement, candidateId: string): Prom
         timeline.append(item);
       }
       auditSection.append(timeline);
+    }
+    if (audit !== null) {
+      auditSection.append(el("p", "muted", audit.has_more ? "Only the first 100 events are shown here. Open the audit workspace for paginated history." : "Open the audit workspace for filters and full event identities."));
+      const fullAudit = el("a", "button secondary", "Open candidate audit");
+      fullAudit.href = auditHash(candidate.project_id, candidateId);
+      auditSection.append(fullAudit);
     }
     content.replaceChildren(heading, details, candidateWorkflowPanel(main, review), reviewLinks, auditSection);
     content.scrollIntoView({ behavior: "smooth", block: "start" });

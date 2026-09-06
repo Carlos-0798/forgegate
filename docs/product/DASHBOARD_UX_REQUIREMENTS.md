@@ -2,7 +2,7 @@
 
 ## Status and evidence boundary
 
-- Status: Phase 28 reviewed assurance export and activation-recovery follow-up
+- Status: Phase 29 project Audit workspace over Phase 28 reviewed assurance export and activation recovery
   implemented over the Phase 27 candidate workflow, Phase 24
   authenticated shell, Phase 25 optional live status, and Phase 26 assurance
   review; exact Edge zoom is accepted while the remaining environment-specific
@@ -81,8 +81,9 @@ The navigation model is:
    journal, session state, and trust-store status.
 
 Items 1–7 are implemented for their stated read-only and reviewed-write slices.
-Candidate audit history is embedded in item 4; dedicated Plugins and Audit &
-security workspaces remain planned.
+Candidate audit history is embedded in item 4 and a dedicated operator-only
+Audit workspace supports project/candidate filtering, stable cursor pages and
+full recorded identities. Dedicated Plugins and Security workspaces remain planned.
 
 Navigation labels describe objects and outcomes. Mutating actions use explicit
 verbs such as **Create candidate**, **Review transition**, **Run policy

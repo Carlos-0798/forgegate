@@ -2,10 +2,8 @@
 
 - Date: 2026-09-06
 - Version: 0.1.0a1
-- Stage: Phase 28 operator-reviewed, candidate-bound assurance ZIP export
-  implemented and Edge/offline tested, with an activation-recovery follow-up,
-  after the Phase 27 workflow and MSP430
-  collector; Windows high contrast,
+- Stage: Phase 29 project Audit workspace implemented over the Phase 28
+  assurance export and activation recovery; Windows high contrast,
   spoken Narrator output, and a real Remote Desktop run remain environment gates
 - Product maturity: testable Windows Alpha with generic initialization,
   local CLI/API release-assurance flow, software-peer collection, audited
@@ -31,6 +29,9 @@ not green. Billing changes require owner action; local acceptance is separate.
 
 ## Implemented
 
+- operator-only project Audit workspace with candidate filtering, stable
+  25-event cursor links, full record/actor inspection, no inferred actor,
+  explicit preview truncation, and candidate-to-audit navigation;
 - repository/package scaffold;
 - strict project, policy, and evidence-bundle contracts;
 - safe configuration loader;
@@ -452,13 +453,18 @@ validation.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 882 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.21% across 10,429 statements and 2,824 branches
+- pytest: 887 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.21% across 10,431 statements and 2,824 branches
 - MSP430 live-status focus: 17 passed across parser, state classification,
   staleness, invalid/recovery, counters, dependency/I/O failure, and input-only
   monitor lifecycle
-- Dashboard focus: 48 passed with 98.41% branch-aware coverage across 642
+- Dashboard focus: 53 passed with 98.42% branch-aware coverage across 644
   statements and 114 branches
+- Frontend host regressions: 25 passed, including 12 Audit cases and the
+  existing 13 activation cases; separate from Python coverage and browser tests
+- Phase 29 browser checkpoint: isolated 28-event fixture returned 25 + 3
+  events, exact candidate filter returned one, nonexistent ID returned zero,
+  refresh/back preserved filters, and keyboard toggled event details
 - Dashboard browser checkpoint: Microsoft Edge and Chrome keyboard creation/
   read, modal Tab containment/Escape/focus return, 129-record six-page
   traversal, and 409/413/422/429/500 recovery PASS; Chrome service-restart

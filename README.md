@@ -78,13 +78,13 @@ never converted into candidate evidence.
 
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 882 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
-| Branch-aware coverage | 95.21% across 10,429 statements and 2,824 branches | Local host test |
+| Full Python suite | 887 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
+| Branch-aware coverage | 95.21% across 10,431 statements and 2,824 branches | Local host test |
 | Static quality | Ruff, formatting, and strict mypy passed across 91 source/tool files | Local host test |
 | Contracts | 41 document and 3 artifact JSON Schemas plus direct-API and 18-operation Dashboard-BFF OpenAPI passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
-| Dashboard automation | 48 focused tests passed; Dashboard package reached 98.41% branch-aware coverage | Local host test; sessions, authorization, reviewed writes, pagination, recovery, assurance review/export, asset integrity, BFF, contract, and CLI boundaries |
+| Dashboard automation | 53 focused Python tests and 25 TypeScript host interaction tests passed; Dashboard Python package reached 98.42% branch-aware coverage | Local host test; sessions, authorization, reviewed writes, audit pagination/filtering, recovery, assurance review/export, asset integrity, BFF, contract, and CLI boundaries |
 | Dashboard browser interaction | Full reviewed Edge workflow, Edge/Chrome keyboard/focus, 129-record pagination, 390 px responsive, 409/413/422/429/500 recovery, exact Edge 100–200% zoom, and clean-console paths passed | Windows local browser test; uncommon errors use a zero-write presentation harness; Narrator is bounded PASS, while spoken output, high contrast, and real Remote Desktop remain open |
 | MSP430 report collector | 34 focused tests plus clean-wheel CLI collection passed; one LaunchPad HIL migration fixture produced 17 normalized records with retained warnings | Local artifact test; the fixture is a historical upstream result, not a new run or physical-measurement claim |
 | MSP430 live status | COM4 opened input-only at 115200 8-N-1; authenticated Devices page showed `CONNECTED`, heartbeat `NORMAL`, device `FAULT`, flags `0015`; sequence advanced 58007→58017 over 10 seconds with 10 accepted frames and no sequence gap | Owner-authorized Windows physical-device observation; one earlier invalid frame was rejected, no command or firmware/debug action, measurement validation, release evidence, or long-duration stability claim |
@@ -181,7 +181,10 @@ Connection/rate failures provide a manual retry action without auto-resubmission
 The browser receives an opaque HttpOnly cookie, never the raw API Bearer token
 or private signing key. The implemented pages cover activation, Overview,
 Devices, Projects, candidate list/create/detail/audit, Evidence, Decision, and
-Assurance for one selected candidate. An operator can explicitly review and
+Assurance for one selected candidate, plus an operator-only project Audit
+workspace. Audit supports candidate filtering, 25-event cursor pages, full
+event/subject fingerprints, recorded actor identity, and refresh/back links;
+missing actors remain explicitly unrecorded. An operator can explicitly review and
 confirm each legal lifecycle transition, bind a complete local evidence-
 assembly JSON document, evaluate exact policy-material JSON, and generate the
 terminal attestation. An operator can then review the current revision, bundle
