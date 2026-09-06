@@ -20,10 +20,15 @@ from forgegate.domain.models import ProjectConfig
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("output", type=Path, help="new isolated fixture directory")
+    parser.add_argument(
+        "--multi-report", action="store_true", help="use synthetic test + coverage policy"
+    )
     args = parser.parse_args()
     output: Path = args.output
     output.mkdir(parents=True, exist_ok=False)
-    root = Path(__file__).resolve().parents[1] / "examples/dashboard-junit"
+    root = Path(__file__).resolve().parents[1] / (
+        "examples/dashboard-multi-report" if args.multi_report else "examples/dashboard-junit"
+    )
     application = CandidateApplication.for_database(output / "forgegate.db")
     application.initialize()
     now = datetime.now(UTC)

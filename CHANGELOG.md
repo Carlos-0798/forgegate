@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Added bounded combined Dashboard JUnit + Cobertura/LCOV previews with independent
+  metadata, duplicate/size/output limits, whole-selection warning consent and
+  separate immutable binding. Source reports remain unsigned-local declarations.
+- Fixed real-browser 422 binding failures caused by JSON number reserialization
+  (`50.0` to `50`); preserve exact assembly JSON without changing retained identities.
+- Added kind/scope labels to coverage previews, generic positive/negative fixtures,
+  complete policy/attestation integration and actual Edge combined PASS evidence.
+  No task queue, raw retention, hardware access or GitHub synchronization added.
 - Added local `candidate backup-store` and `candidate verify-backup` commands
   for current-schema consistent SQLite snapshots, checked exclusive publication,
   offline hash/integrity validation and fixed privacy-safe failure codes.

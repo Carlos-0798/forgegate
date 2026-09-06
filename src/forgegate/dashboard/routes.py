@@ -43,8 +43,11 @@ from forgegate.candidates.models import CANDIDATE_ID_PATTERN
 from forgegate.candidates.store import STORE_SCHEMA_VERSION
 from forgegate.dashboard.assets import validate_dashboard_assets
 from forgegate.dashboard.collection import (
+    DashboardCollectionPreview,
+    DashboardCollectionPreviewRequest,
     DashboardJUnitPreview,
     DashboardJUnitPreviewRequest,
+    preview_collection,
     preview_junit,
 )
 from forgegate.dashboard.models import (
@@ -414,6 +417,30 @@ def install_dashboard_routes(
         command: DashboardJUnitPreviewRequest,
         csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
     ) -> DashboardJUnitPreview:
+        validate_preview(request, candidate_id, command, csrf_token)
+        return preview_junit(candidate_id, command)
+
+    @app.post(
+        "/app/api/candidates/{candidate_id}/collection-preview",
+        response_model=DashboardCollectionPreview,
+        operation_id="previewDashboardCandidateCollection",
+        include_in_schema=False,
+    )
+    def preview_dashboard_candidate_collection(
+        request: Request,
+        candidate_id: Annotated[str, ApiPath(pattern=CANDIDATE_ID_PATTERN)],
+        command: DashboardCollectionPreviewRequest,
+        csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> DashboardCollectionPreview:
+        validate_preview(request, candidate_id, command, csrf_token)
+        return preview_collection(candidate_id, command)
+
+    def validate_preview(
+        request: Request,
+        candidate_id: str,
+        command: DashboardJUnitPreviewRequest | DashboardCollectionPreviewRequest,
+        csrf_token: str | None,
+    ) -> None:
         _dashboard_write_principal(
             manager, authenticator, application, request, candidate_id, csrf_token
         )
@@ -430,7 +457,6 @@ def install_dashboard_routes(
             raise CandidateStoreError(
                 "STORE_REVISION_CONFLICT", "reported commit does not match the selected candidate"
             )
-        return preview_junit(candidate_id, command)
 
     @app.post(
         "/app/api/candidates/{candidate_id}/evidence",

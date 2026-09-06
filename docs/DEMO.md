@@ -158,8 +158,9 @@ explicit manual retry; a returned Retry-After delay never auto-submits.
 
 The page exposes Overview, Devices (when explicitly configured), Projects,
 Candidates, Evidence, Decision, and Assurance. Operators can review and confirm
-the implemented candidate workflow and portable ZIP download; collection,
-plugins, and administration remain separate CLI/API work or planned gates.
+the implemented candidate workflow, bounded JUnit + coverage collection and
+portable ZIP download. Larger collections, plugins and administration remain
+separate CLI/API work or planned gates.
 Keep the service process running while using the page. A browser bookmark does
 not start ForgeGate; `ERR_CONNECTION_REFUSED` means the local service must be
 checked and started, not that internet access or private-key entry is needed.

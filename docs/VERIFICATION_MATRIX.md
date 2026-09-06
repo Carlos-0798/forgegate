@@ -162,7 +162,10 @@
 | Installed identity workflow | ephemeral key derive/trust/sign/replay/verify smoke | PASS — clean-wheel local host |
 | Trusted timestamp/managed online revocation | managed external infrastructure | NOT IMPLEMENTED — signed/auth times are not trusted; API reload is explicit from one fixed local file |
 | Source-artifact producer chain | producer-signed artifact receipts | NOT IMPLEMENTED — signature covers retained bundle only |
-| HTTP server-path artifact loading/file publication | no loader/output path; nested metadata is not dereferenced | OUT OF SCOPE — Phase 30 accepts bounded uploaded JUnit bytes only, in memory |
+| HTTP server-path artifact loading/file publication | no loader/output path; nested metadata is not dereferenced | OUT OF SCOPE — bounded uploaded JUnit/Cobertura/LCOV bytes only, in memory |
+| Combined browser collection | strict contract, exact counts, no-write preview, all-or-nothing assembly and separate binding | PASS — host tests; actual Edge Cobertura positive path separately retained |
+| Browser numeric round trip | original assembly JSON; tamper/fingerprint revalidation | PASS — reproduced 422 for 50.0-to-50 conversion, corrected exact-text binding in real Edge |
+| Combined LCOV/negative browser matrix | direct UI runs | OPEN — host-tested but not a fresh full manual matrix this phase |
 | MSP430 validation-report compatibility | frozen artifact contract, strict collector, Schema/CLI/assembly tests | PASS — 34 focused tests and clean-wheel collection; HIL remains `system_observed`, bench promotion requires complete physical context and calibration provenance, and the collector never opens serial or controls hardware |
 | Physical device control | explicit owner-approved procedure | OUT OF SCOPE — live monitor is input-only |
 | Generic project initialization | clean-wheel `forgegate init`, strict model validation, overwrite rejection | PASS — path-free receipt; no hardware requested |
@@ -170,7 +173,7 @@
 | Structured-input pre-materialization bounds | JSON token, XML event, and YAML event adversarial tests | PASS — byte plus node/element/depth limits; duplicate YAML keys rejected |
 | Plugin output pre-materialization bounds | trusted in-container exporter plus bounded host archive inspection | PASS — clean-wheel live dual snapshots; no archive extraction |
 | Development dependency advisory audit | constrained pip/pytest bootstrap plus `pip-audit` | PASS — no known advisory in resolved registry dependencies; editable local project excluded |
-| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.34% exceeds exact 95.00% threshold |
+| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.37% exceeds exact 95.00% threshold |
 
 See `reports/INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md` for the latest
 expected-versus-actual CLI/API check and

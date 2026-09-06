@@ -2,7 +2,10 @@
 
 - Date: 2026-09-06
 - Version: 0.1.0a1
-- Stage: Phase 32 consistent candidate-store backup and offline validation
+- Stage: Phase 33 combined JUnit + Cobertura/LCOV browser preview, original-JSON
+  binding and generic policy workflow implemented locally. Real Edge combined
+  Cobertura PASS and exact rule values verified; no durable queue/raw retention.
+  Phase 32 consistent candidate-store backup and offline validation
   implemented locally; no automatic restore, encryption or browser write added.
   Phase 31 Windows startup, HTTP/HTML diagnostics and controlled recovery
   support implemented; explicit foreground lifecycle, not an uptime watchdog.
@@ -386,7 +389,7 @@ inspection, push, PR creation or merge was performed for this checkpoint.
   attestation/bundle identity, and explicit limitation/evidence labels;
 - content-hashed deterministic frontend assets, canonical SHA-256 inventory,
   source/wheel inclusion checks, locked build dependencies, and CI drift gates;
-- separate deterministic Dashboard BFF OpenAPI export with 19 explicit
+- separate deterministic Dashboard BFF OpenAPI export with 21 explicit
   operation IDs, committed-byte drift detection, and installed-wheel comparison;
 - optional `msp430` dependency and domain-neutral live-status provider boundary;
   an independently implemented MSP430 UART v1 parser validates ASCII framing,
@@ -461,11 +464,17 @@ automatic restore/repair, retained MSP430 telemetry history,
 Studio Phase 5
 human-readable report ingestion, authenticated provenance/signatures, source
 artifact payload/replay export, hardware control, and physical measurement
-validation. Phase 30 adds only manual single-JUnit preview, not automatic or
-multi-format collection. Its bounded real-browser upload acceptance now passes.
+validation. Phase 33 adds manual JUnit + Cobertura/LCOV combination, not
+automatic/background collection or raw report retention. Its real-browser
+Cobertura positive path passes; the broader manual matrix remains separate.
 
 ## Accepted local checkpoint
 
+- Phase 33: bounded combined report preview, original-JSON reviewed binding,
+  whole-selection rejection/warning behavior and existing collector reuse.
+  Real Edge Cobertura preview/binding/lifecycle/policy PASS and exact rule values
+  are retained; browser-discovered numeric reserialization was fixed without
+  changing canonical fingerprints. No new MSP430 or GitHub operation.
 - Phase 32: 27 focused backup regressions; backup module 100% branch-aware
   coverage (120 statements, 32 branches), cold terminal-candidate readback,
   exact table preservation, installed CLI backup/verify/no-overwrite smoke and
@@ -473,7 +482,9 @@ multi-format collection. Its bounded real-browser upload acceptance now passes.
 - Phase 31: 28 focused host/Windows launcher cases; real isolated Dashboard,
   API-only and stopped-service HTTP checks; two foreground startup/shutdown
   cycles on the same synthetic database, with post-run SQLite quick-check OK.
-  No fresh authenticated-browser or MSP430 stability claim is added.
+  Phase 32 added no fresh authenticated-browser or MSP430 stability claim.
+  Phase 33 adds isolated Edge test + coverage selection/binding/evaluation, not
+  new hardware or assistive-technology evidence. See the Phase 33 report.
 - Activation follow-up: 13 production-TypeScript host interaction regressions
   pass via `pnpm run test:dashboard` on Node 24.19.0, separately from Python
   coverage; real in-app-browser activation at port 8131 also passes
@@ -481,15 +492,16 @@ multi-format collection. Its bounded real-browser upload acceptance now passes.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 973 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.34% across 10,730 statements and 2,884 branches
+- pytest: 999 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.37% across 10,812 statements and 2,898 branches
 - MSP430 live-status focus: 17 passed across parser, state classification,
   staleness, invalid/recovery, counters, dependency/I/O failure, and input-only
   monitor lifecycle
-- Dashboard focus: 80 passed with 98.60% branch-aware coverage across 728
+- Historical Phase 30 Dashboard focus: 80 passed with 98.60% branch-aware coverage across 728
   statements and 130 branches
-- Frontend host regressions: 43 passed, including 18 JUnit collection, 12 Audit
-  and 13 activation cases; separate from Python coverage and browser tests
+- Frontend host regressions: 72 passed, including 29 combined-collection/import,
+  18 JUnit collection, 12 Audit and 13 activation cases; separate from Python
+  coverage and browser tests
 - Phase 30 browser checkpoint: real Edge file selection, independent binding,
   lifecycle and policy PASS/FAIL, explicit warning retention, forbidden-XML
   rejection and unchanged canceled-preview state pass. Shared-policy reuse
@@ -563,7 +575,7 @@ multi-format collection. Its bounded real-browser upload acceptance now passes.
   Validation, and MSP430 validation-report artifact Schemas: drift-checked and
   parsed
 - complete sdist manifest and ForgeGate/sample-plugin wheel builds: PASS
-- clean-wheel MSP430 report collection, Dashboard 19-operation OpenAPI export,
+- clean-wheel MSP430 report collection, Dashboard OpenAPI export (20 paths, 21 operations),
   installed-package workflow, optional `pyserial` install, and uninstall: PASS
 - Windows sandbox focus: 20 passed across probe failure isolation, client/server
   identity, rootless/local/WSL requirements, command controls, strict verifier

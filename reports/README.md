@@ -6,6 +6,8 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
+- [Phase 33 combined report collection](PHASE_33_MULTI_REPORT_ACCEPTANCE.md) — bounded JUnit + Cobertura/LCOV, exact JSON binding, real Edge synthetic combined policy PASS, and remaining manual boundaries
+- [Phase 32 candidate-store backup](PHASE_32_STORE_BACKUP_ACCEPTANCE.md) — consistent snapshots, no-overwrite validation and local data-protection boundaries
 - [Phase 30 JUnit collection](PHASE_30_JUNIT_COLLECTION_ACCEPTANCE.md) — bounded raw-report preview, reviewed binding and real Edge PASS/FAIL/warning/rejection acceptance; shared-policy defect corrected with explicit schema v9 migration
 - [Phase 29 project Audit acceptance](PHASE_29_PROJECT_AUDIT_ACCEPTANCE.md) — complete paginated project/candidate history, recorded actor boundaries, isolated browser fixture and retained captures
 - [Activation recovery follow-up](DASHBOARD_ACTIVATION_RECOVERY_2026-09-06.md) — exact server/port, manual retries, expiry/race regressions, real in-app-browser captures, and the separate GitHub billing blocker

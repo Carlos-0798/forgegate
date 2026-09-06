@@ -491,6 +491,7 @@ def test_dashboard_openapi_export_is_deterministic_and_complete(tmp_path: Path) 
         "/app/api/candidates/{candidate_id}/evaluate",
         "/app/api/candidates/{candidate_id}/evidence",
         "/app/api/candidates/{candidate_id}/junit-preview",
+        "/app/api/candidates/{candidate_id}/collection-preview",
         "/app/api/candidates/{candidate_id}/transitions",
         "/app/api/live-status",
         "/app/api/overview",

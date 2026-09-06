@@ -1,0 +1,17 @@
+schema_version: forgegate.project.v1
+project:
+  id: sample-api
+  name: Combined Report Browser Acceptance Fixture
+  repository: https://example.invalid/combined-browser-fixture
+  default_branch: main
+release_tracks:
+  pull_request:
+    policy: policies/pull-request.yaml
+collectors:
+  - type: junit
+    path: tests.xml
+  - type: coverage_xml
+    path: coverage.xml
+outputs:
+  json: build/attestation.json
+  markdown: build/summary.md

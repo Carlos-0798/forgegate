@@ -11,7 +11,7 @@ const assembly = {schema_version: "forgegate.evidence-bundle-assembly.v1", assem
 function preview(options = {}) {
   return {status: 200, body: {
     schema_version: "forgegate.dashboard-junit-preview.v1", candidate_id: candidate.candidate_id,
-    expected_revision: 1, assembly,
+    expected_revision: 1, assembly, assembly_json: JSON.stringify(assembly),
     collection: {status: "COMPLETE", artifacts: [{sha256: hash, size_bytes: bytes.length}],
       evidence: [{value: {total: 4, passed: 2, failures: 1, skipped: 1}}], warnings: [], rejected_records: []},
     ...options

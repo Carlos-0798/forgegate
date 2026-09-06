@@ -237,6 +237,20 @@ readback. No database or raw project data belongs in this gallery. This checkpoi
 has no browser-layout change and no new screenshot claim. Synchronization is
 paused; these results are retained locally for later review.
 
+### Phase 33 combined-report evidence
+
+[Acceptance and failure correction](../reports/PHASE_33_MULTI_REPORT_ACCEPTANCE.md)
+records synthetic JUnit + Cobertura selection, immutable binding and policy PASS.
+Screenshots retain exact report hashes, seven records, two collector receipts,
+and a 50% expected/actual synthetic coverage rule. These are not repository
+coverage metrics, upstream AFE/MSP results, provenance authentication or hardware.
+The initial browser 422 was reproduced and fixed by exact JSON preservation.
+All evidence remains local while GitHub synchronization is paused.
+
+![Combined evidence retained](assets/forgegate-dashboard-multi-report-bound.jpg)
+
+![Combined policy expected and actual values](assets/forgegate-dashboard-multi-report-rules.jpg)
+
 ### Previously accepted browser workflow boundaries
 
 They support the narrow claim that the authenticated, loopback-only Dashboard

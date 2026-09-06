@@ -242,6 +242,7 @@ interface CandidateAssuranceReview {
 type ReviewDetail = readonly [label: string, value: string, mono?: boolean];
 
 interface ReviewedMutation {
+  serializedBody?: string;
   title: string;
   eyebrow: string;
   summary: string;
@@ -1617,7 +1618,7 @@ function renderReviewedMutation(
       const response = await api<unknown>(mutation.endpoint, {
         method: "POST",
         headers,
-        body: JSON.stringify(mutation.body)
+        body: mutation.serializedBody ?? JSON.stringify(mutation.body)
       });
       heading.textContent = "Authoritative state updated";
       const eyebrow = review.querySelector<HTMLElement>(".eyebrow");
@@ -1762,12 +1763,15 @@ function openJsonCommandImport(
     status.replaceChildren(el("p", "muted", "Parsing and fingerprinting the selected local document…"));
     try {
       const bytes = await file.arrayBuffer();
-      const parsed: unknown = JSON.parse(new TextDecoder("utf-8", { fatal: true }).decode(bytes));
+      const originalJson = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+      const parsed: unknown = JSON.parse(originalJson);
       if (!isJsonObject(parsed)) throw new Error("The JSON root must be an object.");
       const fingerprint = await sha256Hex(bytes);
       const mutation = kind === "evidence"
         ? evidenceImportMutation(candidate, parsed, file, fingerprint)
         : policyImportMutation(candidate, parsed, file, fingerprint);
+      const documentField = kind === "evidence" ? "assembly" : "policy_material";
+      mutation.serializedBody = exactDocumentBody(mutation.body, documentField, originalJson);
       renderReviewedMutation(dialog, candidate, mutation);
     } catch (error) {
       const message = error instanceof Error ? error.message : "The selected file is not valid UTF-8 JSON.";
@@ -1792,17 +1796,27 @@ function openJsonCommandImport(
   input.focus();
 }
 
-function openJUnitImport(main: HTMLElement, candidate: Candidate, returnFocus?: HTMLElement): void {
+function exactDocumentBody(body: Record<string, unknown>, field: string, originalJson: string): string {
+  return `{${Object.entries(body).map(([key, value]) => `${JSON.stringify(key)}:${key === field ? originalJson : JSON.stringify(value)}`).join(",")}}`;
+}
+
+function sortedJsonValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sortedJsonValue);
+  if (isJsonObject(value)) return Object.fromEntries(Object.entries(value).sort(([a], [b]) => a.localeCompare(b)).map(([key, item]) => [key, sortedJsonValue(item)]));
+  return value;
+}
+
+function openJUnitImport(main: HTMLElement, candidate: Candidate, returnFocus?: HTMLElement, multi = false): void {
   const invalid = (message: string): RequestProblem => new RequestProblem(422, "DASHBOARD_JUNIT_INVALID", message, "browser-side", null);
   const dialog = el("dialog", "review-dialog");
   dialog.setAttribute("aria-labelledby", "candidate-command-dialog-title");
-  const heading = el("h2", undefined, "Collect JUnit report");
+  const heading = el("h2", undefined, multi ? "Collect test + coverage reports" : "Collect JUnit report");
   heading.id = "candidate-command-dialog-title";
   const form = el("form", "candidate-form");
   form.addEventListener("submit", (event) => event.preventDefault());
   form.append(el("p", "eyebrow", "BOUNDED RAW REPORT PREVIEW"), heading,
-    el("p", "muted", "Select one report, then review before binding. Maximum 1 MiB. No server path, device access, or test execution. Uploaded results remain unsigned_local / declared; source bytes are not retained."),
-    el("p", "command-boundary", "Binding is immutable and contains only this report. Policies requiring coverage, other reports, or stronger verification may reject it. Use CLI multi-report assembly when needed."));
+    el("p", "muted", "Select reports, then review before binding. Maximum 1 MiB per report. No server path, device access, or test execution. Uploaded results remain unsigned_local / declared; source bytes are not retained."),
+    el("p", "command-boundary", multi ? "Select one JUnit and one coverage report. All reports must parse successfully; no partial selection is bound. Matching source-commit declarations are not authenticated provenance." : "Binding is immutable and contains only this report. Policies requiring other reports or stronger verification may reject it. Use combined test + coverage collection or CLI assembly when needed."));
   const field = (label: string, type: string, value = ""): HTMLInputElement => {
     const wrap = el("label", "field");
     const input = el("input");
@@ -1821,12 +1835,32 @@ function openJUnitImport(main: HTMLElement, candidate: Candidate, returnFocus?: 
   tool.maxLength = version.maxLength = 120;
   const time = field("Original report collection time (ISO 8601 with UTC offset)", "text");
   time.placeholder = "2026-09-06T12:00:00Z";
+  const coverage = multi ? {
+    file: field("Coverage report (Cobertura XML or LCOV)", "file"),
+    tool: field("Coverage source tool", "text"),
+    version: field("Coverage source version", "text"),
+    time: field("Original coverage collection time (ISO 8601 with UTC offset)", "text")
+  } : null;
+  const format = el("select");
+  if (coverage !== null) {
+    coverage.file.accept = ".xml,.info,.lcov,text/plain";
+    coverage.tool.maxLength = coverage.version.maxLength = 120;
+    const wrap = el("label", "field");
+    for (const [value, label] of [["coverage_xml", "Cobertura XML"], ["lcov", "LCOV"]] as const) {
+      const option = el("option", undefined, label);
+      option.value = value;
+      format.append(option);
+    }
+    format.value = "coverage_xml";
+    wrap.append(el("span", undefined, "Coverage format — select explicitly"), format);
+    form.append(wrap);
+  }
   const status = el("div", "dialog-status");
   status.setAttribute("aria-live", "polite");
   const controls = el("div", "dialog-actions");
   const cancel = button("Close preview", "button quiet");
   cancel.addEventListener("click", () => dialog.close());
-  const collect = button("Preview report — no binding", "button primary");
+  const collect = button(multi ? "Preview reports — no binding" : "Preview report — no binding", "button primary");
   controls.append(cancel, collect);
   form.append(status, controls);
   dialog.append(form);
@@ -1843,6 +1877,8 @@ function openJUnitImport(main: HTMLElement, candidate: Candidate, returnFocus?: 
     if (!form.reportValidity() || session === null || !current()) return;
     collect.disabled = true;
     for (const input of [fileInput, commit, tool, version, time]) input.disabled = true;
+    if (coverage !== null) for (const input of Object.values(coverage)) input.disabled = true;
+    format.disabled = true;
     status.replaceChildren(el("p", "muted", "Reading the selected report. Closing discards the preview; an already submitted server request may finish."));
     const file = fileInput.files?.[0];
     try {
@@ -1859,45 +1895,82 @@ function openJUnitImport(main: HTMLElement, candidate: Candidate, returnFocus?: 
         content_base64: btoa(binary), source_tool: tool.value, source_version: version.value,
         collected_at: time.value, retain_warnings: false
       };
+      const sources = [{file, fingerprint, size: bytes.byteLength, format: "junit"}];
+      const reports = [{format: "junit", content_base64: command.content_base64, source_tool: tool.value, source_version: version.value, collected_at: time.value}];
+      if (coverage !== null) {
+        const coverageFile = coverage.file.files?.[0];
+        if (coverageFile === undefined || coverageFile.size === 0 || coverageFile.size > 1048576) throw invalid("Choose one non-empty coverage file no larger than 1 MiB.");
+        if (!["coverage_xml", "lcov"].includes(format.value)) throw invalid("Select a supported coverage format.");
+        if (!/(Z|[+-]\d{2}:\d{2})$/i.test(coverage.time.value) || !Number.isFinite(Date.parse(coverage.time.value)) || Date.parse(coverage.time.value) > Date.now()) throw invalid("Provide the original coverage collection time with a UTC offset, not a future time.");
+        const coverageBytes = await coverageFile.arrayBuffer();
+        const coverageHash = await sha256Hex(coverageBytes);
+        if (!current()) return;
+        if (coverageHash === fingerprint) throw invalid("Duplicate report bytes cannot be used as test and coverage evidence.");
+        let encoded = "";
+        for (const byte of new Uint8Array(coverageBytes)) encoded += String.fromCharCode(byte);
+        reports.push({format: format.value, content_base64: btoa(encoded), source_tool: coverage.tool.value, source_version: coverage.version.value, collected_at: coverage.time.value});
+        sources.push({file: coverageFile, fingerprint: coverageHash, size: coverageBytes.byteLength, format: format.value});
+      }
       const preview = async (retainWarnings: boolean): Promise<void> => {
         if (!current() || owner === null) return;
         controls.replaceChildren(cancel);
         status.replaceChildren(el("p", "muted", "Parsing with the bounded server collector; no candidate state is being changed…"));
         try {
-          const result = await api<Record<string, unknown>>(`/app/api/candidates/${encodeURIComponent(candidate.candidate_id)}/junit-preview`, {
+          const result = await api<Record<string, unknown>>(`/app/api/candidates/${encodeURIComponent(candidate.candidate_id)}/${multi ? "collection-preview" : "junit-preview"}`, {
             method: "POST", headers: { "X-ForgeGate-CSRF": owner.csrf_token },
-            body: JSON.stringify({ ...command, retain_warnings: retainWarnings })
+            body: JSON.stringify(multi ? {expected_revision: candidate.revision, reported_commit: commit.value, reports, retain_warnings: retainWarnings} : { ...command, retain_warnings: retainWarnings })
           });
           if (!current()) return;
-          if (result.schema_version !== "forgegate.dashboard-junit-preview.v1" || result.candidate_id !== candidate.candidate_id || result.expected_revision !== candidate.revision || !isJsonObject(result.collection)) throw invalid("Unexpected preview identity; nothing was bound.");
-          const collection = result.collection;
-          const artifacts = Array.isArray(collection.artifacts) ? collection.artifacts : [];
-          if (!isJsonObject(artifacts[0]) || artifacts[0].sha256 !== fingerprint || artifacts[0].size_bytes !== bytes.byteLength) throw invalid("Preview report hash or size mismatch; nothing was bound.");
-          status.replaceChildren(el("h3", undefined, `Collection ${String(collection.status)} — not a release decision`),
-            definition("Report SHA-256", fingerprint, true),
-            el("p", "muted", "Preview only — not retained. Original report time and caller-declared source metadata are preserved."));
-          const records = Array.isArray(collection.evidence) ? collection.evidence : [];
-          for (const record of records) {
-            if (isJsonObject(record)) status.append(el("pre", "mono", JSON.stringify(record.value, null, 2)));
+          if (result.schema_version !== (multi ? "forgegate.dashboard-collection-preview.v1" : "forgegate.dashboard-junit-preview.v1") || result.candidate_id !== candidate.candidate_id || result.expected_revision !== candidate.revision) throw invalid("Unexpected preview identity; nothing was bound.");
+          const collections = multi ? result.collections : [result.collection];
+          if (!Array.isArray(collections) || collections.length !== sources.length || !collections.every(isJsonObject)) throw invalid("Unexpected preview report count; nothing was bound.");
+          status.replaceChildren(el("p", "muted", "Preview only — not retained. Original report time and caller-declared source metadata are preserved."));
+          let allComplete = true;
+          let warningCount = 0;
+          let allIssuesVisible = true;
+          for (const [index, collection] of collections.entries()) {
+            const source = sources[index];
+            if (source === undefined) throw invalid("Missing source association; nothing was bound.");
+            const artifacts = Array.isArray(collection.artifacts) ? collection.artifacts : [];
+            if (artifacts.length !== 1 || !isJsonObject(artifacts[0]) || artifacts[0].sha256 !== source.fingerprint || artifacts[0].size_bytes !== source.size) throw invalid("Preview report hash or size mismatch; nothing was bound.");
+            status.append(el("h3", undefined, `${source.format}: Collection ${String(collection.status)} — not a release decision`),
+              definition("Selected report", source.file.name), definition("Report SHA-256", source.fingerprint, true));
+            const records = Array.isArray(collection.evidence) ? collection.evidence : [];
+            for (const record of records.slice(0, 25)) {
+              if (isJsonObject(record)) status.append(
+                el("h4", undefined, `${String(record.kind ?? "Evidence")} · ${String(record.scope ?? "unspecified scope")}`),
+                el("pre", "mono", JSON.stringify(record.value, null, 2))
+              );
+            }
+            if (records.length > 25) status.append(el("p", "muted", `Showing 25 of ${records.length} records. The assembly includes all records.`));
+            const warnings = Array.isArray(collection.warnings) ? collection.warnings : [];
+            const rejected = Array.isArray(collection.rejected_records) ? collection.rejected_records : [];
+            allComplete = allComplete && collection.status === "COMPLETE";
+            warningCount += warnings.length;
+            const issues = [...warnings, ...rejected];
+            allIssuesVisible = allIssuesVisible && issues.length <= 25;
+            for (const issue of issues.slice(0, 25)) {
+              if (isJsonObject(issue)) status.append(el("p", "command-boundary", `${String(issue.code)}: ${String(issue.message)}`));
+            }
+            if (issues.length > 25) status.append(el("p", "muted", `Showing 25 of ${issues.length} issues. Use the CLI to inspect all issues before retaining warnings.`));
           }
-          const warnings = Array.isArray(collection.warnings) ? collection.warnings : [];
-          const rejected = Array.isArray(collection.rejected_records) ? collection.rejected_records : [];
-          for (const issue of [...warnings, ...rejected]) {
-            if (isJsonObject(issue)) status.append(el("p", "command-boundary", `${String(issue.code)}: ${String(issue.message)}`));
-          }
-          if (isJsonObject(result.assembly)) {
+          if (isJsonObject(result.assembly) && allComplete && (warningCount === 0 || retainWarnings)) {
             const assembly = result.assembly;
+            const assemblyJson = result.assembly_json;
+            if (typeof assemblyJson !== "string" || JSON.stringify(sortedJsonValue(JSON.parse(assemblyJson))) !== JSON.stringify(sortedJsonValue(assembly))) throw invalid("Missing or mismatched exact assembly JSON; nothing was bound.");
             const review = button("Review immutable binding", "button primary");
             review.addEventListener("click", () => {
               if (!current()) return;
               const mutation = evidenceImportMutation(candidate, assembly, file, fingerprint);
-              mutation.summary = "Bind this single-report assembly. Source bytes are not retained, reported metadata is unverified, and evidence stays unsigned_local / declared. This does not mark the candidate READY or PASS.";
+              mutation.serializedBody = exactDocumentBody(mutation.body, "assembly", assemblyJson);
+              mutation.summary = `Bind this ${multi ? "combined test + coverage" : "single-report"} assembly. Source bytes are not retained, reported metadata is unverified, and evidence stays unsigned_local / declared. This does not mark the candidate READY or PASS.`;
               mutation.details = mutation.details.map(([label, value, mono]) => [label === "Selected file SHA-256" ? "Original report SHA-256" : label, value, mono ?? false]);
+              for (const source of sources.slice(1)) mutation.details.push(["Coverage report", `${source.file.name} · ${source.size} bytes`], ["Coverage report SHA-256", source.fingerprint, true]);
               renderReviewedMutation(dialog, candidate, mutation);
             });
             controls.append(review);
             review.focus();
-          } else if (collection.status === "COMPLETE" && warnings.length > 0 && !retainWarnings) {
+          } else if (allComplete && allIssuesVisible && warningCount > 0 && !retainWarnings) {
             const retain = button("Retain these warnings and preview again", "button primary");
             retain.addEventListener("click", () => { retain.disabled = true; void preview(true); });
             controls.append(retain);
@@ -2068,7 +2141,9 @@ function candidateWorkflowPanel(
   if (candidate.status === "COLLECTING" && review.evidence_binding === null) {
     const collect = button("Collect JUnit report", "button quiet");
     collect.addEventListener("click", () => openJUnitImport(main, candidate, collect));
-    panel.append(collect);
+    const combined = button("Collect test + coverage reports", "button quiet");
+    combined.addEventListener("click", () => openJUnitImport(main, candidate, combined, true));
+    panel.append(collect, combined);
   }
   return panel;
 }

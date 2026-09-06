@@ -259,8 +259,19 @@ def test_producer_cannot_preview(tmp_path, repository_root):
         )
 
 
-@pytest.mark.parametrize("fixture,expected", [("pass.xml", "PASS"), ("fail.xml", "FAIL")])
-def test_raw_preview_to_bound_policy_and_assurance(tmp_path, repository_root, fixture, expected):
+@pytest.mark.parametrize(
+    "fixture,expected,multi",
+    [
+        ("pass.xml", "PASS", False),
+        ("fail.xml", "FAIL", False),
+        ("coverage.xml", "PASS", True),
+        ("coverage-low.xml", "FAIL", True),
+        ("coverage.info", "PASS", True),
+    ],
+)
+def test_raw_preview_to_bound_policy_and_assurance(
+    tmp_path, repository_root, fixture, expected, multi
+):
     from forgegate.application import CandidateAttestCommand
     from forgegate.assurance import render_assurance_bundle_archive
 
@@ -269,7 +280,9 @@ def test_raw_preview_to_bound_policy_and_assurance(tmp_path, repository_root, fi
         application = client.app.state.candidate_application
         from forgegate.application import ProjectReviseCommand
 
-        root = repository_root / "examples/dashboard-junit"
+        root = repository_root / (
+            "examples/dashboard-multi-report" if multi else "examples/dashboard-junit"
+        )
         application.revise_project(
             "sample-api",
             ProjectReviseCommand(
@@ -284,10 +297,21 @@ def test_raw_preview_to_bound_policy_and_assurance(tmp_path, repository_root, fi
         # Two candidates must reuse the exact same profile-authorized material.
         for iteration in range(2):
             cid = _create(client, headers, suffix=f"{fixture}-{iteration}")
+            if multi:
+                from tests.test_dashboard_multi_collection import payload
+
+                command = payload(
+                    "lcov" if fixture.endswith(".info") else "coverage_xml",
+                    (root / fixture).read_bytes(),
+                )
+                endpoint = "collection-preview"
+            else:
+                command = _payload((root / fixture).read_bytes())
+                endpoint = "junit-preview"
             preview = client.post(
-                f"/app/api/candidates/{cid}/junit-preview",
+                f"/app/api/candidates/{cid}/{endpoint}",
                 headers=headers,
-                json=_payload((root / fixture).read_bytes()),
+                json=command,
             )
             assert preview.status_code == 200, preview.text
             assert (

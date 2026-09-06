@@ -1229,6 +1229,111 @@
         "title": "DashboardCandidateAssuranceReview",
         "type": "object"
       },
+      "DashboardCollectionPreview": {
+        "additionalProperties": false,
+        "properties": {
+          "assembly": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvidenceBundleAssembly"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "assembly_json": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "readOnly": true,
+            "title": "Assembly Json"
+          },
+          "candidate_id": {
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "collections": {
+            "items": {
+              "$ref": "#/components/schemas/CollectionResult"
+            },
+            "title": "Collections",
+            "type": "array"
+          },
+          "expected_revision": {
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "persistence": {
+            "const": "NOT_RETAINED",
+            "default": "NOT_RETAINED",
+            "title": "Persistence",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.dashboard-collection-preview.v1",
+            "default": "forgegate.dashboard-collection-preview.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_artifact_bytes": {
+            "const": "not_retained",
+            "default": "not_retained",
+            "title": "Source Artifact Bytes",
+            "type": "string"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "expected_revision",
+          "collections",
+          "assembly",
+          "assembly_json"
+        ],
+        "title": "DashboardCollectionPreview",
+        "type": "object"
+      },
+      "DashboardCollectionPreviewRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "reported_commit": {
+            "pattern": "^[0-9a-fA-F]{7,64}$",
+            "title": "Reported Commit",
+            "type": "string"
+          },
+          "reports": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardReportUpload"
+            },
+            "maxItems": 2,
+            "minItems": 1,
+            "title": "Reports",
+            "type": "array"
+          },
+          "retain_warnings": {
+            "default": false,
+            "title": "Retain Warnings",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "reported_commit",
+          "reports"
+        ],
+        "title": "DashboardCollectionPreviewRequest",
+        "type": "object"
+      },
       "DashboardJUnitPreview": {
         "additionalProperties": false,
         "properties": {
@@ -1241,6 +1346,19 @@
                 "type": "null"
               }
             ]
+          },
+          "assembly_json": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Preserve fingerprint-bearing JSON numbers across a JavaScript round trip.",
+            "readOnly": true,
+            "title": "Assembly Json"
           },
           "candidate_id": {
             "title": "Candidate Id",
@@ -1276,7 +1394,8 @@
           "candidate_id",
           "expected_revision",
           "collection",
-          "assembly"
+          "assembly",
+          "assembly_json"
         ],
         "title": "DashboardJUnitPreview",
         "type": "object"
@@ -1485,6 +1604,52 @@
           "expires_at"
         ],
         "title": "DashboardPrincipal",
+        "type": "object"
+      },
+      "DashboardReportUpload": {
+        "additionalProperties": false,
+        "properties": {
+          "collected_at": {
+            "format": "date-time",
+            "title": "Collected At",
+            "type": "string"
+          },
+          "content_base64": {
+            "maxLength": 1398104,
+            "minLength": 4,
+            "title": "Content Base64",
+            "type": "string"
+          },
+          "format": {
+            "enum": [
+              "junit",
+              "coverage_xml",
+              "lcov"
+            ],
+            "title": "Format",
+            "type": "string"
+          },
+          "source_tool": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Source Tool",
+            "type": "string"
+          },
+          "source_version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Source Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "format",
+          "content_base64",
+          "source_tool",
+          "source_version",
+          "collected_at"
+        ],
+        "title": "DashboardReportUpload",
         "type": "object"
       },
       "DashboardSessionResponse": {
@@ -3722,6 +3887,72 @@
           }
         },
         "summary": "Attest Dashboard Candidate"
+      }
+    },
+    "/app/api/candidates/{candidate_id}/collection-preview": {
+      "post": {
+        "operationId": "previewDashboardCandidateCollection",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "pattern": "^cand-[0-9a-f]{24}$",
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardCollectionPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardCollectionPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Dashboard Candidate Collection"
       }
     },
     "/app/api/candidates/{candidate_id}/evaluate": {

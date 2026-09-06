@@ -565,3 +565,22 @@ implied by the current synchronous preview or runtime diagnostic.
 No automatic restore, encryption, retention service, browser backup button,
 producer authentication or blanket domain-history validation is implied.
 GitHub synchronization is paused by owner instruction; development remains local.
+
+## Phase 33 — combined browser test and coverage collection
+
+- [x] Accept bounded JUnit + Cobertura/LCOV with separate source metadata and
+  original collection times; reject duplicates, excessive output and unsafe counts.
+- [x] Require all reports to succeed and explicit warning retention before one
+  immutable combined binding; no silent partial success or trust promotion.
+- [x] Add frontend count/hash/identity/recovery/cancellation tests and API chains
+  through shared-policy PASS/FAIL, attestation and portable archive creation.
+- [x] Correct browser JSON number reserialization without changing historical
+  fingerprints or weakening validation; retain original assembly JSON on writes.
+- [x] Verify actual Edge Cobertura selection, preview, independent binding,
+  READY/EVALUATING transitions, policy PASS and exact rule values; save screenshots.
+- [x] Keep CLI-only larger collections, generic examples and source evidence labels.
+
+Next engineering slice: durable collection task lifecycle, restart recovery,
+explicit cancellation and bounded private artifact retention. This phase is not
+that task center. Real-browser LCOV/negative matrix and remaining OS assistive
+checks remain additional acceptance gates; their host regressions are separate.

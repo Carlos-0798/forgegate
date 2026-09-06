@@ -20,8 +20,9 @@ The current checkpoint demonstrates:
 
 - fail-closed collection of JUnit, coverage, SARIF, benchmark, and optional
   Analog Validation Studio artifacts;
-- a bounded operator-only JUnit browser preview with exact-byte hashing,
-  explicit warning retention, and separate immutable evidence binding;
+- bounded operator-only JUnit and combined JUnit + Cobertura/LCOV browser
+  previews with exact-byte hashing, explicit warning retention and separately
+  confirmed immutable binding; [collection boundaries](docs/DASHBOARD_COLLECTION_CONTRACT.md);
 - loopback HTTP/HTML diagnostics and an explicit Windows foreground launcher
   with [startup and recovery guidance](docs/WINDOWS_DASHBOARD_OPERATIONS.md);
 - consistent candidate-store snapshots and offline backup validation with
@@ -84,14 +85,14 @@ never converted into candidate evidence.
 
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 973 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
-| Branch-aware coverage | 95.34% across 10,730 statements and 2,884 branches | Local host test |
+| Full Python suite | 999 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
+| Branch-aware coverage | 95.37% across 10,812 statements and 2,898 branches | Local host test |
 | Static quality | Ruff, formatting, and strict mypy passed across 96 source/tool files | Local host test |
 | Candidate-store backup | 27 focused cases; backup module 100% branch-aware coverage; installed CLI round trip passes | Local host test; no automatic restore, encryption or blanket domain validation |
-| Contracts | 41 document and 3 artifact JSON Schemas plus direct-API and 19-operation Dashboard-BFF OpenAPI passed drift checks | Local host test |
+| Contracts | 41 document and 3 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI (20 paths, 21 operations) passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
-| Dashboard automation | 80 focused Python tests and 43 TypeScript host interaction tests passed; Dashboard Python package reached 98.60% branch-aware coverage | Local host test; real Edge JUnit PASS/FAIL, warning-consent and rejected-input acceptance is separately retained |
+| Dashboard automation | 72 TypeScript host interaction tests passed; combined collection included in full Python suite | Local host test; real Edge combined Cobertura binding and policy PASS separately retained; prior Phase 30 JUnit PASS/FAIL and warning/rejection evidence remains historical |
 | Dashboard browser interaction | Full reviewed Edge workflow, Edge/Chrome keyboard/focus, 129-record pagination, 390 px responsive, 409/413/422/429/500 recovery, exact Edge 100–200% zoom, and clean-console paths passed | Windows local browser test; uncommon errors use a zero-write presentation harness; Narrator is bounded PASS, while spoken output, high contrast, and real Remote Desktop remain open |
 | MSP430 report collector | 34 focused tests plus clean-wheel CLI collection passed; one LaunchPad HIL migration fixture produced 17 normalized records with retained warnings | Local artifact test; the fixture is a historical upstream result, not a new run or physical-measurement claim |
 | MSP430 live status | COM4 opened input-only at 115200 8-N-1; authenticated Devices page showed `CONNECTED`, heartbeat `NORMAL`, device `FAULT`, flags `0015`; sequence advanced 58007→58017 over 10 seconds with 10 accepted frames and no sequence gap | Owner-authorized Windows physical-device observation; one earlier invalid frame was rejected, no command or firmware/debug action, measurement validation, release evidence, or long-duration stability claim |

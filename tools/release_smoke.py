@@ -17,6 +17,18 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_SDIST_PATHS = (
+    "reports/PHASE_33_MULTI_REPORT_ACCEPTANCE.md",
+    "docs/assets/forgegate-dashboard-multi-report-bound.jpg",
+    "docs/assets/forgegate-dashboard-multi-report-decision.jpg",
+    "docs/assets/forgegate-dashboard-multi-report-rules.jpg",
+    "frontend/tests/multi-collection.test.mjs",
+    "tests/test_dashboard_multi_collection.py",
+    "examples/dashboard-multi-report/forgegate.yaml",
+    "examples/dashboard-multi-report/policies/pull-request.yaml",
+    "examples/dashboard-multi-report/tests.xml",
+    "examples/dashboard-multi-report/coverage.xml",
+    "examples/dashboard-multi-report/coverage-low.xml",
+    "examples/dashboard-multi-report/coverage.info",
     "docs/STORE_BACKUP_OPERATIONS.md",
     "tests/test_store_backups.py",
     "tools/start_dashboard.ps1",
@@ -721,6 +733,10 @@ def main(
                 "/app/api/candidates/{candidate_id}/junit-preview",
                 "post",
             ): "previewDashboardCandidateJUnit",
+            (
+                "/app/api/candidates/{candidate_id}/collection-preview",
+                "post",
+            ): "previewDashboardCandidateCollection",
             ("/app/api/candidates", "post"): "createDashboardCandidate",
             (
                 "/app/api/candidates/{candidate_id}/transitions",
