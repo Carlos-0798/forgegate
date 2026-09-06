@@ -1006,6 +1006,27 @@
         "title": "DashboardActivationStatus",
         "type": "object"
       },
+      "DashboardAssuranceExportRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_bundle_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Expected Bundle Id",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "expected_bundle_id"
+        ],
+        "title": "DashboardAssuranceExportRequest",
+        "type": "object"
+      },
       "DashboardCandidateAssuranceReview": {
         "additionalProperties": false,
         "properties": {
@@ -3361,6 +3382,72 @@
           }
         },
         "summary": "Get Dashboard Candidate"
+      }
+    },
+    "/app/api/candidates/{candidate_id}/assurance-export": {
+      "post": {
+        "operationId": "exportDashboardCandidateAssurance",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardAssuranceExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Deterministic portable assurance ZIP"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Dashboard Candidate Assurance"
       }
     },
     "/app/api/candidates/{candidate_id}/assurance-review": {

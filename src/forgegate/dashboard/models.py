@@ -112,10 +112,16 @@ class DashboardCandidateAssuranceReview(StrictModel):
     limitations: tuple[str, ...] = Field(min_length=1, max_length=20)
 
 
+class DashboardAssuranceExportRequest(StrictModel):
+    expected_revision: int = Field(ge=0)
+    expected_bundle_id: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
+
+
 __all__ = [
     "DashboardActivationCompleted",
     "DashboardActivationStart",
     "DashboardActivationStatus",
+    "DashboardAssuranceExportRequest",
     "DashboardCandidateAssuranceReview",
     "DashboardCandidateProject",
     "DashboardLogoutResponse",

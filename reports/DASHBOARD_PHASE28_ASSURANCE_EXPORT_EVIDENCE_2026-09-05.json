@@ -1,0 +1,103 @@
+{
+  "record_format": "forgegate-dashboard-assurance-export-evidence-v1",
+  "recorded_at": "2026-09-06T00:14:34.680Z",
+  "source_baseline_commit": "32e961ce72a5ce4497010fbc22a53b0aab090571",
+  "branch": "codex/dashboard-assurance-export",
+  "environment": {
+    "operating_system": "Windows",
+    "browser": "Microsoft Edge local controlled tab",
+    "origin": "http://127.0.0.1:8132",
+    "document_client_width": 1229,
+    "document_client_height": 1233,
+    "document_scroll_width": 1229,
+    "root_horizontal_overflow": false,
+    "browser_console_errors_or_warnings": 0
+  },
+  "fixture": {
+    "kind": "generic retained Phase 27 candidate",
+    "project_id": "sample-api",
+    "candidate_id": "cand-270169223181fdd6a6d287a0",
+    "candidate_version": "2.7.0-manual",
+    "candidate_revision": 4,
+    "candidate_status": "PASS",
+    "assurance": "unsigned_local",
+    "hardware_access": "NOT_PERFORMED"
+  },
+  "request_contract": {
+    "method": "POST",
+    "path": "/app/api/candidates/{candidate_id}/assurance-export",
+    "requires_operator": true,
+    "requires_exact_origin": true,
+    "requires_csrf": true,
+    "requires_expected_revision": true,
+    "requires_expected_bundle_id": true,
+    "accepts_server_or_client_path": false,
+    "creates_durable_state": false
+  },
+  "actual": {
+    "http_status": 200,
+    "media_type": "application/zip",
+    "bundle_id": "sha256:92f2082cb6b2292019911981a3feb5683c873de0d82f9cb6d50560469ff6da97",
+    "archive_filename": "assurance-92f2082cb6b2292019911981a3feb5683c873de0d82f9cb6d50560469ff6da97.zip",
+    "archive_bytes": 15448,
+    "archive_sha256": "fa06b1d7e6fffcf2443500d6e998129fd864974f181424f2db6ed8461bc184fe",
+    "members": [
+      {
+        "path": "README.md",
+        "size_bytes": 974
+      },
+      {
+        "path": "assurance-bundle.json",
+        "size_bytes": 13487
+      },
+      {
+        "path": "manifest.json",
+        "size_bytes": 651
+      }
+    ],
+    "offline_verification_status": "VALID",
+    "offline_decision": "PASS",
+    "source_artifact_bytes": "not_embedded"
+  },
+  "interaction": {
+    "explicit_review_dialog": "PASS",
+    "bundle_identity_visible_before_submit": "PASS",
+    "archive_member_set_visible_before_submit": "PASS",
+    "browser_download_observed": "PASS",
+    "download_success_state_visible": "PASS",
+    "modal_focus_remained_contained": "PASS",
+    "escape_closed_dialog": "PASS",
+    "focus_returned_to_trigger": "PASS"
+  },
+  "automated_negative_cases": {
+    "unauthenticated": 401,
+    "missing_origin": 403,
+    "missing_csrf": 403,
+    "producer_role": 403,
+    "stale_revision": 409,
+    "wrong_bundle_id": 409,
+    "unexpected_output_path_field": 422
+  },
+  "screenshots": [
+    {
+      "path": "docs/assets/forgegate-dashboard-assurance-export-confirm.jpg",
+      "size_bytes": 78602,
+      "sha256": "9ad0626e53de8a4c846f9739cb23bf4ffc9b9d1b0de90aa68af99fda54ac773e"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-assurance-export-complete.jpg",
+      "size_bytes": 88567,
+      "sha256": "b14383297e23751fc27fe4f1c825d946955cadafc002996a217fd063fa63bb23"
+    }
+  ],
+  "boundaries": {
+    "producer_authentication": "NOT_ESTABLISHED",
+    "source_artifact_payloads": "NOT_EMBEDDED",
+    "trusted_time": "NOT_ESTABLISHED",
+    "remote_publication": "NOT_PERFORMED",
+    "deployment_approval": "NOT_PERFORMED",
+    "hardware_access": "NOT_PERFORMED",
+    "physical_measurement_validation": "NOT_PERFORMED",
+    "production_readiness": "NOT_CLAIMED"
+  }
+}

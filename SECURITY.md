@@ -112,6 +112,17 @@ file path and does not browse or dereference the client filesystem. Browser
 hashing and review are usability controls only; server-side contract and
 content-identity validation remain authoritative.
 
+Phase 28 adds one operator-reviewed portable-assurance download without
+expanding the loopback boundary. The BFF requires exact project authority,
+Origin, CSRF, current candidate revision, and regenerated bundle identity. It
+accepts no path, filename, URL, or archive option and writes no server file.
+The deterministic stored ZIP contains exactly the existing three canonical
+portable members and is bounded before browser delivery. The client checks the
+returned bundle identity, media type, and aggregate size before starting the
+local download. Export does not create a release-state mutation or audit event,
+publish remotely, authenticate producers, embed source artifacts, establish
+trusted time, or add any hardware access.
+
 The separate MSP430 validation-report collector accepts only bounded strict
 `forgegate.msp430-validation-report.v1` artifacts. It opens no serial port,
 imports no upstream runtime, sends no command, and does not convert live-status

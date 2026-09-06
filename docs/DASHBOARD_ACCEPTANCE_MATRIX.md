@@ -4,7 +4,8 @@
 
 This matrix defines the gate for the implemented local Web Dashboard. The Phase
 24 authenticated slice, Phase 25 optional live monitor, Phase 26 assurance
-review, and Phase 27 reviewed candidate workflow are present. Design,
+review, Phase 27 reviewed candidate workflow, and Phase 28 assurance export are
+present. Design,
 automation, packaging, real-browser interaction, exact zoom, and each assistive
 environment remain separate evidence; no result implies WCAG certification.
 
@@ -56,6 +57,7 @@ environment remain separate evidence; no result implies WCAG certification.
 | FGD-A32 | Reviewed policy evaluation | Exact frozen profile material is imported and the existing domain engine records the terminal decision without frontend recomputation |
 | FGD-A33 | Reviewed attestation | One terminal candidate creates or exactly replays one immutable unsigned-local attestation |
 | FGD-A34 | Write recovery | 409/413/500 do not auto-retry; 429 reuses the frozen request only after cooldown; list and detail reload together after success |
+| FGD-A35 | Portable assurance download | Operator/project/Origin/CSRF plus exact revision and bundle ID produce one deterministic bounded three-file ZIP; producer, stale, path, and identity cases fail closed without a release-state mutation |
 
 ## Phase 24 real-browser and manual Windows acceptance
 
@@ -71,6 +73,7 @@ environment remain separate evidence; no result implies WCAG certification.
 | FGD-M08 | Claim comprehension | Reviewer can distinguish request success, release decision, evidence level, and no-hardware status |
 | FGD-M09 | Process lifecycle | Closing a tab does not falsely claim server shutdown; explicit shutdown is bounded |
 | FGD-M10 | Portfolio capture | Screenshot contains only generic ForgeGate data and accurate evidence labels |
+| FGD-M11 | Assurance download | Reviewed identity/member boundary, browser file creation, offline verification, modal containment, and focus return all match the frozen export contract |
 
 Edge and Chrome on the supported Windows host are required. High contrast,
 screen reader, Remote Desktop, Firefox, macOS, and Linux are recorded separately
@@ -152,6 +155,19 @@ The detailed records are
 `reports/MSP430_MANUAL_UNPLUG_REPLUG_EVIDENCE_2026-09-05.json`,
 `reports/DASHBOARD_ASSURANCE_REVIEW_EVIDENCE_2026-09-05.json`, and
 `reports/PHASE_26_DASHBOARD_ASSURANCE_REVIEW_ACCEPTANCE_REPORT.md`.
+
+## 2026-09-05 Phase 28 assurance-export follow-up
+
+| Scope | Result | Actual observation / boundary |
+|---|---|---|
+| FGD-A35 | PASS | Operator-only same-origin/CSRF endpoint requires exact revision and bundle ID, accepts no path, returns deterministic bounded `application/zip`, and creates no candidate mutation or release-audit event. Producer, stale, wrong-ID, and unknown-field tests fail closed. |
+| FGD-M11 | PASS — Edge | The generic PASS candidate displayed its exact revision, bundle ID, three members, `unsigned_local`, and `not_embedded` before confirmation. Edge created a 15,448-byte ZIP; extraction contained exactly three files and the existing offline verifier returned `VALID`. |
+| Layout and console | PASS | Document client/scroll width was 1229/1229 CSS pixels and the browser diagnostic log was empty. |
+| Keyboard/focus | PASS | The confirmation dialog received focus, retained it through the completed state, closed on Escape, and returned focus to the initiating button. |
+
+The exact archive hash, response fields, negative statuses, screenshot hashes,
+and non-claims are retained in
+`reports/DASHBOARD_PHASE28_ASSURANCE_EXPORT_EVIDENCE_2026-09-05.json`.
 
 ## Test layers
 

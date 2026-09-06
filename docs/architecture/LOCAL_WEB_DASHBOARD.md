@@ -3,9 +3,10 @@
 ## Decision status
 
 The Phase 23 architecture is implemented through the Phase 24 authenticated
-vertical slice, Phase 25 optional live monitor, Phase 26 assurance review, and
-Phase 27 reviewed candidate write workflow. The current `0.1.0a1` surfaces are
-the CLI, authenticated loopback REST API, and same-origin local Dashboard.
+vertical slice, Phase 25 optional live monitor, Phase 26 assurance review,
+Phase 27 reviewed candidate write workflow, and Phase 28 assurance export. The
+current `0.1.0a1` surfaces are the CLI, authenticated loopback REST API, and
+same-origin local Dashboard.
 Exact Edge zoom is accepted; environment-specific accessibility checks retain
 their own bounded results. `/docs` and `/redoc` remain deliberately disabled.
 
@@ -33,7 +34,7 @@ Bearer tokens must not be exposed to browser JavaScript, while current CLI and
 API clients retain the existing challenge/session protocol.
 
 `schemas/forgegate.dashboard-openapi.v1.json` is a separate build-time,
-drift-checked contract for the seventeen `/app/api/` operations. It is exported
+drift-checked contract for the eighteen `/app/api/` operations. It is exported
 from the installed wheel during release smoke but is not exposed as interactive
 documentation at runtime.
 
@@ -150,9 +151,13 @@ The implemented surface remains intentionally bounded:
 13. The Devices page decodes only versioned MSP430 UART v1 fault bits, retains
    unknown bits without invented meaning, and labels every decoded item as a
    firmware report rather than a ForgeGate diagnosis.
+14. An operator can review and download the exact current portable assurance
+   bundle as a deterministic three-file ZIP. The request is bound to the
+   current candidate revision and bundle ID, accepts no path or filename, and
+   creates no server-side file or release-audit event.
 
-Automatic evidence collection, assurance export/download, plugin execution,
-session administration, and trust-store reload remain disabled and visibly
+Automatic evidence collection, plugin execution, session administration, and
+trust-store reload remain disabled and visibly
 labeled as planned. The implemented local JSON imports are reviewed document
 transfers, not arbitrary server-path access or remote acquisition. Empty
 controls or mock success paths are prohibited.

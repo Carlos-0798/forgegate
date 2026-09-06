@@ -11,7 +11,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — forty-one document plus two artifact schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — forty-one document plus three artifact schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Analog Validation result Schema mirror | committed upstream-consumer contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
@@ -19,7 +19,7 @@
 | mypy strict | package and verification tools | PASS |
 | Source distribution contents | manifest assertion | PASS |
 | Clean release installation | temporary sdist/wheel/venv smoke | PASS |
-| Windows/Linux/macOS CI | GitHub Actions | PASS — `verify.py` + `release_smoke.py`, merge run 33839976122 (`690123e`) plus generic Action smoke; live Podman fixtures not run in hosted CI |
+| Windows/Linux/macOS CI | GitHub Actions | PASS — `verify.py` + `release_smoke.py`, latest accepted merge run 33999452478 (`32e961c`) plus generic Action smoke; live Podman fixtures not run in hosted CI |
 | Artifact root and byte identity | unit/adversarial tests | PASS — local host |
 | Stable artifact read/change rejection | simulated metadata cases | PASS — local host |
 | Actual Windows symlink escape | privileged symlink fixture | NOT RUN — host disallowed symlink creation |
@@ -77,13 +77,14 @@
 | Request correlation and error sanitization | generated/supplied/invalid IDs + injected exception | PASS — local host |
 | Loopback-only API bind | IPv4/IPv6/localhost allowlist + external-address rejection | PASS — local host |
 | OpenAPI 3.1 contract | committed byte comparison + installed-wheel export | PASS — drift-checked |
-| Dashboard BFF OpenAPI contract | separate build-time export + committed byte and installed-wheel comparison | PASS — seventeen `/app/api/` operations with explicit operation IDs; not served as interactive docs |
+| Dashboard BFF OpenAPI contract | separate build-time export + committed byte and installed-wheel comparison | PASS — eighteen `/app/api/` operations with explicit operation IDs; not served as interactive docs |
 | Authenticated local API | Ed25519 challenge, Bearer session, trust recheck | PASS — local host, loopback only |
 | User interaction acceptance | deterministic CLI plus authenticated REST smoke | PASS — 33/33 expected outputs; ephemeral identity/database; Swagger/ReDoc deliberately return 404 |
 | Local Web Dashboard design | architecture, UX requirements, threat model, acceptance matrix | DESIGN PASS — Phase 23 frozen; Phase 24 implementation preserves the defined same-origin boundary |
-| Authenticated local Web Dashboard | clean wheel, adversarial automation, Edge/Chrome, keyboard, focus, pagination, zoom, and bounded assistive evidence | IMPLEMENTED / PARTIAL ASSISTIVE ACCEPTANCE — 46 focused tests, Edge and Chrome keyboard/focus, 129-record cursor pagination, 409/413/422/429/500 recovery, Chrome 390 px/restart, installed-wheel Edge read, candidate-bound assurance review, in-app-browser 390 px, and native Edge 100–200% zoom pass; Narrator keyboard/semantics is bounded PASS, while spoken output, high contrast, and real Remote Desktop remain unexecuted |
+| Authenticated local Web Dashboard | clean wheel, adversarial automation, Edge/Chrome, keyboard, focus, pagination, zoom, and bounded assistive evidence | IMPLEMENTED / PARTIAL ASSISTIVE ACCEPTANCE — 48 focused tests, Edge and Chrome keyboard/focus, 129-record cursor pagination, 409/413/422/429/500 recovery, Chrome 390 px/restart, installed-wheel Edge read, candidate-bound assurance review/export, in-app-browser 390 px, and native Edge 100–200% zoom pass; Narrator keyboard/semantics is bounded PASS, while spoken output, high contrast, and real Remote Desktop remain unexecuted |
 | Dashboard Evidence/Decision/Assurance review | authenticated BFF tests + generic PASS local-browser fixture | PASS — candidate-bound deep links expose retained binding/assembly records, exact policy material, expected/actual rule values, evidence references, attestation/bundle IDs, lifecycle chain, and explicit limitations |
 | Reviewed Dashboard write workflow | operator BFF tests + isolated Edge end-to-end candidate | PASS — DRAFT→COLLECTING→READY→EVALUATING→PASS→attestation with per-command confirmation, CSRF, project scope, idempotency/stale protection, and authoritative reload; mismatched-commit assembly rejected before write |
+| Dashboard portable assurance export | operator BFF tests + real Edge download + offline CLI verification | PASS — reviewed candidate/revision/bundle identity, deterministic bounded rootless ZIP, exact three-member archive, stale/replay/authorization rejection, no durable mutation, and database-independent verification; no upload or publication |
 | Connected MSP430 Windows USB/UART presence | user-authorized device enumeration plus non-writing COM4 open/close, sustained-open, and later re-enumeration | BOUNDED PASS / ABSENCE RETAINED / RECONNECTION PASS — the initial 10/10 open and 10-second window passed, COM4/COM5 later reported problem 45 and `Present=false`, then the user-reconnected board passed 25/25 opens, 90/90 two-second presence samples, and 30 sustained-open seconds over 216.1 seconds; no uninterrupted long-duration stability, parsed telemetry, firmware/debug action, protocol/measurement proof, or ForgeGate collector execution |
 | MSP430 UART v1 parser and state machine | protocol/range/CRC, stale/invalid/recovery, sequence, absent-port, dependency/I/O, and read-only lifecycle tests | PASS — local host; frozen consumer implementation, no upstream runtime import |
 | Authenticated MSP430 live status | production Dashboard, connected COM4, browser polling | BOUNDED PASS — input-only 115200 8-N-1; page showed `CONNECTED` + heartbeat `NORMAL` + device `FAULT`/`0015`; sequence 58007→58017 and valid-frame count 151→161 over 10 seconds, protocol-error count remained 1 and sequence gaps 0; no command, measurement validation, evidence collection, or long-duration claim |
@@ -114,7 +115,7 @@
 | GitHub Action report contract | model/identity/Schema/loader tests | PASS — content-derived v1 report; local host |
 | Portable bundle to CI commit binding | strict verifier + complete exact object ID | PASS — partial/invalid/mismatch rejected; local host |
 | GitHub Job Summary and outputs | escaping, truncation, size/path/adversarial tests | PASS — bounded append-only runner files; local host |
-| GitHub composite Action | committed generic fixture + real workflow job | PASS — private CI run 33839976122 (`690123e`) |
+| GitHub composite Action | committed generic fixture + real workflow job | PASS — latest accepted private CI run 33999452478 (`32e961c`) |
 | Installed GitHub gate | clean-wheel portable-bundle/summary/output/report smoke | PASS — local host |
 | Custom GitHub Checks/PR/API writes | token/permissions/OIDC design | NOT IMPLEMENTED — no token requested and no GitHub API called |
 | Plugin manifest contract | model/identity/Schema/loader/adversarial tests | PASS — bounded content-derived v1 metadata; local + private CI |
@@ -163,7 +164,7 @@
 | Structured-input pre-materialization bounds | JSON token, XML event, and YAML event adversarial tests | PASS — byte plus node/element/depth limits; duplicate YAML keys rejected |
 | Plugin output pre-materialization bounds | trusted in-container exporter plus bounded host archive inspection | PASS — clean-wheel live dual snapshots; no archive extraction |
 | Development dependency advisory audit | constrained pip/pytest bootstrap plus `pip-audit` | PASS — no known advisory in resolved registry dependencies; editable local project excluded |
-| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.23% exceeds exact 95.00% threshold |
+| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.21% exceeds exact 95.00% threshold |
 
 See `reports/INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md` for the latest
 expected-versus-actual CLI/API check and

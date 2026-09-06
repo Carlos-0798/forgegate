@@ -24,6 +24,7 @@ digests are retained in the
 [Dashboard capture record](../reports/DASHBOARD_PORTFOLIO_CAPTURE_EVIDENCE_2026-09-04.json),
 the [Phase 26 assurance-review record](../reports/DASHBOARD_ASSURANCE_REVIEW_EVIDENCE_2026-09-05.json),
 the [Phase 27 interaction record](../reports/DASHBOARD_PHASE27_INTERACTION_EVIDENCE_2026-09-05.json),
+the [Phase 28 assurance-export record](../reports/DASHBOARD_PHASE28_ASSURANCE_EXPORT_EVIDENCE_2026-09-05.json),
 the [MSP430 live-status record](../reports/PHASE_25_MSP430_LIVE_STATUS_EVIDENCE_2026-09-05.json),
 and the [owner-assisted unplug/replug follow-up](../reports/MSP430_MANUAL_UNPLUG_REPLUG_EVIDENCE_2026-09-05.json).
 
@@ -150,17 +151,34 @@ retained for audit rather than crowding the landing page.
 
 ![ForgeGate reviewed command at 200 percent Edge zoom](assets/forgegate-dashboard-zoom-200-dialog.jpg)
 
+## 12. Candidate-bound portable download
+
+![ForgeGate reviewed local assurance export showing the exact candidate, bundle identity, archive members, and evidence boundary](assets/forgegate-dashboard-assurance-export-confirm.jpg)
+
+The Phase 28 Edge run required an operator to review the current candidate
+revision, content-derived bundle ID, exact three-file archive contract,
+`unsigned_local` assurance, and `not_embedded` source-byte state before starting
+the download.
+
+![ForgeGate assurance export completion state with the content-derived archive filename and offline verification instruction](assets/forgegate-dashboard-assurance-export-complete.jpg)
+
+The downloaded 15,448-byte ZIP extracted to exactly `README.md`,
+`assurance-bundle.json`, and `manifest.json`; the existing database-independent
+verifier returned `VALID`. The browser action created no server file, candidate
+mutation, release-audit event, remote publication, or hardware access.
+
 ## What these artifacts support
 
 They support the narrow claim that the authenticated, loopback-only Dashboard
 implements activation, Overview, Devices, Projects, candidate list/create/
 detail/audit, reviewed lifecycle/evidence/evaluation/attestation writes, and
 candidate-bound Evidence/Decision/Assurance review,
+operator-reviewed portable assurance download,
 including visible evidence boundaries and actionable validation errors, on the
 tested Windows browser setup. The Devices capture also supports an
 owner-authorized, input-only MSP430 UART status observation.
 
 They do not support claims of sensor or hardware-behavior validation, evidence authenticity,
 production readiness, public release, non-loopback security, full
-accessibility conformance, automatic browser-side collection, assurance export, or
+accessibility conformance, automatic browser-side collection, remote artifact publication, or
 completion of the planned Plugins and Security pages.

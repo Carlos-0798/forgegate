@@ -51,11 +51,13 @@ analysis, compatibility contracts, and historical acceptance evidence.
 
 - [Dashboard UX requirements](product/DASHBOARD_UX_REQUIREMENTS.md)
 - [Local Web Dashboard architecture](architecture/LOCAL_WEB_DASHBOARD.md)
+- [Dashboard assurance export](architecture/DASHBOARD_ASSURANCE_EXPORT.md)
 - [Dashboard threat model](security/DASHBOARD_THREAT_MODEL.md)
 - [Dashboard acceptance matrix](DASHBOARD_ACCEPTANCE_MATRIX.md)
 
 These documents govern the implemented Phase 24 activation, Phase 25 optional
-live status, Phase 26 assurance review, and Phase 27 reviewed candidate writes.
+live status, Phase 26 assurance review, Phase 27 reviewed candidate writes, and
+Phase 28 operator-reviewed portable ZIP download.
 The packaged frontend and browser-for-frontend session boundary are present.
 Edge and Chrome keyboard/focus, pagination, responsive,
 409/413/422/429/500 recovery, clean-console paths, and exact Edge 100–200% zoom

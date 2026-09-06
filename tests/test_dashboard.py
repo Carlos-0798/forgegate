@@ -5,7 +5,9 @@ import hashlib
 import json
 import re
 import shutil
+import zipfile
 from datetime import UTC, datetime, timedelta
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
@@ -422,6 +424,12 @@ def test_dashboard_static_assets_headers_and_contract_boundary(
     assert all("Decoded firmware reports" in script for script in scripts)
     assert all("Bound evidence" in script and "Policy decision" in script for script in scripts)
     assert all("Release assurance" in script and "assurance-review" in script for script in scripts)
+    assert all(
+        "Review assurance download" in script and "assurance-export" in script for script in scripts
+    )
+    assert all(
+        "URL.createObjectURL" in script and "URL.revokeObjectURL" in script for script in scripts
+    )
     assert all("producer authenticity" in script for script in scripts)
     assert all("hardware_control=" in script for script in scripts)
     assert all("Previous page" in script and "Next page" in script for script in scripts)
@@ -433,7 +441,7 @@ def test_dashboard_static_assets_headers_and_contract_boundary(
         for script in scripts
     )
     assert all("Retry-After" in script and "Retry in" in script for script in scripts)
-    assert all("This write will not be retried automatically" in script for script in scripts)
+    assert all("This operation will not be retried automatically" in script for script in scripts)
     assert all("stated 4 MiB service limit" in script for script in scripts)
     assert all("Do not assume the write failed" in script for script in scripts)
     assert all("aria-live" in script and "assertive" in script for script in scripts)
@@ -477,6 +485,7 @@ def test_dashboard_openapi_export_is_deterministic_and_complete(tmp_path: Path) 
         "/app/api/audit-events",
         "/app/api/candidates",
         "/app/api/candidates/{candidate_id}",
+        "/app/api/candidates/{candidate_id}/assurance-export",
         "/app/api/candidates/{candidate_id}/assurance-review",
         "/app/api/candidates/{candidate_id}/attestation",
         "/app/api/candidates/{candidate_id}/evaluate",
@@ -515,6 +524,9 @@ def test_dashboard_openapi_export_is_deterministic_and_complete(tmp_path: Path) 
         first["paths"]["/app/api/candidates/{candidate_id}/assurance-review"]["get"]["operationId"]
         == "getDashboardCandidateAssuranceReview"
     )
+    export_operation = first["paths"]["/app/api/candidates/{candidate_id}/assurance-export"]["post"]
+    assert export_operation["operationId"] == "exportDashboardCandidateAssurance"
+    assert "application/zip" in export_operation["responses"]["200"]["content"]
     assert "HTTPBearer" not in first.get("components", {}).get("securitySchemes", {})
 
     rejected = runner.invoke(
@@ -679,6 +691,108 @@ def test_dashboard_assurance_review_joins_retained_documents_without_new_claims(
     assert review["assurance"] == "unsigned_local"
     assert review["source_artifact_bytes"] == "not_embedded"
     assert any("not producer authenticity" in item for item in review["limitations"])
+
+
+def test_dashboard_operator_exports_exact_candidate_bound_archive(
+    tmp_path: Path,
+    repository_root: Path,
+) -> None:
+    application, candidate_id = _completed_dashboard_application(tmp_path, repository_root)
+    bundle = application.get_assurance_bundle(candidate_id)
+    endpoint = f"/app/api/candidates/{candidate_id}/assurance-export"
+    command = {"expected_revision": 4, "expected_bundle_id": bundle.bundle_id}
+    with TestClient(
+        create_api_app(
+            tmp_path / "forgegate.db",
+            application=application,
+            authenticator=ApiAuthenticator(TEST_TRUST_STORE),
+            dashboard=True,
+        ),
+        base_url=ORIGIN,
+    ) as client:
+        unauthenticated = client.post(endpoint, headers=ORIGIN_HEADER, json=command)
+        activated = _activate(client)
+        headers = {
+            **ORIGIN_HEADER,
+            "X-ForgeGate-CSRF": activated["csrf_token"],
+        }
+        missing_origin = client.post(
+            endpoint,
+            headers={"X-ForgeGate-CSRF": activated["csrf_token"]},
+            json=command,
+        )
+        missing_csrf = client.post(endpoint, headers=ORIGIN_HEADER, json=command)
+        stale = client.post(endpoint, headers=headers, json={**command, "expected_revision": 3})
+        wrong_bundle = client.post(
+            endpoint,
+            headers=headers,
+            json={**command, "expected_bundle_id": "sha256:" + "0" * 64},
+        )
+        client_path = client.post(
+            endpoint,
+            headers=headers,
+            json={**command, "output_path": "C:\\unsafe"},
+        )
+        audit_before = client.get(
+            f"/app/api/audit-events?project_id=sample-api&candidate_id={candidate_id}&limit=100"
+        )
+        first = client.post(endpoint, headers=headers, json=command)
+        second = client.post(endpoint, headers=headers, json=command)
+        audit_after = client.get(
+            f"/app/api/audit-events?project_id=sample-api&candidate_id={candidate_id}&limit=100"
+        )
+
+    archive_name = f"assurance-{bundle.bundle_id.removeprefix('sha256:')}.zip"
+    assert unauthenticated.status_code == 401
+    assert missing_origin.status_code == missing_csrf.status_code == 403
+    assert stale.status_code == wrong_bundle.status_code == 409
+    assert stale.json()["error"]["code"] == "STORE_REVISION_CONFLICT"
+    assert client_path.status_code == 422
+    assert first.status_code == second.status_code == 200
+    assert first.content == second.content
+    assert first.headers["content-type"] == "application/zip"
+    assert first.headers["content-disposition"] == f'attachment; filename="{archive_name}"'
+    assert first.headers["x-forgegate-assurance-bundle"] == bundle.bundle_id
+    assert first.headers["cache-control"] == "no-store"
+    assert first.headers["x-content-type-options"] == "nosniff"
+    assert audit_before.json() == audit_after.json()
+    assert [event["event_type"] for event in audit_after.json()["events"]].count(
+        "candidate.attestation-recorded"
+    ) == 1
+    with zipfile.ZipFile(BytesIO(first.content)) as archive:
+        assert archive.namelist() == ["README.md", "assurance-bundle.json", "manifest.json"]
+        assert json.loads(archive.read("assurance-bundle.json"))["bundle_id"] == bundle.bundle_id
+
+
+def test_dashboard_producer_cannot_export_complete_assurance_artifact(
+    tmp_path: Path,
+    repository_root: Path,
+) -> None:
+    application, candidate_id = _completed_dashboard_application(tmp_path, repository_root)
+    bundle = application.get_assurance_bundle(candidate_id)
+    with TestClient(
+        create_api_app(
+            tmp_path / "forgegate.db",
+            application=application,
+            authenticator=ApiAuthenticator(_producer_trust_store()),
+            dashboard=True,
+        ),
+        base_url=ORIGIN,
+    ) as client:
+        activated = _activate(client, role="producer")
+        review = client.get(f"/app/api/candidates/{candidate_id}/assurance-review")
+        denied = client.post(
+            f"/app/api/candidates/{candidate_id}/assurance-export",
+            headers={
+                **ORIGIN_HEADER,
+                "X-ForgeGate-CSRF": activated["csrf_token"],
+            },
+            json={"expected_revision": 4, "expected_bundle_id": bundle.bundle_id},
+        )
+
+    assert review.status_code == 200
+    assert denied.status_code == 403
+    assert denied.json()["error"]["code"] == "API_ROLE_FORBIDDEN"
 
 
 def test_dashboard_project_candidate_replay_conflict_and_audit(

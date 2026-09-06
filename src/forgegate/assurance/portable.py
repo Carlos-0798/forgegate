@@ -4,7 +4,9 @@ import json
 import os
 import shutil
 import tempfile
+import zipfile
 from dataclasses import dataclass
+from io import BytesIO
 from pathlib import Path
 from typing import Any
 
@@ -22,6 +24,9 @@ MAX_ASSURANCE_JSON_BYTES = 16 * 1024 * 1024
 MAX_ASSURANCE_AUXILIARY_BYTES = 64 * 1024
 MAX_ASSURANCE_JSON_NODES = 500_000
 MAX_ASSURANCE_JSON_DEPTH = 64
+MAX_ASSURANCE_ARCHIVE_BYTES = (
+    MAX_ASSURANCE_JSON_BYTES + (2 * MAX_ASSURANCE_AUXILIARY_BYTES) + (16 * 1024)
+)
 
 
 class AssuranceBundleError(RuntimeError):
@@ -89,24 +94,30 @@ def render_assurance_bundle_readme(bundle: AssuranceBundle) -> str:
     )
 
 
+def render_assurance_bundle_archive(bundle: AssuranceBundle) -> bytes:
+    """Render the canonical three-file bundle as a deterministic rootless ZIP."""
+    output = BytesIO()
+    with zipfile.ZipFile(output, mode="w", compression=zipfile.ZIP_STORED) as archive:
+        for name, payload in sorted(_canonical_assurance_files(bundle).items()):
+            member = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
+            member.compress_type = zipfile.ZIP_STORED
+            member.create_system = 3
+            member.external_attr = 0o100644 << 16
+            archive.writestr(member, payload)
+    rendered = output.getvalue()
+    if len(rendered) > MAX_ASSURANCE_ARCHIVE_BYTES:
+        raise AssuranceBundleError(
+            "ASSURANCE_ARCHIVE_TOO_LARGE", "rendered assurance archive exceeds byte limit"
+        )
+    return rendered
+
+
 def publish_assurance_bundle(
     bundle: AssuranceBundle,
     output_root: Path,
 ) -> PublishedAssuranceBundle:
     root = _prepare_output_root(output_root)
-    bundle_bytes = render_assurance_bundle_json(bundle).encode("utf-8")
-    readme_bytes = render_assurance_bundle_readme(bundle).encode("utf-8")
-    manifest = create_assurance_manifest(
-        bundle,
-        bundle_json=bundle_bytes,
-        readme=readme_bytes,
-    )
-    manifest_bytes = _render_manifest(manifest).encode("utf-8")
-    expected = {
-        "README.md": readme_bytes,
-        "assurance-bundle.json": bundle_bytes,
-        "manifest.json": manifest_bytes,
-    }
+    expected = _canonical_assurance_files(bundle)
     target = root / ("assurance-" + bundle.bundle_id.removeprefix("sha256:"))
     if target.is_symlink():
         raise AssuranceBundleError(
@@ -197,6 +208,37 @@ def verify_assurance_bundle(directory: Path) -> VerifiedAssuranceBundle:
 
 def _render_manifest(manifest: AssuranceBundleManifest) -> str:
     return json.dumps(manifest.model_dump(mode="json"), indent=2, sort_keys=True) + "\n"
+
+
+def _canonical_assurance_files(bundle: AssuranceBundle) -> dict[str, bytes]:
+    bundle_bytes = render_assurance_bundle_json(bundle).encode("utf-8")
+    readme_bytes = render_assurance_bundle_readme(bundle).encode("utf-8")
+    if len(bundle_bytes) > MAX_ASSURANCE_JSON_BYTES:
+        raise AssuranceBundleError(
+            "ASSURANCE_BUNDLE_FILE_TOO_LARGE",
+            "canonical assurance-bundle.json exceeds byte limit",
+        )
+    if len(readme_bytes) > MAX_ASSURANCE_AUXILIARY_BYTES:
+        raise AssuranceBundleError(
+            "ASSURANCE_BUNDLE_FILE_TOO_LARGE",
+            "canonical README.md exceeds byte limit",
+        )
+    manifest = create_assurance_manifest(
+        bundle,
+        bundle_json=bundle_bytes,
+        readme=readme_bytes,
+    )
+    files = {
+        "README.md": readme_bytes,
+        "assurance-bundle.json": bundle_bytes,
+        "manifest.json": _render_manifest(manifest).encode("utf-8"),
+    }
+    if len(files["manifest.json"]) > MAX_ASSURANCE_AUXILIARY_BYTES:
+        raise AssuranceBundleError(
+            "ASSURANCE_BUNDLE_FILE_TOO_LARGE",
+            "canonical manifest.json exceeds byte limit",
+        )
+    return files
 
 
 def _prepare_output_root(output_root: Path) -> Path:
