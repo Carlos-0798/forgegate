@@ -36,6 +36,7 @@ analysis, compatibility contracts, and historical acceptance evidence.
 
 ## Persistence, API, and audit
 
+- [Candidate store backup and validation](STORE_BACKUP_OPERATIONS.md)
 - [SQLite candidate store](architecture/SQLITE_CANDIDATE_STORE.md)
 - [Project registry and audit query](architecture/PROJECT_REGISTRY_AND_AUDIT_QUERY.md)
 - [Project authority and discovery](architecture/PROJECT_AUTHORITY_AND_DISCOVERY.md)

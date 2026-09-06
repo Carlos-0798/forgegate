@@ -95,6 +95,7 @@ is inferred from another running instance.
    copy only the main file from a live WAL database. Never delete/reinitialize
    an old store to make startup succeed. Follow the explicit migration contract
    in [SQLite candidate store](architecture/SQLITE_CANDIDATE_STORE.md).
+   Current v9 stores now have explicit [backup and offline validation commands](STORE_BACKUP_OPERATIONS.md).
 4. Start the same approved database/trust store, check HTTP/HTML, then open the
    actual browser. Restart clears in-memory sessions; use a fresh activation
    code and existing CLI-held key. Do not paste private keys into the browser.

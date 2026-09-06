@@ -24,6 +24,8 @@ The current checkpoint demonstrates:
   explicit warning retention, and separate immutable evidence binding;
 - loopback HTTP/HTML diagnostics and an explicit Windows foreground launcher
   with [startup and recovery guidance](docs/WINDOWS_DASHBOARD_OPERATIONS.md);
+- consistent candidate-store snapshots and offline backup validation with
+  [no-overwrite and private-data boundaries](docs/STORE_BACKUP_OPERATIONS.md);
 - deterministic policy decisions over commit-bound evidence;
 - immutable project profiles, release candidates, and append-only audit history;
 - content-addressed attestations and portable assurance bundles;
@@ -82,9 +84,10 @@ never converted into candidate evidence.
 
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 946 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
-| Branch-aware coverage | 95.28% across 10,592 statements and 2,852 branches | Local host test |
-| Static quality | Ruff, formatting, and strict mypy passed across 95 source/tool files | Local host test |
+| Full Python suite | 973 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
+| Branch-aware coverage | 95.34% across 10,730 statements and 2,884 branches | Local host test |
+| Static quality | Ruff, formatting, and strict mypy passed across 96 source/tool files | Local host test |
+| Candidate-store backup | 27 focused cases; backup module 100% branch-aware coverage; installed CLI round trip passes | Local host test; no automatic restore, encryption or blanket domain validation |
 | Contracts | 41 document and 3 artifact JSON Schemas plus direct-API and 19-operation Dashboard-BFF OpenAPI passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
@@ -312,8 +315,10 @@ and reporting instructions are documented in [SECURITY.md](SECURITY.md).
   backends are unsupported.
 - The GitHub bridge performs offline bundle/commit gating only. It does not add
   custom Checks, PR annotations, artifact upload, OIDC identity, or API writes.
-- Database authorization, backup/repair, managed key custody, online revocation,
+- Automatic restore/repair, database authorization, managed key custody, online revocation,
   and administrator-resistant audit logging are not implemented.
+  Current-schema backup and structural verification are local CLI operations;
+  they do not authenticate data or replay all domain-history invariants.
 - MSP430 live status is input-only and process-local. It retains no telemetry
   history, controls no hardware, does not validate sensor values, and does not
   create release evidence. The separate artifact collector can normalize a

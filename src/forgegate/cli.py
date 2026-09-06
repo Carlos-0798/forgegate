@@ -1002,6 +1002,42 @@ def candidate_migrate_store(
     typer.echo(f"MIGRATED {repository.database_path}")
 
 
+@candidate_app.command("backup-store")
+def candidate_backup_store(
+    database: Annotated[Path, typer.Argument()],
+    destination: Annotated[Path, typer.Argument()],
+    timeout_seconds: Annotated[float, typer.Option("--timeout-seconds", min=0.1, max=300)] = 30.0,
+) -> None:
+    """Create a consistent private snapshot in a NEW file; never overwrite or migrate."""
+    from forgegate.candidates.backups import StoreBackupError, backup_store
+
+    try:
+        report = backup_store(database, destination, timeout_seconds=timeout_seconds)
+    except StoreBackupError as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(json.dumps(report, indent=2, sort_keys=True))
+
+
+@candidate_app.command("verify-backup")
+def candidate_verify_backup(
+    backup: Annotated[Path, typer.Argument()],
+    sha256: Annotated[str | None, typer.Option("--sha256")] = None,
+    timeout_seconds: Annotated[float, typer.Option("--timeout-seconds", min=0.1, max=300)] = 30.0,
+) -> None:
+    """Check an OFFLINE single-file backup on a disposable copy; no restore performed."""
+    from forgegate.candidates.backups import StoreBackupError, verify_store_backup
+
+    try:
+        report = verify_store_backup(
+            backup, expected_sha256=sha256, timeout_seconds=timeout_seconds
+        )
+    except StoreBackupError as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(json.dumps(report, indent=2, sort_keys=True))
+
+
 @candidate_app.command("transition")
 def candidate_transition(
     candidate_path: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],

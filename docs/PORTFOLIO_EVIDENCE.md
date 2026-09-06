@@ -229,7 +229,15 @@ It shows a temporary Dashboard returning 200/200, an API-only fixture returning
 200/404, and refused connections after owned fixtures stop. These are local
 software tests, not uptime, browser-interaction or hardware evidence.
 
-### Previously accepted browser workflows
+### Phase 32 local data-protection evidence
+
+[Backup acceptance](../reports/PHASE_32_STORE_BACKUP_ACCEPTANCE.md) records exact
+synthetic snapshot counts/hash, WAL transaction isolation and cold application
+readback. No database or raw project data belongs in this gallery. This checkpoint
+has no browser-layout change and no new screenshot claim. Synchronization is
+paused; these results are retained locally for later review.
+
+### Previously accepted browser workflow boundaries
 
 They support the narrow claim that the authenticated, loopback-only Dashboard
 implements activation, Overview, Devices, Projects, candidate list/create/

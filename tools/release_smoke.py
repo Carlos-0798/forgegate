@@ -17,6 +17,8 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_SDIST_PATHS = (
+    "docs/STORE_BACKUP_OPERATIONS.md",
+    "tests/test_store_backups.py",
     "tools/start_dashboard.ps1",
     "tools/dashboard_runtime_smoke.py",
     "tests/test_dashboard_runtime.py",
@@ -1593,6 +1595,50 @@ def main(
             cwd=root,
         )
 
+        snapshot = root / "candidate-backup.db"
+        backup_receipt = root / "candidate-backup-receipt.json"
+        run_capture(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "candidate",
+                "backup-store",
+                str(candidate_store),
+                str(snapshot),
+            ],
+            backup_receipt,
+            cwd=root,
+        )
+        backup_document = json.loads(backup_receipt.read_text(encoding="utf-8"))
+        if backup_document["status"] != "BACKUP_CREATED" or backup_document["size_bytes"] <= 0:
+            raise SystemExit("installed backup did not produce a verified snapshot")
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "candidate",
+                "verify-backup",
+                str(snapshot),
+                "--sha256",
+                backup_document["sha256"],
+            ],
+            cwd=root,
+        )
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "candidate",
+                "backup-store",
+                str(candidate_store),
+                str(snapshot),
+            ],
+            cwd=root,
+            expected_returncode=3,
+        )
         run(
             [str(python), "-m", "pip", "uninstall", "--yes", "forgegate"],
             cwd=root,

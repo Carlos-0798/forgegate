@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Added local `candidate backup-store` and `candidate verify-backup` commands
+  for current-schema consistent SQLite snapshots, checked exclusive publication,
+  offline hash/integrity validation and fixed privacy-safe failure codes.
+- Added 27 regressions including committed WAL/uncommitted isolation, retained
+  rows and cold candidate/evidence/attestation reads, existing-target races,
+  sidecars, corruption, size/deadline checks and installed-wheel smoke. No live
+  database replacement, hardware access or GitHub synchronization performed.
 - Added `dashboard-check` with bounded, unauthenticated health/HTML checks,
   actionable failure states and explicit non-ownership/non-hardware labels.
 - Added a Windows foreground launcher for existing database/trust files,

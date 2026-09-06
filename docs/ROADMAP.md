@@ -548,3 +548,20 @@ automatic crash recovery, database repair, browser acceptance or device testing.
 Those operating modes require a separate lifecycle/ownership design. Durable
 collection jobs and artifact retention remain later engineering slices, not
 implied by the current synchronous preview or runtime diagnostic.
+
+## Phase 32 — candidate-store data protection
+
+- [x] Snapshot a current-schema store using SQLite's backup API and a pinned
+  read transaction, including committed WAL content without uncommitted data.
+- [x] Reject existing targets and sidecars; validate before exclusive hard-link
+  publication, without overwrite fallback, initialization or migration.
+- [x] Verify an offline copy's hash, SQLite integrity, foreign keys, schema and
+  17 table counts without opening or changing the input through SQLite.
+- [x] Test exact retained-row equality and cold candidate/evidence/attestation
+  readback on a terminal synthetic candidate, plus races, corruption and limits.
+- [x] Add installed-wheel backup/verify/no-overwrite checks and local operations
+  documentation; retain only synthetic results, never a database in the gallery.
+
+No automatic restore, encryption, retention service, browser backup button,
+producer authentication or blanket domain-history validation is implied.
+GitHub synchronization is paused by owner instruction; development remains local.

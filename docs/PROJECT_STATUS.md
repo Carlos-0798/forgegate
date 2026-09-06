@@ -2,7 +2,9 @@
 
 - Date: 2026-09-06
 - Version: 0.1.0a1
-- Stage: Phase 31 Windows startup, HTTP/HTML diagnostics and controlled recovery
+- Stage: Phase 32 consistent candidate-store backup and offline validation
+  implemented locally; no automatic restore, encryption or browser write added.
+  Phase 31 Windows startup, HTTP/HTML diagnostics and controlled recovery
   support implemented; explicit foreground lifecycle, not an uptime watchdog.
   Phase 30 bounded JUnit preview and separate binding implemented;
   real Edge PASS/FAIL, warning-consent and rejection acceptance completed.
@@ -31,8 +33,15 @@ package jobs, but its final generic Action job did not start because GitHub
 reported an account payment/spending-limit restriction. The overall run is
 not green. Billing changes require owner action; local acceptance is separate.
 
+Per the owner's current instruction, Phase 32 work is local-only. No GitHub
+inspection, push, PR creation or merge was performed for this checkpoint.
+
 ## Implemented
 
+- current-schema SQLite backup through a pinned read transaction and Online
+  Backup API, checked before atomic create-if-absent file publication; independent
+  offline verification on a disposable copy, optional expected-hash comparison,
+  path-free counts/receipt and explicit private-data/recovery limitations;
 - `dashboard-check` distinguishes health, HTML, refusal, timeout and protocol
   failures without authentication, database reads or device access; an existing-
   workspace Windows launcher rejects missing/empty input and busy ports;
@@ -448,7 +457,7 @@ plugins, Linux/macOS plugin execution,
 custom GitHub Checks/PR annotations/API writes,
 managed/encrypted/hardware-backed key custody, trusted timestamps, online
 revocation, CI workload identity federation, database authorization,
-backup/repair, retained MSP430 telemetry history,
+automatic restore/repair, retained MSP430 telemetry history,
 Studio Phase 5
 human-readable report ingestion, authenticated provenance/signatures, source
 artifact payload/replay export, hardware control, and physical measurement
@@ -457,6 +466,10 @@ multi-format collection. Its bounded real-browser upload acceptance now passes.
 
 ## Accepted local checkpoint
 
+- Phase 32: 27 focused backup regressions; backup module 100% branch-aware
+  coverage (120 statements, 32 branches), cold terminal-candidate readback,
+  exact table preservation, installed CLI backup/verify/no-overwrite smoke and
+  an independent manual synthetic snapshot/hash check pass. No GitHub operation.
 - Phase 31: 28 focused host/Windows launcher cases; real isolated Dashboard,
   API-only and stopped-service HTTP checks; two foreground startup/shutdown
   cycles on the same synthetic database, with post-run SQLite quick-check OK.
@@ -468,8 +481,8 @@ multi-format collection. Its bounded real-browser upload acceptance now passes.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 946 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.28% across 10,592 statements and 2,852 branches
+- pytest: 973 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.34% across 10,730 statements and 2,884 branches
 - MSP430 live-status focus: 17 passed across parser, state classification,
   staleness, invalid/recovery, counters, dependency/I/O failure, and input-only
   monitor lifecycle
