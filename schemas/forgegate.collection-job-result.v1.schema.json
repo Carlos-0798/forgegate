@@ -1,0 +1,566 @@
+{
+  "$defs": {
+    "ArtifactReference": {
+      "additionalProperties": false,
+      "properties": {
+        "media_type": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Media Type",
+          "type": "string"
+        },
+        "path_or_uri": {
+          "maxLength": 2048,
+          "minLength": 1,
+          "title": "Path Or Uri",
+          "type": "string"
+        },
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "size_bytes": {
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "path_or_uri",
+        "media_type",
+        "sha256",
+        "size_bytes"
+      ],
+      "title": "ArtifactReference",
+      "type": "object"
+    },
+    "CollectionIssue": {
+      "additionalProperties": false,
+      "properties": {
+        "code": {
+          "pattern": "^[A-Z][A-Z0-9_]{2,127}$",
+          "title": "Code",
+          "type": "string"
+        },
+        "location": {
+          "anyOf": [
+            {
+              "maxLength": 512,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Location"
+        },
+        "message": {
+          "maxLength": 1024,
+          "minLength": 1,
+          "title": "Message",
+          "type": "string"
+        },
+        "severity": {
+          "$ref": "#/$defs/IssueSeverity"
+        }
+      },
+      "required": [
+        "code",
+        "severity",
+        "message"
+      ],
+      "title": "CollectionIssue",
+      "type": "object"
+    },
+    "CollectionReceipt": {
+      "additionalProperties": false,
+      "properties": {
+        "artifacts": {
+          "items": {
+            "$ref": "#/$defs/ArtifactReference"
+          },
+          "minItems": 1,
+          "title": "Artifacts",
+          "type": "array"
+        },
+        "collector_name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Collector Name",
+          "type": "string"
+        },
+        "collector_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Collector Version",
+          "type": "string"
+        },
+        "evidence_ids": {
+          "items": {
+            "type": "string"
+          },
+          "minItems": 1,
+          "title": "Evidence Ids",
+          "type": "array"
+        },
+        "result_fingerprint": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Result Fingerprint",
+          "type": "string"
+        },
+        "source": {
+          "$ref": "#/$defs/ArtifactReference"
+        },
+        "warnings": {
+          "items": {
+            "$ref": "#/$defs/CollectionIssue"
+          },
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "source",
+        "collector_name",
+        "collector_version",
+        "result_fingerprint",
+        "artifacts",
+        "evidence_ids"
+      ],
+      "title": "CollectionReceipt",
+      "type": "object"
+    },
+    "CollectionResult": {
+      "additionalProperties": false,
+      "properties": {
+        "artifacts": {
+          "items": {
+            "$ref": "#/$defs/ArtifactReference"
+          },
+          "title": "Artifacts",
+          "type": "array"
+        },
+        "collector_name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Collector Name",
+          "type": "string"
+        },
+        "collector_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Collector Version",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/EvidenceRecord"
+          },
+          "title": "Evidence",
+          "type": "array"
+        },
+        "rejected_records": {
+          "items": {
+            "$ref": "#/$defs/CollectionIssue"
+          },
+          "title": "Rejected Records",
+          "type": "array"
+        },
+        "status": {
+          "$ref": "#/$defs/CollectionStatus"
+        },
+        "warnings": {
+          "items": {
+            "$ref": "#/$defs/CollectionIssue"
+          },
+          "title": "Warnings",
+          "type": "array"
+        }
+      },
+      "required": [
+        "collector_name",
+        "collector_version",
+        "status"
+      ],
+      "title": "CollectionResult",
+      "type": "object"
+    },
+    "CollectionStatus": {
+      "enum": [
+        "COMPLETE",
+        "REJECTED"
+      ],
+      "title": "CollectionStatus",
+      "type": "string"
+    },
+    "EvidenceBundle": {
+      "additionalProperties": false,
+      "properties": {
+        "candidate_commit": {
+          "pattern": "^[0-9a-fA-F]{7,64}$",
+          "title": "Candidate Commit",
+          "type": "string"
+        },
+        "evidence": {
+          "items": {
+            "$ref": "#/$defs/EvidenceRecord"
+          },
+          "minItems": 1,
+          "title": "Evidence",
+          "type": "array"
+        },
+        "generated_at": {
+          "format": "date-time",
+          "title": "Generated At",
+          "type": "string"
+        },
+        "producer": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Producer",
+          "type": "string"
+        },
+        "producer_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Producer Version",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "forgegate.evidence-bundle.v1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "schema_version",
+        "producer",
+        "producer_version",
+        "candidate_commit",
+        "generated_at",
+        "evidence"
+      ],
+      "title": "EvidenceBundle",
+      "type": "object"
+    },
+    "EvidenceBundleAssembly": {
+      "additionalProperties": false,
+      "properties": {
+        "assembly_id": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Assembly Id",
+          "type": "string"
+        },
+        "bundle": {
+          "$ref": "#/$defs/EvidenceBundle"
+        },
+        "collections": {
+          "items": {
+            "$ref": "#/$defs/CollectionReceipt"
+          },
+          "minItems": 1,
+          "title": "Collections",
+          "type": "array"
+        },
+        "schema_version": {
+          "const": "forgegate.evidence-bundle-assembly.v1",
+          "default": "forgegate.evidence-bundle-assembly.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "warning_disposition": {
+          "enum": [
+            "none",
+            "retained"
+          ],
+          "title": "Warning Disposition",
+          "type": "string"
+        }
+      },
+      "required": [
+        "assembly_id",
+        "warning_disposition",
+        "bundle",
+        "collections"
+      ],
+      "title": "EvidenceBundleAssembly",
+      "type": "object"
+    },
+    "EvidenceRecord": {
+      "additionalProperties": false,
+      "properties": {
+        "artifact": {
+          "$ref": "#/$defs/ArtifactReference"
+        },
+        "collected_at": {
+          "format": "date-time",
+          "title": "Collected At",
+          "type": "string"
+        },
+        "evidence_id": {
+          "pattern": "^[a-z][a-z0-9._-]{1,127}$",
+          "title": "Evidence Id",
+          "type": "string"
+        },
+        "execution_context": {
+          "$ref": "#/$defs/ExecutionContext"
+        },
+        "kind": {
+          "pattern": "^[a-z][a-z0-9_-]*(\\.[a-z0-9_-]+)+$",
+          "title": "Kind",
+          "type": "string"
+        },
+        "scope": {
+          "maxLength": 255,
+          "minLength": 1,
+          "title": "Scope",
+          "type": "string"
+        },
+        "source_tool": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Source Tool",
+          "type": "string"
+        },
+        "source_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Source Version",
+          "type": "string"
+        },
+        "status": {
+          "maxLength": 64,
+          "minLength": 1,
+          "title": "Status",
+          "type": "string"
+        },
+        "tags": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "object"
+        },
+        "trust": {
+          "$ref": "#/$defs/EvidenceTrust"
+        },
+        "unit": {
+          "anyOf": [
+            {
+              "maxLength": 64,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Unit"
+        },
+        "value": {
+          "title": "Value"
+        },
+        "verification_level": {
+          "$ref": "#/$defs/VerificationLevel"
+        }
+      },
+      "required": [
+        "evidence_id",
+        "kind",
+        "scope",
+        "value",
+        "status",
+        "source_tool",
+        "source_version",
+        "execution_context",
+        "artifact",
+        "collected_at",
+        "trust",
+        "verification_level"
+      ],
+      "title": "EvidenceRecord",
+      "type": "object"
+    },
+    "EvidenceTrust": {
+      "description": "How strongly ForgeGate can trust the producer identity.",
+      "enum": [
+        "unsigned_local",
+        "claimed_ci_metadata",
+        "verified_ci_identity",
+        "signed_attestation"
+      ],
+      "title": "EvidenceTrust",
+      "type": "string"
+    },
+    "ExecutionContext": {
+      "additionalProperties": false,
+      "properties": {
+        "architecture": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Architecture"
+        },
+        "ci_provider": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ci Provider"
+        },
+        "ci_run_id": {
+          "anyOf": [
+            {
+              "maxLength": 255,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Ci Run Id"
+        },
+        "commit_sha": {
+          "pattern": "^[0-9a-fA-F]{7,64}$",
+          "title": "Commit Sha",
+          "type": "string"
+        },
+        "operating_system": {
+          "anyOf": [
+            {
+              "maxLength": 120,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Operating System"
+        },
+        "runtime": {
+          "anyOf": [
+            {
+              "maxLength": 255,
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Runtime"
+        },
+        "tags": {
+          "additionalProperties": {
+            "type": "string"
+          },
+          "title": "Tags",
+          "type": "object"
+        }
+      },
+      "required": [
+        "commit_sha"
+      ],
+      "title": "ExecutionContext",
+      "type": "object"
+    },
+    "IssueSeverity": {
+      "enum": [
+        "WARNING",
+        "REJECTION"
+      ],
+      "title": "IssueSeverity",
+      "type": "string"
+    },
+    "VerificationLevel": {
+      "description": "What kind of engineering observation the evidence represents.",
+      "enum": [
+        "declared",
+        "simulated",
+        "replayed",
+        "host_tested",
+        "target_built",
+        "ci_validated",
+        "system_observed",
+        "physically_verified"
+      ],
+      "title": "VerificationLevel",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "assembly": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/EvidenceBundleAssembly"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "candidate_write": {
+      "const": "NOT_PERFORMED",
+      "default": "NOT_PERFORMED",
+      "title": "Candidate Write",
+      "type": "string"
+    },
+    "collections": {
+      "items": {
+        "$ref": "#/$defs/CollectionResult"
+      },
+      "maxItems": 2,
+      "minItems": 1,
+      "title": "Collections",
+      "type": "array"
+    },
+    "job_id": {
+      "pattern": "^job-[0-9a-f]{32}$",
+      "title": "Job Id",
+      "type": "string"
+    },
+    "producer_authentication": {
+      "const": "NOT_PERFORMED",
+      "default": "NOT_PERFORMED",
+      "title": "Producer Authentication",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "forgegate.collection-job-result.v1",
+      "default": "forgegate.collection-job-result.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_artifact_bytes": {
+      "const": "not_embedded",
+      "default": "not_embedded",
+      "title": "Source Artifact Bytes",
+      "type": "string"
+    }
+  },
+  "required": [
+    "job_id",
+    "collections",
+    "assembly"
+  ],
+  "title": "CollectionJobResult",
+  "type": "object"
+}

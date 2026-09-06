@@ -6,6 +6,8 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
+- [Phase 34 durable local report jobs](PHASE_34_COLLECTION_JOBS_ACCEPTANCE.md) — persistent local CLI lifecycle, bounded input, explicit cancellation/recovery, cross-process evidence and Windows handle correction; no new Dashboard task UI
+- [Phase 34 synthetic job receipt](PHASE_34_COLLECTION_JOB_SMOKE.json) — exact four-test/one-failure output, source hash, non-mutation and cleanup checks; not a policy PASS or hardware claim
 - [Phase 33 actual-browser follow-up](PHASE_33_BROWSER_ACCEPTANCE_FOLLOWUP.md) — LCOV PASS, low-coverage FAIL, 13 scoped cases, local error provenance and Windows asset ordering corrections
 - [Phase 33 combined report collection](PHASE_33_MULTI_REPORT_ACCEPTANCE.md) — bounded JUnit + Cobertura/LCOV, exact JSON binding, real Edge synthetic combined policy PASS, and remaining manual boundaries
 - [Phase 32 candidate-store backup](PHASE_32_STORE_BACKUP_ACCEPTANCE.md) — consistent snapshots, no-overwrite validation and local data-protection boundaries

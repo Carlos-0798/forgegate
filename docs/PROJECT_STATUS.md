@@ -2,11 +2,15 @@
 
 - Date: 2026-09-06
 - Version: 0.1.0a1
-- Stage: Phase 33 combined JUnit + Cobertura/LCOV browser preview, original-JSON
+- Stage: Phase 34 durable local report job engine and CLI implemented, with
+  separate v1 storage, explicit execution/cancellation, expired-lease recovery,
+  bounded pending input retention and independent result export. No Dashboard
+  job UI, automatic worker, candidate mutation or coordinated job backup.
+  Phase 33 combined JUnit + Cobertura/LCOV browser preview, original-JSON
   binding and generic policy workflow implemented locally. Real Edge combined
   Cobertura/LCOV PASS, low-coverage FAIL and the scoped negative-input matrix
   verified; browser error-origin and Windows asset-ordering defects corrected.
-  No durable queue/raw retention.
+  The browser preview itself still has no durable queue/raw retention.
   Phase 32 consistent candidate-store backup and offline validation
   implemented locally; no automatic restore, encryption or browser write added.
   Phase 31 Windows startup, HTTP/HTML diagnostics and controlled recovery
@@ -43,6 +47,9 @@ inspection, push, PR creation or merge was performed for this checkpoint.
 
 ## Implemented
 
+- durable local CLI collection jobs in a separate v1 SQLite file, with bounded
+  pending input, idempotent replay, explicit execution/cancellation, manual
+  expired-lease recovery and result export; no Dashboard queue or automatic worker;
 - current-schema SQLite backup through a pinned read transaction and Online
   Backup API, checked before atomic create-if-absent file publication; independent
   offline verification on a disposable copy, optional expected-hash comparison,
@@ -52,7 +59,7 @@ inspection, push, PR creation or merge was performed for this checkpoint.
   workspace Windows launcher rejects missing/empty input and busy ports;
 - bounded operator-only JUnit upload preview using the existing collector and
   assembler, in-memory exact bytes, declared-only evidence, original report time,
-  explicit warning retention and separate reviewed binding; no durable job queue;
+  explicit warning retention and separate reviewed binding; no browser job queue;
 - operator-only project Audit workspace with candidate filtering, stable
   25-event cursor links, full record/actor inspection, no inferred actor,
   explicit preview truncation, and candidate-to-audit navigation;
@@ -473,6 +480,12 @@ remaining OS assistive checks are separate.
 
 ## Accepted local checkpoint
 
+- Phase 34: 32 focused job regressions and independent-process CLI acceptance;
+  exact replay, exclusive claim, cancellation/late-result ordering, expired-only
+  recovery, candidate rechecks, quotas, corruption rejection and separate binding.
+  [Operations and limitations](COLLECTION_JOBS.md) distinguish successful
+  collection from policy PASS and logical deletion from secure erasure.
+  No existing Dashboard or MSP430 service was restarted or used for this work.
 - Phase 33: bounded combined report preview, original-JSON reviewed binding,
   whole-selection rejection/warning behavior and existing collector reuse.
   Real Edge Cobertura preview/binding/lifecycle/policy PASS and exact rule values
@@ -499,8 +512,8 @@ remaining OS assistive checks are separate.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 1001 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.37% across 10,812 statements and 2,898 branches
+- pytest: 1033 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.49% across 11,164 statements and 2,994 branches
 - MSP430 live-status focus: 17 passed across parser, state classification,
   staleness, invalid/recovery, counters, dependency/I/O failure, and input-only
   monitor lifecycle

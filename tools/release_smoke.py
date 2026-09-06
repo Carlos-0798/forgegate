@@ -17,6 +17,14 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_SDIST_PATHS = (
+    "reports/PHASE_34_COLLECTION_JOBS_ACCEPTANCE.md",
+    "reports/PHASE_34_COLLECTION_JOB_SMOKE.json",
+    "docs/COLLECTION_JOBS.md",
+    "tools/collection_jobs_smoke.py",
+    "tests/test_collection_jobs.py",
+    "schemas/forgegate.collection-job-request.v1.schema.json",
+    "schemas/forgegate.collection-job.v1.schema.json",
+    "schemas/forgegate.collection-job-result.v1.schema.json",
     "reports/PHASE_33_MULTI_REPORT_ACCEPTANCE.md",
     "docs/assets/forgegate-dashboard-multi-report-bound.jpg",
     "docs/assets/forgegate-dashboard-multi-report-decision.jpg",
@@ -1491,6 +1499,7 @@ def main(
             cwd=root,
         )
         run([str(python), str(REPOSITORY_ROOT / "tools/dashboard_runtime_smoke.py")], cwd=root)
+        run([str(python), str(REPOSITORY_ROOT / "tools/collection_jobs_smoke.py")], cwd=root)
         run([str(python), "-m", "forgegate", "doctor"], cwd=root)
         run(
             [

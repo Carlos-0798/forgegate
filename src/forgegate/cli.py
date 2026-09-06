@@ -47,6 +47,7 @@ from forgegate.candidates import (
     SQLiteCandidateRepository,
     transition_candidate,
 )
+from forgegate.collection_jobs_cli import jobs_app
 from forgegate.collectors import (
     AnalogValidationCollectionRequest,
     AnalogValidationResultCollector,
@@ -130,6 +131,7 @@ app.add_typer(project_app, name="project")
 app.add_typer(audit_app, name="audit")
 app.add_typer(identity_app, name="identity")
 app.add_typer(plugins_app, name="plugins")
+app.add_typer(jobs_app, name="jobs")
 
 
 @app.command()

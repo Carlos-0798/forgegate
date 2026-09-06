@@ -164,6 +164,10 @@
 | Source-artifact producer chain | producer-signed artifact receipts | NOT IMPLEMENTED — signature covers retained bundle only |
 | HTTP server-path artifact loading/file publication | no loader/output path; nested metadata is not dereferenced | OUT OF SCOPE — bounded uploaded JUnit/Cobertura/LCOV bytes only, in memory |
 | Combined browser collection | strict contract, exact counts, no-write preview, all-or-nothing assembly and separate binding | PASS — host tests; actual Edge Cobertura/LCOV PASS and low-coverage FAIL separately retained |
+| Durable local collection jobs | 32 focused host cases; independent-process queued read/replay/run/result/cancel; clean-wheel smoke | PASS — synthetic local CLI only; no new browser or device evidence |
+| Job interruption/cancellation | concurrent claim, stale revision, revoked/expired lease, explicit recovery, late-result discard | PASS — deterministic host tests; cancellation blocks publication, not parser execution; no power-loss certification |
+| Pending report retention | transactionally clear terminal input/lease, size/count quotas, sanitized public records | PASS — logical retention boundaries only; no encryption, secure erase, coordinated backup or purge service |
+| Authenticated Dashboard task center | project scope, configured private store, reviewed writes, browser acceptance | NOT IMPLEMENTED — local file authority must not be treated as HTTP authority |
 | Browser numeric round trip | original assembly JSON; tamper/fingerprint revalidation | PASS — reproduced 422 for 50.0-to-50 conversion, corrected exact-text binding in real Edge |
 | Combined LCOV/negative browser matrix | direct UI runs | PASS — 13 scoped actual-Edge cases in Phase 33 browser follow-up; not exhaustive OS, concurrency or HTTP-injection certification |
 | Local error provenance | actual Edge oversize rejection + host HTTP/local regressions | PASS — local validation does not claim an HTTP response or server request ID |
@@ -175,7 +179,7 @@
 | Structured-input pre-materialization bounds | JSON token, XML event, and YAML event adversarial tests | PASS — byte plus node/element/depth limits; duplicate YAML keys rejected |
 | Plugin output pre-materialization bounds | trusted in-container exporter plus bounded host archive inspection | PASS — clean-wheel live dual snapshots; no archive extraction |
 | Development dependency advisory audit | constrained pip/pytest bootstrap plus `pip-audit` | PASS — no known advisory in resolved registry dependencies; editable local project excluded |
-| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.37% exceeds exact 95.00% threshold |
+| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.49% exceeds exact 95.00% threshold |
 
 See `reports/INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md` for the latest
 expected-versus-actual CLI/API check and

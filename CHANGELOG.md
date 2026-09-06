@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Added a separate durable local collection-job store and CLI with idempotent
+  submission, bounded pending source retention, explicit run/cancel/recover,
+  exact result export and fail-closed candidate rechecks. No Dashboard job UI,
+  automatic worker, hardware access, evidence binding or policy decision added.
+- Added job lifecycle/negative tests, three public schemas, cross-process
+  expected-output acceptance and clean-wheel integration checks.
 - Added bounded combined Dashboard JUnit + Cobertura/LCOV previews with independent
   metadata, duplicate/size/output limits, whole-selection warning consent and
   separate immutable binding. Source reports remain unsigned-local declarations.

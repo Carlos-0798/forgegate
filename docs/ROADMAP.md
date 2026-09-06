@@ -580,9 +580,29 @@ GitHub synchronization is paused by owner instruction; development remains local
   READY/EVALUATING transitions, policy PASS and exact rule values; save screenshots.
 - [x] Keep CLI-only larger collections, generic examples and source evidence labels.
 
-Next engineering slice: durable collection task lifecycle, restart recovery,
-explicit cancellation and bounded private artifact retention. This phase is not
-that task center. The scoped real-browser LCOV/negative matrix now passes in
+Phase 34 adds the local job engine separately; Phase 33 is not a durable
+task center. The scoped real-browser LCOV/negative matrix now passes in
 the Phase 33 follow-up (13 cases). Browser error provenance and Windows
 mixed-case asset ordering were corrected. Remaining OS assistive checks stay
 separate gates; host regressions do not replace actual OS acceptance.
+
+## Phase 34 — durable local report jobs
+
+- [x] Versioned request/record/result contracts and a separate explicit v1 store;
+  no candidate-store migration, automatic binding or producer authentication.
+- [x] Idempotent submission, exclusive claim, revision checks and bounded
+  pending report bytes; exact-result retention with assembly consistency checks.
+- [x] Explicit cancellation that prevents late publication; expired-only manual
+  recovery to INTERRUPTED; queued work survives process restart, no silent retry.
+- [x] CLI create/submit/show/list/run/cancel/recover/result commands, strict
+  bounded JSON loading and path-free operational errors.
+- [x] Host race/fault/recovery tests, independent-process expected-value checks
+  and clean installed-wheel execution. No real-device or new browser claims.
+- [x] Document quotas, local-file authority, logical deletion, source replay
+  limitations and the absence of coordinated job backup/retention management.
+
+Next engineering slice: authenticated project-scoped Dashboard job visibility
+and reviewed job actions, with explicit local-store configuration and a genuine
+browser acceptance matrix. Do not expose the local CLI file-authority model as
+an HTTP authorization mechanism. Automatic workers and retention/backup services
+require separate lifecycle design and acceptance.

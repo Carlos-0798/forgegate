@@ -27,6 +27,9 @@ The current checkpoint demonstrates:
   with [startup and recovery guidance](docs/WINDOWS_DASHBOARD_OPERATIONS.md);
 - consistent candidate-store snapshots and offline backup validation with
   [no-overwrite and private-data boundaries](docs/STORE_BACKUP_OPERATIONS.md);
+- [durable local report jobs](docs/COLLECTION_JOBS.md) with idempotent submission,
+  explicit execution/cancellation, expired-lease recovery and bounded pending
+  input retention; CLI only, no automatic evidence binding or policy PASS;
 - deterministic policy decisions over commit-bound evidence;
 - immutable project profiles, release candidates, and append-only audit history;
 - content-addressed attestations and portable assurance bundles;
@@ -85,11 +88,12 @@ never converted into candidate evidence.
 
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 1001 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
-| Branch-aware coverage | 95.37% across 10,812 statements and 2,898 branches | Local host test |
-| Static quality | Ruff, formatting, and strict mypy passed across 97 source/tool files | Local host test |
+| Full Python suite | 1033 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
+| Branch-aware coverage | 95.49% across 11,164 statements and 2,994 branches | Local host test |
+| Static quality | Ruff, formatting, and strict mypy passed across 100 source/tool files | Local host test |
+| Durable local report jobs | 32 focused cases and cross-process installed CLI smoke | Local synthetic host test; no Dashboard job UI, automatic worker or hardware |
 | Candidate-store backup | 27 focused cases; backup module 100% branch-aware coverage; installed CLI round trip passes | Local host test; no automatic restore, encryption or blanket domain validation |
-| Contracts | 41 document and 3 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI (20 paths, 21 operations) passed drift checks | Local host test |
+| Contracts | 44 document and 3 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI (20 paths, 21 operations) passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
 | Dashboard automation | 73 TypeScript host interaction tests passed; combined collection included in full Python suite | Local host test; [actual Edge follow-up](reports/PHASE_33_BROWSER_ACCEPTANCE_FOLLOWUP.md) records LCOV PASS, low-coverage FAIL and 13 scoped browser cases; not exhaustive browser/OS certification |
@@ -336,8 +340,8 @@ The next maturity gates are:
 
 1. complete Windows high-contrast, spoken Narrator-output, and real Remote
    Desktop evidence without claiming full accessibility certification;
-2. add automatic collection only after its file, authorization, progress,
-   cancellation, and recovery contracts are frozen;
+2. expose durable local jobs through separately authorized, project-scoped
+   Dashboard workflows and browser acceptance before adding automatic workers;
 3. align future MSP430 report revisions through the frozen artifact contract
    while keeping live UART status separate from evidence;
 4. establish publisher provenance and broader hostile-plugin compatibility;

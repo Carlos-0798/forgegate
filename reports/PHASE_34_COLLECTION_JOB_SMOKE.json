@@ -1,0 +1,25 @@
+{
+  "schema_version": "forgegate.collection-job-smoke.v1",
+  "result": "PASS",
+  "verification": "HOST_TEST_SYNTHETIC",
+  "checks": [
+    "cross_process_queued_read",
+    "idempotent_replay",
+    "foreground_completion",
+    "exact_source_sha256",
+    "expected_test_summary",
+    "exact_assembly_export",
+    "candidate_history_unchanged",
+    "explicit_cancel",
+    "list_retained_jobs",
+    "temporary_store_cleanup"
+  ],
+  "expected_test_summary": {
+    "total": 4,
+    "failures": 1
+  },
+  "source_sha256": "c841ced91447cdecc82ce8e942f86f7307d391342a85ed78a514d82f60488b5d",
+  "job_completion_is_policy_pass": false,
+  "hardware_access": "NOT_PERFORMED",
+  "browser_test": "NOT_PERFORMED"
+}
