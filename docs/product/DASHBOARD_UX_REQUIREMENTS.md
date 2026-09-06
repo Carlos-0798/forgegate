@@ -2,7 +2,8 @@
 
 ## Status and evidence boundary
 
-- Status: Phase 27 reviewed candidate workflow implemented over the Phase 24
+- Status: Phase 28 reviewed assurance export and activation-recovery follow-up
+  implemented over the Phase 27 candidate workflow, Phase 24
   authenticated shell, Phase 25 optional live status, and Phase 26 assurance
   review; exact Edge zoom is accepted while the remaining environment-specific
   assistive checks retain their individual results
@@ -30,8 +31,9 @@ optional device status, project discovery, candidate discovery and creation,
 reviewed lifecycle transitions, local JSON evidence binding, local JSON policy
 evaluation, attestation generation, candidate detail, audit history,
 bound-evidence inspection, explainable policy results, and portable-assurance
-identity. Assurance export, plugin execution, trust-store administration, and
-file publication remain separate later gates.
+identity and reviewed portable ZIP download. Automatic collection, plugin
+execution, trust-store administration, and server-side file publication remain
+separate later gates.
 
 ## Non-goals
 

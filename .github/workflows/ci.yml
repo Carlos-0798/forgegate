@@ -44,6 +44,7 @@ jobs:
           python -m pip install --disable-pip-version-check
           -c requirements/dev-constraints.txt -e ".[dev]"
       - run: pnpm run check:dashboard
+      - run: pnpm run test:dashboard
       - run: pnpm run build:dashboard
       - run: pnpm run inventory:dashboard
       - run: >-

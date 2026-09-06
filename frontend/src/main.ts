@@ -289,6 +289,7 @@ let selectedProjectId: string | null = null;
 let candidateCursor: string | null = null;
 let candidateCursorHistory: Array<string | null> = [];
 let activationTimer: number | null = null;
+let activationGeneration = 0;
 let sessionExpiryTimer: number | null = null;
 let liveStatusTimer: number | null = null;
 let liveStatusGeneration = 0;
@@ -464,6 +465,7 @@ function saveLocalDownload(download: AssuranceDownload): void {
 function clearActivationTimer(): void {
   if (activationTimer !== null) window.clearTimeout(activationTimer);
   activationTimer = null;
+  activationGeneration += 1;
 }
 
 function clearSessionExpiryTimer(): void {
@@ -739,6 +741,7 @@ function renderActivation(notice?: string): void {
 
 async function startActivation(card: HTMLElement): Promise<void> {
   clearActivationTimer();
+  const generation = activationGeneration;
   const actions = card.querySelector<HTMLElement>(".activation-actions");
   if (actions === null) return;
   actions.replaceChildren(el("p", "muted", "Creating a one-time browser-bound request…"));
@@ -747,6 +750,9 @@ async function startActivation(card: HTMLElement): Promise<void> {
       method: "POST",
       body: "{}"
     });
+    if (generation !== activationGeneration) return;
+    const notice = card.querySelector<HTMLElement>(".session-notice");
+    if (notice !== null) notice.textContent = "A new one-time activation is pending. Use the code shown below.";
     const panel = el("section", "activation-code-panel");
     panel.setAttribute("aria-live", "polite");
     panel.append(
@@ -757,23 +763,44 @@ async function startActivation(card: HTMLElement): Promise<void> {
     const command = el(
       "code",
       "command",
-      `forgegate dashboard-activate ${activation.activation_code} --identity IDENTITY.json --private-key KEY.pem --role ROLE --project PROJECT_ID`
+      `forgegate dashboard-activate ${activation.activation_code} --server ${window.location.origin} --identity IDENTITY.json --private-key KEY.pem --role ROLE --project PROJECT_ID`
     );
     panel.append(
       command,
-      el("p", "muted", "Replace ROLE with producer or operator. The terminal will display and authorize the exact role and project scopes.")
+      el("p", "muted", "Run from your ForgeGate environment. Replace IDENTITY.json and KEY.pem with your local files, ROLE with producer or operator, and PROJECT_ID with an authorized project. Keep --server exactly as shown; never paste a private key into this page.")
     );
     actions.replaceChildren(panel);
     pollActivation(Math.max(activation.poll_after_seconds, 1));
   } catch (error) {
+    if (generation !== activationGeneration) return;
     showProblem(actions, error, "Retry activation. If it repeats, restart the local Dashboard service.");
+    addActivationRetry(actions, () => void startActivation(card), error);
+  }
+}
+
+function addActivationRetry(container: HTMLElement, retry: () => void, error: unknown): void {
+  const action = button("Retry local activation", "button primary");
+  action.addEventListener("click", retry);
+  container.append(action);
+  if (error instanceof RequestProblem && error.status === 429 && error.retryAfterSeconds !== null) {
+    action.disabled = true;
+    action.textContent = `Retry after ${error.retryAfterSeconds}s`;
+    // Do not automatically send a new request when the rate window ends.
+    const generation = activationGeneration;
+    activationTimer = window.setTimeout(() => {
+      if (generation !== activationGeneration) return;
+      action.disabled = false;
+      action.textContent = "Retry local activation";
+    }, Math.min(error.retryAfterSeconds * 1000, 2_147_483_647));
   }
 }
 
 function pollActivation(delaySeconds: number): void {
+  const generation = activationGeneration;
   activationTimer = window.setTimeout(async () => {
     try {
       const state = await api<ActivationStatus>("/app/api/activation");
+      if (generation !== activationGeneration) return;
       if (state.status === "AUTHENTICATED" && state.principal !== null && state.csrf_token !== null) {
         clearActivationTimer();
         session = { status: "AUTHENTICATED", principal: state.principal, csrf_token: state.csrf_token };
@@ -783,13 +810,15 @@ function pollActivation(delaySeconds: number): void {
       }
       pollActivation(delaySeconds);
     } catch (error) {
+      if (generation !== activationGeneration) return;
       clearActivationTimer();
       if (error instanceof RequestProblem && [401, 404, 410].includes(error.status)) {
-        renderActivation();
+        renderActivation("The one-time activation expired or is no longer available. Start a new activation and use its new code.");
         return;
       }
       const main = page("Activation interrupted", "LOCAL CONTROL PLANE", "The browser could not complete the local activation handshake.");
       showProblem(main, error, "Start a new activation request.");
+      addActivationRetry(main, () => renderActivation(), error);
       shell(main);
     }
   }, delaySeconds * 1000);

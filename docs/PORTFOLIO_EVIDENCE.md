@@ -30,6 +30,22 @@ and the [owner-assisted unplug/replug follow-up](../reports/MSP430_MANUAL_UNPLUG
 
 ## 1. Authority and limitations
 
+### Activation reliability follow-up
+
+![ForgeGate activation command including the current local server and port](assets/forgegate-dashboard-activation-server.png)
+
+![ForgeGate real one-time-code expiry with a fresh activation action](assets/forgegate-dashboard-activation-expired.png)
+
+![ForgeGate manual activation retry after a real local-service connection failure](assets/forgegate-dashboard-activation-retry.png)
+
+These unedited in-app-browser captures demonstrate origin-aware CLI approval
+and actual code-expiry recovery. The depicted code was consumed and the session
+ended; no private key, API token, or cookie is shown. Exact hashes, expected and
+actual behavior, host-test boundaries, and the GitHub CI account restriction
+are retained in the [activation follow-up report](../reports/DASHBOARD_ACTIVATION_RECOVERY_2026-09-06.md).
+
+### Authenticated overview
+
 ![ForgeGate Dashboard Overview showing service health, authenticated scope, and explicit evidence limitations](assets/forgegate-dashboard-overview.jpg)
 
 This view demonstrates the authenticated local shell, service/schema status,

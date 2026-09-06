@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Fixed Dashboard activation commands to include the actual loopback origin
+  and port; added manual retry, explicit code-expiry guidance, rate-window
+  waiting without resubmission, and late-response isolation.
+- Added 13 Node host interaction regressions over the production TypeScript,
+  wired into CI separately from Python coverage and real-browser acceptance.
 - Added an operator-reviewed, candidate-bound Dashboard assurance download as
   a deterministic bounded three-file ZIP with no server path or filesystem
   publication surface.

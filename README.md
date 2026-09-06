@@ -165,11 +165,18 @@ an owner-managed trust store and an initialized project database:
 
 # In another terminal, approve the code displayed by the page:
 .\.venv\Scripts\forgegate.exe dashboard-activate FG-ABCDE-FGHJK `
+  --server http://127.0.0.1:8000 `
   --identity work\operator-identity.json `
   --private-key work\operator-private-key.pem `
   --role operator `
   --project sample-api
 ```
+
+Use the fresh code and exact `--server` origin shown by your page. If you start
+the service with `--port 8131`, activation must also target port 8131. Replace
+the identity/key paths, role, and project with your owner-managed values; the
+page never accepts a private key. An expired code requires a new activation.
+Connection/rate failures provide a manual retry action without auto-resubmission.
 
 The browser receives an opaque HttpOnly cookie, never the raw API Bearer token
 or private signing key. The implemented pages cover activation, Overview,

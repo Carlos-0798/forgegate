@@ -1,9 +1,10 @@
 # Project status
 
-- Date: 2026-09-05
+- Date: 2026-09-06
 - Version: 0.1.0a1
 - Stage: Phase 28 operator-reviewed, candidate-bound assurance ZIP export
-  implemented and Edge/offline tested after the Phase 27 workflow and MSP430
+  implemented and Edge/offline tested, with an activation-recovery follow-up,
+  after the Phase 27 workflow and MSP430
   collector; Windows high contrast,
   spoken Narrator output, and a real Remote Desktop run remain environment gates
 - Product maturity: testable Windows Alpha with generic initialization,
@@ -22,6 +23,11 @@
   are synchronized through reviewed pull requests and required CI. The latest
   previously accepted cross-platform run was 33999452478; no public release,
   License, or LinkedIn publication is authorized
+
+The Phase 28 post-merge run 34001577886 passed the Windows/Linux/macOS test and
+package jobs, but its final generic Action job did not start because GitHub
+reported an account payment/spending-limit restriction. The overall run is
+not green. Billing changes require owner action; local acceptance is separate.
 
 ## Implemented
 
@@ -439,6 +445,9 @@ validation.
 
 ## Accepted local checkpoint
 
+- Activation follow-up: 13 production-TypeScript host interaction regressions
+  pass via `pnpm run test:dashboard` on Node 24.19.0, separately from Python
+  coverage; real in-app-browser activation at port 8131 also passes
 - PowerShell environment bootstrap: PASS
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS

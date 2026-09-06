@@ -475,3 +475,14 @@ producer authentication, MSP430 control, or physical measurement validation.
 Phase 28 delivers local artifact download only. It does not add automatic
 collection, source-artifact payload export, producer authentication, trusted
 time, remote publication, deployment approval, or hardware validation.
+
+### Phase 28 follow-up — activation reliability
+
+- [x] Preserve the exact current loopback origin/port in the CLI command.
+- [x] Provide manual recovery for creation/poll failures and code expiry;
+  respect Retry-After without sending another request automatically.
+- [x] Ignore delayed creation/poll responses after the activation screen changes.
+- [x] Run 13 production-TypeScript host regressions and real local-browser
+  activation on port 8131, with screenshot evidence kept separately.
+- [ ] Restore a complete post-merge GitHub CI run after the owner resolves the
+  reported billing/spending restriction; never bypass required checks.
