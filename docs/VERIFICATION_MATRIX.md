@@ -2,6 +2,8 @@
 
 | Capability | Planned evidence | Current status |
 |---|---|---|
+| Coordinated workspace backup/recovery | 48 regressions, exact table readback, committed WAL, cold attestation and independent-process CLI smoke | LOCAL PASS — both writers reserved; running jobs refused; strict member/hash/history checks; restore into a new directory only; no automatic failover or hardware |
+| Snapshot-bound retention planning | active/bound/recent protection, cutoff and timestamp/hash validation | LOCAL PASS — review-only archival candidates, audit/idempotency retained, zero deletion and zero quota reclamation |
 | Durable foreground execution lifecycle | 99 focused Python job cases, 127 frontend host cases, actual isolated in-app-browser execution, schema drift and cross-process smoke | LOCAL PASS — v2 record owner identity, bounded lease renewal, cooperative cancellation checkpoints, v1/v2-to-v3 migration and restart non-adoption; no worker, mid-parser preemption, GitHub or hardware claim |
 | Dashboard job-result evidence handoff | 21 additional Python and 23 frontend regressions; isolated actual Edge plus independent CLI/store readback | LOCAL PASS — exact canonical download and separately confirmed immutable binding with job/result/assembly/candidate identity checks; candidate remains COLLECTING and policy is not evaluated; synthetic only, no hardware claim |
 | Dashboard job submission/execution | 23 additional Python and 14 frontend regressions; isolated real Edge | LOCAL PASS — reviewed exact-byte single/combined submission, separate parsing, warning consent, reject-before-queue; no worker, binding or hardware claim |
@@ -20,7 +22,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — forty-four document plus three artifact schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — forty-six document plus three artifact schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Analog Validation result Schema mirror | committed upstream-consumer contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
@@ -171,7 +173,7 @@
 | Combined browser collection | strict contract, exact counts, no-write preview, all-or-nothing assembly and separate binding | PASS — host tests; actual Edge Cobertura/LCOV PASS and low-coverage FAIL separately retained |
 | Durable local collection jobs | 37 focused core host cases; independent-process queued read/replay/run/result/cancel plus owner/renewal bounds; clean-wheel smoke | PASS — synthetic local inputs; actual browser/CLI readback is retained separately; no device evidence |
 | Job interruption/cancellation | concurrent claim, stale revision, revoked/expired/renewed lease, explicit recovery, cooperative checkpoints and late-result discard | PASS — deterministic host tests; cancellation stops later bounded stages and publication, not a parser already inside one stage; no power-loss certification |
-| Pending report retention | transactionally clear terminal input/lease, size/count quotas, sanitized public records | PASS — logical retention boundaries only; no encryption, secure erase, coordinated backup or purge service |
+| Pending report retention | transactionally clear terminal input/lease, size/count quotas, sanitized public records | PASS — logical release; Phase 39 coordinated backup/retention plans preserve queued input; no encryption, secure erase or purge service |
 | Authenticated Dashboard task center | project scope, configured private store, reviewed writes, browser acceptance | BOUNDED LOCAL PASS — list/detail/submit/foreground parse/cancel/recover plus visible process-lifetime owner/renewals; no scheduler or distributed worker; local file authority is not HTTP authority |
 | Browser numeric round trip | original assembly JSON; tamper/fingerprint revalidation | PASS — reproduced 422 for 50.0-to-50 conversion, corrected exact-text binding in real Edge |
 | Combined LCOV/negative browser matrix | direct UI runs | PASS — 13 scoped actual-Edge cases in Phase 33 browser follow-up; not exhaustive OS, concurrency or HTTP-injection certification |
@@ -184,7 +186,7 @@
 | Structured-input pre-materialization bounds | JSON token, XML event, and YAML event adversarial tests | PASS — byte plus node/element/depth limits; duplicate YAML keys rejected |
 | Plugin output pre-materialization bounds | trusted in-container exporter plus bounded host archive inspection | PASS — clean-wheel live dual snapshots; no archive extraction |
 | Development dependency advisory audit | constrained pip/pytest bootstrap plus `pip-audit` | PASS — no known advisory in resolved registry dependencies; editable local project excluded |
-| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.46% exceeds exact 95.00% threshold |
+| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.57% exceeds exact 95.00% threshold |
 
 See `reports/INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md` for the latest
 expected-versus-actual CLI/API check and

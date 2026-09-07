@@ -1,5 +1,9 @@
 # Candidate store backup and validation
 
+For candidate **and** report-job databases together, use the Phase 39
+[workspace backup and recovery commands](WORKSPACE_RECOVERY.md). The commands below
+retain their original candidate-only scope.
+
 Phase 32 adds two local owner-operated CLI commands, independent of the browser,
 AFE and MSP430. No HTTP endpoint, background job, migration or restore is added.
 Only current schema **v9** stores are supported. Older stores still require the

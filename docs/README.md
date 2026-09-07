@@ -12,7 +12,9 @@ analysis, compatibility contracts, and historical acceptance evidence.
 5. [Portfolio evidence gallery](PORTFOLIO_EVIDENCE.md) — retained screenshots, exact fixture data, hashes, and claim boundaries
 6. [Security policy](../SECURITY.md) — supported scope and responsible reporting
 
-Latest local engineering slice: [durable report-job lifecycle](COLLECTION_JOBS.md)
+Latest local engineering slice: [coordinated workspace backup and recovery](WORKSPACE_RECOVERY.md),
+with paired snapshots, independent verification, restored copies and retention plans.
+Previous slice: [durable report-job lifecycle](COLLECTION_JOBS.md)
 with visible execution ownership, bounded lease renewal and cooperative stop
 checkpoints, with [Phase 38 browser and host evidence](../reports/PHASE_38_JOB_EXECUTION_LIFECYCLE_ACCEPTANCE.md).
 Phase 37 exact export/binding browser evidence remains separately retained in the
@@ -44,6 +46,7 @@ Phase 37 exact export/binding browser evidence remains separately retained in th
 
 ## Persistence, API, and audit
 
+- [Coordinated workspace backup, recovery and retention planning](WORKSPACE_RECOVERY.md)
 - [Candidate store backup and validation](STORE_BACKUP_OPERATIONS.md)
 - [SQLite candidate store](architecture/SQLITE_CANDIDATE_STORE.md)
 - [Project registry and audit query](architecture/PROJECT_REGISTRY_AND_AUDIT_QUERY.md)

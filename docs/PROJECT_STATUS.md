@@ -2,7 +2,15 @@
 
 - Date: 2026-09-07
 - Version: 0.1.0a1
-- Stage: Phase 38 durable foreground job execution lifecycle implemented:
+- Stage: Phase 39 coordinated workspace backup and recovery implemented:
+  candidate v9 and job v3 snapshots are taken under simultaneous SQLite write
+  reservations and published as one bounded, hash-checked archive. Offline
+  verification checks job histories and their exact historical candidate links.
+  Restore requires an earlier receipt hash and a new directory, with a final
+  readiness marker. Retention planning protects active/bound/recent jobs and
+  performs no deletion, automatic execution or live workspace replacement.
+  See [operations and recovery acceptance](WORKSPACE_RECOVERY.md).
+  Phase 38 durable foreground job execution lifecycle remains implemented:
   `forgegate.collection-job.v2` records retain a non-credential execution owner
   and bounded lease-renewal count; parsing renews/checks ownership before each
   report and before assembly, so durable cancellation prevents later stages and
@@ -30,8 +38,8 @@
   Phase 34 durable local report job engine and CLI implemented, with
   separate v1 storage, explicit execution/cancellation, expired-lease recovery,
   bounded pending input retention and independent result export. Phase 34 itself
-  added no Dashboard UI; automatic workers, candidate mutation by jobs and
-  coordinated job backup remain absent.
+  added no Dashboard UI, automatic workers, candidate mutation by jobs or
+  coordinated backup; later phases add only their separately described surfaces.
   Phase 33 combined JUnit + Cobertura/LCOV browser preview, original-JSON
   binding and generic policy workflow implemented locally. Real Edge combined
   Cobertura/LCOV PASS, low-coverage FAIL and the scoped negative-input matrix
@@ -68,11 +76,14 @@ package jobs, but its final generic Action job did not start because GitHub
 reported an account payment/spending-limit restriction. The overall run is
 not green. Billing changes require owner action; local acceptance is separate.
 
-Per the owner's current instruction, Phases 32–38 work is local-only. No GitHub
+Per the owner's current instruction, Phases 32–39 work is local-only. No GitHub
 inspection, push, PR creation or merge was performed for this checkpoint.
 
 ## Implemented
 
+- coordinated candidate/job snapshots, strict offline verification, restore to
+  a new directory and non-destructive job-retention planning; bounded current
+  schemas, historical association checks, no-overwrite and partial-failure handling;
 - durable foreground job execution control with per-process Dashboard owner ID,
   private-token lease renewal at bounded parser checkpoints, cooperative durable
   cancellation, append-only renewal history and fail-closed restart ownership;
@@ -81,7 +92,7 @@ inspection, push, PR creation or merge was performed for this checkpoint.
 - opt-in operator-only Dashboard jobs with scope filtering, paged list/detail,
   reviewed preview/submission/execution, exact result inspection,
   reviewed cancellation/recovery and event attribution;
-- durable local CLI collection jobs in a separate v2 SQLite file, with bounded
+- durable local CLI collection jobs in a separate v3 SQLite file, with bounded
   pending input, idempotent replay, explicit execution/cancellation, manual
   expired-lease recovery and result export; no automatic worker;
 - current-schema SQLite backup through a pinned read transaction and Online
@@ -514,6 +525,13 @@ remaining OS assistive checks are separate.
 
 ## Accepted local checkpoint
 
+- Phase 39: 48 workspace regressions pass, with 100% branch-aware coverage across
+  the new backup and CLI modules (323 statements, 36 branches). Paired locking,
+  committed WAL, exact table/history preservation, cold terminal attestation,
+  queued execution after recovery, malformed archives and partial recovery are
+  covered. Independent-process CLI smoke retains three task states/eight events
+  and the exact four-test/one-failure result. Retention planning changes no records.
+  See [Phase 39 evidence](../reports/PHASE_39_WORKSPACE_RECOVERY_ACCEPTANCE.md).
 - Phase 38: 99 focused Python job cases and 127 frontend host cases cover v2
   record validation, exact v1/v2-to-v3 migration, private-token exclusion,
   visible owner identity, lease renewal, cooperative cancellation ordering,
@@ -575,8 +593,8 @@ remaining OS assistive checks are separate.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 1101 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.46% across 11,466 statements and 3,076 branches
+- pytest: 1149 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.57% across 11,794 statements and 3,112 branches
 - MSP430 live-status focus: 17 passed across parser, state classification,
   staleness, invalid/recovery, counters, dependency/I/O failure, and input-only
   monitor lifecycle
@@ -655,7 +673,7 @@ remaining OS assistive checks are separate.
 - committed JSON Schema, direct API OpenAPI, and Dashboard BFF OpenAPI drift
   checks: PASS
 - project/policy/candidate/transition example documents: VALID
-- forty-four canonical versioned document Schemas plus Benchmark, Analog
+- forty-six canonical versioned document Schemas plus Benchmark, Analog
   Validation, and MSP430 validation-report artifact Schemas: drift-checked and
   parsed
 - complete sdist manifest and ForgeGate/sample-plugin wheel builds: PASS

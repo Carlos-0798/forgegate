@@ -17,6 +17,10 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_SDIST_PATHS = (
+    "tools/workspace_backups_smoke.py",
+    "tests/test_workspace_backups.py",
+    "docs/WORKSPACE_RECOVERY.md",
+    "schemas/forgegate.workspace-backup.v1.schema.json",
     "reports/PHASE_37_JOB_RESULT_HANDOFF_ACCEPTANCE.md",
     "reports/PHASE_37_JOB_RESULT_HANDOFF_EVIDENCE.json",
     "tests/test_dashboard_job_result_handoff.py",
@@ -1529,6 +1533,7 @@ def main(
         )
         run([str(python), str(REPOSITORY_ROOT / "tools/dashboard_runtime_smoke.py")], cwd=root)
         run([str(python), str(REPOSITORY_ROOT / "tools/collection_jobs_smoke.py")], cwd=root)
+        run([str(python), str(REPOSITORY_ROOT / "tools/workspace_backups_smoke.py")], cwd=root)
         run([str(python), "-m", "forgegate", "doctor"], cwd=root)
         run(
             [

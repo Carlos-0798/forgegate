@@ -115,6 +115,7 @@ from forgegate.policy.models import (
     ProfileAuthorizedPolicyEvaluation,
 )
 from forgegate.schema_registry import ARTIFACT_SCHEMAS, SCHEMAS, schema_filename
+from forgegate.workspace_cli import workspace_app
 
 app = typer.Typer(
     name="forgegate",
@@ -127,6 +128,7 @@ audit_app = typer.Typer(help="Query durable append-only audit events.")
 identity_app = typer.Typer(help="Derive public identities and author local trust stores.")
 plugins_app = typer.Typer(help="Inspect installed plugin metadata without importing plugin code.")
 app.add_typer(candidate_app, name="candidate")
+app.add_typer(workspace_app, name="workspace")
 app.add_typer(project_app, name="project")
 app.add_typer(audit_app, name="audit")
 app.add_typer(identity_app, name="identity")

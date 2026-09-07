@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Added coordinated candidate v9/job v3 backup, strict offline archive verification,
+  restored copies in new directories and snapshot-bound retention planning.
+  Both database writers are reserved during copying; running jobs block backup.
+  History/association checks, required restore hash, final readiness marker and
+  no-overwrite behavior preserve existing workspaces. No automatic purge, worker,
+  hardware operation or service restart is added.
 - Added `forgegate.collection-job.v2` and explicit job-store v3 migration with
   byte-preserved v1 history, visible non-credential execution ownership, bounded
   append-only lease renewals, restart non-adoption and cooperative cancellation

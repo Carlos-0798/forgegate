@@ -1,0 +1,210 @@
+"""Installed-CLI recovery rehearsal with synthetic data and exact expected results."""
+
+from __future__ import annotations
+
+import base64
+import hashlib
+import json
+import os
+import sqlite3
+import subprocess
+import sys
+import tempfile
+from contextlib import closing
+from datetime import UTC, datetime, timedelta
+from pathlib import Path
+from typing import Any
+
+from forgegate.application import (
+    CandidateAdvanceCommand,
+    CandidateApplication,
+    CandidateCreateCommand,
+    ProjectRegisterCommand,
+)
+from forgegate.collection_jobs import CollectionJobRequest, CollectionJobStore
+from forgegate.config import load_config
+from forgegate.domain.enums import CandidateStatus
+from forgegate.domain.models import ProjectConfig
+
+ROOT = Path(__file__).resolve().parents[1]
+XML = b'<testsuite tests="4" failures="1" errors="0" skipped="0" time="0.5"/>'
+
+
+def invoke(root: Path, *args: str, expected: int = 0) -> dict[str, Any]:
+    env = os.environ.copy()
+    env.pop("PYTHONPATH", None)
+    completed = subprocess.run(
+        [sys.executable, "-m", "forgegate", *args],
+        cwd=root,
+        env=env,
+        capture_output=True,
+        text=True,
+        timeout=45,
+        check=False,
+    )
+    if completed.returncode != expected:
+        raise RuntimeError("workspace smoke failed; private command/output not echoed")
+    if expected:
+        assert "WORKSPACE_DESTINATION_EXISTS" in completed.stderr
+        return {"expected_rejection": True}
+    result: dict[str, Any] = json.loads(completed.stdout)
+    return result
+
+
+def rows(path: Path) -> dict[str, list[Any]]:
+    with closing(sqlite3.connect(path)) as con:
+        return {
+            str(r[0]): con.execute(f'SELECT * FROM "{r[0]}" ORDER BY 1').fetchall()
+            for r in con.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        }
+
+
+def main() -> int:
+    with tempfile.TemporaryDirectory(prefix="forgegate-workspace-smoke-") as temp:
+        root = Path(temp)
+        database, jp = root / "candidates.db", root / "jobs.db"
+        application = CandidateApplication.for_database(database)
+        application.initialize()
+        now = datetime.now(UTC)
+        config = load_config(ROOT / "examples/dashboard-multi-report/forgegate.yaml")
+        assert isinstance(config, ProjectConfig)
+        application.register_project(
+            ProjectRegisterCommand(config=config, registered_at=now),
+            idempotency_key="smoke:project",
+        )
+        candidate = application.create_candidate(
+            CandidateCreateCommand(
+                project_id=config.project.id,
+                version="workspace-smoke",
+                commit_sha="a" * 40,
+                release_track="pull-request",
+                created_at=now,
+            ),
+            idempotency_key="smoke:candidate",
+        )
+        application.advance_candidate(
+            candidate.candidate_id,
+            CandidateAdvanceCommand(
+                to_status=CandidateStatus.COLLECTING, expected_revision=0, occurred_at=now
+            ),
+            idempotency_key="smoke:collecting",
+        )
+        request = CollectionJobRequest.model_validate(
+            {
+                "candidate_id": candidate.candidate_id,
+                "collection": {
+                    "expected_revision": 1,
+                    "reported_commit": "a" * 40,
+                    "reports": [
+                        {
+                            "format": "junit",
+                            "content_base64": base64.b64encode(XML).decode(),
+                            "source_tool": "synthetic-workspace-smoke",
+                            "source_version": "1",
+                            "collected_at": now,
+                        }
+                    ],
+                },
+            }
+        )
+        store = CollectionJobStore(jp)
+        store.initialize()
+        done = store.submit(request, application, key="smoke:complete")
+        store.run(done.job_id, 0, application)
+        queued = store.submit(request, application, key="smoke:queued")
+        cancelled = store.submit(request, application, key="smoke:cancel")
+        store.cancel(cancelled.job_id, 0)
+        before = (rows(database), rows(jp))
+        backup, restored = root / "snapshot.zip", root / "recovered workspace"
+        receipt = invoke(root, "workspace", "backup", str(database), str(jp), str(backup))
+        digest = receipt["sha256"]
+        assert hashlib.sha256(backup.read_bytes()).hexdigest() == digest
+        verified = invoke(root, "workspace", "verify-backup", str(backup), "--sha256", digest)
+        assert verified["expected_hash_matched"]
+        assert verified["job_states"] == {"SUCCEEDED": 1, "QUEUED": 1, "CANCELLED": 1}
+        assert verified["job_event_count"] == 8
+        recovery = invoke(
+            root, "workspace", "restore", str(backup), str(restored), "--sha256", digest
+        )
+        assert recovery["status"] == "WORKSPACE_RESTORED_COPY"
+        assert json.loads((restored / "RESTORED.json").read_text()) == recovery
+        assert (rows(restored / "candidates.db"), rows(restored / "jobs.db")) == before
+        after = (datetime.now(UTC) + timedelta(days=1)).isoformat()
+        plan = invoke(
+            root,
+            "workspace",
+            "retention-plan",
+            str(backup),
+            "--sha256",
+            digest,
+            "--as-of",
+            after,
+            "--terminal-before",
+            after,
+        )
+        assert sorted(r["action"] for r in plan["jobs"]) == [
+            "RETAIN",
+            "REVIEW_ARCHIVAL",
+            "REVIEW_ARCHIVAL",
+        ]
+        assert plan["deletion_performed"] is False and plan["capacity_reclaimed"] == 0
+        invoke(root, "workspace", "backup", str(database), str(jp), str(backup), expected=3)
+        invoke(
+            root, "workspace", "restore", str(backup), str(restored), "--sha256", digest, expected=3
+        )
+        completed = invoke(
+            root,
+            "jobs",
+            "run",
+            str(restored / "jobs.db"),
+            queued.job_id,
+            "--database",
+            str(restored / "candidates.db"),
+            "--revision",
+            "0",
+        )
+        assert completed["state"] == "SUCCEEDED" and completed["revision"] == 4
+        result = invoke(root, "jobs", "result", str(restored / "jobs.db"), queued.job_id)
+        summary = result["collections"][0]["evidence"][0]["value"]
+        assert summary == {
+            "total": 4,
+            "passed": 3,
+            "failures": 1,
+            "errors": 0,
+            "skipped": 0,
+            "duration_seconds": 0.5,
+        }
+        assert result["collections"][0]["evidence"][0]["status"] == "failed"
+        assert result["collections"][0]["artifacts"][0]["sha256"] == hashlib.sha256(XML).hexdigest()
+        assert (rows(database), rows(jp)) == before
+        receipt = {
+            "result": "PASS",
+            "verification": "HOST_TEST_SYNTHETIC",
+            "checks": [
+                "cross_process_backup_verify_restore",
+                "exact_all_table_readback",
+                "three_job_states_eight_events",
+                "required_archive_hash",
+                "readiness_marker",
+                "backup_and_restore_no_overwrite",
+                "retention_plan_two_review_one_retain_no_delete",
+                "restored_queued_job_foreground_execution",
+                "expected_test_summary",
+                "original_workspace_unchanged",
+                "temporary_cleanup",
+            ],
+            "backup_sha256": digest,
+            "backup_size_bytes": receipt["size_bytes"],
+            "manifest_fingerprint": receipt["manifest_fingerprint"],
+            "expected_test_summary": summary,
+            "source_sha256": hashlib.sha256(XML).hexdigest(),
+            "hardware_access": "NOT_PERFORMED",
+            "browser_test": "NOT_PERFORMED",
+            "production_recovery": "NOT_PERFORMED",
+        }
+    print(json.dumps(receipt, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

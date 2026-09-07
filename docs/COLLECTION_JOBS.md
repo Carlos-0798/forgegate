@@ -3,6 +3,7 @@
 Submission/execution use an explicit local task lifecycle, not a worker service,
 scheduler or production queue. Phases 35–36 add an opt-in authenticated
 [Dashboard management view](DASHBOARD_JOBS.md) with reviewed submission/parsing.
+Phase 37 adds exact result export and separately reviewed binding through the
 existing candidate-evidence binding service. Phase 38 adds a durable execution
 owner identifier, bounded lease-renewal events and cooperative cancellation
 checkpoints before any automatic worker. It adds no device access, candidate
@@ -161,9 +162,10 @@ and result commands exit 0, operational/input failures 3, CLI usage errors 2.
   result and 32 MiB aggregate retained result JSON. Metadata/events are retained;
   no purge, rotation or automatic archival exists. These are logical quotas,
   not a physical database-file-size ceiling.
-- Candidate `store backup` does not include this separate job file. No coordinated
-  job backup/restore is delivered. Do not copy a live SQLite file as a certified
-  backup, publish it, or archive active jobs merely to evade the quota.
+- Candidate-only `backup-store` does not include this separate job file. Phase 39
+  [workspace backup/recovery](WORKSPACE_RECOVERY.md) snapshots both stores together,
+  rejects RUNNING jobs and retains queued input. Retention planning does not purge
+  jobs or reclaim quota; never archive active work merely to evade the quota.
 
 Stable errors include `JOB_KEY_CONFLICT`, `JOB_STATE_CONFLICT`,
 `JOB_CANDIDATE_CONFLICT`, `JOB_CANDIDATE_ALREADY_BOUND`, `JOB_LEASE_LOST`,
@@ -173,8 +175,9 @@ mutations. Exceptions in execution persist only `JOB_EXECUTION_FAILED`.
 
 ## Deferred gates
 
-Automatic worker startup/shutdown, scheduled execution, coordinated job/candidate
-backup and private artifact lifecycle/retention UI remain separate future work.
+Automatic worker startup/shutdown, scheduled execution, live archival/purge and
+private artifact lifecycle/retention UI remain separate future work. Phase 39
+provides coordinated backup, restored copies and non-destructive retention plans.
 Phase 38 implements cooperative checkpoints only for the existing explicit
 foreground parser; it is not a general task cancellation framework. Phases 35–37
 browser acceptance is documented separately. Existing

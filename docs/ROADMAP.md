@@ -660,6 +660,19 @@ Phase 38 is still explicit foreground parsing. It adds no scheduler, daemon,
 automatic worker, arbitrary parser termination, candidate transition, policy
 decision, GitHub operation or hardware access.
 
-Next engineering slice: coordinated job/candidate backup plus explicit retention
-planning before any background worker. Native assistive-technology gates remain
-separate; completed lifecycle work makes no production or hardware claim.
+## Phase 39 — coordinated workspace recovery
+
+- [x] Reserve both database writers and snapshot candidate v9/job v3 as one
+  validated archive; reject running jobs and preserve queued input/history.
+- [x] Freeze a bounded manifest with member hashes and explicit data boundaries;
+  verify offline copies and exact historical job/candidate associations.
+- [x] Restore to a new directory with required expected hash, exact copied bytes
+  and a final readiness marker; preserve existing workspaces and launch settings.
+- [x] Generate cutoff-based retention plans that protect active, bound and recent
+  jobs, retain audit/replay records and perform no deletion or quota reclamation.
+- [x] Test locking, committed WAL, corruption, incomplete recovery, cold domain
+  reads and independent CLI execution from a restored synthetic workspace.
+
+Next engineering slice: reviewed job archival with preserved audit/idempotency
+semantics and live revision checks, before automatic workers. Native assistive
+technology remains a separate acceptance gate. GitHub synchronization is paused.

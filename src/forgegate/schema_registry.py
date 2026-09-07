@@ -47,8 +47,10 @@ from forgegate.projects import (
     RegisteredProjectPage,
 )
 from forgegate.security_events import ApiSecurityEvent, ApiSecurityEventPage
+from forgegate.workspace_backups import WorkspaceBackupManifest
 
 SCHEMAS: dict[str, type[BaseModel]] = {
+    "forgegate.workspace-backup.v1": WorkspaceBackupManifest,
     "forgegate.collection-job-request.v1": CollectionJobRequest,
     "forgegate.collection-job.v1": LegacyCollectionJobRecord,
     "forgegate.collection-job.v2": CollectionJobRecord,

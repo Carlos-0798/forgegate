@@ -412,34 +412,41 @@ class CollectionJobStore:
 
     def review(self, job_id: str, *, project_id: str) -> CollectionJobReview:
         with self._transaction() as con:
-            record, row = self._read(con, job_id)
-            if record.project_id != project_id:
-                raise JobError("JOB_NOT_FOUND")
-            try:
-                events: list[CollectionJobEvent] = []
-                for event in con.execute(
-                    "SELECT * FROM events WHERE job_id=? ORDER BY revision", (job_id,)
-                ):
-                    snapshot = _record(event["record"])
-                    _require(snapshot.job_id == job_id and snapshot.project_id == project_id)
-                    _require(
-                        snapshot.revision == len(events) and _json(snapshot) == event["record"]
-                    )
-                    actor_raw = dict(event).get("actor")
-                    actor = None if actor_raw is None else AuditActor.model_validate_json(actor_raw)
-                    if actor is not None:
-                        _require(actor.role == "operator" and _json(actor) == actor_raw)
-                    events.append(CollectionJobEvent(record=snapshot, actor=actor))
-                _require(len(events) == record.revision + 1 and events[-1].record == record)
-                return CollectionJobReview(
-                    record=record,
-                    events=events,
-                    result=None
-                    if row["result"] is None
-                    else CollectionJobResult.model_validate_json(row["result"]),
+            return self.review_snapshot(con, job_id, project_id=project_id)
+
+    def review_snapshot(
+        self, con: sqlite3.Connection, job_id: str, *, project_id: str
+    ) -> CollectionJobReview:
+        """Validate history on a caller-owned pinned transaction, without opening a writer."""
+        record, row = self._read(con, job_id)
+        if record.project_id != project_id:
+            raise JobError("JOB_NOT_FOUND")
+        try:
+            events: list[CollectionJobEvent] = []
+            for event in con.execute(
+                "SELECT * FROM events WHERE job_id=? ORDER BY revision", (job_id,)
+            ):
+                snapshot = _record(event["record"])
+                _require(snapshot.job_id == job_id and snapshot.project_id == project_id)
+                _require(
+                    snapshot.revision == len(events) == event["revision"]
+                    and _json(snapshot) == event["record"]
                 )
-            except ValueError as exc:
-                raise JobError("JOB_STORE_CORRUPT") from exc
+                actor_raw = dict(event).get("actor")
+                actor = None if actor_raw is None else AuditActor.model_validate_json(actor_raw)
+                if actor is not None:
+                    _require(actor.role == "operator" and _json(actor) == actor_raw)
+                events.append(CollectionJobEvent(record=snapshot, actor=actor))
+            _require(len(events) == record.revision + 1 and events[-1].record == record)
+            return CollectionJobReview(
+                record=record,
+                events=events,
+                result=None
+                if row["result"] is None
+                else CollectionJobResult.model_validate_json(row["result"]),
+            )
+        except ValueError as exc:
+            raise JobError("JOB_STORE_CORRUPT") from exc
 
     def list_jobs(self, *, after: str = "", limit: int = 25) -> list[CollectionJobRecordLike]:
         if not 1 <= limit <= 100:

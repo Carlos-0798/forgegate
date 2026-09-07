@@ -27,6 +27,9 @@ The current checkpoint demonstrates:
   with [startup and recovery guidance](docs/WINDOWS_DASHBOARD_OPERATIONS.md);
 - consistent candidate-store snapshots and offline backup validation with
   [no-overwrite and private-data boundaries](docs/STORE_BACKUP_OPERATIONS.md);
+- [coordinated candidate/job backup and recovery](docs/WORKSPACE_RECOVERY.md),
+  including exact historical association checks, restore to a new directory,
+  and non-destructive retention plans;
 - [durable local report jobs](docs/COLLECTION_JOBS.md) with idempotent submission,
   explicit execution/cancellation, expired-lease recovery and bounded pending
   input retention; v2 records expose non-credential execution ownership and
@@ -95,12 +98,13 @@ never converted into candidate evidence.
 
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 1101 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
-| Branch-aware coverage | 95.46% across 11,466 statements and 3,076 branches | Local host test |
-| Static quality | Ruff, formatting, and strict mypy passed across 102 source/tool files | Local host test |
+| Full Python suite | 1149 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
+| Branch-aware coverage | 95.57% across 11,794 statements and 3,112 branches | Local host test |
+| Static quality | Ruff, formatting, and strict mypy passed across 105 source/tool files | Local host test |
+| Coordinated workspace recovery | 48 focused cases; backup/CLI modules 100% branch-aware coverage; paired snapshots, restored-copy execution and retention planning | Local synthetic test; no live replacement, automatic purge, encryption or power-loss certification |
 | Durable local report jobs | 99 focused Python cases plus actual synthetic browser execution; CLI lifecycle, v1/v2-to-v3 store migration, cooperative cancellation/renewal, exact browser export and reviewed binding | Local synthetic test; no automatic worker, mid-parser preemption, candidate transition, policy decision or hardware |
 | Candidate-store backup | 27 focused cases; backup module 100% branch-aware coverage; installed CLI round trip passes | Local host test; no automatic restore, encryption or blanket domain validation |
-| Contracts | 44 document and 3 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI (27 paths, 29 operations) passed drift checks | Local host test |
+| Contracts | 46 document and 3 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI (27 paths, 29 operations) passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
 | Dashboard automation | 127 TypeScript host interaction tests passed, including 54 job-management/submission/handoff cases | Local host test; [Phase 37 actual Edge checks](reports/PHASE_37_JOB_RESULT_HANDOFF_ACCEPTANCE.md) separately verify exact download, reviewed binding and readback; not exhaustive browser/OS certification |
@@ -363,8 +367,8 @@ The next maturity gates are:
 
 1. complete Windows high-contrast, spoken Narrator-output, and real Remote
    Desktop evidence without claiming full accessibility certification;
-2. expose durable local jobs through separately authorized, project-scoped
-   Dashboard workflows and browser acceptance before adding automatic workers;
+2. add reviewed archival/quota reclamation with durable audit and idempotency
+   preservation, building on paired backup/recovery before automatic workers;
 3. align future MSP430 report revisions through the frozen artifact contract
    while keeping live UART status separate from evidence;
 4. establish publisher provenance and broader hostile-plugin compatibility;
