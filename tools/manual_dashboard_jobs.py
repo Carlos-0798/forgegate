@@ -18,6 +18,7 @@ from forgegate.application import (
     CandidateCreateCommand,
     ProjectRegisterCommand,
 )
+from forgegate.canonical import sha256_fingerprint
 from forgegate.collection_jobs import CollectionJobRequest, CollectionJobStore
 from forgegate.config import load_config
 from forgegate.domain.enums import CandidateStatus
@@ -28,6 +29,8 @@ from forgegate.identity import (
     create_signing_identity,
     create_trust_store,
 )
+from forgegate.job_archival import archive_job, plan_job_archive
+from forgegate.workspace_backups import backup_workspace
 
 
 def main() -> None:
@@ -35,7 +38,13 @@ def main() -> None:
     parser.add_argument(
         "output", type=Path, help="New private directory; contains an ephemeral test key"
     )
-    output = parser.parse_args().output
+    parser.add_argument(
+        "--archive-complete",
+        action="store_true",
+        help="Prepare an archived result backed by a private synthetic snapshot.",
+    )
+    args = parser.parse_args()
+    output = args.output
     output.mkdir(parents=True, exist_ok=False)
     now = datetime.now(UTC)
     application = CandidateApplication.for_database(output / "candidates.db")
@@ -109,6 +118,33 @@ def main() -> None:
         if name == "queued":
             for index in range(21):
                 store.submit(request, application, key=f"padding:{index}")
+    if args.archive_complete:
+        for name in ("running", "expired"):
+            current = store.show(manifest[name])
+            store.cancel(current.job_id, current.revision)
+        backup = output / "original-results.zip"
+        metadata = backup_workspace(output / "candidates.db", store.path, backup)
+        store.enable_archiving()
+        complete = store.show(manifest["complete"])
+        plan = plan_job_archive(
+            output / "candidates.db",
+            store.path,
+            backup,
+            complete.job_id,
+            expected_sha256=metadata["sha256"],
+            expected_revision=complete.revision,
+            terminal_before=datetime.now(UTC),
+        )
+        receipt = archive_job(
+            output / "candidates.db",
+            store.path,
+            backup,
+            plan,
+            confirm_plan=sha256_fingerprint(plan.model_dump(mode="json")),
+        )
+        (output / "archive-receipt.json").write_text(
+            receipt.model_dump_json(indent=2), encoding="utf-8"
+        )
     private_key = Ed25519PrivateKey.generate()
     identity = create_signing_identity(
         display_name="Synthetic job operator",

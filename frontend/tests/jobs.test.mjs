@@ -14,6 +14,20 @@ async function start(hash = "#/jobs?project_id=sample-api", role="operator") {
 function all(root, tag) { return [...(root.tag===tag?[root]:[]),...root.children.flatMap(child=>all(child,tag))]; }
 function named(app, label) { return all(app.root,"button").find(b=>b.text===label); }
 
+test("archived task shows backup dependency and history without result mutation actions",async()=>{
+  const app=await start(`#/jobs?project_id=sample-api&job_id=${job.job_id}`);
+  app.responses.push({status:200,body:{...review,record:{...job,state:"SUCCEEDED"},archive:{archived_at:job.updated_at,plan_fingerprint:"sha256:reviewed",plan:{backup_sha256:"c".repeat(64),result_size_bytes:2048}}}});
+  await runInContext("renderJobs()",app.context);
+  assert.match(app.root.text,/Archived result — external backup required/);
+  assert.match(app.root.text,/cccccccc/);
+  assert.match(app.root.text,/Result bytes moved logically 2048/);
+  assert.match(app.root.text,/State history and recorded actors/);
+  assert.match(app.root.text,/No new collection or policy decision/);
+  assert.doesNotMatch(app.root.text,/No retained collection result/);
+  for(const label of ["Review assembly download","Review evidence binding from task","Review execution","Review cancellation"])
+    assert.equal(named(app,label),undefined);
+});
+
 test("job list preserves scope/cursor and exposes no execution button", async()=>{
   const app=await start(`#/jobs?project_id=sample-api&after_job_id=${job.job_id}&candidate_id=${job.candidate_id}`);
   app.responses.push(page({has_more:true}));

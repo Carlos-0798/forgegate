@@ -158,9 +158,12 @@ and result commands exit 0, operational/input failures 3, CLI usage errors 2.
   process memory or external copies can retain bytes.
 - Results retain normalized evidence, artifact hashes and warnings, not original
   XML/LCOV bytes. Keep source reports separately if later replay is required.
-- Each store allows 100 jobs, 16 MiB total pending serialized input, 4 MiB per
+- v3 allows 100 jobs; opt-in v4 allows 100 unarchived jobs and 1,000 archive
+  receipts. Both allow 16 MiB total pending serialized input, 4 MiB per
   result and 32 MiB aggregate retained result JSON. Metadata/events are retained;
-  no purge, rotation or automatic archival exists. These are logical quotas,
+  [reviewed CLI archival](JOB_ARCHIVAL.md) releases only logical slots/result
+  quota and retains original payloads in an explicit verified backup. No purge,
+  rotation or automatic archival exists. These are logical quotas,
   not a physical database-file-size ceiling.
 - Candidate-only `backup-store` does not include this separate job file. Phase 39
   [workspace backup/recovery](WORKSPACE_RECOVERY.md) snapshots both stores together,
@@ -170,14 +173,15 @@ and result commands exit 0, operational/input failures 3, CLI usage errors 2.
 Stable errors include `JOB_KEY_CONFLICT`, `JOB_STATE_CONFLICT`,
 `JOB_CANDIDATE_CONFLICT`, `JOB_CANDIDATE_ALREADY_BOUND`, `JOB_LEASE_LOST`,
 `JOB_LEASE_RENEWAL_LIMIT`, `JOB_RECOVERY_NOT_DUE`, `JOB_CAPACITY_EXCEEDED`, `JOB_STORE_CORRUPT` and
-`JOB_RESULT_UNAVAILABLE`. Inspect state/revision first; do not blindly retry
+`JOB_RESULT_UNAVAILABLE` / `JOB_RESULT_ARCHIVED`. Inspect state/revision first; do not blindly retry
 mutations. Exceptions in execution persist only `JOB_EXECUTION_FAILED`.
 
 ## Deferred gates
 
-Automatic worker startup/shutdown, scheduled execution, live archival/purge and
+Automatic worker startup/shutdown, scheduled execution, physical purge and
 private artifact lifecycle/retention UI remain separate future work. Phase 39
 provides coordinated backup, restored copies and non-destructive retention plans.
+Phase 40 adds explicit reviewed logical archival, not automatic retention UI.
 Phase 38 implements cooperative checkpoints only for the existing explicit
 foreground parser; it is not a general task cancellation framework. Phases 35–37
 browser acceptance is documented separately. Existing

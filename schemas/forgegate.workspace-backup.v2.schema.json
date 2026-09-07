@@ -1,0 +1,107 @@
+{
+  "$defs": {
+    "SnapshotMember": {
+      "additionalProperties": false,
+      "properties": {
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "size_bytes": {
+          "maximum": 1073872896,
+          "minimum": 1,
+          "title": "Size Bytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "sha256",
+        "size_bytes"
+      ],
+      "title": "SnapshotMember",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "archived_result_payloads": {
+      "const": "external_backups_required",
+      "default": "external_backups_required",
+      "title": "Archived Result Payloads",
+      "type": "string"
+    },
+    "candidate_store": {
+      "$ref": "#/$defs/SnapshotMember"
+    },
+    "candidate_store_version": {
+      "const": 9,
+      "default": 9,
+      "title": "Candidate Store Version",
+      "type": "integer"
+    },
+    "consistency": {
+      "const": "simultaneous_sqlite_write_reservations",
+      "default": "simultaneous_sqlite_write_reservations",
+      "title": "Consistency",
+      "type": "string"
+    },
+    "created_at": {
+      "format": "date-time",
+      "title": "Created At",
+      "type": "string"
+    },
+    "encrypted": {
+      "const": false,
+      "default": false,
+      "title": "Encrypted",
+      "type": "boolean"
+    },
+    "external_identity_and_artifact_files": {
+      "const": "not_included",
+      "default": "not_included",
+      "title": "External Identity And Artifact Files",
+      "type": "string"
+    },
+    "includes_pending_report_bytes": {
+      "const": true,
+      "default": true,
+      "title": "Includes Pending Report Bytes",
+      "type": "boolean"
+    },
+    "job_store": {
+      "$ref": "#/$defs/SnapshotMember"
+    },
+    "job_store_version": {
+      "const": 4,
+      "default": 4,
+      "title": "Job Store Version",
+      "type": "integer"
+    },
+    "producer_authenticity": {
+      "const": "NOT_VERIFIED",
+      "default": "NOT_VERIFIED",
+      "title": "Producer Authenticity",
+      "type": "string"
+    },
+    "running_jobs": {
+      "const": 0,
+      "default": 0,
+      "title": "Running Jobs",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": "forgegate.workspace-backup.v2",
+      "default": "forgegate.workspace-backup.v2",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "created_at",
+    "candidate_store",
+    "job_store"
+  ],
+  "title": "WorkspaceBackupManifestV2",
+  "type": "object"
+}

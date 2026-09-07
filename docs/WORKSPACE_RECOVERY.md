@@ -1,7 +1,8 @@
 # Coordinated workspace backup and recovery
 
 Phase 39 adds owner-operated CLI protection for the candidate **v9** and report-job
-**v3** databases together. The Dashboard continues to use these same stores.
+**v3** databases together. Phase 40 also supports explicit job-store v4 and
+[reviewed job archival](JOB_ARCHIVAL.md). The Dashboard uses these same stores.
 Backup, verification, restored-copy creation and retention planning are local
 operations; no browser file paths or service-control endpoint is added.
 
@@ -26,7 +27,10 @@ Keep the creation receipt separately from the archive. Verification without
 receipt; it does not authenticate the original producer or sign the backup.
 
 The ZIP contains exactly `candidates.db`, `jobs.db` and a canonical
-`forgegate.workspace-backup.v1` `manifest.json`. Members are stored without
+`forgegate.workspace-backup.v1` (job v3) or `forgegate.workspace-backup.v2`
+(job v4) `manifest.json`. A v4 receipt lists earlier external backup dependencies;
+their result payloads are **not** included or automatically verified. Keep the
+referenced ZIPs separately. Members are stored without
 compression. The manifest records both member sizes/hashes, store versions,
 local creation time and scope. The receipt includes counts and the archive hash,
 without absolute paths or record content. It is an operational receipt, not a
@@ -153,7 +157,10 @@ The smoke uses new CLI processes and synthetic stores, compares all table rows,
 verifies no-overwrite behavior, then runs a restored queued report. Expected result:
 four tests, three passed, **one failed**, duration 0.5 seconds; job collection
 completes successfully while the evidence status remains `failed`. It leaves the
-original synthetic workspace unchanged and emits PASS only after temporary cleanup.
+original synthetic workspace unchanged through that recovery rehearsal. The
+Phase 40 extension then explicitly migrates/archives one synthetic result,
+checks exact replay and result readback, and backs up/restores the v4 stores
+with their external dependency metadata. PASS is emitted only after cleanup.
 The same smoke is included in clean-wheel installation acceptance.
 
 Implementation references: [SQLite backup API](https://www.sqlite.org/backup.html),

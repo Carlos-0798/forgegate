@@ -30,7 +30,7 @@ ROOT = Path(__file__).resolve().parents[1]
 XML = b'<testsuite tests="4" failures="1" errors="0" skipped="0" time="0.5"/>'
 
 
-def invoke(root: Path, *args: str, expected: int = 0) -> dict[str, Any]:
+def invoke(root: Path, *args: str, expected: int = 0, json_output: bool = True) -> dict[str, Any]:
     env = os.environ.copy()
     env.pop("PYTHONPATH", None)
     completed = subprocess.run(
@@ -47,6 +47,9 @@ def invoke(root: Path, *args: str, expected: int = 0) -> dict[str, Any]:
     if expected:
         assert "WORKSPACE_DESTINATION_EXISTS" in completed.stderr
         return {"expected_rejection": True}
+    if not json_output:
+        assert "v4" in completed.stdout
+        return {}
     result: dict[str, Any] = json.loads(completed.stdout)
     return result
 
@@ -177,6 +180,76 @@ def main() -> int:
         assert result["collections"][0]["evidence"][0]["status"] == "failed"
         assert result["collections"][0]["artifacts"][0]["sha256"] == hashlib.sha256(XML).hexdigest()
         assert (rows(database), rows(jp)) == before
+        invoke(root, "jobs", "enable-archiving", str(jp), json_output=False)
+        archive_plan = root / "review.json"
+        reviewed = invoke(
+            root,
+            "workspace",
+            "plan-job-archive",
+            str(database),
+            str(jp),
+            str(backup),
+            done.job_id,
+            "--sha256",
+            digest,
+            "--revision",
+            "4",
+            "--terminal-before",
+            datetime.now(UTC).isoformat(),
+            "--output",
+            str(archive_plan),
+        )
+        archived = invoke(
+            root,
+            "workspace",
+            "archive-job",
+            str(database),
+            str(jp),
+            str(backup),
+            str(archive_plan),
+            "--confirm-plan",
+            reviewed["plan_fingerprint"],
+        )
+        assert (
+            invoke(
+                root,
+                "workspace",
+                "archive-job",
+                str(database),
+                str(jp),
+                str(backup),
+                str(archive_plan),
+                "--confirm-plan",
+                reviewed["plan_fingerprint"],
+            )
+            == archived
+        )
+        assert invoke(root, "jobs", "archive-info", str(jp), done.job_id) == archived
+        assert store.submit(request, application, key="smoke:complete").job_id == done.job_id
+        retained = invoke(
+            root, "workspace", "archived-result", str(backup), done.job_id, "--sha256", digest
+        )
+        assert retained["collections"][0]["evidence"][0]["value"] == summary
+        assert retained["collections"][0]["evidence"][0]["status"] == "failed"
+        assert rows(jp)["events"] == before[1]["events"]
+        assert rows(database) == before[0]
+        archived_backup = root / "archived-snapshot.zip"
+        archive_meta = invoke(
+            root, "workspace", "backup", str(database), str(jp), str(archived_backup)
+        )
+        assert archive_meta["external_archive_dependencies"] == [digest]
+        assert archive_meta["archived_job_count"] == 1 and archive_meta["job_store_version"] == 4
+        archive_restore = root / "recovered-archived"
+        invoke(
+            root,
+            "workspace",
+            "restore",
+            str(archived_backup),
+            str(archive_restore),
+            "--sha256",
+            archive_meta["sha256"],
+        )
+        assert rows(archive_restore / "jobs.db") == rows(jp)
         receipt = {
             "result": "PASS",
             "verification": "HOST_TEST_SYNTHETIC",
@@ -191,6 +264,10 @@ def main() -> int:
                 "restored_queued_job_foreground_execution",
                 "expected_test_summary",
                 "original_workspace_unchanged",
+                "reviewed_archive_cli_and_exact_replay",
+                "archival_preserves_events_candidate_and_request_key",
+                "external_archived_result_exact_failure_summary",
+                "v4_backup_dependencies_and_restore",
                 "temporary_cleanup",
             ],
             "backup_sha256": digest,

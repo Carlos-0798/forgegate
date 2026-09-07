@@ -25,6 +25,7 @@ from forgegate.collectors.msp430_validation import MSP430_REPORT_JSON_SCHEMA
 from forgegate.domain.models import EvidenceBundle, PolicyConfig, ProjectConfig
 from forgegate.github_actions import GitHubActionReport
 from forgegate.identity import AssuranceSignature, SigningIdentity, TrustStore
+from forgegate.job_archive_models import JobArchivePlan, JobArchiveReceipt
 from forgegate.plugins import (
     PluginDiscoveryReport,
     PluginManifest,
@@ -47,9 +48,12 @@ from forgegate.projects import (
     RegisteredProjectPage,
 )
 from forgegate.security_events import ApiSecurityEvent, ApiSecurityEventPage
-from forgegate.workspace_backups import WorkspaceBackupManifest
+from forgegate.workspace_backups import WorkspaceBackupManifest, WorkspaceBackupManifestV2
 
 SCHEMAS: dict[str, type[BaseModel]] = {
+    "forgegate.job-archive-plan.v1": JobArchivePlan,
+    "forgegate.job-archive-receipt.v1": JobArchiveReceipt,
+    "forgegate.workspace-backup.v2": WorkspaceBackupManifestV2,
     "forgegate.workspace-backup.v1": WorkspaceBackupManifest,
     "forgegate.collection-job-request.v1": CollectionJobRequest,
     "forgegate.collection-job.v1": LegacyCollectionJobRecord,

@@ -41,6 +41,7 @@ from forgegate.collection_jobs import (
     CollectionJobStore,
 )
 from forgegate.domain.models import SHA256_PATTERN, StrictModel
+from forgegate.job_archive_models import MAX_ARCHIVED_JOBS
 
 MAX_STORE_BYTES = 1024 * 1024 * 1024
 MAX_ARCHIVE_BYTES = MAX_STORE_BYTES + 128 * 1024
@@ -57,11 +58,9 @@ class SnapshotMember(StrictModel):
     size_bytes: int = Field(ge=1, le=MAX_ARCHIVE_BYTES)
 
 
-class WorkspaceBackupManifest(StrictModel):
-    schema_version: Literal["forgegate.workspace-backup.v1"] = "forgegate.workspace-backup.v1"
+class _WorkspaceBackupFields(StrictModel):
     created_at: datetime
     candidate_store_version: Literal[9] = 9
-    job_store_version: Literal[3] = 3
     candidate_store: SnapshotMember
     job_store: SnapshotMember
     consistency: Literal["simultaneous_sqlite_write_reservations"] = (
@@ -80,6 +79,20 @@ class WorkspaceBackupManifest(StrictModel):
         if self.candidate_store.size_bytes + self.job_store.size_bytes > MAX_STORE_BYTES:
             raise ValueError("combined snapshot exceeds limit")
         return self
+
+
+class WorkspaceBackupManifest(_WorkspaceBackupFields):
+    schema_version: Literal["forgegate.workspace-backup.v1"] = "forgegate.workspace-backup.v1"
+    job_store_version: Literal[3] = 3
+
+
+class WorkspaceBackupManifestV2(_WorkspaceBackupFields):
+    schema_version: Literal["forgegate.workspace-backup.v2"] = "forgegate.workspace-backup.v2"
+    job_store_version: Literal[4] = 4
+    archived_result_payloads: Literal["external_backups_required"] = "external_backups_required"
+
+
+BackupManifest = WorkspaceBackupManifest | WorkspaceBackupManifestV2
 
 
 @contextmanager
@@ -157,7 +170,7 @@ def _reserve(path: Path, deadline: float) -> Iterator[sqlite3.Connection]:
 def _job_schema(con: sqlite3.Connection) -> None:
     _require(
         con.execute("PRAGMA application_id").fetchone()[0] == APP_ID
-        and con.execute("PRAGMA user_version").fetchone()[0] == 3,
+        and con.execute("PRAGMA user_version").fetchone()[0] in (3, 4),
         "WORKSPACE_JOB_SCHEMA_INVALID",
     )
     objects = {(r[0], r[1]) for r in con.execute("SELECT type,name FROM sqlite_master")}
@@ -177,8 +190,30 @@ def _job_schema(con: sqlite3.Connection) -> None:
         "SELECT count(*),coalesce(sum(length(cast(input as blob))),0),"
         "coalesce(sum(length(cast(result as blob))),0) FROM jobs"
     ).fetchone()
-    _require(count <= MAX_JOBS and inputs <= MAX_INPUT_BYTES and results <= MAX_RESULT_BYTES)
-    _require(con.execute("SELECT count(*) FROM events").fetchone()[0] <= MAX_JOBS * 65)
+    archived = 0
+    if con.execute("PRAGMA user_version").fetchone()[0] == 4:
+        _require(
+            {
+                ("table", "job_archives"),
+                ("trigger", "archives_no_update"),
+                ("trigger", "archives_no_delete"),
+                ("trigger", "archived_jobs_no_update"),
+                ("trigger", "archived_jobs_no_delete"),
+            }
+            <= objects
+        )
+        archived = con.execute("SELECT count(*) FROM job_archives").fetchone()[0]
+        _require(archived <= MAX_ARCHIVED_JOBS)
+        _require(
+            con.execute(
+                "SELECT 1 FROM job_archives WHERE length(cast(receipt as blob))>16384 LIMIT 1"
+            ).fetchone()
+            is None
+        )
+    _require(
+        count - archived <= MAX_JOBS and inputs <= MAX_INPUT_BYTES and results <= MAX_RESULT_BYTES
+    )
+    _require(con.execute("SELECT count(*) FROM events").fetchone()[0] <= (MAX_JOBS + archived) * 65)
     _require(
         con.execute(
             "SELECT 1 FROM jobs WHERE length(cast(record as blob))>8192 "
@@ -207,6 +242,8 @@ def _inspect_pair(root: Path, deadline: float) -> dict[str, Any]:
         _require(candidates.execute("PRAGMA integrity_check(1)").fetchone()[0] == "ok")
         _job_schema(jobs)
         states: dict[str, int] = {}
+        archive_dependencies: set[str] = set()
+        archived_count = 0
         rows: list[dict[str, Any]] = []
         for item in jobs.execute("SELECT job_id FROM jobs ORDER BY job_id"):
             _check_time(deadline)
@@ -218,6 +255,19 @@ def _inspect_pair(root: Path, deadline: float) -> dict[str, Any]:
             )
             _require(record.state != "RUNNING", "WORKSPACE_RUNNING_JOBS")
             review = store.review_snapshot(jobs, item[0], project_id=record.project_id)
+            if review.archive is not None:
+                archived_count += 1
+                archive_dependencies.add(review.archive.plan.backup_sha256)
+                events_fingerprint = sha256_fingerprint(
+                    [
+                        dict(e)
+                        for e in jobs.execute(
+                            "SELECT * FROM events WHERE job_id=? ORDER BY revision",
+                            (record.job_id,),
+                        )
+                    ]
+                )
+                _require(events_fingerprint == review.archive.plan.events_fingerprint)
             # Validate the submitted historical snapshot, not only today's revision.
             history = repository._load_history(candidates, record.candidate_id)
             snapshot = candidates.execute(
@@ -286,6 +336,8 @@ def _inspect_pair(root: Path, deadline: float) -> dict[str, Any]:
                 and review.result.assembly is not None
                 and binding.assembly == review.result.assembly
             )
+            if review.archive is not None and binding is not None:
+                bound = binding.assembly.assembly_id == review.archive.plan.assembly_id
             states[record.state] = states.get(record.state, 0) + 1
             rows.append(
                 {
@@ -294,6 +346,7 @@ def _inspect_pair(root: Path, deadline: float) -> dict[str, Any]:
                     "revision": record.revision,
                     "updated_at": record.updated_at.isoformat(),
                     "result_bound": bound,
+                    "archived": review.archive is not None,
                 }
             )
         counts = {
@@ -301,12 +354,16 @@ def _inspect_pair(root: Path, deadline: float) -> dict[str, Any]:
             for table in TABLES
         }
         event_count = jobs.execute("SELECT count(*) FROM events").fetchone()[0]
+        job_version = jobs.execute("PRAGMA user_version").fetchone()[0]
     _check_time(deadline)
     return {
         "candidate_table_counts": counts,
         "job_states": states,
         "job_count": len(rows),
         "job_event_count": event_count,
+        "job_store_version": job_version,
+        "archived_job_count": archived_count,
+        "external_archive_dependencies": sorted(archive_dependencies),
         "jobs": rows,
     }
 
@@ -325,7 +382,7 @@ def _snapshot(source: Path, target: Path, deadline: float) -> None:
 
 
 def _receipt(
-    manifest: WorkspaceBackupManifest, archive: SnapshotMember, details: dict[str, Any], status: str
+    manifest: BackupManifest, archive: SnapshotMember, details: dict[str, Any], status: str
 ) -> dict[str, Any]:
     return {
         "status": status,
@@ -376,7 +433,12 @@ def backup_workspace(
                 _snapshot(job_store, root / MEMBERS[1], deadline)
                 created_at = datetime.now(UTC)
             details = _inspect_pair(root, deadline)
-            manifest = WorkspaceBackupManifest(
+            manifest_type = (
+                WorkspaceBackupManifest
+                if details["job_store_version"] == 3
+                else WorkspaceBackupManifestV2
+            )
+            manifest = manifest_type(
                 created_at=created_at,
                 candidate_store=_hash(root / MEMBERS[0], deadline),
                 job_store=_hash(root / MEMBERS[1], deadline),
@@ -405,7 +467,7 @@ def _unique(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
     return result
 
 
-def _extract(source: Path, root: Path, deadline: float) -> WorkspaceBackupManifest:
+def _extract(source: Path, root: Path, deadline: float) -> BackupManifest:
     # Bound the central directory BEFORE ZipFile materializes it. This format has
     # exactly three stored entries, no ZIP64, comment, prepended data or extra members.
     with source.open("rb") as stream:
@@ -436,9 +498,14 @@ def _extract(source: Path, root: Path, deadline: float) -> WorkspaceBackupManife
         _require(infos[2].file_size <= MAX_MANIFEST_BYTES)
         payload = z.read(MEMBERS[2])
         enforce_json_structure_limits(payload, max_nodes=100, max_depth=5)
-        manifest = WorkspaceBackupManifest.model_validate(
-            json.loads(payload, object_pairs_hook=_unique)
+        raw = json.loads(payload, object_pairs_hook=_unique)
+        manifest_type = (
+            WorkspaceBackupManifestV2
+            if isinstance(raw, dict)
+            and raw.get("schema_version") == "forgegate.workspace-backup.v2"
+            else WorkspaceBackupManifest
         )
+        manifest = manifest_type.model_validate(raw)
         _require(canonical_json(manifest.model_dump(mode="json")).encode() == payload)
         for info, expected in zip(
             infos[:2], (manifest.candidate_store, manifest.job_store), strict=True
@@ -455,7 +522,7 @@ def _extract(source: Path, root: Path, deadline: float) -> WorkspaceBackupManife
 @contextmanager
 def _verified(
     backup: Path, expected_sha256: str | None, deadline: float
-) -> Iterator[tuple[Path, WorkspaceBackupManifest, SnapshotMember, dict[str, Any]]]:
+) -> Iterator[tuple[Path, BackupManifest, SnapshotMember, dict[str, Any]]]:
     _require(
         expected_sha256 is None or re.fullmatch(r"[0-9a-f]{64}", expected_sha256) is not None,
         "WORKSPACE_HASH_INVALID",
@@ -482,6 +549,7 @@ def _verified(
         )
         manifest = _extract(local, root, deadline)
         details = _inspect_pair(root, deadline)
+        _require(details["job_store_version"] == manifest.job_store_version)
         yield root, manifest, digest, details
 
 
@@ -573,7 +641,9 @@ def plan_workspace_retention(
                 stamp = datetime.fromisoformat(job["updated_at"])
                 _require(stamp <= as_of, "WORKSPACE_RETENTION_TIME_INVALID")
                 reason = (
-                    "ACTIVE_JOB"
+                    "ALREADY_ARCHIVED"
+                    if job["archived"]
+                    else "ACTIVE_JOB"
                     if job["state"] in ACTIVE
                     else "BOUND_EVIDENCE"
                     if job["result_bound"]

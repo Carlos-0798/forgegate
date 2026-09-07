@@ -30,6 +30,9 @@ The current checkpoint demonstrates:
 - [coordinated candidate/job backup and recovery](docs/WORKSPACE_RECOVERY.md),
   including exact historical association checks, restore to a new directory,
   and non-destructive retention plans;
+- [reviewed terminal-job archival](docs/JOB_ARCHIVAL.md) backed by exact verified
+  snapshots, preserving history and duplicate-request protection while freeing
+  logical job/result quota; Dashboard details disclose external-backup dependencies;
 - [durable local report jobs](docs/COLLECTION_JOBS.md) with idempotent submission,
   explicit execution/cancellation, expired-lease recovery and bounded pending
   input retention; v2 records expose non-credential execution ownership and
@@ -98,16 +101,17 @@ never converted into candidate evidence.
 
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 1149 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
-| Branch-aware coverage | 95.57% across 11,794 statements and 3,112 branches | Local host test |
-| Static quality | Ruff, formatting, and strict mypy passed across 105 source/tool files | Local host test |
+| Full Python suite | 1195 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
+| Branch-aware coverage | 95.66% across 12,060 statements and 3,154 branches | Local host test |
+| Static quality | Ruff, formatting, and strict mypy passed across 107 source/tool files | Local host test |
+| Reviewed job archival | 46 new regressions; 94 combined archive/backup cases, 100% focused branch coverage; actual Edge detail and clean-wheel CLI recovery | Local synthetic test; history/idempotency retained; logical quota only; original external backups required |
 | Coordinated workspace recovery | 48 focused cases; backup/CLI modules 100% branch-aware coverage; paired snapshots, restored-copy execution and retention planning | Local synthetic test; no live replacement, automatic purge, encryption or power-loss certification |
 | Durable local report jobs | 99 focused Python cases plus actual synthetic browser execution; CLI lifecycle, v1/v2-to-v3 store migration, cooperative cancellation/renewal, exact browser export and reviewed binding | Local synthetic test; no automatic worker, mid-parser preemption, candidate transition, policy decision or hardware |
 | Candidate-store backup | 27 focused cases; backup module 100% branch-aware coverage; installed CLI round trip passes | Local host test; no automatic restore, encryption or blanket domain validation |
-| Contracts | 46 document and 3 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI (27 paths, 29 operations) passed drift checks | Local host test |
+| Contracts | 49 document and 3 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI (27 paths, 29 operations) passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
-| Dashboard automation | 127 TypeScript host interaction tests passed, including 54 job-management/submission/handoff cases | Local host test; [Phase 37 actual Edge checks](reports/PHASE_37_JOB_RESULT_HANDOFF_ACCEPTANCE.md) separately verify exact download, reviewed binding and readback; not exhaustive browser/OS certification |
+| Dashboard automation | 128 TypeScript host interaction tests passed, including 55 job-management/submission/handoff/archive cases | Local host test; [Phase 40 actual Edge checks](reports/PHASE_40_JOB_ARCHIVAL_ACCEPTANCE.md) verify archive disclosure/history separately; not exhaustive browser/OS certification |
 | Dashboard browser interaction | Full reviewed Edge workflow, Edge/Chrome keyboard/focus, 129-record pagination, 390 px responsive, 409/413/422/429/500 recovery, exact Edge 100–200% zoom, and clean-console paths passed | Windows local browser test; uncommon errors use a zero-write presentation harness; Narrator is bounded PASS, while spoken output, high contrast, and real Remote Desktop remain open |
 | MSP430 report collector | 34 focused tests plus clean-wheel CLI collection passed; one LaunchPad HIL migration fixture produced 17 normalized records with retained warnings | Local artifact test; the fixture is a historical upstream result, not a new run or physical-measurement claim |
 | MSP430 live status | COM4 opened input-only at 115200 8-N-1; authenticated Devices page showed `CONNECTED`, heartbeat `NORMAL`, device `FAULT`, flags `0015`; sequence advanced 58007→58017 over 10 seconds with 10 accepted frames and no sequence gap | Owner-authorized Windows physical-device observation; one earlier invalid frame was rejected, no command or firmware/debug action, measurement validation, release evidence, or long-duration stability claim |
@@ -367,8 +371,8 @@ The next maturity gates are:
 
 1. complete Windows high-contrast, spoken Narrator-output, and real Remote
    Desktop evidence without claiming full accessibility certification;
-2. add reviewed archival/quota reclamation with durable audit and idempotency
-   preservation, building on paired backup/recovery before automatic workers;
+2. expose read-only capacity/backup-dependency health and archived-task filtering,
+   building on reviewed archival/recovery before automatic workers;
 3. align future MSP430 report revisions through the frozen artifact contract
    while keeping live UART status separate from evidence;
 4. establish publisher provenance and broader hostile-plugin compatibility;

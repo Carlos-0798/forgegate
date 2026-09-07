@@ -161,4 +161,9 @@ jobs and a temporary test identity, but starts no server or device. Its expired
 lease is seeded, not evidence of an observed crash. Keep its private files local.
 
 Still deferred: automatic worker/scheduler operation, mid-parser preemption,
-coordinated job/candidate backup, job retention UI, and new native accessibility tests.
+job retention UI and new native accessibility tests. Coordinated backup/recovery
+is available through the Phase 39 owner CLI. Phase 40 adds
+[reviewed CLI archival](JOB_ARCHIVAL.md) and v4-store compatibility: details retain
+history and show archive time, original backup SHA-256 and logical result bytes.
+Archived results cannot use the Dashboard export/binding actions; stale requests
+conflict. The archive action itself is not exposed in the browser.

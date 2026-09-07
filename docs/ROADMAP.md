@@ -673,6 +673,22 @@ decision, GitHub operation or hardware access.
 - [x] Test locking, committed WAL, corruption, incomplete recovery, cold domain
   reads and independent CLI execution from a restored synthetic workspace.
 
-Next engineering slice: reviewed job archival with preserved audit/idempotency
-semantics and live revision checks, before automatic workers. Native assistive
-technology remains a separate acceptance gate. GitHub synchronization is paused.
+## Phase 40 — reviewed job archival and logical capacity
+
+- [x] Explicitly migrate job v3 to v4 without changing historical records/events.
+- [x] Generate a bounded one-job plan tied to a verified backup, exact job/event
+  bytes, revision, result identity, cutoff and current candidate fingerprint.
+- [x] Recheck live candidate/binding state while reserving both writers; atomically
+  archive result bytes and insert an immutable receipt with exact replay behavior.
+- [x] Preserve task identity, audit and request-key protection; release one logical
+  slot and result quota within bounded 100-live/1,000-archived storage limits.
+- [x] Read original results through an explicit backup/hash, and support v4
+  backups/restores with clear external dependency disclosure; keep v1 frozen.
+- [x] Display archive metadata/history in Dashboard detail, reject stale result
+  actions, and retain actual isolated Edge acceptance with synthetic screenshots.
+- [x] Test corruption/staleness, binding protection, lock contention, transaction
+  rollback, quota reuse, replay, exact readback and clean-wheel CLI recovery.
+
+Next engineering slice: read-only operational capacity/dependency visibility and
+archived-task filtering, before automatic workers. Native assistive technology
+remains a separate acceptance gate. GitHub synchronization is paused.

@@ -64,9 +64,10 @@ runner = CliRunner()
 def test_dashboard_help_describes_current_job_store_boundary() -> None:
     result = runner.invoke(app, ["dashboard", "--help"])
     assert result.exit_code == 0
-    assert "Use an existing v3 job" in result.output
-    assert "store; no automatic" in result.output
-    assert "migration, scheduling" in result.output
+    assert "Use an existing v3/v4" in result.output
+    assert "job store; no" in result.output
+    assert "automatic migration," in result.output
+    assert "scheduling, or" in result.output
     assert "v2 job store" not in result.output
 
 

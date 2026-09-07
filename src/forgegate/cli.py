@@ -664,7 +664,7 @@ def dashboard(
             exists=True,
             dir_okay=False,
             help=(
-                "Use an existing v3 job store; no automatic migration, scheduling, "
+                "Use an existing v3/v4 job store; no automatic migration, scheduling, "
                 "or background execution."
             ),
         ),

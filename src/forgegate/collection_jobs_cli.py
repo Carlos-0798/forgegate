@@ -68,7 +68,7 @@ def migrate(store: Path) -> None:
     """Explicit v1/v2-to-v3 migration; existing record bytes and actors are preserved."""
     with _guard():
         CollectionJobStore(store).migrate()
-    typer.echo("VALID collection-job store v3; no historical owner or actor inferred")
+    typer.echo("VALID collection-job store v3 or v4; no historical owner or actor inferred")
 
 
 @jobs_app.command("submit")
@@ -84,6 +84,26 @@ def submit(
             load_request(request), CandidateApplication.for_database(database), key=key
         )
         typer.echo(record.model_dump_json(indent=2))
+
+
+@jobs_app.command("enable-archiving")
+def enable_archiving(store: Path) -> None:
+    """Explicit v3-to-v4 upgrade after backup; retains exact existing records and events."""
+    with _guard():
+        CollectionJobStore(store).enable_archiving()
+    typer.echo("VALID collection-job store v4; archiving enabled, no jobs archived")
+
+
+@jobs_app.command("archive-info")
+def archive_info(store: Path, job_id: str) -> None:
+    """Show the retained archive receipt without opening any external backup."""
+    with _guard():
+        repository = CollectionJobStore(store)
+        record = repository.show(job_id)
+        review = repository.review(job_id, project_id=record.project_id)
+        if review.archive is None:
+            raise JobError("JOB_NOT_ARCHIVED")
+        typer.echo(review.archive.model_dump_json(indent=2))
 
 
 @jobs_app.command("show")

@@ -2,7 +2,14 @@
 
 - Date: 2026-09-07
 - Version: 0.1.0a1
-- Stage: Phase 39 coordinated workspace backup and recovery implemented:
+- Stage: Phase 40 reviewed job archival implemented: explicit v3-to-v4 job-store
+  migration; one-job review/confirmation tied to an exact verified backup; live
+  revision, candidate and binding checks; atomic result/receipt mutation; preserved
+  audit/request keys and exact replay. Logical job/result quota is reclaimed, not
+  physical disk space. Dashboard details identify external archived results;
+  v4 backup/restore receipts expose earlier backup dependencies. See
+  [archival operations](JOB_ARCHIVAL.md).
+  Phase 39 coordinated workspace backup and recovery remains implemented:
   candidate v9 and job v3 snapshots are taken under simultaneous SQLite write
   reservations and published as one bounded, hash-checked archive. Offline
   verification checks job histories and their exact historical candidate links.
@@ -76,11 +83,16 @@ package jobs, but its final generic Action job did not start because GitHub
 reported an account payment/spending-limit restriction. The overall run is
 not green. Billing changes require owner action; local acceptance is separate.
 
-Per the owner's current instruction, Phases 32–39 work is local-only. No GitHub
+Per the owner's current instruction, Phases 32–40 work is local-only. No GitHub
 inspection, push, PR creation or merge was performed for this checkpoint.
 
 ## Implemented
 
+- reviewed CLI archival with exact source backups, v4 job storage, immutable
+  receipts/history, retained idempotency, live candidate/binding protection,
+  logical capacity reclamation and explicit external result readback;
+- Dashboard archive disclosures and conflict rejection of stale result actions;
+  v4 workspace snapshots/restore preserve receipts and list external dependencies;
 - coordinated candidate/job snapshots, strict offline verification, restore to
   a new directory and non-destructive job-retention planning; bounded current
   schemas, historical association checks, no-overwrite and partial-failure handling;
@@ -525,6 +537,14 @@ remaining OS assistive checks are separate.
 
 ## Accepted local checkpoint
 
+- Phase 40: 46 new regressions and 94 combined archival/backup cases pass, with
+  100% focused branch-aware coverage across four archival/model/workspace/CLI
+  modules (533 statements, 60 branches). Exact-backup review, live binding and
+  revision checks, immutable history, idempotency, logical quota reuse, rollback
+  and external readback pass. Actual isolated Edge detail/refresh/navigation and
+  logout pass; screenshot retained. Clean-wheel CLI archive/v4 restore also pass.
+  No live owner-workspace migration or hardware/GitHub access was performed.
+  See [Phase 40 evidence](../reports/PHASE_40_JOB_ARCHIVAL_ACCEPTANCE.md).
 - Phase 39: 48 workspace regressions pass, with 100% branch-aware coverage across
   the new backup and CLI modules (323 statements, 36 branches). Paired locking,
   committed WAL, exact table/history preservation, cold terminal attestation,
@@ -593,14 +613,14 @@ remaining OS assistive checks are separate.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 1149 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.57% across 11,794 statements and 3,112 branches
+- pytest: 1195 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.66% across 12,060 statements and 3,154 branches
 - MSP430 live-status focus: 17 passed across parser, state classification,
   staleness, invalid/recovery, counters, dependency/I/O failure, and input-only
   monitor lifecycle
 - Historical Phase 30 Dashboard focus: 80 passed with 98.60% branch-aware coverage across 728
   statements and 130 branches
-- Frontend host regressions: 127 passed, including 54 job management/submission/result-handoff,
+- Frontend host regressions: 128 passed, including 55 job management/submission/result-handoff/archive,
   30 combined-collection/import, 18 JUnit collection, 12 Audit and 13 activation
   cases; separate from Python
   coverage and browser tests
@@ -673,7 +693,7 @@ remaining OS assistive checks are separate.
 - committed JSON Schema, direct API OpenAPI, and Dashboard BFF OpenAPI drift
   checks: PASS
 - project/policy/candidate/transition example documents: VALID
-- forty-six canonical versioned document Schemas plus Benchmark, Analog
+- forty-nine canonical versioned document Schemas plus Benchmark, Analog
   Validation, and MSP430 validation-report artifact Schemas: drift-checked and
   parsed
 - complete sdist manifest and ForgeGate/sample-plugin wheel builds: PASS

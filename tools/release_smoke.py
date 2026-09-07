@@ -19,6 +19,11 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_SDIST_PATHS = (
     "tools/workspace_backups_smoke.py",
     "tests/test_workspace_backups.py",
+    "tests/test_job_archival.py",
+    "docs/JOB_ARCHIVAL.md",
+    "schemas/forgegate.job-archive-plan.v1.schema.json",
+    "schemas/forgegate.job-archive-receipt.v1.schema.json",
+    "schemas/forgegate.workspace-backup.v2.schema.json",
     "docs/WORKSPACE_RECOVERY.md",
     "schemas/forgegate.workspace-backup.v1.schema.json",
     "reports/PHASE_37_JOB_RESULT_HANDOFF_ACCEPTANCE.md",

@@ -1,6 +1,7 @@
 """Owner-operated database protection. No browser path, migration or service control."""
 
 import json
+import os
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime
@@ -9,6 +10,13 @@ from typing import Annotated
 
 import typer
 
+from forgegate.canonical import sha256_fingerprint
+from forgegate.job_archival import (
+    archive_job,
+    load_archive_plan,
+    plan_job_archive,
+    read_archived_result,
+)
 from forgegate.workspace_backups import (
     WorkspaceBackupError,
     backup_workspace,
@@ -27,8 +35,9 @@ Timeout = Annotated[float, typer.Option(min=0.1, max=300)]
 def _guard() -> Iterator[None]:
     try:
         yield
-    except WorkspaceBackupError as exc:
-        typer.echo(f"ERROR: {exc}", err=True)
+    except (WorkspaceBackupError, OSError) as exc:
+        code = str(exc) if isinstance(exc, WorkspaceBackupError) else "WORKSPACE_FILE_IO_FAILED"
+        typer.echo(f"ERROR: {code}", err=True)
         raise typer.Exit(code=3) from exc
 
 
@@ -39,7 +48,7 @@ def backup(
     destination: Path,
     timeout_seconds: Timeout = 30,
 ) -> None:
-    """Create a NEW ZIP snapshot of candidate v9 + job v3; running jobs block backup."""
+    """Create a NEW ZIP snapshot of candidate v9 + job v3/v4; running jobs block backup."""
     with _guard():
         typer.echo(
             json.dumps(
@@ -47,6 +56,90 @@ def backup(
                 indent=2,
             )
         )
+
+
+@workspace_app.command("plan-job-archive")
+def archive_plan(
+    database: Path,
+    job_store: Path,
+    backup: Path,
+    job_id: str,
+    sha256: Annotated[str, typer.Option()],
+    revision: Annotated[int, typer.Option(min=1, max=64)],
+    terminal_before: Annotated[
+        datetime, typer.Option(formats=["%Y-%m-%dT%H:%M:%S%z", "%Y-%m-%dT%H:%M:%S.%f%z"])
+    ],
+    output: Annotated[Path, typer.Option(help="NEW private plan file; never overwrite.")],
+    timeout_seconds: Timeout = 30,
+) -> None:
+    """Review one terminal unbound job against an exact verified backup; no job writes."""
+    with _guard():
+        plan = plan_job_archive(
+            database,
+            job_store,
+            backup,
+            job_id,
+            expected_sha256=sha256,
+            expected_revision=revision,
+            terminal_before=terminal_before,
+            timeout_seconds=timeout_seconds,
+        )
+        with output.open("x", encoding="utf-8") as stream:
+            stream.write(plan.model_dump_json(indent=2) + "\n")
+            stream.flush()
+            os.fsync(stream.fileno())
+        typer.echo(
+            json.dumps(
+                {
+                    "plan": plan.model_dump(mode="json"),
+                    "plan_fingerprint": sha256_fingerprint(plan.model_dump(mode="json")),
+                },
+                indent=2,
+            )
+        )
+
+
+@workspace_app.command("archive-job")
+def apply_archive(
+    database: Path,
+    job_store: Path,
+    backup: Path,
+    plan_file: Path,
+    confirm_plan: Annotated[str, typer.Option(help="Exact reviewed plan fingerprint.")],
+    timeout_seconds: Timeout = 30,
+) -> None:
+    """Recheck then archive one result logically; preserve history and duplicate-request keys."""
+    with _guard():
+        receipt = archive_job(
+            database,
+            job_store,
+            backup,
+            load_archive_plan(plan_file),
+            confirm_plan=confirm_plan,
+            timeout_seconds=timeout_seconds,
+        )
+        typer.echo(receipt.model_dump_json(indent=2))
+
+
+@workspace_app.command("archived-result")
+def archived_result(
+    backup: Path,
+    job_id: str,
+    sha256: Annotated[str, typer.Option()],
+    assembly: Annotated[bool, typer.Option()] = False,
+    timeout_seconds: Timeout = 30,
+) -> None:
+    """Read retained payload from an explicit original backup; never auto-follow paths."""
+    with _guard():
+        result = read_archived_result(
+            backup, job_id, expected_sha256=sha256, timeout_seconds=timeout_seconds
+        )
+        if assembly:
+            if result.assembly is None:
+                raise WorkspaceBackupError("ARCHIVE_ASSEMBLY_UNAVAILABLE")
+            typer.echo(result.assembly.model_dump_json(indent=2))
+        else:
+            typer.echo(result.model_dump_json(indent=2))
 
 
 @workspace_app.command("verify-backup")

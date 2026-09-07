@@ -35,6 +35,11 @@ interface JobPage {
 interface JobReview {
   record: CollectionJob;
   events: Array<{ record: CollectionJob; actor: AuditEvent["actor"] }>;
+  archive?: {
+    archived_at: string;
+    plan_fingerprint: string;
+    plan: {backup_sha256: string; result_size_bytes: number};
+  } | null;
   result: {
     collections: Array<{
       collector_name: string; status: string; evidence: EvidenceRecord[];
@@ -1514,6 +1519,18 @@ function renderJobDetail(main: HTMLElement, review: JobReview): HTMLElement {
     "Error code": job.error_code ?? "None recorded"
   })) details.append(definition(label, value, true));
   panel.append(details);
+  if (review.archive) {
+    const archive = el("section", "notice");
+    archive.append(el("h3", undefined, "Archived result — external backup required"),
+      el("p", undefined, "The task identity, state history and duplicate-request protection are retained. Result bytes are no longer available in this workspace. Use the owner CLI with the original backup to retrieve them; this page cannot restore or bind an archived result."));
+    const metadata = el("dl", "definition-list");
+    metadata.append(definition("Archived", formatDate(review.archive.archived_at)),
+      definition("Original backup SHA-256", review.archive.plan.backup_sha256, true),
+      definition("Reviewed plan", review.archive.plan_fingerprint, true),
+      definition("Result bytes moved logically", String(review.archive.plan.result_size_bytes)));
+    archive.append(metadata, el("p", "muted", "Archival is not a new test result, policy decision, secure erasure or proof of reduced disk usage. Keep the original backup private and available."));
+    panel.append(archive);
+  }
   const candidate = el("a", "button secondary", "Review candidate evidence separately");
   candidate.href = candidateReviewHash("evidence", job.candidate_id);
   panel.append(candidate);
@@ -1545,7 +1562,7 @@ function renderJobDetail(main: HTMLElement, review: JobReview): HTMLElement {
   }
   panel.append(el("h3", undefined, "Collection output — not a policy decision"));
   if (review.result === null) {
-    panel.append(el("p", "muted", "No retained collection result. This is not an empty successful test run."));
+    panel.append(el("p", "muted", review.archive ? "Result archived externally. No new collection or policy decision was performed." : "No retained collection result. This is not an empty successful test run."));
   } else {
     panel.append(el("p", "mono", `Assembly: ${review.result.assembly?.assembly_id ?? "Not available"}`), el("p", "muted", "Source report bytes are not embedded. Binding requires a separate reviewed operation; this page cannot promote a result to PASS."));
     for (const collection of review.result.collections) {

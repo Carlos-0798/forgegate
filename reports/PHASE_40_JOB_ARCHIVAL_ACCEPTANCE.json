@@ -1,0 +1,83 @@
+{
+  "phase": 40,
+  "date": "2026-09-07",
+  "result": "PASS_WITH_EXPLICIT_BOUNDARIES",
+  "verification": "LOCAL_HOST_TEST_SYNTHETIC",
+  "python": "3.12.10",
+  "platform": "Windows",
+  "development_verification": {
+    "command": "python tools/verify.py",
+    "status": "PASS",
+    "pytest_passed": 1195,
+    "pytest_skipped": 3,
+    "skip_reason": "host_symlink_creation_unavailable",
+    "branch_aware_coverage_percent": 95.66,
+    "statements": 12060,
+    "branches": 3154,
+    "ruff_format_mypy": "PASS",
+    "mypy_source_tool_files": 107,
+    "interaction_smoke_cases": 33,
+    "document_schemas": 49,
+    "artifact_schemas": 3,
+    "schema_openapi_asset_drift": "PASS",
+    "workspace_backup_v1_schema_unchanged": true
+  },
+  "focused_verification": {
+    "new_archival_tests": 46,
+    "combined_archival_backup_tests": 94,
+    "branch_aware_coverage_percent": 100.0,
+    "statements": 533,
+    "branches": 60,
+    "modules": ["job_archival", "job_archive_models", "workspace_backups", "workspace_cli"],
+    "frontend_tests_passed": 128,
+    "typescript_build_asset_inventory": "PASS"
+  },
+  "release_smoke": {
+    "command": "python tools/release_smoke.py",
+    "status": "PASS",
+    "exit_code": 0,
+    "clean_wheel_archival_v4_restore": "PASS",
+    "tested_wheel_sha256": "22da6b1bce548132b2ee9ce65be1991bc15599fa419c24c389d90c4e2b3ec623",
+    "tested_sdist_sha256": "9c273e578f05752f5b3169c392cf176bc6cd23eef42cac09c3584f5a7a2bc761",
+    "artifact_scope": "local_smoke_build_before_final_report_edits_not_a_published_release"
+  },
+  "actual_browser": {
+    "browser": "Edge",
+    "status": "PASS",
+    "in_app_browser": "NOT_ACCEPTED_CONTROL_TIMEOUT",
+    "fixture": "manual_dashboard_jobs.py --archive-complete",
+    "job_revision": 4,
+    "lease_renewals": 2,
+    "retained_events": 5,
+    "logical_result_bytes": 3467,
+    "original_backup_sha256": "9190cba731926fcfd8743943e70eb537c562fd739458b7302bf70543287b439d",
+    "checks": ["archive_metadata", "retained_history", "no_result_action_buttons", "candidate_collecting_unbound", "reload_persistence", "logout_clears_protected_view"],
+    "screenshot": "docs/assets/forgegate-job-archived-result.png",
+    "screenshot_sha256": "7680b6ad414932abe2f2681a6791b600f1fa5ddb9584f9261f079078370761f9",
+    "temporary_server_stopped": true,
+    "session_ended": true
+  },
+  "source_backup_readback": {
+    "evidence_status": "failed",
+    "total": 4,
+    "passed": 3,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0,
+    "duration_seconds": 0.5,
+    "job_state": "SUCCEEDED",
+    "policy_evaluation": "NOT_PERFORMED"
+  },
+  "boundaries": {
+    "owner_workspace_migration": "NOT_PERFORMED",
+    "github_access_or_write": "NOT_PERFORMED",
+    "hardware_access": "NOT_PERFORMED",
+    "native_assistive_technology_tests": "NOT_PERFORMED",
+    "secure_erasure": "NOT_PERFORMED",
+    "physical_compaction": "NOT_PERFORMED",
+    "automatic_workers": "NOT_IMPLEMENTED",
+    "new_backup_contains_external_archived_payloads": false,
+    "structural_validation_checks_external_backup_availability": false,
+    "physical_power_loss_certification": "NOT_PERFORMED"
+  }
+}

@@ -2,6 +2,9 @@
 
 | Capability | Planned evidence | Current status |
 |---|---|---|
+| Reviewed terminal job archival | 46 new regressions; 94 combined archival/backup cases; exact preserved rows, lock contention, rollback, quotas and replay | LOCAL PASS — verified pre-archive backup, live candidate/binding checks, immutable receipt; logical quota only, no secure erasure or physical shrink |
+| Archived Dashboard detail | 128 frontend host cases; actual isolated Edge detail, refresh, candidate navigation and logout | LOCAL PASS — external backup hash and history visible; no export/bind actions; screenshot retained; synthetic, not native assistive/hardware acceptance |
+| Archive dependency recovery | Independent-process clean-wheel CLI backup/plan/apply/readback/v4 restore | LOCAL PASS — exact failure counts retained; later backups list but do not contain earlier archived payloads; original ZIP availability remains owner's responsibility |
 | Coordinated workspace backup/recovery | 48 regressions, exact table readback, committed WAL, cold attestation and independent-process CLI smoke | LOCAL PASS — both writers reserved; running jobs refused; strict member/hash/history checks; restore into a new directory only; no automatic failover or hardware |
 | Snapshot-bound retention planning | active/bound/recent protection, cutoff and timestamp/hash validation | LOCAL PASS — review-only archival candidates, audit/idempotency retained, zero deletion and zero quota reclamation |
 | Durable foreground execution lifecycle | 99 focused Python job cases, 127 frontend host cases, actual isolated in-app-browser execution, schema drift and cross-process smoke | LOCAL PASS — v2 record owner identity, bounded lease renewal, cooperative cancellation checkpoints, v1/v2-to-v3 migration and restart non-adoption; no worker, mid-parser preemption, GitHub or hardware claim |
@@ -22,7 +25,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — forty-six document plus three artifact schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — forty-nine document plus three artifact schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Analog Validation result Schema mirror | committed upstream-consumer contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
@@ -186,7 +189,7 @@
 | Structured-input pre-materialization bounds | JSON token, XML event, and YAML event adversarial tests | PASS — byte plus node/element/depth limits; duplicate YAML keys rejected |
 | Plugin output pre-materialization bounds | trusted in-container exporter plus bounded host archive inspection | PASS — clean-wheel live dual snapshots; no archive extraction |
 | Development dependency advisory audit | constrained pip/pytest bootstrap plus `pip-audit` | PASS — no known advisory in resolved registry dependencies; editable local project excluded |
-| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.57% exceeds exact 95.00% threshold |
+| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.66% exceeds exact 95.00% threshold |
 
 See `reports/INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md` for the latest
 expected-versus-actual CLI/API check and

@@ -24,6 +24,7 @@ from forgegate.collectors.base import CollectionResult, CollectionStatus
 from forgegate.dashboard.collection import DashboardCollectionPreviewRequest, preview_collection
 from forgegate.domain.enums import CandidateStatus
 from forgegate.domain.models import SLUG_PATTERN, StrictModel
+from forgegate.job_archive_models import JobArchiveReceipt
 
 APP_ID = 0x4647434A
 MAX_JOBS = 100
@@ -196,6 +197,7 @@ class CollectionJobReview(StrictModel):
     record: CollectionJobRecordLike
     events: list[CollectionJobEvent] = Field(min_length=1, max_length=MAX_JOB_REVISION + 1)
     result: CollectionJobResult | None
+    archive: JobArchiveReceipt | None = None
 
 
 def _json(model: StrictModel) -> str:
@@ -288,7 +290,7 @@ class CollectionJobStore:
             con.row_factory = sqlite3.Row
             if con.execute("PRAGMA application_id").fetchone()[0] != APP_ID or con.execute(
                 "PRAGMA user_version"
-            ).fetchone()[0] not in (1, 2, 3):
+            ).fetchone()[0] not in (1, 2, 3, 4):
                 raise JobError("JOB_STORE_VERSION_INVALID")
             con.execute("PRAGMA synchronous=FULL")
             con.execute("PRAGMA foreign_keys=ON")
@@ -303,7 +305,7 @@ class CollectionJobStore:
 
     def require_dashboard_store(self) -> None:
         with self._transaction() as con:
-            if con.execute("PRAGMA user_version").fetchone()[0] != 3:
+            if con.execute("PRAGMA user_version").fetchone()[0] not in (3, 4):
                 raise JobError("JOB_STORE_MIGRATION_REQUIRED")
             # Validate schema without initializing or upgrading a configured file.
             con.execute("SELECT job_id,revision,record,actor FROM events LIMIT 1")
@@ -312,7 +314,7 @@ class CollectionJobStore:
         """Explicit transactional v1/v2-to-v3 upgrade; preserve raw rows and actors."""
         with self._transaction() as con:
             version = con.execute("PRAGMA user_version").fetchone()[0]
-            if version == 3:
+            if version in (3, 4):
                 return
             for row in con.execute("SELECT job_id FROM jobs").fetchall():
                 self._read(con, row[0])
@@ -322,8 +324,47 @@ class CollectionJobStore:
 
     @staticmethod
     def _require_current(con: sqlite3.Connection) -> None:
-        if con.execute("PRAGMA user_version").fetchone()[0] != 3:
+        if con.execute("PRAGMA user_version").fetchone()[0] not in (3, 4):
             raise JobError("JOB_STORE_MIGRATION_REQUIRED")
+
+    def enable_archiving(self) -> None:
+        """Explicit v3-to-v4 upgrade; never drop or rewrite historical job/event bytes."""
+        with self._transaction() as con:
+            self._require_current(con)
+            if con.execute("PRAGMA user_version").fetchone()[0] == 4:
+                return
+            for row in con.execute("SELECT job_id FROM jobs").fetchall():
+                record, _ = self._read(con, row[0])
+                self.review_snapshot(con, record.job_id, project_id=record.project_id)
+            con.execute(
+                "CREATE TABLE job_archives (job_id TEXT PRIMARY KEY NOT NULL "
+                "REFERENCES jobs(job_id), receipt TEXT NOT NULL)"
+            )
+            for operation in ("UPDATE", "DELETE"):
+                con.execute(
+                    f"CREATE TRIGGER archives_no_{operation.lower()} BEFORE {operation} "
+                    "ON job_archives BEGIN SELECT RAISE(ABORT, 'archives are immutable'); END"
+                )
+                con.execute(
+                    f"CREATE TRIGGER archived_jobs_no_{operation.lower()} BEFORE {operation} "
+                    "ON jobs WHEN EXISTS(SELECT 1 FROM job_archives WHERE job_id=OLD.job_id) "
+                    "BEGIN SELECT RAISE(ABORT, 'archived jobs are immutable'); END"
+                )
+            con.execute("PRAGMA user_version=4")
+
+    @staticmethod
+    def archive_snapshot(con: sqlite3.Connection, job_id: str) -> JobArchiveReceipt | None:
+        if con.execute("PRAGMA user_version").fetchone()[0] != 4:
+            return None
+        row = con.execute("SELECT receipt FROM job_archives WHERE job_id=?", (job_id,)).fetchone()
+        if row is None:
+            return None
+        try:
+            receipt = JobArchiveReceipt.model_validate_json(row[0])
+            _require(_json(receipt) == row[0] and receipt.plan.job_id == job_id)
+            return receipt
+        except ValueError as exc:
+            raise JobError("JOB_STORE_CORRUPT") from exc
 
     def _read(
         self, con: sqlite3.Connection, job_id: str
@@ -336,7 +377,22 @@ class CollectionJobStore:
             _require(record.job_id == job_id and _json(record) == row["record"])
             _require((record.state in ACTIVE) == (row["input"] is not None))
             _require((record.state == "RUNNING") == (row["lease"] is not None))
-            _require((record.state in HAS_RESULT) == (row["result"] is not None))
+            archive = self.archive_snapshot(con, job_id)
+            if archive is None:
+                _require((record.state in HAS_RESULT) == (row["result"] is not None))
+            else:
+                _require(record.state not in ACTIVE and row["result"] is None)
+                _require(archive.plan.record_fingerprint == _fingerprint(row["record"]))
+                _require(archive.plan.result_fingerprint == record.result_fingerprint)
+                _require(
+                    archive.plan.candidate_id == record.candidate_id
+                    and archive.plan.project_id == record.project_id
+                    and archive.plan.expected_revision == record.revision
+                )
+                _require(
+                    sha256_fingerprint({**dict(row), "result": None})
+                    == archive.plan.retained_row_fingerprint
+                )
             if row["input"] is not None:
                 _require(_fingerprint(row["input"]) == record.request_fingerprint)
             if row["result"] is not None:
@@ -381,8 +437,14 @@ class CollectionJobStore:
             actual_project, candidate_fingerprint = _candidate(application, request)
             if project_id is not None and actual_project != project_id:
                 raise JobError("JOB_NOT_FOUND")
+            filter_archived = (
+                " WHERE job_id NOT IN (SELECT job_id FROM job_archives)"
+                if con.execute("PRAGMA user_version").fetchone()[0] == 4
+                else ""
+            )
             count, size = con.execute(
                 "SELECT count(*),coalesce(sum(length(cast(input as blob))),0) FROM jobs"
+                + filter_archived
             ).fetchone()
             if count >= MAX_JOBS or size + len(payload.encode()) > MAX_INPUT_BYTES:
                 raise JobError("JOB_CAPACITY_EXCEEDED")
@@ -438,12 +500,26 @@ class CollectionJobStore:
                     _require(actor.role == "operator" and _json(actor) == actor_raw)
                 events.append(CollectionJobEvent(record=snapshot, actor=actor))
             _require(len(events) == record.revision + 1 and events[-1].record == record)
+            archive = self.archive_snapshot(con, job_id)
+            if archive is not None:
+                _require(
+                    archive.plan.events_fingerprint
+                    == sha256_fingerprint(
+                        [
+                            dict(e)
+                            for e in con.execute(
+                                "SELECT * FROM events WHERE job_id=? ORDER BY revision", (job_id,)
+                            )
+                        ]
+                    )
+                )
             return CollectionJobReview(
                 record=record,
                 events=events,
                 result=None
                 if row["result"] is None
                 else CollectionJobResult.model_validate_json(row["result"]),
+                archive=archive,
             )
         except ValueError as exc:
             raise JobError("JOB_STORE_CORRUPT") from exc
@@ -503,7 +579,7 @@ class CollectionJobStore:
             actor = AuditActor.model_validate_json(actor.model_dump_json())
             if actor.role != "operator" or actor.authenticated_at > record.updated_at:
                 raise JobError("JOB_ACTOR_INVALID")
-            if con.execute("PRAGMA user_version").fetchone()[0] != 3:
+            if con.execute("PRAGMA user_version").fetchone()[0] not in (3, 4):
                 raise JobError("JOB_STORE_MIGRATION_REQUIRED")
             con.execute(
                 "INSERT INTO events(job_id,revision,record,actor) VALUES(?,?,?,?)",
@@ -677,6 +753,8 @@ class CollectionJobStore:
     def result(self, job_id: str) -> CollectionJobResult:
         with self._transaction() as con:
             _, row = self._read(con, job_id)
+            if self.archive_snapshot(con, job_id) is not None:
+                raise JobError("JOB_RESULT_ARCHIVED")
             if row["result"] is None:
                 raise JobError("JOB_RESULT_UNAVAILABLE")
             return CollectionJobResult.model_validate_json(row["result"])
