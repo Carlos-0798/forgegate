@@ -6,6 +6,7 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
+- [Phase 36 Dashboard submission and parsing](PHASE_36_DASHBOARD_JOB_SUBMISSION_ACCEPTANCE.md) — reviewed frozen report input, separate execution, warning consent and exact real Edge results; no worker, binding or hardware
 - [Phase 35 Dashboard job management](PHASE_35_DASHBOARD_JOBS_ACCEPTANCE.md) — actual Edge synthetic inspection/cancel/recovery/conflict evidence and explicit store migration; no automatic worker
 - [Phase 34 durable local report jobs](PHASE_34_COLLECTION_JOBS_ACCEPTANCE.md) — persistent local CLI lifecycle, bounded input, explicit cancellation/recovery, cross-process evidence and Windows handle correction; no new Dashboard task UI at that checkpoint
 - [Phase 34 synthetic job receipt](PHASE_34_COLLECTION_JOB_SMOKE.json) — exact four-test/one-failure output, source hash, non-mutation and cleanup checks; not a policy PASS or hardware claim

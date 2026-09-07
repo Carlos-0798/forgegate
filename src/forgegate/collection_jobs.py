@@ -63,7 +63,9 @@ class CollectionJobRecord(StrictModel):
     project_id: str = Field(pattern=SLUG_PATTERN)
     candidate_fingerprint: str = Field(pattern=FINGERPRINT_PATTERN)
     request_fingerprint: str = Field(pattern=FINGERPRINT_PATTERN)
-    authority: Literal["LOCAL_CLI_NOT_AUTHENTICATED"] = "LOCAL_CLI_NOT_AUTHENTICATED"
+    authority: Literal["LOCAL_CLI_NOT_AUTHENTICATED", "AUTHENTICATED_DASHBOARD"] = (
+        "LOCAL_CLI_NOT_AUTHENTICATED"
+    )
     state: JobState = "QUEUED"
     revision: int = Field(default=0, ge=0, le=2)
     created_at: datetime
@@ -287,7 +289,13 @@ class CollectionJobStore:
         return record, row
 
     def submit(
-        self, request: CollectionJobRequest, application: CandidateApplication, *, key: str
+        self,
+        request: CollectionJobRequest,
+        application: CandidateApplication,
+        *,
+        key: str,
+        actor: AuditActor | None = None,
+        project_id: str | None = None,
     ) -> CollectionJobRecord:
         if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}", key) is None:
             raise JobError("JOB_KEY_INVALID")
@@ -299,10 +307,14 @@ class CollectionJobStore:
             existing = con.execute("SELECT job_id FROM jobs WHERE request_key=?", (key,)).fetchone()
             if existing is not None:
                 record, _ = self._read(con, existing[0])
+                if project_id is not None and record.project_id != project_id:
+                    raise JobError("JOB_NOT_FOUND")
                 if record.request_fingerprint != fingerprint:
                     raise JobError("JOB_KEY_CONFLICT")
                 return record
-            project_id, candidate_fingerprint = _candidate(application, request)
+            actual_project, candidate_fingerprint = _candidate(application, request)
+            if project_id is not None and actual_project != project_id:
+                raise JobError("JOB_NOT_FOUND")
             count, size = con.execute(
                 "SELECT count(*),coalesce(sum(length(cast(input as blob))),0) FROM jobs"
             ).fetchone()
@@ -312,20 +324,20 @@ class CollectionJobStore:
             record = CollectionJobRecord(
                 job_id="job-" + secrets.token_hex(16),
                 candidate_id=request.candidate_id,
-                project_id=project_id,
+                project_id=actual_project,
                 candidate_fingerprint=candidate_fingerprint,
                 request_fingerprint=fingerprint,
                 created_at=now,
                 updated_at=now,
+                authority="LOCAL_CLI_NOT_AUTHENTICATED"
+                if actor is None
+                else "AUTHENTICATED_DASHBOARD",
             )
             con.execute(
                 "INSERT INTO jobs VALUES(?,?,?,?,NULL,NULL)",
                 (record.job_id, key, _json(record), payload),
             )
-            con.execute(
-                "INSERT INTO events(job_id,revision,record) VALUES(?,?,?)",
-                (record.job_id, 0, _json(record)),
-            )
+            self._append_event(con, record, actor)
             return record
 
     def show(self, job_id: str) -> CollectionJobRecord:
@@ -392,6 +404,14 @@ class CollectionJobStore:
             }
         )
         con.execute("UPDATE jobs SET record=? WHERE job_id=?", (_json(record), old.job_id))
+        self._append_event(con, record, actor)
+        if record.state not in ACTIVE:
+            con.execute("UPDATE jobs SET input=NULL,lease=NULL WHERE job_id=?", (old.job_id,))
+        return record
+
+    def _append_event(
+        self, con: sqlite3.Connection, record: CollectionJobRecord, actor: AuditActor | None
+    ) -> None:
         if actor is None:
             con.execute(
                 "INSERT INTO events(job_id,revision,record) VALUES(?,?,?)",
@@ -399,7 +419,7 @@ class CollectionJobStore:
             )
         else:
             actor = AuditActor.model_validate_json(actor.model_dump_json())
-            if actor.role != "operator" or actor.authenticated_at > now:
+            if actor.role != "operator" or actor.authenticated_at > record.updated_at:
                 raise JobError("JOB_ACTOR_INVALID")
             if con.execute("PRAGMA user_version").fetchone()[0] != 2:
                 raise JobError("JOB_STORE_MIGRATION_REQUIRED")
@@ -407,15 +427,19 @@ class CollectionJobStore:
                 "INSERT INTO events(job_id,revision,record,actor) VALUES(?,?,?,?)",
                 (record.job_id, record.revision, _json(record), _json(actor)),
             )
-        if record.state not in ACTIVE:
-            con.execute("UPDATE jobs SET input=NULL,lease=NULL WHERE job_id=?", (old.job_id,))
-        return record
 
     def claim(
-        self, job_id: str, revision: int
+        self,
+        job_id: str,
+        revision: int,
+        *,
+        actor: AuditActor | None = None,
+        project_id: str | None = None,
     ) -> tuple[CollectionJobRecord, str, CollectionJobRequest]:
         with self._transaction() as con:
             old, row = self._read(con, job_id)
+            if project_id is not None and old.project_id != project_id:
+                raise JobError("JOB_NOT_FOUND")
             if old.state != "QUEUED" or old.revision != revision:
                 raise JobError("JOB_STATE_CONFLICT")
             request = CollectionJobRequest.model_validate_json(row["input"])
@@ -424,13 +448,19 @@ class CollectionJobStore:
                 con,
                 old,
                 state="RUNNING",
+                actor=actor,
                 lease_expires_at=_now() + timedelta(seconds=LEASE_SECONDS),
             )
             con.execute("UPDATE jobs SET lease=? WHERE job_id=?", (token, job_id))
             return record, token, request
 
     def finish(
-        self, job_id: str, token: str, result: CollectionJobResult | None
+        self,
+        job_id: str,
+        token: str,
+        result: CollectionJobResult | None,
+        *,
+        actor: AuditActor | None = None,
     ) -> CollectionJobRecord:
         with self._transaction() as con:
             old, row = self._read(con, job_id)
@@ -446,6 +476,7 @@ class CollectionJobStore:
                     con,
                     old,
                     state="FAILED",
+                    actor=actor,
                     lease_expires_at=None,
                     source_bytes="released_logically",
                     error_code="JOB_EXECUTION_FAILED",
@@ -466,6 +497,7 @@ class CollectionJobStore:
                 con,
                 old,
                 state=result.terminal_state(),
+                actor=actor,
                 lease_expires_at=None,
                 source_bytes="released_logically",
                 result_fingerprint=_fingerprint(payload),
@@ -533,9 +565,15 @@ class CollectionJobStore:
             return CollectionJobResult.model_validate_json(row["result"])
 
     def run(
-        self, job_id: str, revision: int, application: CandidateApplication
+        self,
+        job_id: str,
+        revision: int,
+        application: CandidateApplication,
+        *,
+        actor: AuditActor | None = None,
+        project_id: str | None = None,
     ) -> CollectionJobRecord:
-        record, token, request = self.claim(job_id, revision)
+        record, token, request = self.claim(job_id, revision, actor=actor, project_id=project_id)
         try:
             if _candidate(application, request)[1] != record.candidate_fingerprint:
                 raise JobError("JOB_CANDIDATE_CONFLICT")
@@ -545,10 +583,10 @@ class CollectionJobStore:
             result = CollectionJobResult(
                 job_id=job_id, collections=preview.collections, assembly=preview.assembly
             )
-            return self.finish(job_id, token, result)
+            return self.finish(job_id, token, result, actor=actor)
         except Exception:
             # Cancellation/expired ownership wins; never overwrite another terminal result.
             latest = self.show(job_id)
             if latest.state != "RUNNING":
                 return latest
-            return self.finish(job_id, token, None)
+            return self.finish(job_id, token, None, actor=actor)

@@ -1,9 +1,10 @@
-"""Opt-in operator/project-scoped views and reviewed job management, never execution."""
+"""Opt-in operator/project-scoped jobs with explicitly confirmed report parsing."""
 
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
+from threading import Lock
 from typing import Annotated
 
 from fastapi import FastAPI, Header, Query, Request
@@ -13,8 +14,10 @@ from pydantic import Field
 from forgegate.api.auth import ApiAuthenticationError, ApiAuthenticator, ApiPrincipal
 from forgegate.application import CandidateApplication
 from forgegate.candidates.models import CANDIDATE_ID_PATTERN
+from forgegate.canonical import sha256_fingerprint
 from forgegate.collection_jobs import (
     CollectionJobRecord,
+    CollectionJobRequest,
     CollectionJobReview,
     CollectionJobStore,
     JobError,
@@ -74,6 +77,7 @@ def install_job_routes(
     store_path: Path | None,
 ) -> None:
     store = None if store_path is None else CollectionJobStore(store_path)
+    execution_lock = Lock()  # One foreground HTTP parser per app instance, not a worker pool.
     if store is not None:
         store.require_dashboard_store()  # No creation or migration during startup.
 
@@ -178,6 +182,80 @@ def install_job_routes(
                 actor=principal.audit_actor(),
                 project_id=project_id,
             )
+
+    @app.post(
+        "/app/api/jobs",
+        response_model=CollectionJobRecord,
+        operation_id="submitDashboardJob",
+        include_in_schema=False,
+    )
+    def submit_job(
+        request: Request,
+        project_id: Annotated[str, Query(pattern=SLUG_PATTERN)],
+        command: CollectionJobRequest,
+        idempotency_key: Annotated[
+            str,
+            Header(
+                alias="Idempotency-Key",
+                min_length=1,
+                max_length=128,
+                pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]*$",
+            ),
+        ],
+        csrf: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> CollectionJobRecord:
+        principal = authorize(request, project_id, write=True, csrf=csrf)
+        candidate = application.get_candidate(command.candidate_id)
+        if candidate.project_id != project_id:
+            raise ApiAuthenticationError(
+                "JOB_NOT_FOUND", "Job candidate not found.", status_code=404
+            )
+        # Isolate keys across identities/projects and from CLI callers; do not expose raw keys.
+        key = "dashboard:" + sha256_fingerprint(
+            {
+                "identity": principal.audit_actor().identity_id,
+                "project": project_id,
+                "key": idempotency_key,
+            }
+        ).removeprefix("sha256:")
+        with _job_errors():
+            return configured().submit(
+                command, application, key=key, actor=principal.audit_actor(), project_id=project_id
+            )
+
+    @app.post(
+        "/app/api/jobs/{job_id}/run",
+        response_model=CollectionJobRecord,
+        operation_id="runDashboardJob",
+        include_in_schema=False,
+    )
+    def run_job(
+        request: Request,
+        job_id: Annotated[str, ApiPath(pattern=JOB_ID_PATTERN)],
+        project_id: Annotated[str, Query(pattern=SLUG_PATTERN)],
+        command: DashboardJobCommand,
+        csrf: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> CollectionJobRecord:
+        principal = authorize(request, project_id, write=True, csrf=csrf)
+        with _job_errors():
+            job_store = configured()
+            review_for_project(job_store, job_id, project_id)
+            if not execution_lock.acquire(blocking=False):
+                raise ApiAuthenticationError(
+                    "DASHBOARD_JOB_RUN_BUSY",
+                    "Another report parser is active. Inspect jobs and retry manually later.",
+                    status_code=429,
+                )
+            try:
+                return job_store.run(
+                    job_id,
+                    command.expected_revision,
+                    application,
+                    actor=principal.audit_actor(),
+                    project_id=project_id,
+                )
+            finally:
+                execution_lock.release()
 
     @app.post(
         "/app/api/jobs/{job_id}/cancel",

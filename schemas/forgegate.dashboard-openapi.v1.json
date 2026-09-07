@@ -820,8 +820,11 @@
         "additionalProperties": false,
         "properties": {
           "authority": {
-            "const": "LOCAL_CLI_NOT_AUTHENTICATED",
             "default": "LOCAL_CLI_NOT_AUTHENTICATED",
+            "enum": [
+              "LOCAL_CLI_NOT_AUTHENTICATED",
+              "AUTHENTICATED_DASHBOARD"
+            ],
             "title": "Authority",
             "type": "string"
           },
@@ -953,6 +956,31 @@
           "updated_at"
         ],
         "title": "CollectionJobRecord",
+        "type": "object"
+      },
+      "CollectionJobRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_id": {
+            "pattern": "^cand-[0-9a-f]{24}$",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "collection": {
+            "$ref": "#/components/schemas/DashboardCollectionPreviewRequest"
+          },
+          "schema_version": {
+            "const": "forgegate.collection-job-request.v1",
+            "default": "forgegate.collection-job-request.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "collection"
+        ],
+        "title": "CollectionJobRequest",
         "type": "object"
       },
       "CollectionJobResult": {
@@ -4649,6 +4677,82 @@
           }
         },
         "summary": "List Jobs"
+      },
+      "post": {
+        "operationId": "submitDashboardJob",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$",
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollectionJobRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionJobRecord"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit Job"
       }
     },
     "/app/api/jobs/{job_id}": {
@@ -4851,6 +4955,82 @@
           }
         },
         "summary": "Recover Job"
+      }
+    },
+    "/app/api/jobs/{job_id}/run": {
+      "post": {
+        "operationId": "runDashboardJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^job-[0-9a-f]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardJobCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionJobRecord"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Job"
       }
     },
     "/app/api/live-status": {

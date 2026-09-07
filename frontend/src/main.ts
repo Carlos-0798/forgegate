@@ -1314,7 +1314,7 @@ async function renderJobs(): Promise<void> {
   const owner = session;
   const route = window.location.hash;
   const active = () => generation === jobsViewGeneration && session === owner && window.location.hash === route;
-  const main = page("Collection jobs", "DURABLE LOCAL TASKS", "Inspect retained report tasks. Completion is not a policy PASS. Refresh to observe progress from the CLI.");
+  const main = page("Collection jobs", "DURABLE LOCAL TASKS", "Inspect retained report tasks. Completion is not a policy PASS. Refresh to observe external progress.");
   if (owner?.principal.role !== "operator") {
     main.append(emptyState("Operator session required", "Job results and management require an authorized operator. No job request was sent."));
     shell(main);
@@ -1366,7 +1366,7 @@ async function renderJobs(): Promise<void> {
   const refresh = button("Refresh jobs", "button secondary");
   refresh.addEventListener("click", () => void renderJobs());
   form.append(projectLabel, candidateLabel, apply, refresh);
-  main.append(form, el("p", "command-boundary", "Submission and execution remain CLI-only. No automatic worker, evidence binding, test execution, hardware access or release decision occurs here. Pending raw reports stay in the configured local store; logical release is not secure erasure."));
+  main.append(form, el("p", "command-boundary", "Submit from an unbound COLLECTING candidate, then separately review execution here. Execution parses retained reports; it does not run project tests. No automatic worker, evidence binding, hardware access or release decision occurs here. Pending raw reports stay in the configured local store; logical release is not secure erasure."));
   const results = el("section", "job-results");
   results.setAttribute("aria-live", "polite");
   results.append(el("p", "muted", "Loading retained tasks…"));
@@ -1393,7 +1393,7 @@ async function renderJobs(): Promise<void> {
       return;
     }
     results.append(el("p", "pager-status", `${page.jobs.length} jobs shown · ${page.has_more ? "More jobs available" : "End of matching jobs"} · Read at ${formatDate(page.observed_at)}`));
-    if (!page.jobs.length) results.append(emptyState("No matching jobs", "Submit a report task with the local CLI, or change the filter. Empty results do not prove successful collection."));
+    if (!page.jobs.length) results.append(emptyState("No matching jobs", "Submit a report task from a candidate or the local CLI, or change the filter. Empty results do not prove successful collection."));
     for (const job of page.jobs) {
       const item = el("article", "panel job-card");
       const link = el("a", "button quiet", `Inspect ${job.job_id}`);
@@ -1435,6 +1435,11 @@ function renderJobDetail(main: HTMLElement, review: JobReview): HTMLElement {
   const candidate = el("a", "button secondary", "Review candidate evidence separately");
   candidate.href = candidateReviewHash("evidence", job.candidate_id);
   panel.append(candidate);
+  if (job.state === "QUEUED") {
+    const run = button("Review execution", "button primary");
+    run.addEventListener("click", () => reviewJobAction(main, job, "run", run));
+    panel.append(run);
+  }
   if (["QUEUED", "RUNNING"].includes(job.state)) {
     const cancel = button("Review cancellation", "button secondary");
     cancel.addEventListener("click", () => reviewJobAction(main, job, "cancel", cancel));
@@ -1469,7 +1474,7 @@ function renderJobDetail(main: HTMLElement, review: JobReview): HTMLElement {
   return panel;
 }
 
-function reviewJobAction(main: HTMLElement, job: CollectionJob, action: "cancel" | "recover", returnFocus: HTMLElement): void {
+function reviewJobAction(main: HTMLElement, job: CollectionJob, action: "cancel" | "recover" | "run", returnFocus: HTMLElement): void {
   const owner = session;
   if (owner?.principal.role !== "operator") return;
   const route = window.location.hash;
@@ -1478,17 +1483,18 @@ function reviewJobAction(main: HTMLElement, job: CollectionJob, action: "cancel"
   dialog.setAttribute("aria-labelledby", "job-action-title");
   const active = () => dialog.open && dialog.isConnected && session === owner && window.location.hash === route && generation === jobsViewGeneration;
   let busy = false;
-  const heading = el("h2", undefined, action === "cancel" ? "Confirm task cancellation" : "Confirm interruption recovery");
+  const heading = el("h2", undefined, action === "run" ? "Confirm report parsing" : action === "cancel" ? "Confirm task cancellation" : "Confirm interruption recovery");
   heading.id = "job-action-title";
-  dialog.append(heading, el("p", "command-boundary", action === "cancel" ? "This revokes result publication and logically releases pending input. It does not kill the parser, securely erase bytes, or change candidate evidence." : "Only an expired running lease can become INTERRUPTED. No retry or execution is started."));
+  dialog.append(heading, el("p", "command-boundary", action === "run" ? "Parse this retained report selection once in the foreground. No test commands, plugins, device access or binding. Closing the page or losing the response does not stop parsing: inspect the retained job before retrying. Cancellation revokes publication, not parser execution." : action === "cancel" ? "This revokes result publication and logically releases pending input. It does not kill the parser, securely erase bytes, or change candidate evidence." : "Only an expired running lease can become INTERRUPTED. No retry or execution is started."));
   const details = el("dl", "definition-list");
   details.append(definition("Job", job.job_id, true), definition("Project", job.project_id), definition("Reviewed revision", String(job.revision)), definition("Operator", owner.principal.display_name));
+  if (action === "run") details.append(definition("Retained request fingerprint", job.request_fingerprint, true));
   const status = el("div", "dialog-status");
   status.setAttribute("aria-live", "polite");
   const controls = el("div", "dialog-actions");
   const close = button("Back without changes", "button quiet");
   close.addEventListener("click", () => dialog.close());
-  const confirm = button(action === "cancel" ? "Confirm cancellation" : "Confirm recovery", "button primary");
+  const confirm = button(action === "run" ? "Confirm execution" : action === "cancel" ? "Confirm cancellation" : "Confirm recovery", "button primary");
   confirm.addEventListener("click", async () => {
     if (!active() || busy || confirm.disabled) return;
     busy = true;
@@ -1498,7 +1504,7 @@ function reviewJobAction(main: HTMLElement, job: CollectionJob, action: "cancel"
     try {
       const result = await api<CollectionJob>(`/app/api/jobs/${job.job_id}/${action}?${new URLSearchParams({ project_id: job.project_id })}`, { method: "POST", headers: { "X-ForgeGate-CSRF": owner.csrf_token }, body: JSON.stringify({ expected_revision: job.revision }) });
       if (!active()) return;
-      status.replaceChildren(el("p", undefined, `Recorded ${result.state} at revision ${result.revision}. The authenticated operator was retained with this event.`));
+      status.replaceChildren(el("p", undefined, action === "run" ? `Observed ${result.state} at revision ${result.revision}. Inspect the retained output and actors. Parsing completion is not a policy PASS.` : `Recorded ${result.state} at revision ${result.revision}. The authenticated operator was retained with this event.`));
     } catch (error) {
       if (!active()) return;
       if (handleProtectedProblem(status, error, "Outcome may be uncertain. Close and refresh before creating another command; no automatic retry occurs.")) return;
@@ -2073,17 +2079,17 @@ function sortedJsonValue(value: unknown): unknown {
   return value;
 }
 
-function openJUnitImport(main: HTMLElement, candidate: Candidate, returnFocus?: HTMLElement, multi = false): void {
+function openJUnitImport(main: HTMLElement, candidate: Candidate, returnFocus?: HTMLElement, multi = false, durable = false): void {
   const invalid = (message: string): RequestProblem => new RequestProblem(422, multi ? "DASHBOARD_COLLECTION_INVALID" : "DASHBOARD_JUNIT_INVALID", message, "browser-side", null, "browser");
   const dialog = el("dialog", "review-dialog");
   dialog.setAttribute("aria-labelledby", "candidate-command-dialog-title");
-  const heading = el("h2", undefined, multi ? "Collect test + coverage reports" : "Collect JUnit report");
+  const heading = el("h2", undefined, durable ? "Prepare durable report task" : multi ? "Collect test + coverage reports" : "Collect JUnit report");
   heading.id = "candidate-command-dialog-title";
   const form = el("form", "candidate-form");
   form.addEventListener("submit", (event) => event.preventDefault());
   form.append(el("p", "eyebrow", "BOUNDED RAW REPORT PREVIEW"), heading,
-    el("p", "muted", "Select reports, then review before binding. Maximum 1 MiB per report. No server path, device access, or test execution. Uploaded results remain unsigned_local / declared; source bytes are not retained."),
-    el("p", "command-boundary", multi ? "Select one JUnit and one coverage report. All reports must parse successfully; no partial selection is bound. Matching source-commit declarations are not authenticated provenance." : "Binding is immutable and contains only this report. Policies requiring other reports or stronger verification may reject it. Use combined test + coverage collection or CLI assembly when needed."));
+    el("p", "muted", durable ? "Preview first, then separately confirm durable submission. Maximum 1 MiB per report. Submission retains raw bytes in the configured private job store until a terminal state; no encryption or secure erasure is promised. Execution needs another confirmation. Evidence stays unsigned_local / declared." : "Select reports, then review before binding. Maximum 1 MiB per report. No server path, device access, or test execution. Uploaded results remain unsigned_local / declared; source bytes are not retained."),
+    el("p", "command-boundary", durable ? "The complete selection must pass preview before browser submission. The queued task will parse these same bytes again only after separate execution confirmation. Matching source-commit declarations are not authenticated provenance." : multi ? "Select one JUnit and one coverage report. All reports must parse successfully; no partial selection is bound. Matching source-commit declarations are not authenticated provenance." : "Binding is immutable and contains only this report. Policies requiring other reports or stronger verification may reject it. Use combined test + coverage collection or CLI assembly when needed."));
   const field = (label: string, type: string, value = ""): HTMLInputElement => {
     const wrap = el("label", "field");
     const input = el("input");
@@ -2183,13 +2189,13 @@ function openJUnitImport(main: HTMLElement, candidate: Candidate, returnFocus?: 
         controls.replaceChildren(cancel);
         status.replaceChildren(el("p", "muted", "Parsing with the bounded server collector; no candidate state is being changed…"));
         try {
-          const result = await api<Record<string, unknown>>(`/app/api/candidates/${encodeURIComponent(candidate.candidate_id)}/${multi ? "collection-preview" : "junit-preview"}`, {
+          const result = await api<Record<string, unknown>>(`/app/api/candidates/${encodeURIComponent(candidate.candidate_id)}/${multi || durable ? "collection-preview" : "junit-preview"}`, {
             method: "POST", headers: { "X-ForgeGate-CSRF": owner.csrf_token },
-            body: JSON.stringify(multi ? {expected_revision: candidate.revision, reported_commit: commit.value, reports, retain_warnings: retainWarnings} : { ...command, retain_warnings: retainWarnings })
+            body: JSON.stringify(multi || durable ? {expected_revision: candidate.revision, reported_commit: command.reported_commit, reports, retain_warnings: retainWarnings} : { ...command, retain_warnings: retainWarnings })
           });
           if (!current()) return;
-          if (result.schema_version !== (multi ? "forgegate.dashboard-collection-preview.v1" : "forgegate.dashboard-junit-preview.v1") || result.candidate_id !== candidate.candidate_id || result.expected_revision !== candidate.revision) throw invalid("Unexpected preview identity; nothing was bound.");
-          const collections = multi ? result.collections : [result.collection];
+          if (result.schema_version !== (multi || durable ? "forgegate.dashboard-collection-preview.v1" : "forgegate.dashboard-junit-preview.v1") || result.candidate_id !== candidate.candidate_id || result.expected_revision !== candidate.revision) throw invalid("Unexpected preview identity; nothing was bound.");
+          const collections = multi || durable ? result.collections : [result.collection];
           if (!Array.isArray(collections) || collections.length !== sources.length || !collections.every(isJsonObject)) throw invalid("Unexpected preview report count; nothing was bound.");
           status.replaceChildren(el("p", "muted", "Preview only — not retained. Original report time and caller-declared source metadata are preserved."));
           let allComplete = true;
@@ -2225,9 +2231,16 @@ function openJUnitImport(main: HTMLElement, candidate: Candidate, returnFocus?: 
             const assembly = result.assembly;
             const assemblyJson = result.assembly_json;
             if (typeof assemblyJson !== "string" || JSON.stringify(sortedJsonValue(JSON.parse(assemblyJson))) !== JSON.stringify(sortedJsonValue(assembly))) throw invalid("Missing or mismatched exact assembly JSON; nothing was bound.");
-            const review = button("Review immutable binding", "button primary");
+            const review = button(durable ? "Review durable submission" : "Review immutable binding", "button primary");
             review.addEventListener("click", () => {
               if (!current()) return;
+              if (durable) {
+                renderJobSubmission(dialog, candidate, {
+                  expected_revision: candidate.revision, reported_commit: command.reported_commit,
+                  reports, retain_warnings: retainWarnings
+                }, sources, warningCount);
+                return;
+              }
               const mutation = evidenceImportMutation(candidate, assembly, file, fingerprint);
               mutation.serializedBody = exactDocumentBody(mutation.body, "assembly", assemblyJson);
               mutation.summary = `Bind this ${multi ? "combined test + coverage" : "single-report"} assembly. Source bytes are not retained, reported metadata is unverified, and evidence stays unsigned_local / declared. This does not mark the candidate READY or PASS.`;
@@ -2257,6 +2270,64 @@ function openJUnitImport(main: HTMLElement, candidate: Candidate, returnFocus?: 
   main.append(dialog);
   dialog.showModal();
   fileInput.focus();
+}
+
+function renderJobSubmission(
+  dialog: HTMLDialogElement, candidate: Candidate, collection: Record<string, unknown>,
+  sources: Array<{file: File; fingerprint: string; size: number; format: string}>, warningCount: number
+): void {
+  const owner = session;
+  if (owner?.principal.role !== "operator") return;
+  const route = window.location.hash;
+  const current = () => dialog.open && dialog.isConnected && session === owner && window.location.hash === route;
+  const body = JSON.stringify({candidate_id: candidate.candidate_id, collection});
+  const key = `dashboard:job:${crypto.randomUUID()}`;
+  const panel = el("section", "review-panel");
+  const heading = el("h2", undefined, "Confirm durable task submission");
+  heading.id = "candidate-command-dialog-title";
+  panel.append(heading, el("p", "command-boundary", "This writes one QUEUED task and retains the exact report bytes in the configured private job store. It does not execute, bind evidence or change the candidate. Raw bytes are not encrypted; terminal logical release is not secure erasure. A lost response may still mean the task was created; inspect Jobs before making another submission."));
+  const details = el("dl", "definition-list");
+  details.append(definition("Project", candidate.project_id), definition("Candidate", candidate.candidate_id, true), definition("Reviewed candidate revision", String(candidate.revision)), definition("Reported commit", candidate.commit_sha, true), definition("Warnings explicitly retained", String(warningCount)), definition("Idempotency key", key, true));
+  for (const source of sources) details.append(definition("Report", `${source.format} · ${source.file.name} · ${source.size} bytes`), definition("Exact report SHA-256", source.fingerprint, true));
+  if (Array.isArray(collection.reports)) for (const report of collection.reports) {
+    if (isJsonObject(report)) details.append(definition("Declared source", `${report.source_tool} · ${report.source_version}`), definition("Declared collection time", String(report.collected_at)));
+  }
+  const status = el("div", "dialog-status");
+  status.setAttribute("aria-live", "polite");
+  const controls = el("div", "dialog-actions");
+  const back = button("Back without submission", "button quiet");
+  back.addEventListener("click", () => dialog.close());
+  const confirm = button("Confirm task submission", "button primary");
+  let submitted = false;
+  confirm.addEventListener("click", async () => {
+    if (!current() || submitted) return;
+    submitted = true;
+    confirm.disabled = back.disabled = true;
+    status.replaceChildren(el("p", "muted", "Submitting the frozen report selection once…"));
+    try {
+      const result = await api<CollectionJob>(`/app/api/jobs?${new URLSearchParams({project_id: candidate.project_id})}`, {
+        method: "POST", headers: {"X-ForgeGate-CSRF": owner.csrf_token, "Idempotency-Key": key}, body
+      });
+      if (!current()) return;
+      if (!/^job-[0-9a-f]{32}$/.test(result.job_id) || result.candidate_id !== candidate.candidate_id || result.project_id !== candidate.project_id) throw new Error("Unexpected submission identity; inspect Jobs before any new write.");
+      status.replaceChildren(el("p", undefined, `Retained ${result.state} at revision ${result.revision}. No execution was started by submission.`));
+      const inspect = el("a", "button primary", "Inspect submitted task");
+      inspect.href = jobsHash(candidate.project_id, candidate.candidate_id, "", result.job_id);
+      controls.replaceChildren(inspect);
+      inspect.focus();
+    } catch (error) {
+      if (!current()) return;
+      handleProtectedProblem(status, error, "Outcome may be uncertain. Inspect Jobs before submitting again. No automatic retry occurs.");
+      const close = button("Close and inspect Jobs", "button secondary");
+      close.addEventListener("click", () => { dialog.close(); window.location.hash = jobsHash(candidate.project_id, candidate.candidate_id); });
+      controls.replaceChildren(close);
+      close.focus();
+    }
+  });
+  controls.append(back, confirm);
+  panel.append(details, status, controls);
+  dialog.replaceChildren(panel);
+  back.focus();
 }
 
 function evidenceImportMutation(
@@ -2410,7 +2481,11 @@ function candidateWorkflowPanel(
     collect.addEventListener("click", () => openJUnitImport(main, candidate, collect));
     const combined = button("Collect test + coverage reports", "button quiet");
     combined.addEventListener("click", () => openJUnitImport(main, candidate, combined, true));
-    panel.append(collect, combined);
+    const queue = button("Prepare JUnit task", "button quiet");
+    queue.addEventListener("click", () => openJUnitImport(main, candidate, queue, false, true));
+    const queueCombined = button("Prepare test + coverage task", "button quiet");
+    queueCombined.addEventListener("click", () => openJUnitImport(main, candidate, queueCombined, true, true));
+    panel.append(collect, combined, queue, queueCombined);
   }
   return panel;
 }

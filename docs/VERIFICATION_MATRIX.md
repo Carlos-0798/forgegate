@@ -2,7 +2,8 @@
 
 | Capability | Planned evidence | Current status |
 |---|---|---|
-| Dashboard job management | 16 additional Python and 17 frontend regressions; isolated real Edge | LOCAL PASS — scoped list/detail/results, confirmed cancel/recover, actor history and real 409; no browser submit/run, new OS accessibility or hardware claim |
+| Dashboard job submission/execution | 23 additional Python and 14 frontend regressions; isolated real Edge | LOCAL PASS — reviewed exact-byte single/combined submission, separate parsing, warning consent, reject-before-queue; no worker, binding or hardware claim |
+| Dashboard job management | 16 additional Python and 17 frontend regressions; isolated real Edge | LOCAL PASS — scoped list/detail/results, confirmed cancel/recover, actor history and real 409; no new OS accessibility or hardware claim |
 | Job-store v1-to-v2 migration | historical byte preservation, actor absence, rollback and independent CLI processes | LOCAL PASS — explicit upgrade only; startup never migrates |
 | Candidate-store backup and offline verification | 27 focused regressions, WAL transaction fixture, cold domain reads and clean-wheel commands | LOCAL PASS — no-overwrite, exact retained rows, hash/schema/integrity checks and limits; no automatic restore or arbitrary-backup domain proof |
 | Windows Dashboard startup and diagnostics | 28 focused host/PowerShell cases, actual HTTP and clean-wheel smoke | PASS — foreground start/stop/restart, missing/empty inputs, occupied port and argument/exit-code checks; no watchdog or ownership guarantee |
@@ -83,7 +84,7 @@
 | Request correlation and error sanitization | generated/supplied/invalid IDs + injected exception | PASS — local host |
 | Loopback-only API bind | IPv4/IPv6/localhost allowlist + external-address rejection | PASS — local host |
 | OpenAPI 3.1 contract | committed byte comparison + installed-wheel export | PASS — drift-checked |
-| Dashboard BFF OpenAPI contract | separate build-time export + committed byte and installed-wheel comparison | PASS — 24 paths / 25 `/app/api/` operations with explicit operation IDs; not served as interactive docs |
+| Dashboard BFF OpenAPI contract | separate build-time export + committed byte and installed-wheel comparison | PASS — 25 paths / 27 `/app/api/` operations with explicit operation IDs; not served as interactive docs |
 | Authenticated local API | Ed25519 challenge, Bearer session, trust recheck | PASS — local host, loopback only |
 | User interaction acceptance | deterministic CLI plus authenticated REST smoke | PASS — 33/33 expected outputs; ephemeral identity/database; Swagger/ReDoc deliberately return 404 |
 | Local Web Dashboard design | architecture, UX requirements, threat model, acceptance matrix | DESIGN PASS — Phase 23 frozen; Phase 24 implementation preserves the defined same-origin boundary |
@@ -169,7 +170,7 @@
 | Durable local collection jobs | 32 focused host cases; independent-process queued read/replay/run/result/cancel; clean-wheel smoke | PASS — synthetic local CLI only; no new browser or device evidence |
 | Job interruption/cancellation | concurrent claim, stale revision, revoked/expired lease, explicit recovery, late-result discard | PASS — deterministic host tests; cancellation blocks publication, not parser execution; no power-loss certification |
 | Pending report retention | transactionally clear terminal input/lease, size/count quotas, sanitized public records | PASS — logical retention boundaries only; no encryption, secure erase, coordinated backup or purge service |
-| Authenticated Dashboard task center | project scope, configured private store, reviewed writes, browser acceptance | NOT IMPLEMENTED — local file authority must not be treated as HTTP authority |
+| Authenticated Dashboard task center | project scope, configured private store, reviewed writes, browser acceptance | BOUNDED LOCAL PASS — list/detail/submit/foreground parse/cancel/recover; no scheduler or distributed worker; local file authority is not HTTP authority |
 | Browser numeric round trip | original assembly JSON; tamper/fingerprint revalidation | PASS — reproduced 422 for 50.0-to-50 conversion, corrected exact-text binding in real Edge |
 | Combined LCOV/negative browser matrix | direct UI runs | PASS — 13 scoped actual-Edge cases in Phase 33 browser follow-up; not exhaustive OS, concurrency or HTTP-injection certification |
 | Local error provenance | actual Edge oversize rejection + host HTTP/local regressions | PASS — local validation does not claim an HTTP response or server request ID |
@@ -181,7 +182,7 @@
 | Structured-input pre-materialization bounds | JSON token, XML event, and YAML event adversarial tests | PASS — byte plus node/element/depth limits; duplicate YAML keys rejected |
 | Plugin output pre-materialization bounds | trusted in-container exporter plus bounded host archive inspection | PASS — clean-wheel live dual snapshots; no archive extraction |
 | Development dependency advisory audit | constrained pip/pytest bootstrap plus `pip-audit` | PASS — no known advisory in resolved registry dependencies; editable local project excluded |
-| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.53% exceeds exact 95.00% threshold |
+| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.50% exceeds exact 95.00% threshold |
 
 See `reports/INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md` for the latest
 expected-versus-actual CLI/API check and

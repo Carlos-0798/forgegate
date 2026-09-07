@@ -2,11 +2,16 @@
 
 ## Unreleased
 
+- Added separately reviewed Dashboard job submission and foreground report
+  parsing, frozen bytes/metadata, warning consent, namespaced idempotency,
+  per-instance busy rejection and atomic initiating-operator attribution.
+  Added 23 backend and 14 frontend regressions plus real Edge synthetic acceptance.
+  No project test execution, automatic worker, evidence binding or hardware access.
 - Added opt-in authenticated Dashboard job inspection, project pagination,
   reviewed cancellation and expired-lease recovery with atomic actor attribution.
   Added explicit job-store v1-to-v2 migration without rewriting historical records,
   frontend/authorization regressions and actual Edge synthetic acceptance.
-  Submission/execution remain CLI-only; no automatic worker or hardware change.
+  Submission/execution were CLI-only at Phase 35; no automatic worker or hardware change.
 - Added a separate durable local collection-job store and CLI with idempotent
   submission, bounded pending source retention, explicit run/cancel/recover,
   exact result export and fail-closed candidate rechecks. No Dashboard job UI,

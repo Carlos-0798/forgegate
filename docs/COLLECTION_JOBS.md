@@ -1,8 +1,8 @@
-# Durable local collection jobs (Phases 34–35)
+# Durable local collection jobs (Phases 34–36)
 
-Submission/execution use an explicit **local CLI** task lifecycle, not a worker
-service, scheduler or production queue. Phase 35 adds an opt-in authenticated
-[Dashboard management view](DASHBOARD_JOBS.md), not browser submission/execution.
+Submission/execution use an explicit local task lifecycle, not a worker service,
+scheduler or production queue. Phases 35–36 add an opt-in authenticated
+[Dashboard management view](DASHBOARD_JOBS.md) with reviewed submission/parsing.
 It adds no device access. The candidate store remains schema v9; new job stores
 use a separate v2 SQLite file. Existing browser previews remain ephemeral.
 Legacy v1 jobs require explicit `jobs migrate STORE` before Dashboard use.
@@ -149,8 +149,7 @@ mutations. Exceptions in execution persist only `JOB_EXECUTION_FAILED`.
 
 ## Deferred gates
 
-Browser job submission/execution, safe durable warning review, cooperative worker
-shutdown, scheduled execution, lease renewal and private artifact lifecycle/backup
-UI remain separate future work. Phase 35 list/detail/cancel/recover and its scoped
-real-browser acceptance are documented separately. Existing MSP430 live telemetry is not
+Browser job-result export/binding, cooperative worker shutdown, scheduled execution,
+lease renewal and private artifact lifecycle/backup UI remain separate future work.
+Phases 35–36 browser acceptance is documented separately. Existing MSP430 live telemetry is not
 connected to this report queue and does not become release evidence.

@@ -2,8 +2,11 @@
   "additionalProperties": false,
   "properties": {
     "authority": {
-      "const": "LOCAL_CLI_NOT_AUTHENTICATED",
       "default": "LOCAL_CLI_NOT_AUTHENTICATED",
+      "enum": [
+        "LOCAL_CLI_NOT_AUTHENTICATED",
+        "AUTHENTICATED_DASHBOARD"
+      ],
       "title": "Authority",
       "type": "string"
     },

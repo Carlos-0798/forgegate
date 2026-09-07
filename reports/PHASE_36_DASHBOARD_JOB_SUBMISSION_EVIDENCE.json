@@ -1,0 +1,61 @@
+{
+  "receipt_type": "phase36-local-browser-acceptance",
+  "date_local": "2026-09-06",
+  "timezone": "America/New_York",
+  "source": "actual Edge against isolated local BFF plus independent store readback",
+  "synthetic_only": true,
+  "hardware_access": "NOT_PERFORMED",
+  "github_access": "NOT_PERFORMED",
+  "candidate_id": "cand-7424e8a0ba6ea77544ae23a7",
+  "candidate_after": {"state": "COLLECTING", "revision": 1, "transitions": 1, "evidence_binding": null, "evaluation_id": null},
+  "job_counts": {"before": 27, "after_back": 27, "after_all": 30, "new_browser_tasks": 3},
+  "new_job_event_states": ["QUEUED", "RUNNING", "SUCCEEDED"],
+  "new_job_creation_authority": "AUTHENTICATED_DASHBOARD",
+  "all_new_event_actors": "Synthetic job operator",
+  "all_new_terminal_source_bytes": "released_logically",
+  "cases": [
+    {
+      "name": "single_failure_report",
+      "job_id": "job-0298966f7f3862e025e2a9d5b3712696",
+      "file": "examples/dashboard-junit/fail.xml",
+      "source_sha256": "3f5fe217f2b46ca72df5161ee099a55962d1fad909a6d3c95733f7d3105b80be",
+      "request_fingerprint": "sha256:2adefcee1729cca040a5a79f883ab707f9c181e808a994f15d689b5f419b2f69",
+      "result_fingerprint": "sha256:c5ddd79ce8e7d9db06255730428480689472d88544629b7bf81ad1ec665a57d4",
+      "expected_and_observed": {"total": 4, "passed": 2, "failures": 1, "errors": 0, "skipped": 1, "duration_seconds": 0.5}
+    },
+    {
+      "name": "combined_junit_lcov",
+      "job_id": "job-0079a41c95a05851f2bba2fd7aad2fee",
+      "source_files": {
+        "examples/dashboard-multi-report/tests.xml": "6828a0f86da1aeb406c1cb05f9fc172705ddc33b8dab707027e93c6c0e2f2c10",
+        "examples/dashboard-multi-report/coverage.info": "8d690d23304344c051e3a05f39c7d72ff46d91e1d5d561de544d92d81c58a53f"
+      },
+      "request_fingerprint": "sha256:db52459a4a85c39cd128e18a88b0d1958ad45b5f1b5520fae5b4d83aba08bd63",
+      "result_fingerprint": "sha256:b633338b6030c45b5ac802d8ddfef9caf16f1ce460148e75182be804c8a159d3",
+      "expected_and_observed": {"tests": 4, "passed": 4, "failures": 0, "coverage_scopes": ["repository", "module:src/demo.c"], "line": {"covered": 1, "total": 2, "percent": 50}, "branch": {"covered": 1, "total": 2, "percent": 50}}
+    },
+    {
+      "name": "explicit_warning_retention",
+      "job_id": "job-8e0e3f04e3c1532d79b510e15febd5aa",
+      "file": "examples/dashboard-junit/warning.xml",
+      "source_sha256": "11e02421f3ee12a8f87d73c621b5aa7d97874674ee467ee50479601318fcd30f",
+      "request_fingerprint": "sha256:25afaa58cb46e7d878fc1d919716dd66e0d088c747b6304f2d79df680206a749",
+      "result_fingerprint": "sha256:ed5585c97850e5c0be6d167ad409ed9b9d48f8f3f7460242ce545e4f6cee57bc",
+      "expected_and_observed": {"total": 1, "passed": 1, "duration_seconds": null, "warnings": ["JUNIT_DECLARED_COUNT_MISMATCH", "JUNIT_DURATION_INCOMPLETE"]}
+    },
+    {
+      "name": "forbidden_xml_preview",
+      "file": "examples/dashboard-junit/rejected.xml",
+      "source_sha256": "aea0796109e1c051715ed4eaf2d20ae65009a438030a7b9fc9120a0ae148d49c",
+      "code": "JUNIT_FORBIDDEN_DECLARATION",
+      "job_created": false
+    }
+  ],
+  "screenshots_sha256": {
+    "docs/assets/phase36-combined-result.png": "c5afae71efc42d31b0e9fdcf8a08316d507ba4adc7ba2cde2db12bd8facd86e6",
+    "docs/assets/phase36-retained-warnings.png": "f4b638dddb78b197fbd92c126d95a7c15c583162f6c52b104b5e90b9e3a8b1f6",
+    "docs/assets/phase36-submit-review.png": "17f372d007c91f22b06a0cd4369a3b459fb90427323c7a75ac38c220eb13dc94",
+    "docs/assets/phase36-task-result.png": "53eef18edb4391e031dca6f60501683bf59500eff2fe79a609e8148bc58f6c97"
+  },
+  "limits": ["not policy PASS", "not producer authentication", "not hardware evidence", "not native AT certification", "not production readiness", "screenshots are viewport captures"]
+}

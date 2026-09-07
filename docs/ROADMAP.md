@@ -612,8 +612,20 @@ separate gates; host regressions do not replace actual OS acceptance.
   real Edge expected-value, confirmation, recovery and 409 conflict checks.
 - [x] Package assets, schemas, operation guidance and synthetic screenshot evidence.
 
-Next engineering slice: reviewed browser job submission with exact report-byte,
-candidate revision and warning-consent contracts, followed by explicitly controlled
-execution. Keep manual preview distinct from durable retention. Automatic workers,
-cooperative shutdown, and job retention/backup services require separate lifecycle
-design and acceptance. Native assistive-technology gates remain open.
+## Phase 36 — reviewed browser submission and foreground parsing
+
+- [x] Freeze exact selected bytes, declared metadata, candidate revision and
+  warning consent before separately confirmed durable submission.
+- [x] Scope idempotency by identity/project; preserve CLI creation authority and
+  atomically attribute new browser submit/claim/completion events.
+- [x] Separately confirm foreground parsing with revision checks, nonblocking
+  per-app busy rejection, cancellation-safe publication and no automatic retry.
+- [x] Verify host authorization/concurrency/error cases and real Edge single,
+  combined, warning-consent and forbidden-XML workflows; retain screenshots.
+- [x] Keep parsing completion separate from test success, policy PASS and binding.
+
+Next engineering slice: reviewed export/reuse of retained job results into the
+existing candidate-evidence workflow, with exact-byte/fingerprint and stale-state
+checks. Automatic workers, cooperative shutdown and coordinated job retention/
+backup require separate lifecycle design and acceptance. Native assistive-technology
+gates remain open; this phase makes no production or hardware claim.

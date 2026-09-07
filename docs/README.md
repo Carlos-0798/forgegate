@@ -12,6 +12,9 @@ analysis, compatibility contracts, and historical acceptance evidence.
 5. [Portfolio evidence gallery](PORTFOLIO_EVIDENCE.md) — retained screenshots, exact fixture data, hashes, and claim boundaries
 6. [Security policy](../SECURITY.md) — supported scope and responsible reporting
 
+Latest local engineering slice: [reviewed report jobs](DASHBOARD_JOBS.md), with
+[Phase 36 host/browser evidence](../reports/PHASE_36_DASHBOARD_JOB_SUBMISSION_ACCEPTANCE.md).
+
 ## Product and trust model
 
 - [Product brief](product/PRODUCT_BRIEF.md)
