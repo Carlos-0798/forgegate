@@ -93,6 +93,11 @@ availability of every external dependency. Restoring a v4 pair preserves archive
 receipts, not external payloads. Losing the earlier ZIP can make those result
 bytes unavailable. Restore remains new-directory-only, with no automatic startup.
 
+Phase 42 provides [explicit offline recovery readiness](RECOVERY_READINESS.md)
+to verify each root receipt against an owner-supplied original ZIP, including
+manifest and exact row/event/result associations. Its report is a check-time
+observation; keep the original files for subsequent independently checked readback.
+
 Live binding checks apply at the archive commit. A caller that previously
 exported an assembly, or an already in-flight binding request, can bind that
 assembly later through the existing separate workflow. Archival does not revoke

@@ -1,0 +1,57 @@
+{
+  "phase": 42,
+  "date": "2026-09-07",
+  "verification": "LOCAL_HOST_TEST_SYNTHETIC",
+  "focused_tests_passed": 120,
+  "new_readiness_tests": 26,
+  "independent_cli_smoke": {
+    "command": "python tools/workspace_backups_smoke.py",
+    "exit_code": 0,
+    "result": "PASS",
+    "sample_scope": "selected_values_from_development_cli_smoke",
+    "root_sha256": "9370731528bc19fdcd330c705aa933a952201cdcaa9a45f3ea70ef828280e407",
+    "dependency_sha256": "f75dac795cbba8292f3a8db2b7a9cf982606c913c33a6562bc1fb044a54e05d6",
+    "job_id": "job-09c8807b8876caa540ab150252ee2cc2",
+    "checked_at": "2026-09-07T22:21:14.795557Z",
+    "readiness": "READY",
+    "result_payloads_verified": 1,
+    "missing_dependency": "INCOMPLETE/NOT_SUPPLIED",
+    "wrong_dependency": "INCOMPLETE/WORKSPACE_HASH_MISMATCH",
+    "expected_and_actual_test_summary": {
+      "total": 4, "passed": 3, "failures": 1, "errors": 0,
+      "skipped": 0, "duration_seconds": 0.5
+    },
+    "exact_restored_tables": "PASS",
+    "source_preservation": "PASS"
+  },
+  "full_verification": {
+    "command": "python tools/verify.py",
+    "status": "PASS",
+    "exit_code": 0,
+    "tests_passed": 1233,
+    "tests_skipped": 3,
+    "branch_aware_coverage_percent": 95.72,
+    "statements": 12286,
+    "branches": 3212,
+    "readiness_module_and_workspace_cli_coverage_percent": 100,
+    "mypy_source_tool_files": 108,
+    "interaction_smoke_passed": 33,
+    "document_schemas": 52,
+    "artifact_schemas": 3,
+    "schema_openapi_asset_drift": "PASS"
+  },
+  "release_smoke": {
+    "command": "python tools/release_smoke.py",
+    "status": "PASS",
+    "exit_code": 0,
+    "installed_recovery_readiness_chain": "PASS",
+    "wheel_sha256": "54f67ff8f5f2cf1976b9dea0eca620a6009581b3a03db62e3bdf2cb86648804f",
+    "sdist_sha256": "6299ab46af932b8cf274f9dc6d20dedb539e17204c9de33d5864daf425b654b3",
+    "artifact_scope": "local_smoke_build_before_final_evidence_edits_not_published_release",
+    "live_plugin_enforcement": "NOT_RETESTED_RUNTIME_PROBE_UNAVAILABLE"
+  },
+  "hardware_access": "NOT_PERFORMED",
+  "browser_retest": "NOT_PERFORMED_NO_UI_CHANGE",
+  "production_store_access": "NOT_PERFORMED",
+  "github_access_or_write": "NOT_PERFORMED"
+}

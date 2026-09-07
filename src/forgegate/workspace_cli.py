@@ -2,6 +2,7 @@
 
 import json
 import os
+import re
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import datetime
@@ -17,6 +18,7 @@ from forgegate.job_archival import (
     plan_job_archive,
     read_archived_result,
 )
+from forgegate.recovery_readiness import check_recovery_readiness
 from forgegate.workspace_backups import (
     WorkspaceBackupError,
     backup_workspace,
@@ -29,6 +31,34 @@ workspace_app = typer.Typer(
     help="Coordinated private candidate/job backup, recovery and retention planning."
 )
 Timeout = Annotated[float, typer.Option(min=0.1, max=300)]
+
+
+@workspace_app.command("recovery-check")
+def recovery_check(
+    backup: Path,
+    sha256: Annotated[str, typer.Option()],
+    dependency: Annotated[
+        list[str] | None,
+        typer.Option(help="Explicit SHA256=PATH mapping; repeat for each original backup."),
+    ] = None,
+    timeout_seconds: Timeout = 30,
+) -> None:
+    """Check an exact snapshot and archived payload dependencies; no restore or live reads."""
+    with _guard():
+        mappings: dict[str, Path] = {}
+        for entry in dependency or []:
+            digest, separator, path = entry.partition("=")
+            if not separator or not path or not re.fullmatch(r"[0-9a-f]{64}", digest):
+                raise WorkspaceBackupError("RECOVERY_DEPENDENCY_MAP_INVALID")
+            if digest in mappings:
+                raise WorkspaceBackupError("RECOVERY_DUPLICATE_DEPENDENCY")
+            mappings[digest] = Path(path)
+        report = check_recovery_readiness(
+            backup, expected_sha256=sha256, dependencies=mappings, timeout_seconds=timeout_seconds
+        )
+        typer.echo(report.model_dump_json(indent=2))
+        if report.status != "READY":
+            raise typer.Exit(code=2)
 
 
 @contextmanager

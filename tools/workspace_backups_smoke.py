@@ -44,7 +44,7 @@ def invoke(root: Path, *args: str, expected: int = 0, json_output: bool = True) 
     )
     if completed.returncode != expected:
         raise RuntimeError("workspace smoke failed; private command/output not echoed")
-    if expected:
+    if expected == 3:
         assert "WORKSPACE_DESTINATION_EXISTS" in completed.stderr
         return {"expected_rejection": True}
     if not json_output:
@@ -239,6 +239,24 @@ def main() -> int:
         )
         assert archive_meta["external_archive_dependencies"] == [digest]
         assert archive_meta["archived_job_count"] == 1 and archive_meta["job_store_version"] == 4
+        readiness_args = (
+            "workspace",
+            "recovery-check",
+            str(archived_backup),
+            "--sha256",
+            archive_meta["sha256"],
+        )
+        missing = invoke(root, *readiness_args, expected=2)
+        assert missing["status"] == "INCOMPLETE"
+        assert missing["dependencies"][0]["status"] == "NOT_SUPPLIED"
+        ready = invoke(root, *readiness_args, "--dependency", f"{digest}={backup}")
+        assert ready["status"] == "READY" and ready["archived_job_count"] == 1
+        assert ready["dependencies"][0]["result_payloads_verified"] == 1
+        wrong = invoke(
+            root, *readiness_args, "--dependency", f"{digest}={archived_backup}", expected=2
+        )
+        assert wrong["status"] == "INCOMPLETE"
+        assert wrong["dependencies"][0]["error_code"] == "WORKSPACE_HASH_MISMATCH"
         archive_restore = root / "recovered-archived"
         invoke(
             root,
@@ -268,12 +286,16 @@ def main() -> int:
                 "archival_preserves_events_candidate_and_request_key",
                 "external_archived_result_exact_failure_summary",
                 "v4_backup_dependencies_and_restore",
+                "recovery_readiness_ready_missing_and_wrong_hash",
                 "temporary_cleanup",
             ],
             "backup_sha256": digest,
             "backup_size_bytes": receipt["size_bytes"],
             "manifest_fingerprint": receipt["manifest_fingerprint"],
             "expected_test_summary": summary,
+            "recovery_readiness": ready,
+            "missing_dependency_readiness": missing,
+            "wrong_dependency_readiness": wrong,
             "source_sha256": hashlib.sha256(XML).hexdigest(),
             "hardware_access": "NOT_PERFORMED",
             "browser_test": "NOT_PERFORMED",

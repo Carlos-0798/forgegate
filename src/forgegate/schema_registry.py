@@ -49,10 +49,12 @@ from forgegate.projects import (
     RegisteredProject,
     RegisteredProjectPage,
 )
+from forgegate.recovery_readiness import WorkspaceRecoveryReadiness
 from forgegate.security_events import ApiSecurityEvent, ApiSecurityEventPage
 from forgegate.workspace_backups import WorkspaceBackupManifest, WorkspaceBackupManifestV2
 
 SCHEMAS: dict[str, type[BaseModel]] = {
+    "forgegate.workspace-recovery-readiness.v1": WorkspaceRecoveryReadiness,
     "forgegate.job-archive-plan.v1": JobArchivePlan,
     "forgegate.job-archive-receipt.v1": JobArchiveReceipt,
     "forgegate.workspace-backup.v2": WorkspaceBackupManifestV2,

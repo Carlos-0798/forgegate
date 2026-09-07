@@ -26,6 +26,10 @@ bytes; it does not prove that the corresponding private ZIP still exists, is
 readable, or can be recovered. Logical quota release is not secure erasure or
 SQLite file compaction.
 
+For explicit offline verification of an exact snapshot and its original result
+backups, use [recovery-check](RECOVERY_READINESS.md). Capacity itself performs no
+file availability probe and retains its NOT_CHECKED value.
+
 ## Project-scoped Dashboard view
 
 The Jobs page can filter **All**, **Current**, or **Archived** tasks and retains

@@ -19,6 +19,10 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_SDIST_PATHS = (
     "tests/test_job_capacity.py",
     "docs/JOB_CAPACITY.md",
+    "schemas/forgegate.workspace-recovery-readiness.v1.schema.json",
+    "tests/test_recovery_readiness.py",
+    "docs/RECOVERY_READINESS.md",
+    "reports/PHASE_42_RECOVERY_READINESS_ACCEPTANCE.md",
     "schemas/forgegate.job-capacity.v1.schema.json",
     "schemas/forgegate.job-project-usage.v1.schema.json",
     "reports/PHASE_41_JOB_CAPACITY_ACCEPTANCE.md",

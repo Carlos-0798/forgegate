@@ -704,6 +704,17 @@ decision, GitHub operation or hardware access.
 - [x] Generate strict schemas/OpenAPI/assets and cover privacy, quotas, malformed
   filters, model coherence, CLI and frontend behavior.
 
-Next engineering slice: owner-reviewed dependency verification and recovery
-readiness, before any automatic worker. Native assistive technology remains a
-separate acceptance gate. GitHub synchronization is paused.
+## Phase 42 — offline dependency verification and recovery readiness
+
+- [x] Require an exact root backup hash and explicit original backup mappings.
+- [x] Verify ZIP structure, manifest identity and original task/event/result bytes.
+- [x] Distinguish verified, absent mappings and failed dependencies in a strict,
+  path-free report; reject duplicate/unused mappings and enforce a shared deadline.
+- [x] Verify shared and multi-generation dependencies, no-result tasks, corruption
+  and mismatch refusal, source preservation and independent CLI/restore chains.
+- [x] Retain local acceptance artifacts and installed-wheel execution evidence.
+
+Next engineering slice: operator recovery rehearsal and artifact handoff UX,
+using the explicit snapshot identities without presenting old offline reports
+as live availability. Native assistive technology remains a separate acceptance
+gate. GitHub synchronization is paused.

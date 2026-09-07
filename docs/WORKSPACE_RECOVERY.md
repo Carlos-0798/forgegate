@@ -163,6 +163,11 @@ checks exact replay and result readback, and backs up/restores the v4 stores
 with their external dependency metadata. PASS is emitted only after cleanup.
 The same smoke is included in clean-wheel installation acceptance.
 
+Phase 42 extends that smoke with [offline recovery readiness](RECOVERY_READINESS.md):
+an exact root plus original backup yields READY, an omitted mapping yields
+INCOMPLETE/NOT_SUPPLIED, and a wrong ZIP yields INCOMPLETE/HASH_MISMATCH. The check
+does not restore; the separate new-directory restore is still verified afterward.
+
 Implementation references: [SQLite backup API](https://www.sqlite.org/backup.html),
 [SQLite transaction reservations](https://www.sqlite.org/lang_transaction.html),
 and [Python 3.12 ZIP handling](https://docs.python.org/3.12/library/zipfile.html).

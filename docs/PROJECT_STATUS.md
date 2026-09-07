@@ -2,7 +2,12 @@
 
 - Date: 2026-09-07
 - Version: 0.1.0a1
-- Stage: Phase 41 read-only job capacity and archive visibility implemented:
+- Stage: Phase 42 offline recovery readiness implemented: explicit original
+  backup mappings, exact ZIP/manifest/job/event/result checks, path-free READY
+  or INCOMPLETE reports, and fail-closed root/deadline handling. This reports
+  snapshot-time payload readiness; restore and external identity files remain
+  separate. See [recovery readiness](RECOVERY_READINESS.md).
+  Phase 41 read-only job capacity and archive visibility implemented:
   owner CLI reports store-wide logical quotas, while the authenticated Dashboard
   reports only project-scoped usage and filters All / Current / Archived tasks
   across the complete bounded identity set. External backup availability and
@@ -89,7 +94,7 @@ package jobs, but its final generic Action job did not start because GitHub
 reported an account payment/spending-limit restriction. The overall run is
 not green. Billing changes require owner action; local acceptance is separate.
 
-Per the owner's current instruction, Phases 32–40 work is local-only. No GitHub
+Per the owner's current instruction, Phases 32–42 work is local-only. No GitHub
 inspection, push, PR creation or merge was performed for this checkpoint.
 
 ## Implemented
@@ -543,6 +548,11 @@ remaining OS assistive checks are separate.
 
 ## Accepted local checkpoint
 
+- Phase 42: 26 new readiness tests and 120 combined cases pass. Full verification
+  passes with 1,233 tests, 3 environment-dependent symlink skips and 95.72%
+  branch-aware coverage; the new readiness module and workspace CLI each reach
+  100%. Exact independent-process READY/missing/wrong-hash and restore/readback
+  results are retained in [Phase 42 evidence](../reports/PHASE_42_RECOVERY_READINESS_ACCEPTANCE.md).
 - Phase 41: strict capacity/project-usage documents, CLI filtering and complete
   bounded scan are implemented. Focused tests cover exact accounting, an archived
   identity beyond the first 100 rows, invalid filters, project privacy and browser

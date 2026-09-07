@@ -36,6 +36,9 @@ The current checkpoint demonstrates:
 - [read-only job capacity and archive visibility](docs/JOB_CAPACITY.md), with
   store-wide owner CLI quotas and project-scoped Dashboard filters/usage that do
   not disclose other-project counts or claim external-backup availability;
+- [offline recovery readiness](docs/RECOVERY_READINESS.md) checks explicitly
+  supplied original backups against snapshot receipts and exact archived-job
+  payloads, reporting missing or failed dependencies before recovery rehearsal;
 - [durable local report jobs](docs/COLLECTION_JOBS.md) with idempotent submission,
   explicit execution/cancellation, expired-lease recovery and bounded pending
   input retention; v2 records expose non-credential execution ownership and
@@ -104,14 +107,15 @@ never converted into candidate evidence.
 
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 1207 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
-| Branch-aware coverage | 95.67% across 12,166 statements and 3,180 branches | Local host test |
-| Static quality | Ruff, formatting, and strict mypy passed across 107 source/tool files | Local host test |
+| Full Python suite | 1233 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
+| Branch-aware coverage | 95.72% across 12,286 statements and 3,212 branches | Local host test |
+| Static quality | Ruff, formatting, and strict mypy passed across 108 source/tool files | Local host test |
+| Offline recovery readiness | 26 new cases; 120 combined archive/backup/readiness cases; exact CLI READY/missing/wrong-hash outcomes | Local synthetic test; observed snapshot/payload readiness only; [Phase 42 evidence](reports/PHASE_42_RECOVERY_READINESS_ACCEPTANCE.md) |
 | Reviewed job archival | 46 new regressions; 94 combined archive/backup cases, 100% focused branch coverage; actual Edge detail and clean-wheel CLI recovery | Local synthetic test; history/idempotency retained; logical quota only; original external backups required |
 | Coordinated workspace recovery | 48 focused cases; backup/CLI modules 100% branch-aware coverage; paired snapshots, restored-copy execution and retention planning | Local synthetic test; no live replacement, automatic purge, encryption or power-loss certification |
 | Durable local report jobs | 99 focused Python cases plus actual synthetic browser execution; CLI lifecycle, v1/v2-to-v3 store migration, cooperative cancellation/renewal, exact browser export and reviewed binding | Local synthetic test; no automatic worker, mid-parser preemption, candidate transition, policy decision or hardware |
 | Candidate-store backup | 27 focused cases; backup module 100% branch-aware coverage; installed CLI round trip passes | Local host test; no automatic restore, encryption or blanket domain validation |
-| Contracts | 51 document and 3 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI (27 paths, 29 operations) passed drift checks | Local host test |
+| Contracts | 52 document and 3 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI (27 paths, 29 operations) passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
 | Dashboard automation | 130 TypeScript host interaction tests passed, including capacity/archive filtering and 55 earlier job-management/submission/handoff/archive cases | Local host test; [Phase 41 actual Edge checks](reports/PHASE_41_JOB_CAPACITY_ACCEPTANCE.md) verify scoped usage, dependency warning and filters; not exhaustive browser/OS certification |
