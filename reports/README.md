@@ -6,6 +6,7 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
+- [Phase 38 durable foreground execution lifecycle](PHASE_38_JOB_EXECUTION_LIFECYCLE_ACCEPTANCE.md) — v2 owner/renewal records, cooperative cancellation checkpoints, v1/v2-to-v3 migration and actual in-app-browser execution; synthetic only, no worker, GitHub or hardware
 - [Phase 37 job-result evidence handoff](PHASE_37_JOB_RESULT_HANDOFF_ACCEPTANCE.md) — actual Edge canonical download and separately confirmed immutable binding with exact identity/readback evidence; synthetic only, no state promotion or hardware
 - [Phase 36 Dashboard submission and parsing](PHASE_36_DASHBOARD_JOB_SUBMISSION_ACCEPTANCE.md) — reviewed frozen report input, separate execution, warning consent and exact real Edge results; no worker, binding or hardware
 - [Phase 35 Dashboard job management](PHASE_35_DASHBOARD_JOBS_ACCEPTANCE.md) — actual Edge synthetic inspection/cancel/recovery/conflict evidence and explicit store migration; no automatic worker

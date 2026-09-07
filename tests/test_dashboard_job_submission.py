@@ -48,7 +48,9 @@ def test_submit_run_exact_results_actors_replay_and_no_binding(job_fixture):
         completed = run(client, job, session)
         assert completed.status_code == 200 and completed.json()["state"] == "SUCCEEDED"
         review = store.review(job.job_id, project_id="sample-api")
-        assert len(review.events) == 3 and all(e.actor is not None for e in review.events)
+        assert len(review.events) == 5 and all(e.actor is not None for e in review.events)
+        assert review.record.execution_owner_id is not None
+        assert review.record.lease_renewal_count == 2
         assert all(
             e.actor.identity_id == session["principal"]["identity_id"] for e in review.events
         )
@@ -62,7 +64,7 @@ def test_submit_run_exact_results_actors_replay_and_no_binding(job_fixture):
         )
         assert run(client, job, session).status_code == 409  # Never re-execute.
         assert submit(client, request, session).json() == completed.json()
-        assert len(store.review(job.job_id, project_id="sample-api").events) == 3
+        assert len(store.review(job.job_id, project_id="sample-api").events) == 5
         assert application.get_history(request.candidate_id) == before
 
 
@@ -193,10 +195,10 @@ def test_foreground_single_flight_cancellation_wins_and_lock_releases(job_fixtur
     entered, finish = Event(), Event()
     original = jobs.preview_collection
 
-    def blocked(*args):
+    def blocked(*args, **kwargs):
         entered.set()
         assert finish.wait(10)
-        return original(*args)
+        return original(*args, **kwargs)
 
     monkeypatch.setattr(jobs, "preview_collection", blocked)
     with client_for(application, store) as client, ThreadPoolExecutor() as pool:

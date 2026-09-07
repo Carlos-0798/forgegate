@@ -83,14 +83,16 @@ def test_restart_replay_result_and_separate_binding(fixture):
     store = jobs.CollectionJobStore(store.path)
     assert store.show(first.job_id).state == "QUEUED"
     complete = store.run(first.job_id, 0, app)
-    assert complete.state == "SUCCEEDED" and complete.revision == 2
+    assert complete.state == "SUCCEEDED" and complete.revision == 4
+    assert complete.execution_owner_id is not None
+    assert complete.lease_renewal_count == 2
     assert app.get_history(request.candidate_id) == before
     result = jobs.CollectionJobStore(store.path).result(first.job_id)
     assert result.assembly.bundle.evidence[0].value["total"] == 4
     assert store.submit(request, app, key="one") == complete
     with sqlite3.connect(store.path) as con:
         assert con.execute("select input,lease from jobs").fetchone() == (None, None)
-        assert con.execute("select count(*) from events").fetchone()[0] == 3
+        assert con.execute("select count(*) from events").fetchone()[0] == 5
         with pytest.raises(sqlite3.IntegrityError):
             con.execute("delete from events")
     app.bind_evidence(
@@ -159,6 +161,70 @@ def test_recovery_is_explicit_and_expired_only(fixture, monkeypatch):
     assert recovered.source_bytes == "released_logically"
 
 
+def test_execution_owner_and_lease_renewal_are_visible_but_token_is_private(fixture):
+    app, store, request = fixture
+    queued = store.submit(request, app, key="renewal")
+    owner_id = "executor-" + "1" * 32
+    running, token, _ = store.claim(queued.job_id, queued.revision, execution_owner_id=owner_id)
+    assert running.execution_owner_id == owner_id
+    assert running.lease_renewal_count == 0
+    assert token not in running.model_dump_json()
+
+    renewed = jobs.CollectionJobStore(store.path).renew_lease(queued.job_id, token)
+    assert renewed.state == "RUNNING"
+    assert renewed.revision == 2
+    assert renewed.execution_owner_id == running.execution_owner_id
+    assert renewed.lease_renewal_count == 1
+    assert renewed.lease_expires_at >= running.lease_expires_at
+    assert token not in store.review(queued.job_id, project_id="sample-api").model_dump_json()
+    with pytest.raises(jobs.JobError, match="LEASE_LOST"):
+        store.renew_lease(queued.job_id, "wrong-token")
+
+
+def test_lease_renewal_bound_leaves_one_terminal_revision(fixture):
+    app, store, request = fixture
+    queued = store.submit(request, app, key="renewal-bound")
+    current, token, _ = store.claim(queued.job_id, queued.revision)
+    for _ in range(jobs.MAX_LEASE_RENEWALS):
+        current = store.renew_lease(queued.job_id, token)
+    assert current.revision == jobs.MAX_JOB_REVISION - 1
+    assert current.lease_renewal_count == jobs.MAX_LEASE_RENEWALS
+    with pytest.raises(jobs.JobError, match="LEASE_RENEWAL_LIMIT"):
+        store.renew_lease(queued.job_id, token)
+    terminal = store.finish(queued.job_id, token, None)
+    assert terminal.state == "FAILED" and terminal.revision == jobs.MAX_JOB_REVISION
+    assert len(store.review(queued.job_id, project_id="sample-api").events) == 65
+
+
+def test_run_observes_durable_cancellation_at_cooperative_checkpoint(fixture, monkeypatch):
+    app, store, request = fixture
+    queued = store.submit(request, app, key="cooperative-stop")
+    reached_after_cancel = False
+
+    def controlled_preview(*args, checkpoint, **kwargs):
+        nonlocal reached_after_cancel
+        checkpoint()
+        current = store.show(queued.job_id)
+        store.cancel(queued.job_id, current.revision)
+        checkpoint()
+        reached_after_cancel = True
+        raise AssertionError("cancelled execution advanced past its checkpoint")
+
+    monkeypatch.setattr(jobs, "preview_collection", controlled_preview)
+    cancelled = store.run(queued.job_id, queued.revision, app)
+    assert cancelled.state == "CANCELLED"
+    assert cancelled.execution_owner_id is not None
+    assert cancelled.lease_renewal_count == 1
+    assert not reached_after_cancel
+    review = store.review(queued.job_id, project_id="sample-api")
+    assert [event.record.state for event in review.events] == [
+        "QUEUED",
+        "RUNNING",
+        "RUNNING",
+        "CANCELLED",
+    ]
+
+
 def test_parser_failure_is_retained_and_sanitized(fixture, monkeypatch):
     app, store, request = fixture
     record = store.submit(request, app, key="fail")
@@ -176,9 +242,9 @@ def test_cancellation_during_parse_wins(fixture, monkeypatch):
     record = store.submit(request, app, key="cancel-parse")
     real = jobs.preview_collection
 
-    def cancel(*args):
+    def cancel(*args, **kwargs):
         store.cancel(record.job_id, 1)
-        return real(*args)
+        return real(*args, **kwargs)
 
     monkeypatch.setattr(jobs, "preview_collection", cancel)
     assert store.run(record.job_id, 0, app).state == "CANCELLED"
@@ -317,6 +383,8 @@ def test_strict_loader_rejects_invalid(tmp_path, raw):
         {"source_bytes": "released_logically"},
         {"error_code": "JOB_EXECUTION_FAILED"},
         {"revision": 1},
+        {"execution_owner_id": "executor-" + "0" * 32},
+        {"lease_renewal_count": 1},
     ],
 )
 def test_record_rejects_inconsistent_fields(fixture, change):

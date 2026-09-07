@@ -3,7 +3,7 @@ import {test} from "node:test";
 import {runInContext} from "node:vm";
 import {harness, flush} from "./harness.mjs";
 
-const job = {job_id: `job-${"a".repeat(32)}`, candidate_id: `cand-${"b".repeat(24)}`, project_id: "sample-api", state: "QUEUED", revision: 0, created_at: "2026-09-01T00:00:00Z", updated_at: "2026-09-01T00:00:00Z", lease_expires_at: null, result_fingerprint: null, request_fingerprint: "sha256:fixture", error_code: null, source_bytes: "retained_pending", authority: "LOCAL_CLI_NOT_AUTHENTICATED"};
+const job = {schema_version:"forgegate.collection-job.v2",job_id: `job-${"a".repeat(32)}`, candidate_id: `cand-${"b".repeat(24)}`, project_id: "sample-api", state: "QUEUED", revision: 0, created_at: "2026-09-01T00:00:00Z", updated_at: "2026-09-01T00:00:00Z", lease_expires_at: null, result_fingerprint: null, request_fingerprint: "sha256:fixture", error_code: null, source_bytes: "retained_pending", authority: "LOCAL_CLI_NOT_AUTHENTICATED",execution_owner_id:null,lease_renewal_count:0};
 const review = {record: job, events:[{record: job, actor:null}], result:null};
 const page = (changes = {}) => ({status:200, body:{enabled:true, project_id:"sample-api", jobs:[job], next_after_job_id: job.job_id, has_more:false, observed_at:job.updated_at, ...changes}});
 async function start(hash = "#/jobs?project_id=sample-api", role="operator") {
@@ -83,10 +83,12 @@ for(const status of [409,429,500,503]){
 }
 test("running task recovery is distinct from retry",async()=>{
   const app=await start(`#/jobs?project_id=sample-api&job_id=${job.job_id}`);
-  app.responses.push({status:200,body:{...review,record:{...job,state:"RUNNING",revision:1}}});
+  const running={...job,state:"RUNNING",revision:3,lease_expires_at:"2026-09-01T00:05:00Z",execution_owner_id:`executor-${"c".repeat(32)}`,lease_renewal_count:2};
+  app.responses.push({status:200,body:{...review,record:running}});
   await runInContext("renderJobs()",app.context);
+  assert.match(app.root.text,/executor-cccc/); assert.match(app.root.text,/Lease renewals 2/);
   named(app,"Review interruption recovery").click();
-  app.responses.push({status:200,body:{...job,state:"INTERRUPTED",revision:2}});
+  app.responses.push({status:200,body:{...running,state:"INTERRUPTED",revision:4,lease_expires_at:null}});
   named(app,"Confirm recovery").click(); await flush();
   assert.match(app.requests.at(-1).path,/\/recover\?/);
   assert.match(app.root.text,/No retry or execution is started/);

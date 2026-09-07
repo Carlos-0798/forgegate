@@ -1,13 +1,15 @@
-# Durable local collection jobs (Phases 34–37)
+# Durable local collection jobs (Phases 34–38)
 
 Submission/execution use an explicit local task lifecycle, not a worker service,
 scheduler or production queue. Phases 35–36 add an opt-in authenticated
 [Dashboard management view](DASHBOARD_JOBS.md) with reviewed submission/parsing.
-Phase 37 adds reviewed canonical assembly export and explicit reuse through the
-existing candidate-evidence binding service. It adds no device access, candidate
+existing candidate-evidence binding service. Phase 38 adds a durable execution
+owner identifier, bounded lease-renewal events and cooperative cancellation
+checkpoints before any automatic worker. It adds no device access, candidate
 transition or policy decision. The candidate store remains schema v9; new job
-stores use a separate v2 SQLite file. Existing browser previews remain ephemeral.
-Legacy v1 jobs require explicit `jobs migrate STORE` before Dashboard use.
+stores use a separate v3 SQLite file and emit `forgegate.collection-job.v2`
+records. Existing browser previews remain ephemeral. Legacy v1/v2 stores require
+explicit `jobs migrate STORE` before submission, execution or Dashboard use.
 
 ## Small reproducible acceptance
 
@@ -73,8 +75,9 @@ Generate canonical base64 in PowerShell with
 `[Convert]::ToBase64String([IO.File]::ReadAllBytes('C:/reports/tests.xml'))`.
 Do not infer collection time or producer authenticity from the filename.
 This envelope is validated by the jobs loader, not generic `validate-config`.
-The three committed `forgegate.collection-job*.v1` schemas describe public
-requests, records and results; the private lease token is never in CLI output.
+The committed request/result v1 and record v1/v2 schemas describe the public
+documents. Record v1 remains frozen for historical reads; new records are v2.
+The private lease token is never in CLI, Dashboard, review or event output.
 
 Reports reuse the existing [bounded collection contract](DASHBOARD_COLLECTION_CONTRACT.md):
 one or two reports; JUnit and/or one Cobertura/LCOV coverage family; no duplicate
@@ -88,26 +91,43 @@ are rejected. Warning retention requires an explicit `retain_warnings=true`.
 | From | Explicit operation | Result |
 |---|---|---|
 | New | `submit`, unused idempotency key | `QUEUED`, revision 0 |
-| QUEUED | `run --revision 0` | `RUNNING`, revision 1, private five-minute lease |
-| RUNNING | Parser result and valid ownership | `SUCCEEDED`, `REVIEW_REQUIRED` or `REJECTED`, revision 2 |
-| RUNNING | Execution/candidate recheck fails | `FAILED`, revision 2, sanitized error |
+| QUEUED | `run --revision 0` | `RUNNING`, revision 1, non-credential execution owner plus private five-minute lease |
+| RUNNING | Before each report and before assembly | `RUNNING`, revision +1, same owner and renewed five-minute lease |
+| RUNNING | Parser result and valid ownership | `SUCCEEDED`, `REVIEW_REQUIRED` or `REJECTED`, revision +1 |
+| RUNNING | Execution/candidate recheck fails | `FAILED`, revision +1, sanitized error |
 | QUEUED / RUNNING | `cancel --revision CURRENT_REVISION` | `CANCELLED`, terminal |
-| RUNNING, lease expired | `recover --revision 1` | `INTERRUPTED`, terminal |
+| RUNNING, lease expired | `recover --revision CURRENT_REVISION` | `INTERRUPTED`, terminal |
 
 `show` and `list` do not recover or run anything. A restarted process can read and
 run retained queued jobs. An interrupted running job stays RUNNING until its
-five-minute lease expires and an operator explicitly recovers it. No automatic
-retry, requeue, renewal or daemon is installed. Retry means a **new submission
+five-minute lease expires and an operator explicitly recovers it. The new process
+has a different owner ID and cannot adopt, renew or finish the old lease. No
+automatic retry, requeue, takeover, scheduler or daemon is installed. Retry means a **new submission
 with a new key** after reviewing the failure. Reusing the same key and exact
 request returns the existing current record, including terminal records; changed
 content with that key fails. Pagination is lexical by ID, not chronological:
 pass the previous page's last `job_id` as `--after`.
 
-Transactions serialize claims and compare state/revision. Cancellation revokes
-publication rights and discards late results; it **does not terminate a running
-parser process**. A worker cannot finish with an expired or revoked lease. Lease
-timing uses the local wall clock: a detected backward transition fails closed;
-this is not a trusted distributed clock or crash/ power-loss certification.
+Transactions serialize claims and compare state/revision. A Dashboard process
+uses one random `executor-…` owner ID for its lifetime; an independent CLI run
+uses a fresh ID. This value is visible for restart diagnosis but is not a process
+ID, host identity, authentication proof or credential. Only the private in-process
+token can renew or finish the lease.
+
+Execution renews its lease and checks durable ownership before each report and
+before assembly. Cancellation revokes publication rights, releases retained input
+logically, and causes the next checkpoint to stop later stages. It **does not
+forcibly terminate a collector already inside one bounded parser or assembler**;
+in-memory bytes can remain until that call returns. A parser cannot publish with
+an expired or revoked lease. Lease timing uses the local wall clock: a detected
+backward transition fails closed; this is not a trusted distributed clock,
+arbitrary-code preemption, or crash/power-loss certification.
+
+A one-report successful run normally ends at revision 4 (claim, two renewals,
+finish); a two-report run normally ends at revision 5. Do not hard-code those
+values: review the current revision because cancellation or future bounded stages
+can produce a different valid history. At most 62 renewal events and revision 64
+are representable; hitting that guard fails closed rather than wrapping history.
 
 Only `SUCCEEDED` produces a bindable assembly. `REVIEW_REQUIRED` retains completed
 collections but no assembly because warnings were not accepted. `REJECTED`
@@ -147,14 +167,16 @@ and result commands exit 0, operational/input failures 3, CLI usage errors 2.
 
 Stable errors include `JOB_KEY_CONFLICT`, `JOB_STATE_CONFLICT`,
 `JOB_CANDIDATE_CONFLICT`, `JOB_CANDIDATE_ALREADY_BOUND`, `JOB_LEASE_LOST`,
-`JOB_RECOVERY_NOT_DUE`, `JOB_CAPACITY_EXCEEDED`, `JOB_STORE_CORRUPT` and
+`JOB_LEASE_RENEWAL_LIMIT`, `JOB_RECOVERY_NOT_DUE`, `JOB_CAPACITY_EXCEEDED`, `JOB_STORE_CORRUPT` and
 `JOB_RESULT_UNAVAILABLE`. Inspect state/revision first; do not blindly retry
 mutations. Exceptions in execution persist only `JOB_EXECUTION_FAILED`.
 
 ## Deferred gates
 
-Cooperative worker shutdown, scheduled execution, lease renewal, coordinated
-job/candidate backup and private artifact lifecycle/retention UI remain separate
-future work. Phases 35–37 browser acceptance is documented separately. Existing
+Automatic worker startup/shutdown, scheduled execution, coordinated job/candidate
+backup and private artifact lifecycle/retention UI remain separate future work.
+Phase 38 implements cooperative checkpoints only for the existing explicit
+foreground parser; it is not a general task cancellation framework. Phases 35–37
+browser acceptance is documented separately. Existing
 MSP430 live telemetry is not connected to this report queue and does not become
 release evidence.

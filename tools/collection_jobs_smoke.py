@@ -136,6 +136,9 @@ def main() -> int:
             root, "run", str(store), job_id, "--database", str(database), "--revision", "0"
         )
         assert isinstance(finished, dict) and finished["state"] == "SUCCEEDED"
+        assert finished["schema_version"] == "forgegate.collection-job.v2"
+        assert finished["revision"] == 4 and finished["lease_renewal_count"] == 2
+        assert str(finished["execution_owner_id"]).startswith("executor-")
         result = invoke(root, "result", str(store), job_id)
         assert isinstance(result, dict)
         summary = result["collections"][0]["evidence"][0]["value"]
@@ -179,7 +182,7 @@ def main() -> int:
             )
             assert migrated.returncode == 0
         with closing(sqlite3.connect(store)) as connection:
-            assert connection.execute("PRAGMA user_version").fetchone()[0] == 2
+            assert connection.execute("PRAGMA user_version").fetchone()[0] == 3
             assert (
                 connection.execute("SELECT record FROM events ORDER BY job_id, revision").fetchall()
                 == before
@@ -204,7 +207,9 @@ def main() -> int:
                 "candidate_history_unchanged",
                 "explicit_cancel",
                 "list_retained_jobs",
-                "explicit_v1_v2_migration_preserves_records",
+                "explicit_v1_v2_v3_migration_preserves_records",
+                "visible_execution_owner_without_private_token",
+                "bounded_cooperative_lease_renewal",
                 "migration_replay_does_not_infer_actors",
                 "temporary_store_cleanup",
             ],

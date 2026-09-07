@@ -11,7 +11,12 @@ import typer
 from forgegate.application import CandidateApplication
 from forgegate.artifacts import ArtifactRegistry
 from forgegate.bounded_parsing import enforce_json_structure_limits
-from forgegate.collection_jobs import CollectionJobRequest, CollectionJobStore, JobError
+from forgegate.collection_jobs import (
+    MAX_JOB_REVISION,
+    CollectionJobRequest,
+    CollectionJobStore,
+    JobError,
+)
 
 jobs_app = typer.Typer(help="Explicit local report jobs; separate private store, no daemon.")
 
@@ -55,15 +60,15 @@ def initialize(store: Path) -> None:
     """Create a NEW private job database; existing files are never overwritten."""
     with _guard():
         CollectionJobStore(store).initialize()
-    typer.echo("CREATED collection-job store v2; local file authority only")
+    typer.echo("CREATED collection-job store v3; local file authority only")
 
 
 @jobs_app.command("migrate")
 def migrate(store: Path) -> None:
-    """Explicit v1-to-v2 actor-column migration; existing history stays unattributed."""
+    """Explicit v1/v2-to-v3 migration; existing record bytes and actors are preserved."""
     with _guard():
         CollectionJobStore(store).migrate()
-    typer.echo("VALID collection-job store v2; no historical actor inferred")
+    typer.echo("VALID collection-job store v3; no historical owner or actor inferred")
 
 
 @jobs_app.command("submit")
@@ -102,7 +107,7 @@ def run(
     store: Path,
     job_id: str,
     database: Annotated[Path, typer.Option()],
-    revision: Annotated[int, typer.Option(min=0, max=2)],
+    revision: Annotated[int, typer.Option(min=0, max=MAX_JOB_REVISION)],
 ) -> None:
     """Run one queued job in the foreground; no automatic retries or policy decision."""
     with _guard():
@@ -115,14 +120,22 @@ def run(
 
 
 @jobs_app.command("cancel")
-def cancel(store: Path, job_id: str, revision: Annotated[int, typer.Option(min=0, max=2)]) -> None:
-    """Cancel publication and logically release input; does not kill a parser process."""
+def cancel(
+    store: Path,
+    job_id: str,
+    revision: Annotated[int, typer.Option(min=0, max=MAX_JOB_REVISION)],
+) -> None:
+    """Persist cancellation; a running parser observes it at a cooperative checkpoint."""
     with _guard():
         typer.echo(CollectionJobStore(store).cancel(job_id, revision).model_dump_json(indent=2))
 
 
 @jobs_app.command("recover")
-def recover(store: Path, job_id: str, revision: Annotated[int, typer.Option(min=0, max=2)]) -> None:
+def recover(
+    store: Path,
+    job_id: str,
+    revision: Annotated[int, typer.Option(min=0, max=MAX_JOB_REVISION)],
+) -> None:
     """Mark an expired running lease INTERRUPTED; never restart execution."""
     with _guard():
         typer.echo(CollectionJobStore(store).recover(job_id, revision).model_dump_json(indent=2))

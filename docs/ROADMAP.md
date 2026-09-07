@@ -639,8 +639,27 @@ separate gates; host regressions do not replace actual OS acceptance.
 - [x] Retain screenshot and machine-readable acceptance evidence with explicit
   synthetic/no-hardware/no-production boundaries.
 
-Next engineering slice: design a durable execution lifecycle before adding any
-automatic worker—cooperative stop, lease renewal, restart ownership and explicit
-operator controls—plus coordinated job/candidate backup and retention. Native
-assistive-technology gates remain separate; Phase 37 makes no production or
-hardware claim.
+## Phase 38 — durable foreground execution lifecycle
+
+- [x] Freeze `forgegate.collection-job.v2` with a visible, random execution owner
+  that is explicitly not a credential, host identity or authentication proof.
+- [x] Upgrade the separate store to v3 only through an explicit, transactional
+  v1/v2 migration that preserves historical record bytes and infers no actor/owner.
+- [x] Renew the private five-minute lease before each report and before assembly,
+  retaining bounded append-only renewal events and current revision.
+- [x] Make durable cancellation cooperatively stop later stages at those same
+  checkpoints while retaining late-publication rejection and no mid-parser claim.
+- [x] Give one Dashboard process a stable lifetime owner ID; after restart, a new
+  owner cannot adopt, renew or finish the old lease, which remains manual recovery.
+- [x] Display owner/renewal fields in job detail and expand reviewed command
+  revisions without exposing the private token or adding automatic retry.
+- [x] Verify new/legacy records, renewal/token guards, cancellation ordering,
+  migration rollback, CLI cross-process smoke, frontend behavior and schemas.
+
+Phase 38 is still explicit foreground parsing. It adds no scheduler, daemon,
+automatic worker, arbitrary parser termination, candidate transition, policy
+decision, GitHub operation or hardware access.
+
+Next engineering slice: coordinated job/candidate backup plus explicit retention
+planning before any background worker. Native assistive-technology gates remain
+separate; completed lifecycle work makes no production or hardware claim.

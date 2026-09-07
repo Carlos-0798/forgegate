@@ -1,8 +1,17 @@
 # Project status
 
-- Date: 2026-09-06
+- Date: 2026-09-07
 - Version: 0.1.0a1
-- Stage: Phase 37 reviewed Dashboard job-result handoff implemented: exact
+- Stage: Phase 38 durable foreground job execution lifecycle implemented:
+  `forgegate.collection-job.v2` records retain a non-credential execution owner
+  and bounded lease-renewal count; parsing renews/checks ownership before each
+  report and before assembly, so durable cancellation prevents later stages and
+  publication without claiming mid-parser termination. Explicit transactional
+  v1/v2-to-v3 store migration preserves historical record bytes and invents no
+  owner/actor. A restarted Dashboard gets a different owner and cannot adopt an
+  old lease; expired recovery remains manual. No scheduler, automatic worker,
+  candidate transition, policy decision, GitHub operation or hardware access.
+  Phase 37 reviewed Dashboard job-result handoff remains implemented: exact
   canonical assembly download plus separately confirmed immutable candidate
   evidence binding, guarded by current job/result/assembly/candidate identities.
   Actual Edge download, binding, duplicate review and independent CLI/store
@@ -59,11 +68,16 @@ package jobs, but its final generic Action job did not start because GitHub
 reported an account payment/spending-limit restriction. The overall run is
 not green. Billing changes require owner action; local acceptance is separate.
 
-Per the owner's current instruction, Phases 32–36 work is local-only. No GitHub
+Per the owner's current instruction, Phases 32–38 work is local-only. No GitHub
 inspection, push, PR creation or merge was performed for this checkpoint.
 
 ## Implemented
 
+- durable foreground job execution control with per-process Dashboard owner ID,
+  private-token lease renewal at bounded parser checkpoints, cooperative durable
+  cancellation, append-only renewal history and fail-closed restart ownership;
+- `forgegate.collection-job.v2` plus separate job-store v3 and explicit
+  byte-preserving v1/v2 migration; old v1 public records remain readable;
 - opt-in operator-only Dashboard jobs with scope filtering, paged list/detail,
   reviewed preview/submission/execution, exact result inspection,
   reviewed cancellation/recovery and event attribution;
@@ -500,6 +514,14 @@ remaining OS assistive checks are separate.
 
 ## Accepted local checkpoint
 
+- Phase 38: 99 focused Python job cases and 127 frontend host cases cover v2
+  record validation, exact v1/v2-to-v3 migration, private-token exclusion,
+  visible owner identity, lease renewal, cooperative cancellation ordering,
+  existing export/binding behavior and expanded revisions. The cross-process
+  synthetic smoke retains four tests/one failure and confirms candidate history
+  unchanged. Actual isolated in-app-browser execution separately confirmed r0-to-r4,
+  the owner/renewal fields, operator event history, exact failed-test output and
+  zero horizontal overflow. No GitHub or hardware claim is added.
 - Phase 37: 21 additional Python and 23 frontend result-handoff regressions;
   operator-only canonical download and immutable binding with exact stale-state,
   authorization, response identity and no-retry checks. Actual Edge downloaded
@@ -553,8 +575,8 @@ remaining OS assistive checks are separate.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 1093 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.51% across 11,401 statements and 3,052 branches
+- pytest: 1101 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.46% across 11,466 statements and 3,076 branches
 - MSP430 live-status focus: 17 passed across parser, state classification,
   staleness, invalid/recovery, counters, dependency/I/O failure, and input-only
   monitor lifecycle

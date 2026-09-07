@@ -1,5 +1,6 @@
 """Reviewed Dashboard job parsing, exact export, and candidate evidence handoff."""
 
+import secrets
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
@@ -18,7 +19,8 @@ from forgegate.candidates import CandidateEvidenceBinding
 from forgegate.candidates.models import CANDIDATE_ID_PATTERN, FINGERPRINT_PATTERN
 from forgegate.canonical import canonical_json, sha256_fingerprint
 from forgegate.collection_jobs import (
-    CollectionJobRecord,
+    MAX_JOB_REVISION,
+    CollectionJobRecordLike,
     CollectionJobRequest,
     CollectionJobReview,
     CollectionJobStore,
@@ -38,18 +40,18 @@ JOB_ID_PATTERN = r"^job-[0-9a-f]{32}$"
 class DashboardJobPage(StrictModel):
     enabled: bool
     project_id: str
-    jobs: list[CollectionJobRecord]
+    jobs: list[CollectionJobRecordLike]
     next_after_job_id: str | None
     has_more: bool
     observed_at: datetime
 
 
 class DashboardJobCommand(StrictModel):
-    expected_revision: int = Field(ge=0, le=2)
+    expected_revision: int = Field(ge=0, le=MAX_JOB_REVISION)
 
 
 class DashboardJobAssemblyCommand(StrictModel):
-    expected_job_revision: int = Field(ge=0, le=2)
+    expected_job_revision: int = Field(ge=0, le=MAX_JOB_REVISION)
     expected_result_fingerprint: str = Field(pattern=FINGERPRINT_PATTERN)
     expected_assembly_id: str = Field(pattern=FINGERPRINT_PATTERN)
 
@@ -113,6 +115,7 @@ def install_job_routes(
 ) -> None:
     store = None if store_path is None else CollectionJobStore(store_path)
     execution_lock = Lock()  # One foreground HTTP parser per app instance, not a worker pool.
+    execution_owner_id = "executor-" + secrets.token_hex(16)
     if store is not None:
         store.require_dashboard_store()  # No creation or migration during startup.
 
@@ -152,7 +155,7 @@ def install_job_routes(
         job_id: str,
         project_id: str,
         command: DashboardJobAssemblyCommand,
-    ) -> tuple[CollectionJobRecord, EvidenceBundleAssembly, str]:
+    ) -> tuple[CollectionJobRecordLike, EvidenceBundleAssembly, str]:
         review = review_for_project(job_store, job_id, project_id)
         record = review.record
         if record.state != "SUCCEEDED" or review.result is None or review.result.assembly is None:
@@ -226,7 +229,7 @@ def install_job_routes(
         csrf: str | None,
         *,
         recover: bool,
-    ) -> CollectionJobRecord:
+    ) -> CollectionJobRecordLike:
         principal = authorize(request, project_id, write=True, csrf=csrf)
         with _job_errors():
             job_store = configured()
@@ -241,7 +244,7 @@ def install_job_routes(
 
     @app.post(
         "/app/api/jobs",
-        response_model=CollectionJobRecord,
+        response_model=CollectionJobRecordLike,
         operation_id="submitDashboardJob",
         include_in_schema=False,
     )
@@ -259,7 +262,7 @@ def install_job_routes(
             ),
         ],
         csrf: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
-    ) -> CollectionJobRecord:
+    ) -> CollectionJobRecordLike:
         principal = authorize(request, project_id, write=True, csrf=csrf)
         candidate = application.get_candidate(command.candidate_id)
         if candidate.project_id != project_id:
@@ -281,7 +284,7 @@ def install_job_routes(
 
     @app.post(
         "/app/api/jobs/{job_id}/run",
-        response_model=CollectionJobRecord,
+        response_model=CollectionJobRecordLike,
         operation_id="runDashboardJob",
         include_in_schema=False,
     )
@@ -291,7 +294,7 @@ def install_job_routes(
         project_id: Annotated[str, Query(pattern=SLUG_PATTERN)],
         command: DashboardJobCommand,
         csrf: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
-    ) -> CollectionJobRecord:
+    ) -> CollectionJobRecordLike:
         principal = authorize(request, project_id, write=True, csrf=csrf)
         with _job_errors():
             job_store = configured()
@@ -309,6 +312,7 @@ def install_job_routes(
                     application,
                     actor=principal.audit_actor(),
                     project_id=project_id,
+                    execution_owner_id=execution_owner_id,
                 )
             finally:
                 execution_lock.release()
@@ -413,7 +417,7 @@ def install_job_routes(
 
     @app.post(
         "/app/api/jobs/{job_id}/cancel",
-        response_model=CollectionJobRecord,
+        response_model=CollectionJobRecordLike,
         operation_id="cancelDashboardJob",
         include_in_schema=False,
     )
@@ -423,12 +427,12 @@ def install_job_routes(
         project_id: Annotated[str, Query(pattern=SLUG_PATTERN)],
         command: DashboardJobCommand,
         csrf: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
-    ) -> CollectionJobRecord:
+    ) -> CollectionJobRecordLike:
         return change_job(request, job_id, project_id, command, csrf, recover=False)
 
     @app.post(
         "/app/api/jobs/{job_id}/recover",
-        response_model=CollectionJobRecord,
+        response_model=CollectionJobRecordLike,
         operation_id="recoverDashboardJob",
         include_in_schema=False,
     )
@@ -438,5 +442,5 @@ def install_job_routes(
         project_id: Annotated[str, Query(pattern=SLUG_PATTERN)],
         command: DashboardJobCommand,
         csrf: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
-    ) -> CollectionJobRecord:
+    ) -> CollectionJobRecordLike:
         return change_job(request, job_id, project_id, command, csrf, recover=True)

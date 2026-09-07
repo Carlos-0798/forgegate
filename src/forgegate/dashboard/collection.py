@@ -3,6 +3,7 @@ from __future__ import annotations
 import base64
 import binascii
 import hashlib
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
@@ -241,10 +242,15 @@ def preview_junit(
 
 
 def preview_collection(
-    candidate_id: str, command: DashboardCollectionPreviewRequest
+    candidate_id: str,
+    command: DashboardCollectionPreviewRequest,
+    *,
+    checkpoint: Callable[[], None] | None = None,
 ) -> DashboardCollectionPreview:
     results: list[CollectionResult] = []
     for report in command.reports:
+        if checkpoint is not None:
+            checkpoint()
         if report.format == "junit":
             # Reuse the single-report collector, but defer assembly to the whole selection.
             single = DashboardJUnitPreviewRequest(
@@ -284,6 +290,8 @@ def preview_collection(
             else LcovCollector(source, max_lines=10_000)
         )
         results.append(_browser_bounded_result(collector.collect(request)))
+    if checkpoint is not None:
+        checkpoint()
     assembly = None
     if all(result.status is CollectionStatus.COMPLETE for result in results) and (
         command.retain_warnings or not any(result.warnings for result in results)

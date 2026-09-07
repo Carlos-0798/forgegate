@@ -61,6 +61,15 @@ ORIGIN_HEADER = {"Origin": ORIGIN}
 runner = CliRunner()
 
 
+def test_dashboard_help_describes_current_job_store_boundary() -> None:
+    result = runner.invoke(app, ["dashboard", "--help"])
+    assert result.exit_code == 0
+    assert "Use an existing v3 job" in result.output
+    assert "store; no automatic" in result.output
+    assert "migration, scheduling" in result.output
+    assert "v2 job store" not in result.output
+
+
 def _application_with_project(tmp_path: Path, repository_root: Path) -> CandidateApplication:
     application = CandidateApplication.for_database(tmp_path / "forgegate.db")
     application.initialize()

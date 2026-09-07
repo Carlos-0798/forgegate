@@ -12,8 +12,11 @@ analysis, compatibility contracts, and historical acceptance evidence.
 5. [Portfolio evidence gallery](PORTFOLIO_EVIDENCE.md) — retained screenshots, exact fixture data, hashes, and claim boundaries
 6. [Security policy](../SECURITY.md) — supported scope and responsible reporting
 
-Latest local engineering slice: [reviewed report jobs](DASHBOARD_JOBS.md), with
-[Phase 37 exact export/binding evidence](../reports/PHASE_37_JOB_RESULT_HANDOFF_ACCEPTANCE.md).
+Latest local engineering slice: [durable report-job lifecycle](COLLECTION_JOBS.md)
+with visible execution ownership, bounded lease renewal and cooperative stop
+checkpoints, with [Phase 38 browser and host evidence](../reports/PHASE_38_JOB_EXECUTION_LIFECYCLE_ACCEPTANCE.md).
+Phase 37 exact export/binding browser evidence remains separately retained in the
+[handoff report](../reports/PHASE_37_JOB_RESULT_HANDOFF_ACCEPTANCE.md).
 
 ## Product and trust model
 

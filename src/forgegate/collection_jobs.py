@@ -12,7 +12,7 @@ from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Literal, Self
 
-from pydantic import Field, model_validator
+from pydantic import ConfigDict, Field, ValidationError, model_validator
 
 from forgegate.application import CandidateApplication
 from forgegate.assembly.models import EvidenceBundleAssembly
@@ -30,6 +30,8 @@ MAX_JOBS = 100
 MAX_INPUT_BYTES = 16 * 1024 * 1024
 MAX_RESULT_BYTES = 32 * 1024 * 1024
 LEASE_SECONDS = 300
+MAX_JOB_REVISION = 64
+MAX_LEASE_RENEWALS = MAX_JOB_REVISION - 2
 JobState = Literal[
     "QUEUED",
     "RUNNING",
@@ -56,8 +58,7 @@ class CollectionJobRequest(StrictModel):
     collection: DashboardCollectionPreviewRequest
 
 
-class CollectionJobRecord(StrictModel):
-    schema_version: Literal["forgegate.collection-job.v1"] = "forgegate.collection-job.v1"
+class _CollectionJobRecordFields(StrictModel):
     job_id: str = Field(pattern=r"^job-[0-9a-f]{32}$")
     candidate_id: str = Field(pattern=CANDIDATE_ID_PATTERN)
     project_id: str = Field(pattern=SLUG_PATTERN)
@@ -67,7 +68,7 @@ class CollectionJobRecord(StrictModel):
         "LOCAL_CLI_NOT_AUTHENTICATED"
     )
     state: JobState = "QUEUED"
-    revision: int = Field(default=0, ge=0, le=2)
+    revision: int = Field(default=0, ge=0)
     created_at: datetime
     updated_at: datetime
     lease_expires_at: datetime | None = None
@@ -99,6 +100,52 @@ class CollectionJobRecord(StrictModel):
         if (self.state == "QUEUED") != (self.revision == 0):
             raise ValueError("job revision mismatch")
         return self
+
+
+class LegacyCollectionJobRecord(_CollectionJobRecordFields):
+    # Frozen Phase 34-37 public record retained for exact historical reads.
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+        str_strip_whitespace=True,
+        title="CollectionJobRecord",
+    )
+
+    schema_version: Literal["forgegate.collection-job.v1"] = "forgegate.collection-job.v1"
+    revision: int = Field(default=0, ge=0, le=2)
+
+
+class CollectionJobRecord(_CollectionJobRecordFields):
+    """Current record with visible, non-credential execution ownership and renewals."""
+
+    model_config = ConfigDict(
+        extra="forbid",
+        frozen=True,
+        str_strip_whitespace=True,
+        title="CollectionJobRecord",
+    )
+
+    schema_version: Literal["forgegate.collection-job.v2"] = "forgegate.collection-job.v2"
+    revision: int = Field(default=0, ge=0, le=MAX_JOB_REVISION)
+    execution_owner_id: str | None = Field(default=None, pattern=r"^executor-[0-9a-f]{32}$")
+    lease_renewal_count: int = Field(default=0, ge=0, le=MAX_LEASE_RENEWALS)
+
+    @model_validator(mode="after")
+    def execution_lifecycle_must_be_coherent(self) -> Self:
+        if self.state == "QUEUED" and (
+            self.execution_owner_id is not None or self.lease_renewal_count != 0
+        ):
+            raise ValueError("queued job cannot claim execution ownership")
+        if self.state == "RUNNING" and self.execution_owner_id is None:
+            raise ValueError("running job requires execution ownership")
+        if self.execution_owner_id is None and self.lease_renewal_count != 0:
+            raise ValueError("lease renewal requires execution ownership")
+        if self.lease_renewal_count > max(0, self.revision - 1):
+            raise ValueError("lease renewal count exceeds job history")
+        return self
+
+
+CollectionJobRecordLike = LegacyCollectionJobRecord | CollectionJobRecord
 
 
 class CollectionJobResult(StrictModel):
@@ -141,13 +188,13 @@ class CollectionJobResult(StrictModel):
 
 
 class CollectionJobEvent(StrictModel):
-    record: CollectionJobRecord
+    record: CollectionJobRecordLike
     actor: AuditActor | None = None
 
 
 class CollectionJobReview(StrictModel):
-    record: CollectionJobRecord
-    events: list[CollectionJobEvent] = Field(min_length=1, max_length=3)
+    record: CollectionJobRecordLike
+    events: list[CollectionJobEvent] = Field(min_length=1, max_length=MAX_JOB_REVISION + 1)
     result: CollectionJobResult | None
 
 
@@ -161,6 +208,17 @@ def _fingerprint(payload: str) -> str:
 
 def _now() -> datetime:
     return datetime.now(UTC)
+
+
+def _record(payload: str) -> CollectionJobRecordLike:
+    last_error: ValidationError | None = None
+    for model in (CollectionJobRecord, LegacyCollectionJobRecord):
+        try:
+            return model.model_validate_json(payload)
+        except ValidationError as exc:
+            last_error = exc
+    assert last_error is not None
+    raise last_error
 
 
 def _require(condition: bool) -> None:
@@ -187,7 +245,7 @@ def _candidate(application: CandidateApplication, request: CollectionJobRequest)
 
 
 class CollectionJobStore:
-    """Separate SQLite store; v2 adds actor metadata without rewriting v1 records."""
+    """Separate SQLite store; v3 enables cooperative execution lifecycle records."""
 
     def __init__(self, path: Path) -> None:
         if path.is_symlink() or not path.parent.is_dir():
@@ -202,7 +260,7 @@ class CollectionJobStore:
             with closing(sqlite3.connect(self.path)) as con:
                 con.executescript(f"""
                     PRAGMA application_id={APP_ID};
-                    PRAGMA user_version=2;
+                    PRAGMA user_version=3;
                     CREATE TABLE jobs (
                         job_id TEXT PRIMARY KEY, request_key TEXT UNIQUE NOT NULL,
                         record TEXT NOT NULL, input TEXT, result TEXT, lease TEXT
@@ -230,7 +288,7 @@ class CollectionJobStore:
             con.row_factory = sqlite3.Row
             if con.execute("PRAGMA application_id").fetchone()[0] != APP_ID or con.execute(
                 "PRAGMA user_version"
-            ).fetchone()[0] not in (1, 2):
+            ).fetchone()[0] not in (1, 2, 3):
                 raise JobError("JOB_STORE_VERSION_INVALID")
             con.execute("PRAGMA synchronous=FULL")
             con.execute("PRAGMA foreign_keys=ON")
@@ -245,29 +303,36 @@ class CollectionJobStore:
 
     def require_dashboard_store(self) -> None:
         with self._transaction() as con:
-            if con.execute("PRAGMA user_version").fetchone()[0] != 2:
+            if con.execute("PRAGMA user_version").fetchone()[0] != 3:
                 raise JobError("JOB_STORE_MIGRATION_REQUIRED")
             # Validate schema without initializing or upgrading a configured file.
             con.execute("SELECT job_id,revision,record,actor FROM events LIMIT 1")
 
     def migrate(self) -> None:
-        """Explicit transactional v1-to-v2 upgrade; preserve raw rows, infer no actor."""
+        """Explicit transactional v1/v2-to-v3 upgrade; preserve raw rows and actors."""
         with self._transaction() as con:
-            if con.execute("PRAGMA user_version").fetchone()[0] == 2:
+            version = con.execute("PRAGMA user_version").fetchone()[0]
+            if version == 3:
                 return
             for row in con.execute("SELECT job_id FROM jobs").fetchall():
                 self._read(con, row[0])
-            con.execute("ALTER TABLE events ADD COLUMN actor TEXT")
-            con.execute("PRAGMA user_version=2")
+            if version == 1:
+                con.execute("ALTER TABLE events ADD COLUMN actor TEXT")
+            con.execute("PRAGMA user_version=3")
+
+    @staticmethod
+    def _require_current(con: sqlite3.Connection) -> None:
+        if con.execute("PRAGMA user_version").fetchone()[0] != 3:
+            raise JobError("JOB_STORE_MIGRATION_REQUIRED")
 
     def _read(
         self, con: sqlite3.Connection, job_id: str
-    ) -> tuple[CollectionJobRecord, sqlite3.Row]:
+    ) -> tuple[CollectionJobRecordLike, sqlite3.Row]:
         row = con.execute("SELECT * FROM jobs WHERE job_id=?", (job_id,)).fetchone()
         if row is None:
             raise JobError("JOB_NOT_FOUND")
         try:
-            record = CollectionJobRecord.model_validate_json(row["record"])
+            record = _record(row["record"])
             _require(record.job_id == job_id and _json(record) == row["record"])
             _require((record.state in ACTIVE) == (row["input"] is not None))
             _require((record.state == "RUNNING") == (row["lease"] is not None))
@@ -296,7 +361,7 @@ class CollectionJobStore:
         key: str,
         actor: AuditActor | None = None,
         project_id: str | None = None,
-    ) -> CollectionJobRecord:
+    ) -> CollectionJobRecordLike:
         if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:/-]{0,127}", key) is None:
             raise JobError("JOB_KEY_INVALID")
         # Revalidate at the boundary, including model_copy callers.
@@ -304,6 +369,7 @@ class CollectionJobStore:
         payload = _json(request)
         fingerprint = _fingerprint(payload)
         with self._transaction() as con:
+            self._require_current(con)
             existing = con.execute("SELECT job_id FROM jobs WHERE request_key=?", (key,)).fetchone()
             if existing is not None:
                 record, _ = self._read(con, existing[0])
@@ -340,7 +406,7 @@ class CollectionJobStore:
             self._append_event(con, record, actor)
             return record
 
-    def show(self, job_id: str) -> CollectionJobRecord:
+    def show(self, job_id: str) -> CollectionJobRecordLike:
         with self._transaction() as con:
             return self._read(con, job_id)[0]
 
@@ -354,7 +420,7 @@ class CollectionJobStore:
                 for event in con.execute(
                     "SELECT * FROM events WHERE job_id=? ORDER BY revision", (job_id,)
                 ):
-                    snapshot = CollectionJobRecord.model_validate_json(event["record"])
+                    snapshot = _record(event["record"])
                     _require(snapshot.job_id == job_id and snapshot.project_id == project_id)
                     _require(
                         snapshot.revision == len(events) and _json(snapshot) == event["record"]
@@ -375,7 +441,7 @@ class CollectionJobStore:
             except ValueError as exc:
                 raise JobError("JOB_STORE_CORRUPT") from exc
 
-    def list_jobs(self, *, after: str = "", limit: int = 25) -> list[CollectionJobRecord]:
+    def list_jobs(self, *, after: str = "", limit: int = 25) -> list[CollectionJobRecordLike]:
         if not 1 <= limit <= 100:
             raise JobError("JOB_PAGE_INVALID")
         with self._transaction() as con:
@@ -387,7 +453,7 @@ class CollectionJobStore:
     def _update(
         self,
         con: sqlite3.Connection,
-        old: CollectionJobRecord,
+        old: CollectionJobRecordLike,
         *,
         actor: AuditActor | None = None,
         **changes: object,
@@ -395,14 +461,20 @@ class CollectionJobStore:
         now = _now()
         if now < old.updated_at:
             raise JobError("JOB_CLOCK_REGRESSED")
-        record = CollectionJobRecord.model_validate(
-            {
-                **old.model_dump(),
-                **changes,
-                "updated_at": now,
-                "revision": old.revision + 1,
-            }
-        )
+        values = {
+            **old.model_dump(),
+            **changes,
+            "updated_at": now,
+            "revision": old.revision + 1,
+        }
+        if isinstance(old, LegacyCollectionJobRecord) and not isinstance(old, CollectionJobRecord):
+            values.update(
+                schema_version="forgegate.collection-job.v2",
+                execution_owner_id=None,
+                lease_renewal_count=0,
+            )
+            values.update(changes)
+        record = CollectionJobRecord.model_validate(values)
         con.execute("UPDATE jobs SET record=? WHERE job_id=?", (_json(record), old.job_id))
         self._append_event(con, record, actor)
         if record.state not in ACTIVE:
@@ -410,7 +482,10 @@ class CollectionJobStore:
         return record
 
     def _append_event(
-        self, con: sqlite3.Connection, record: CollectionJobRecord, actor: AuditActor | None
+        self,
+        con: sqlite3.Connection,
+        record: CollectionJobRecordLike,
+        actor: AuditActor | None,
     ) -> None:
         if actor is None:
             con.execute(
@@ -421,7 +496,7 @@ class CollectionJobStore:
             actor = AuditActor.model_validate_json(actor.model_dump_json())
             if actor.role != "operator" or actor.authenticated_at > record.updated_at:
                 raise JobError("JOB_ACTOR_INVALID")
-            if con.execute("PRAGMA user_version").fetchone()[0] != 2:
+            if con.execute("PRAGMA user_version").fetchone()[0] != 3:
                 raise JobError("JOB_STORE_MIGRATION_REQUIRED")
             con.execute(
                 "INSERT INTO events(job_id,revision,record,actor) VALUES(?,?,?,?)",
@@ -435,8 +510,10 @@ class CollectionJobStore:
         *,
         actor: AuditActor | None = None,
         project_id: str | None = None,
+        execution_owner_id: str | None = None,
     ) -> tuple[CollectionJobRecord, str, CollectionJobRequest]:
         with self._transaction() as con:
+            self._require_current(con)
             old, row = self._read(con, job_id)
             if project_id is not None and old.project_id != project_id:
                 raise JobError("JOB_NOT_FOUND")
@@ -450,9 +527,39 @@ class CollectionJobStore:
                 state="RUNNING",
                 actor=actor,
                 lease_expires_at=_now() + timedelta(seconds=LEASE_SECONDS),
+                execution_owner_id=execution_owner_id or "executor-" + secrets.token_hex(16),
             )
             con.execute("UPDATE jobs SET lease=? WHERE job_id=?", (token, job_id))
             return record, token, request
+
+    def renew_lease(
+        self,
+        job_id: str,
+        token: str,
+        *,
+        actor: AuditActor | None = None,
+    ) -> CollectionJobRecord:
+        """Renew current ownership at a cooperative parser checkpoint."""
+
+        with self._transaction() as con:
+            self._require_current(con)
+            old, row = self._read(con, job_id)
+            if not isinstance(old, CollectionJobRecord) or (
+                old.state != "RUNNING"
+                or row["lease"] != token
+                or old.lease_expires_at is None
+                or _now() >= old.lease_expires_at
+            ):
+                raise JobError("JOB_LEASE_LOST")
+            if old.lease_renewal_count >= MAX_LEASE_RENEWALS:
+                raise JobError("JOB_LEASE_RENEWAL_LIMIT")
+            return self._update(
+                con,
+                old,
+                actor=actor,
+                lease_expires_at=_now() + timedelta(seconds=LEASE_SECONDS),
+                lease_renewal_count=old.lease_renewal_count + 1,
+            )
 
     def finish(
         self,
@@ -463,6 +570,7 @@ class CollectionJobStore:
         actor: AuditActor | None = None,
     ) -> CollectionJobRecord:
         with self._transaction() as con:
+            self._require_current(con)
             old, row = self._read(con, job_id)
             if (
                 old.state != "RUNNING"
@@ -514,6 +622,7 @@ class CollectionJobStore:
         project_id: str | None = None,
     ) -> CollectionJobRecord:
         with self._transaction() as con:
+            self._require_current(con)
             old, _ = self._read(con, job_id)
             if project_id is not None and old.project_id != project_id:
                 raise JobError("JOB_NOT_FOUND")
@@ -537,6 +646,7 @@ class CollectionJobStore:
         project_id: str | None = None,
     ) -> CollectionJobRecord:
         with self._transaction() as con:
+            self._require_current(con)
             old, _ = self._read(con, job_id)
             if project_id is not None and old.project_id != project_id:
                 raise JobError("JOB_NOT_FOUND")
@@ -572,12 +682,27 @@ class CollectionJobStore:
         *,
         actor: AuditActor | None = None,
         project_id: str | None = None,
-    ) -> CollectionJobRecord:
-        record, token, request = self.claim(job_id, revision, actor=actor, project_id=project_id)
+        execution_owner_id: str | None = None,
+    ) -> CollectionJobRecordLike:
+        record, token, request = self.claim(
+            job_id,
+            revision,
+            actor=actor,
+            project_id=project_id,
+            execution_owner_id=execution_owner_id,
+        )
         try:
             if _candidate(application, request)[1] != record.candidate_fingerprint:
                 raise JobError("JOB_CANDIDATE_CONFLICT")
-            preview = preview_collection(request.candidate_id, request.collection)
+
+            def checkpoint() -> None:
+                self.renew_lease(job_id, token, actor=actor)
+
+            preview = preview_collection(
+                request.candidate_id,
+                request.collection,
+                checkpoint=checkpoint,
+            )
             if _candidate(application, request)[1] != record.candidate_fingerprint:
                 raise JobError("JOB_CANDIDATE_CONFLICT")
             result = CollectionJobResult(

@@ -29,7 +29,9 @@ The current checkpoint demonstrates:
   [no-overwrite and private-data boundaries](docs/STORE_BACKUP_OPERATIONS.md);
 - [durable local report jobs](docs/COLLECTION_JOBS.md) with idempotent submission,
   explicit execution/cancellation, expired-lease recovery and bounded pending
-  input retention; CLI and explicitly reviewed browser submission/execution;
+  input retention; v2 records expose non-credential execution ownership and
+  bounded lease-renewal history, while cancellation is checked between parser
+  stages; CLI and explicitly reviewed browser submission/execution;
 - [opt-in Dashboard job management](docs/DASHBOARD_JOBS.md): project-scoped
   list/detail/results, reviewed submission/parsing, cancellation and expired-lease
   recovery with retained operator attribution, plus exact assembly download and
@@ -93,10 +95,10 @@ never converted into candidate evidence.
 
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 1093 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
-| Branch-aware coverage | 95.51% across 11,401 statements and 3,052 branches | Local host test |
+| Full Python suite | 1101 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
+| Branch-aware coverage | 95.46% across 11,466 statements and 3,076 branches | Local host test |
 | Static quality | Ruff, formatting, and strict mypy passed across 102 source/tool files | Local host test |
-| Durable local report jobs | 92 focused Python cases; CLI lifecycle, explicit store migration, exact browser export and reviewed binding | Local synthetic host test; no automatic worker, candidate transition, policy decision or hardware |
+| Durable local report jobs | 99 focused Python cases plus actual synthetic browser execution; CLI lifecycle, v1/v2-to-v3 store migration, cooperative cancellation/renewal, exact browser export and reviewed binding | Local synthetic test; no automatic worker, mid-parser preemption, candidate transition, policy decision or hardware |
 | Candidate-store backup | 27 focused cases; backup module 100% branch-aware coverage; installed CLI round trip passes | Local host test; no automatic restore, encryption or blanket domain validation |
 | Contracts | 44 document and 3 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI (27 paths, 29 operations) passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
@@ -327,7 +329,10 @@ and reporting instructions are documented in [SECURITY.md](SECURITY.md).
   policy evaluation, attestation generation, and candidate-bound portable ZIP
   download are implemented. Automatic collection, server-side browsing,
   source-artifact export, plugin, and administration
-  workflows are not. Exact 100–200% Edge zoom passes; spoken Narrator output,
+  workflows are not. Foreground report parsing now records execution ownership,
+  renews at bounded checkpoints, and observes explicit cancellation between
+  stages; there is still no scheduler, background service, or arbitrary parser
+  preemption. Exact 100–200% Edge zoom passes; spoken Narrator output,
   Windows high contrast, and a real Remote Desktop run remain unexecuted.
   The Dashboard BFF has a separate generated and drift-checked
   OpenAPI contract without exposing interactive docs.

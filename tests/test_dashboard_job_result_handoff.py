@@ -25,7 +25,7 @@ def export_command(job, result):
     assembly = result.assembly
     assert assembly is not None and job.result_fingerprint is not None
     return {
-        "expected_job_revision": 2,
+        "expected_job_revision": job.revision,
         "expected_result_fingerprint": job.result_fingerprint,
         "expected_assembly_id": assembly.assembly_id,
     }

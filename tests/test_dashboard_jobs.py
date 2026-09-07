@@ -98,7 +98,7 @@ def test_write_rejections_leave_job_unchanged(job_fixture, mode):
         if mode == "unknown-field":
             body["actor"] = {"role": "operator"}
         if mode == "bad-revision":
-            body["expected_revision"] = 4
+            body["expected_revision"] = jobs.MAX_JOB_REVISION + 1
         result = client.post(
             f"/app/api/jobs/{job.job_id}/cancel?project_id={project}", json=body, headers=headers
         )
@@ -177,6 +177,35 @@ def downgrade_fixture(store):
         connection.commit()
 
 
+def downgrade_v2_fixture(store):
+    with closing(sqlite3.connect(store.path)) as connection:
+        connection.execute("PRAGMA user_version=2")
+        connection.commit()
+
+
+def downgrade_to_true_v1_fixture(store, job):
+    raw = job.model_dump(mode="json")
+    raw.pop("execution_owner_id")
+    raw.pop("lease_renewal_count")
+    raw["schema_version"] = "forgegate.collection-job.v1"
+    legacy = jobs.LegacyCollectionJobRecord.model_validate(raw)
+    payload = jobs._json(legacy)
+    with closing(sqlite3.connect(store.path)) as connection:
+        connection.execute("DROP TRIGGER events_no_update")
+        connection.execute("UPDATE jobs SET record=? WHERE job_id=?", (payload, job.job_id))
+        connection.execute(
+            "UPDATE events SET record=? WHERE job_id=? AND revision=0", (payload, job.job_id)
+        )
+        connection.executescript("""
+            CREATE TRIGGER events_no_update BEFORE UPDATE ON events
+            BEGIN SELECT RAISE(ABORT, 'job events are append-only'); END;
+        """)
+        connection.execute("ALTER TABLE events DROP COLUMN actor")
+        connection.execute("PRAGMA user_version=1")
+        connection.commit()
+    return legacy, payload
+
+
 def test_explicit_migration_preserves_rows_and_refuses_implicit_upgrade(job_fixture):
     application, store, request = job_fixture
     job = store.submit(request, application, key="legacy")
@@ -193,9 +222,37 @@ def test_explicit_migration_preserves_rows_and_refuses_implicit_upgrade(job_fixt
     store.require_dashboard_store()
     store.migrate()
     with closing(sqlite3.connect(store.path)) as connection:
-        assert connection.execute("PRAGMA user_version").fetchone()[0] == 2
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == 3
         with pytest.raises(sqlite3.IntegrityError):
             connection.execute("UPDATE events SET actor='{}'")
+
+
+def test_v2_to_v3_migration_preserves_current_record_bytes(job_fixture):
+    application, store, request = job_fixture
+    job = store.submit(request, application, key="v2-preserved")
+    with closing(sqlite3.connect(store.path)) as connection:
+        before = connection.execute("SELECT record FROM jobs").fetchone()[0]
+    downgrade_v2_fixture(store)
+    assert store.show(job.job_id) == job
+    with pytest.raises(jobs.JobError, match="MIGRATION_REQUIRED"):
+        store.submit(request, application, key="blocked-before-upgrade")
+    store.migrate()
+    with closing(sqlite3.connect(store.path)) as connection:
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == 3
+        assert connection.execute("SELECT record FROM jobs").fetchone()[0] == before
+
+
+def test_true_v1_record_migrates_without_fabricating_owner_or_actor(job_fixture):
+    application, store, request = job_fixture
+    job = store.submit(request, application, key="true-v1")
+    legacy, payload = downgrade_to_true_v1_fixture(store, job)
+    assert store.show(job.job_id) == legacy
+    store.migrate()
+    review = store.review(job.job_id, project_id="sample-api")
+    assert review.record == legacy and review.events[0].actor is None
+    with closing(sqlite3.connect(store.path)) as connection:
+        assert connection.execute("PRAGMA user_version").fetchone()[0] == 3
+        assert connection.execute("SELECT record FROM jobs").fetchone()[0] == payload
 
 
 def test_actor_failure_rolls_back_state_and_migration(job_fixture, monkeypatch):
@@ -246,7 +303,7 @@ def test_migration_ddl_failure_is_transactional(job_fixture, monkeypatch):
 
     class FailVersionChange(sqlite3.Connection):
         def execute(self, sql, parameters=()):
-            if sql == "PRAGMA user_version=2":
+            if sql == "PRAGMA user_version=3":
                 raise sqlite3.OperationalError("injected failure")
             return super().execute(sql, parameters)
 

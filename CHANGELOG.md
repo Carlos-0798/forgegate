@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Added `forgegate.collection-job.v2` and explicit job-store v3 migration with
+  byte-preserved v1 history, visible non-credential execution ownership, bounded
+  append-only lease renewals, restart non-adoption and cooperative cancellation
+  checks before each report and assembly. The Dashboard exposes owner/renewal
+  state without the private token. No scheduler, worker, mid-parser termination,
+  candidate transition, policy decision, GitHub operation or hardware access.
 - Added operator-reviewed canonical assembly download and separately confirmed
   reuse of a retained `SUCCEEDED` job result through the existing immutable
   candidate-evidence binding service. Exact job/result/assembly/candidate

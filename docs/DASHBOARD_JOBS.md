@@ -1,4 +1,4 @@
-# Dashboard collection-job management (Phases 35–37)
+# Dashboard collection-job management (Phases 35–38)
 
 An opt-in, operator-only view of the separate local job store. It can list and
 inspect retained jobs/results, cancel queued or running work after confirmation,
@@ -7,12 +7,16 @@ submission and separately confirmed foreground parsing. Phase 37 adds an exact
 canonical-assembly download and a separately confirmed handoff into the existing
 immutable candidate-evidence binding. No automatic worker, retry, test-command
 execution, automatic binding, candidate transition or policy PASS is added.
+Phase 38 makes foreground execution ownership visible, renews the private lease
+at bounded parser checkpoints, and makes durable cancellation cooperatively stop
+later parsing/assembly stages.
 
 ## Explicit configuration
 
 Use owner-restricted files outside source control and synchronized folders.
 The candidate database and trust store must already be configured. New `jobs init`
-stores use SQLite schema v2. Existing v1 CLI stores require an explicit upgrade:
+stores use SQLite schema v3 and emit `forgegate.collection-job.v2` records.
+Existing v1/v2 stores require an explicit upgrade:
 
 ```powershell
 python -m forgegate jobs migrate C:/private-forgegate/jobs.db
@@ -22,10 +26,12 @@ python -m forgegate dashboard --database C:/private-forgegate/candidates.db --tr
 Replace example paths; this is not an instruction to restart an existing service.
 Stop all users of a store and preserve an operator-managed consistent backup before
 migration. Candidate-store backup does not cover jobs. The migration is transactional
-and idempotent, preserves historical record JSON, and adds nullable event actors;
-it cannot invent old authentication. CLI operations without actor attribution still
-support v1. Dashboard startup refuses v1, missing, or incompatible files and never
-initializes or migrates them automatically. Omit `--job-store` to keep Jobs disabled.
+and idempotent, preserves historical record JSON, adds nullable event actors when
+upgrading v1, and fabricates neither execution owners nor actor identities;
+it cannot invent old authentication. Read-only CLI inspection still accepts v1/v2;
+submission and lifecycle writes require v3. Dashboard startup refuses v1, v2,
+missing, or incompatible files and never initializes or migrates them automatically.
+Omit `--job-store` to keep Jobs disabled.
 
 Activate an **operator** session for the exact project through the existing signed
 CLI activation flow. Producers cannot read or mutate this workspace. A configured
@@ -52,6 +58,7 @@ Job submission and execution still recheck candidate eligibility separately.
   Back/Next retain URL filters. This is not a transaction-wide snapshot or total.
 - Refresh explicitly to observe external CLI progress; there is no polling worker.
 - Inspect the exact state, revision, lease, fingerprints and available result.
+  New v2 records also show a non-credential execution owner and renewal count.
   The page shows at most 25 records and 25 issues per collection with truncation
   labels. `jobs result STORE JOB_ID` exports the complete exact retained document.
 - For a `SUCCEEDED` task with an assembly, **Review assembly download** freezes
@@ -66,8 +73,9 @@ Job submission and execution still recheck candidate eligibility separately.
   transition and policy evaluation were `NOT_PERFORMED`; repeat review links to
   the existing immutable binding instead of replacing it.
 - Cancellation freezes the reviewed revision and requires confirmation. Escape or
-  Back makes no write. It prevents result publication, but does **not** kill a
-  parser, change candidate evidence, or securely erase bytes.
+  Back makes no write. It persists `CANCELLED`, prevents result publication, and
+  is observed before the next report or assembly stage. It does **not** forcibly
+  kill a parser mid-stage, change candidate evidence, or securely erase bytes.
 - Recovery checks the server's expired lease and records INTERRUPTED. It does not
   execute, retry or requeue anything. A new submission is a separate reviewed action.
 - A conflicting revision returns 409. Close and refresh before deciding again.
@@ -100,9 +108,13 @@ return 429 `DASHBOARD_JOB_RUN_BUSY` without claiming the second task. This is no
 a distributed CPU limit, and does not cover independent CLI/preview requests.
 SQLite claim/revision checks prevent duplicate publication for a single job.
 The five-minute lease limits publication eligibility, not parser CPU wall time.
-Closing a tab, request loss, cancellation or session expiry does not forcibly
-stop parsing. Cancellation revokes publication; manual recovery handles expired
-leases. Busy/error responses have no automatic retry; refresh before acting.
+The same application instance uses one random public owner ID and retains the
+initiating operator on claim, renewal and completion events; neither value is the
+private lease token. Closing a tab, request loss or session expiry does not itself
+stop parsing. Explicit cancellation is checked between bounded stages, while
+manual recovery handles expired leases. A restarted service gets a different
+owner and cannot take over an old run. Busy/error responses have no automatic
+retry; refresh before acting.
 
 `POST /app/api/jobs/{job_id}/assembly-export?project_id=...` accepts the frozen
 job revision, result fingerprint and assembly ID. Only an operator-scoped,
@@ -120,11 +132,12 @@ identity: the exact assembly ID and canonical assembly fingerprint are shared;
 no new job ID field is invented inside the frozen binding contract. The two
 SQLite files are still not a distributed transaction.
 
-New browser-created records have `AUTHENTICATED_DASHBOARD` creation authority.
-The v1 public record enum is extended; older strict readers must be upgraded to
-read that value. Historical CLI records are unchanged. Event actors identify the
+New browser-created records have `AUTHENTICATED_DASHBOARD` creation authority and
+use `forgegate.collection-job.v2`. Historical v1 records remain readable and are
+not rewritten by the explicit store v3 migration. Event actors identify the
 operator who initiated the request, not proof of an active session at completion.
-No migration beyond the existing explicit v2 actor storage is added in Phase 37.
+The execution owner is process-local diagnostic identity, not authentication,
+machine identity or permission authority.
 
 Do not rebuild/replace packaged assets beneath a running server. Static resource
 allowlists are loaded at startup; an in-place rebuild can produce new-asset 404s.
@@ -147,5 +160,5 @@ The isolated fixture generator `tools/manual_dashboard_jobs.py` creates 27 synth
 jobs and a temporary test identity, but starts no server or device. Its expired
 lease is seeded, not evidence of an observed crash. Keep its private files local.
 
-Still deferred: cooperative parser stop, scheduler, lease renewal, coordinated
-job/candidate backup, job retention UI, and new native accessibility tests.
+Still deferred: automatic worker/scheduler operation, mid-parser preemption,
+coordinated job/candidate backup, job retention UI, and new native accessibility tests.

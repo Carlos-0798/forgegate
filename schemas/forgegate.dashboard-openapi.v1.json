@@ -807,7 +807,15 @@
             ]
           },
           "record": {
-            "$ref": "#/components/schemas/CollectionJobRecord"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LegacyCollectionJobRecord"
+              },
+              {
+                "$ref": "#/components/schemas/CollectionJobRecord"
+              }
+            ],
+            "title": "Record"
           }
         },
         "required": [
@@ -818,6 +826,7 @@
       },
       "CollectionJobRecord": {
         "additionalProperties": false,
+        "description": "Current record with visible, non-credential execution ownership and renewals.",
         "properties": {
           "authority": {
             "default": "LOCAL_CLI_NOT_AUTHENTICATED",
@@ -864,6 +873,18 @@
             ],
             "title": "Error Code"
           },
+          "execution_owner_id": {
+            "anyOf": [
+              {
+                "pattern": "^executor-[0-9a-f]{32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execution Owner Id"
+          },
           "job_id": {
             "pattern": "^job-[0-9a-f]{32}$",
             "title": "Job Id",
@@ -880,6 +901,13 @@
               }
             ],
             "title": "Lease Expires At"
+          },
+          "lease_renewal_count": {
+            "default": 0,
+            "maximum": 62.0,
+            "minimum": 0.0,
+            "title": "Lease Renewal Count",
+            "type": "integer"
           },
           "project_id": {
             "pattern": "^[a-z][a-z0-9-]{1,62}$",
@@ -905,14 +933,14 @@
           },
           "revision": {
             "default": 0,
-            "maximum": 2.0,
+            "maximum": 64.0,
             "minimum": 0.0,
             "title": "Revision",
             "type": "integer"
           },
           "schema_version": {
-            "const": "forgegate.collection-job.v1",
-            "default": "forgegate.collection-job.v1",
+            "const": "forgegate.collection-job.v2",
+            "default": "forgegate.collection-job.v2",
             "title": "Schema Version",
             "type": "string"
           },
@@ -1050,13 +1078,21 @@
             "items": {
               "$ref": "#/components/schemas/CollectionJobEvent"
             },
-            "maxItems": 3,
+            "maxItems": 65,
             "minItems": 1,
             "title": "Events",
             "type": "array"
           },
           "record": {
-            "$ref": "#/components/schemas/CollectionJobRecord"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LegacyCollectionJobRecord"
+              },
+              {
+                "$ref": "#/components/schemas/CollectionJobRecord"
+              }
+            ],
+            "title": "Record"
           },
           "result": {
             "anyOf": [
@@ -1746,7 +1782,7 @@
             "type": "string"
           },
           "expected_job_revision": {
-            "maximum": 2.0,
+            "maximum": 64.0,
             "minimum": 0.0,
             "title": "Expected Job Revision",
             "type": "integer"
@@ -1789,7 +1825,7 @@
             "type": "integer"
           },
           "expected_job_revision": {
-            "maximum": 2.0,
+            "maximum": 64.0,
             "minimum": 0.0,
             "title": "Expected Job Revision",
             "type": "integer"
@@ -1815,7 +1851,7 @@
         "additionalProperties": false,
         "properties": {
           "expected_revision": {
-            "maximum": 2.0,
+            "maximum": 64.0,
             "minimum": 0.0,
             "title": "Expected Revision",
             "type": "integer"
@@ -1901,7 +1937,14 @@
           },
           "jobs": {
             "items": {
-              "$ref": "#/components/schemas/CollectionJobRecord"
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/LegacyCollectionJobRecord"
+                },
+                {
+                  "$ref": "#/components/schemas/CollectionJobRecord"
+                }
+              ]
             },
             "title": "Jobs",
             "type": "array"
@@ -2486,6 +2529,148 @@
         ],
         "title": "IssueSeverity",
         "type": "string"
+      },
+      "LegacyCollectionJobRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "authority": {
+            "default": "LOCAL_CLI_NOT_AUTHENTICATED",
+            "enum": [
+              "LOCAL_CLI_NOT_AUTHENTICATED",
+              "AUTHENTICATED_DASHBOARD"
+            ],
+            "title": "Authority",
+            "type": "string"
+          },
+          "candidate_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Candidate Fingerprint",
+            "type": "string"
+          },
+          "candidate_id": {
+            "pattern": "^cand-[0-9a-f]{24}$",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "candidate_write": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Candidate Write",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "enum": [
+                  "JOB_EXECUTION_FAILED",
+                  "JOB_LEASE_EXPIRED"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "job_id": {
+            "pattern": "^job-[0-9a-f]{32}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "lease_expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lease Expires At"
+          },
+          "project_id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "request_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Request Fingerprint",
+            "type": "string"
+          },
+          "result_fingerprint": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Fingerprint"
+          },
+          "revision": {
+            "default": 0,
+            "maximum": 2.0,
+            "minimum": 0.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "forgegate.collection-job.v1",
+            "default": "forgegate.collection-job.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_bytes": {
+            "default": "retained_pending",
+            "enum": [
+              "retained_pending",
+              "released_logically"
+            ],
+            "title": "Source Bytes",
+            "type": "string"
+          },
+          "state": {
+            "default": "QUEUED",
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "SUCCEEDED",
+              "REVIEW_REQUIRED",
+              "REJECTED",
+              "FAILED",
+              "CANCELLED",
+              "INTERRUPTED"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "candidate_id",
+          "project_id",
+          "candidate_fingerprint",
+          "request_fingerprint",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CollectionJobRecord",
+        "type": "object"
       },
       "LiveReportedIssue": {
         "additionalProperties": false,
@@ -4870,7 +5055,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CollectionJobRecord"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/LegacyCollectionJobRecord"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CollectionJobRecord"
+                    }
+                  ],
+                  "title": "Response Submitdashboardjob"
                 }
               }
             },
@@ -5161,7 +5354,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CollectionJobRecord"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/LegacyCollectionJobRecord"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CollectionJobRecord"
+                    }
+                  ],
+                  "title": "Response Canceldashboardjob"
                 }
               }
             },
@@ -5237,7 +5438,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CollectionJobRecord"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/LegacyCollectionJobRecord"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CollectionJobRecord"
+                    }
+                  ],
+                  "title": "Response Recoverdashboardjob"
                 }
               }
             },
@@ -5313,7 +5522,15 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CollectionJobRecord"
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/LegacyCollectionJobRecord"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CollectionJobRecord"
+                    }
+                  ],
+                  "title": "Response Rundashboardjob"
                 }
               }
             },

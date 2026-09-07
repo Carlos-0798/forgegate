@@ -4,6 +4,7 @@ type Role = "operator" | "producer";
 type Route = "overview" | "devices" | "projects" | "candidates" | "evidence" | "decision" | "assurance" | "audit" | "jobs";
 
 interface CollectionJob {
+  schema_version: "forgegate.collection-job.v1" | "forgegate.collection-job.v2";
   job_id: string;
   candidate_id: string;
   project_id: string;
@@ -18,6 +19,8 @@ interface CollectionJob {
   error_code: string | null;
   source_bytes: string;
   authority: string;
+  execution_owner_id?: string | null;
+  lease_renewal_count?: number;
 }
 
 interface JobPage {
@@ -1504,6 +1507,8 @@ function renderJobDetail(main: HTMLElement, review: JobReview): HTMLElement {
     "Job ID": job.job_id, "Project": job.project_id, "Candidate": job.candidate_id,
     "Revision": String(job.revision), "Updated": formatDate(job.updated_at),
     "Lease expires": job.lease_expires_at ? formatDate(job.lease_expires_at) : "No active lease",
+    "Execution owner": job.execution_owner_id ?? "No execution owner recorded",
+    "Lease renewals": String(job.lease_renewal_count ?? 0),
     "Creation authority": job.authority, "Source bytes": job.source_bytes,
     "Request fingerprint": job.request_fingerprint, "Result fingerprint": job.result_fingerprint ?? "No result",
     "Error code": job.error_code ?? "None recorded"
@@ -1765,7 +1770,7 @@ function reviewJobAction(main: HTMLElement, job: CollectionJob, action: "cancel"
   let busy = false;
   const heading = el("h2", undefined, action === "run" ? "Confirm report parsing" : action === "cancel" ? "Confirm task cancellation" : "Confirm interruption recovery");
   heading.id = "job-action-title";
-  dialog.append(heading, el("p", "command-boundary", action === "run" ? "Parse this retained report selection once in the foreground. No test commands, plugins, device access or binding. Closing the page or losing the response does not stop parsing: inspect the retained job before retrying. Cancellation revokes publication, not parser execution." : action === "cancel" ? "This revokes result publication and logically releases pending input. It does not kill the parser, securely erase bytes, or change candidate evidence." : "Only an expired running lease can become INTERRUPTED. No retry or execution is started."));
+  dialog.append(heading, el("p", "command-boundary", action === "run" ? "Parse this retained report selection once in the foreground. No test commands, plugins, device access or binding. The run records a non-credential owner and renews its lease at bounded parser checkpoints. Closing the page or losing the response does not stop parsing by itself: inspect the retained job before retrying." : action === "cancel" ? "This persists cancellation, revokes result publication and logically releases pending input. A running parser checks that state between bounded stages; it is not forcibly killed mid-parser. This does not securely erase bytes or change candidate evidence." : "Only an expired running lease can become INTERRUPTED. No retry or execution is started; no takeover is performed."));
   const details = el("dl", "definition-list");
   details.append(definition("Job", job.job_id, true), definition("Project", job.project_id), definition("Reviewed revision", String(job.revision)), definition("Operator", owner.principal.display_name));
   if (action === "run") details.append(definition("Retained request fingerprint", job.request_fingerprint, true));

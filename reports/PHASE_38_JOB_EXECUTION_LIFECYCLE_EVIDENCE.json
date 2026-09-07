@@ -1,0 +1,91 @@
+{
+  "receipt_type": "phase38-local-job-execution-lifecycle",
+  "date_local": "2026-09-07",
+  "timezone": "America/New_York",
+  "source": "actual Codex in-app browser against isolated local BFF plus independent CLI and SQLite readback",
+  "service_origin": "http://127.0.0.1:8137",
+  "service_stopped": true,
+  "synthetic_only": true,
+  "hardware_access": "NOT_PERFORMED",
+  "github_access": "NOT_PERFORMED",
+  "candidate_write": "NOT_PERFORMED",
+  "policy_decision": "NOT_PERFORMED",
+  "job": {
+    "job_id": "job-7b2bca211285fb0cce662a5e8b6b2635",
+    "candidate_id": "cand-d6bd8851069560a386d39aa1",
+    "schema_version": "forgegate.collection-job.v2",
+    "initial_state": "QUEUED",
+    "terminal_state": "SUCCEEDED",
+    "initial_revision": 0,
+    "terminal_revision": 4,
+    "execution_owner_id": "executor-cf3794f9fdcdcadfba7112e3a3716dfe",
+    "lease_renewal_count": 2,
+    "private_lease_token_exposed": false,
+    "result_fingerprint": "sha256:298b4db5900a06dd6e9ce1af3f3259c613adc7584c695d2b677ed8fdd0f7a196",
+    "assembly_id": "sha256:c192cdd0b2180fd46e1d1938ddb1c32e8e1bc15ac6582f0077e0f0bc095ba86c",
+    "event_revisions": [0, 1, 2, 3, 4],
+    "actors_recorded": [false, true, true, true, true]
+  },
+  "expected_and_observed_test_summary": {
+    "total": 4,
+    "passed": 3,
+    "failures": 1,
+    "errors": 0,
+    "skipped": 0,
+    "duration_seconds": 0.5,
+    "status": "failed",
+    "trust": "unsigned_local",
+    "verification_level": "declared",
+    "source_sha256": "c841ced91447cdecc82ce8e942f86f7307d391342a85ed78a514d82f60488b5d"
+  },
+  "browser": {
+    "name": "Codex in-app browser",
+    "warning_error_log": [],
+    "document_width": {
+      "client": 1265,
+      "scroll": 1265
+    },
+    "screenshot": {
+      "status": "CAPTURED_INLINE_NOT_COMMITTED",
+      "png_bytes": 84663,
+      "repository_path": null
+    }
+  },
+  "verification": {
+    "python": {
+      "passed": 1101,
+      "skipped": 3,
+      "coverage_percent": 95.46,
+      "statements": 11466,
+      "branches": 3076
+    },
+    "focused_python_jobs": {
+      "total": 99,
+      "core_lifecycle": 37,
+      "dashboard_management": 18,
+      "submission_execution": 23,
+      "result_handoff": 21
+    },
+    "frontend": {
+      "passed": 127,
+      "asset_inventory_files": 5
+    },
+    "schemas_and_openapi": "PASS",
+    "release_smoke": "PASS"
+  },
+  "cleanup": {
+    "isolated_service": "STOPPED",
+    "temporary_workspace": "LEFT_IN_SYSTEM_TEMP_AFTER_POLICY_DENIED_RECURSIVE_DELETE",
+    "repository_files_affected": false
+  },
+  "limits": [
+    "not policy PASS",
+    "not producer authentication",
+    "not an automatic worker or scheduler",
+    "not mid-parser termination",
+    "not GitHub evidence",
+    "not hardware evidence",
+    "not native assistive-technology certification",
+    "not production readiness"
+  ]
+}

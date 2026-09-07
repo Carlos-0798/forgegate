@@ -52,10 +52,10 @@ test('foreground execution is separately confirmed once, with revision and CSRF'
   const a=await start();a.root.replaceChildren();
   runInContext("reviewJobAction(document.querySelector('#app'),jobFixture,'run',document.querySelector('#app'))",a.context);
   assert.match(a.root.text,/does not stop parsing/);assert.match(a.root.text,/Retained request fingerprint/);assert.equal(a.requests.length,1);
-  a.responses.push({status:200,body:{...job,state:'SUCCEEDED',revision:2}});const b=find(a,'Confirm execution');b.click();b.click();await flush();
+  a.responses.push({status:200,body:{...job,state:'SUCCEEDED',revision:4,execution_owner_id:`executor-${'b'.repeat(32)}`,lease_renewal_count:2}});const b=find(a,'Confirm execution');b.click();b.click();await flush();
   assert.equal(a.requests.length,2);assert.match(a.requests.at(-1).path,/\/run\?project_id=sample-api$/);assert.deepEqual(JSON.parse(a.requests.at(-1).options.body),{expected_revision:0});assert.equal(a.requests.at(-1).options.headers.get('X-ForgeGate-CSRF'),'fixture-csrf');assert.match(a.root.text,/not a policy PASS/);
 });
 for(const state of ['FAILED','CANCELLED','INTERRUPTED'])test(`execution returns retained ${state} without claiming success`,async()=>{
   const a=await start();a.root.replaceChildren();runInContext("reviewJobAction(document.querySelector('#app'),jobFixture,'run',document.querySelector('#app'))",a.context);
-  a.responses.push({status:200,body:{...job,state,revision:2}});await click(a,'Confirm execution');assert.match(a.root.text,new RegExp(`Observed ${state}`));assert.doesNotMatch(a.root.text,/Recorded SUCCEEDED/);
+  a.responses.push({status:200,body:{...job,state,revision:4,execution_owner_id:`executor-${'b'.repeat(32)}`,lease_renewal_count:2}});await click(a,'Confirm execution');assert.match(a.root.text,new RegExp(`Observed ${state}`));assert.doesNotMatch(a.root.text,/Recorded SUCCEEDED/);
 });

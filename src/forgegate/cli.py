@@ -661,7 +661,10 @@ def dashboard(
             "--job-store",
             exists=True,
             dir_okay=False,
-            help="Use an existing v2 job store; no automatic migration or execution.",
+            help=(
+                "Use an existing v3 job store; no automatic migration, scheduling, "
+                "or background execution."
+            ),
         ),
     ] = None,
     session_ttl_seconds: Annotated[

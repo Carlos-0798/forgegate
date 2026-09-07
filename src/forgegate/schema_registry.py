@@ -13,7 +13,12 @@ from forgegate.candidates.models import (
     ReleaseCandidate,
     ReleaseCandidatePage,
 )
-from forgegate.collection_jobs import CollectionJobRecord, CollectionJobRequest, CollectionJobResult
+from forgegate.collection_jobs import (
+    CollectionJobRecord,
+    CollectionJobRequest,
+    CollectionJobResult,
+    LegacyCollectionJobRecord,
+)
 from forgegate.collectors.analog_validation import AFE_RESULT_JSON_SCHEMA
 from forgegate.collectors.benchmark import BENCHMARK_JSON_SCHEMA
 from forgegate.collectors.msp430_validation import MSP430_REPORT_JSON_SCHEMA
@@ -45,7 +50,8 @@ from forgegate.security_events import ApiSecurityEvent, ApiSecurityEventPage
 
 SCHEMAS: dict[str, type[BaseModel]] = {
     "forgegate.collection-job-request.v1": CollectionJobRequest,
-    "forgegate.collection-job.v1": CollectionJobRecord,
+    "forgegate.collection-job.v1": LegacyCollectionJobRecord,
+    "forgegate.collection-job.v2": CollectionJobRecord,
     "forgegate.collection-job-result.v1": CollectionJobResult,
     "forgegate.assurance-bundle.v1": AssuranceBundle,
     "forgegate.assurance-bundle-manifest.v1": AssuranceBundleManifest,
