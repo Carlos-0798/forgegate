@@ -2,7 +2,7 @@
 
 | Capability | Planned evidence | Current status |
 |---|---|---|
-| Reviewed recovery handoff | 39 focused Python cases, 8 production-TypeScript cases, strict Schema/OpenAPI/assets and isolated Edge navigation | AUTOMATED LOCAL PASS / MANUAL FILE GATE OPEN — operator-only exact JSON/hash validation and content-addressed download contract; Edge extension returned zero files without file-URL access, so no successful native import/download screenshot is claimed |
+| Reviewed recovery handoff | 40 focused Python cases, 9 production-TypeScript cases, strict Schema/OpenAPI/assets and native Edge READY/BLOCKED workflow | LOCAL PASS — exact CLI trailing newline preserved; sequential reselection works; both downloaded handoffs independently hash and validate; interactive screenshots captured but not repository-retained due browser policy |
 | Offline archive recovery readiness | 26 new cases, 120 combined archive/backup/readiness cases and independent CLI checks | LOCAL PASS — root hash, explicit originals, exact manifest/job/event/result association; READY/INCOMPLETE and exit 0/2/3; check-time observation, no restore or live availability claim |
 | Job capacity and archive visibility | strict capacity/project-usage models, complete bounded scan, CLI/API/frontend tests | LOCAL PASS — owner CLI sees global logical quotas; Dashboard sees only authorized project usage; dependency availability and physical database size remain unverified |
 | Reviewed terminal job archival | 46 new regressions; 94 combined archival/backup cases; exact preserved rows, lock contention, rollback, quotas and replay | LOCAL PASS — verified pre-archive backup, live candidate/binding checks, immutable receipt; logical quota only, no secure erasure or physical shrink |

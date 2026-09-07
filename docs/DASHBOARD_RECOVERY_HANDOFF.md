@@ -32,12 +32,15 @@ verify external trust/identity files, reserve disk, restore data, start a servic
 touch hardware or publish anything. Rerun the CLI immediately before an actual
 rehearsal.
 
-## Verified and open
+## Verified
 
 Local host tests cover READY/BLOCKED, exact hashes, malformed/duplicate/non-finite
 JSON, model forgery, size limits, origin/CSRF/role enforcement, HTTP error
-presentation and stale-response isolation. Production TypeScript navigation was
-observed in Edge. Native Edge file selection remains a manual acceptance gate on
-this workstation because the browser-control extension currently lacks file-URL
-access; no successful browser screenshot is claimed until that permission is
-owner-enabled and the exact generated file is selected.
+presentation, sequential reselection and stale-response isolation. Native Edge
+READY and INCOMPLETE selection passed, rendering `READY_FOR_REHEARSAL` and
+`BLOCKED` respectively. Both downloaded handoffs matched the SHA-256 displayed
+by the browser and passed strict model validation. The manual pass also found and
+fixed exact-byte trailing-newline normalization and post-success reselection.
+Interactive screenshots were captured but are not claimed as repository-retained
+because browser policy blocked transferring their captured bytes through a local
+`file://` bridge.

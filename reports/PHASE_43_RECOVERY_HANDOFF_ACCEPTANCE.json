@@ -2,18 +2,18 @@
   "phase": 43,
   "date": "2026-09-07",
   "verification": "LOCAL_HOST_TEST_SYNTHETIC",
-  "status": "AUTOMATED_PASS_NATIVE_EDGE_FILE_GATE_OPEN",
-  "focused_python_tests_passed": 39,
-  "new_frontend_tests_passed": 8,
-  "frontend_tests_passed": 138,
+  "status": "PASS_NATIVE_EDGE_SYNTHETIC",
+  "focused_python_tests_passed": 40,
+  "new_frontend_tests_passed": 9,
+  "frontend_tests_passed": 139,
   "full_verification": {
     "command": "python tools/verify.py",
     "status": "PASS",
     "exit_code": 0,
-    "tests_passed": 1246,
+    "tests_passed": 1247,
     "tests_skipped": 3,
     "branch_aware_coverage_percent": 95.72,
-    "statements": 12371,
+    "statements": 12372,
     "branches": 3226,
     "mypy_source_tool_files": 109,
     "interaction_smoke_passed": 33,
@@ -26,16 +26,35 @@
   "browser": {
     "engine": "Microsoft Edge",
     "activation_and_navigation": "PASS",
-    "native_file_selection": "BLOCKED_EXTENSION_FILE_URL_ACCESS_DISABLED",
-    "successful_import_or_download": "NOT_ESTABLISHED",
-    "success_screenshot": "NOT_RETAINED"
+    "native_file_selection": "PASS",
+    "ready_import": {
+      "status": "PASS",
+      "disposition": "READY_FOR_REHEARSAL",
+      "source_sha256": "257e526e7fb054dda638b4353b5b5a3352c7d885b7e3e8ff912ac76f82b7f39b",
+      "handoff_id": "sha256:23ae5fd541481602ceee688df03e4a9a1b5910bfb9b607bc5622b143a58bef15",
+      "download_sha256": "c74b57d88f6af6d19adb78c273ed5ad608cea94d8037e6548bbc4e22df308c2d"
+    },
+    "incomplete_import": {
+      "status": "PASS",
+      "disposition": "BLOCKED",
+      "source_sha256": "a70cd6eefa7e0af7adecb7be971e27adb8aee12077c0deb62da9ed3644ff5a9b",
+      "handoff_id": "sha256:e9703e4b35be98147d6d8331886e8284b5bdf48ac37fbd8076caacc1791b6da7",
+      "download_sha256": "8fa3b1a0ed290786eed1f4564d51c7b3267838aad965ca190daf4decf1bade45"
+    },
+    "sequential_reselection": "PASS",
+    "download_model_revalidation": "PASS",
+    "interactive_screenshot_capture": "PASS_NOT_REPOSITORY_RETAINED_BROWSER_POLICY"
   },
+  "browser_findings_fixed": [
+    "REQUEST_MODEL_STRIPPED_CLI_TRAILING_NEWLINE_BEFORE_EXACT_HASH",
+    "SUCCESSFUL_REVIEW_DID_NOT_REENABLE_AFTER_NEW_FILE_SELECTION"
+  ],
   "release_smoke": {
     "command": "python tools/release_smoke.py",
     "status": "PASS",
     "exit_code": 0,
-    "wheel_sha256": "a3cd44b0b555772f6478d188c31c91e8411d7e13df777d3e3b5add98c495b890",
-    "sdist_sha256": "dd660ce2ba6f6d6a1899a0719fb7d8c115b487f1144e07385deb708ba04d251f"
+    "wheel_sha256": "a5aeda6053a880ed0c7862e901b456c8dbccf008f189ec80f8944ff5201d42a4",
+    "sdist_sha256": "57063aa20800c1fae8fc3bb017cd95480f3f48e0af937b91cb6474d017567d87"
   },
   "restore": "NOT_PERFORMED",
   "hardware_access": "NOT_PERFORMED",

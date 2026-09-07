@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Literal, Self
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 
 from forgegate.api.auth import ApiPrincipal
 from forgegate.attestations import ReleaseAttestation
@@ -120,6 +120,10 @@ class DashboardAssuranceExportRequest(StrictModel):
 
 
 class DashboardRecoveryReviewRequest(StrictModel):
+    # The source hash covers the imported UTF-8 bytes. Preserve surrounding
+    # whitespace so validation sees exactly what the browser hashed.
+    model_config = ConfigDict(str_strip_whitespace=False)
+
     document: str = Field(min_length=1, max_length=MAX_DASHBOARD_RECOVERY_REPORT_BYTES)
     expected_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 

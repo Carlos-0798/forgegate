@@ -1,7 +1,7 @@
 # Phase 43 — reviewed recovery handoff
 
 Date: 2026-09-07. Evidence: local Windows host tests with synthetic private data.
-Status: automated acceptance passed; native Edge file-selection acceptance open.
+Status: automated and native Edge synthetic acceptance passed.
 
 ## Implemented
 
@@ -20,14 +20,14 @@ Status: automated acceptance passed; native Edge file-selection acceptance open.
 
 ## Automated validation
 
-Thirty-nine focused Python cases pass across Dashboard recovery and offline
-readiness. Eight production-TypeScript cases cover READY/BLOCKED presentation,
+Forty focused Python cases pass across Dashboard recovery and offline
+readiness. Nine production-TypeScript cases cover READY/BLOCKED presentation,
 local invalid/oversize refusal, 409/429/500 display without automatic retry,
-producer isolation and late-response suppression. The complete frontend suite
-passes 138 cases.
+producer isolation, late-response suppression and sequential report reselection.
+The complete frontend suite passes 139 cases.
 
-`tools/verify.py` passed with 1,246 tests and 3 environment-dependent symlink
-skips. Branch-aware coverage is 95.72% across 12,371 statements and 3,226
+`tools/verify.py` passed with 1,247 tests and 3 environment-dependent symlink
+skips. Branch-aware coverage is 95.72% across 12,372 statements and 3,226
 branches; both recovery modules are 100%. Ruff, formatting, strict mypy across
 109 source/tool files, 53 document plus 3 artifact Schemas, 28-path/30-operation
 Dashboard OpenAPI, packaged asset inventory and 33 interaction-smoke outcomes
@@ -35,31 +35,52 @@ all pass.
 
 `tools/release_smoke.py` also passed from clean Windows environments. The built
 wheel SHA-256 was
-`a3cd44b0b555772f6478d188c31c91e8411d7e13df777d3e3b5add98c495b890`; the
+`a5aeda6053a880ed0c7862e901b456c8dbccf008f189ec80f8944ff5201d42a4`; the
 sdist SHA-256 was
-`dd660ce2ba6f6d6a1899a0719fb7d8c115b487f1144e07385deb708ba04d251f`.
+`57063aa20800c1fae8fc3bb017cd95480f3f48e0af937b91cb6474d017567d87`.
 The smoke workflow installed the wheel, exercised packaged CLI/storage flows,
 verified the candidate-store backup, and installed the MSP430 optional extra in
 an isolated environment. It did not connect to physical hardware.
 
-## Browser observation and open gate
+## Native Edge acceptance and findings
 
-An isolated Edge session activated successfully with the synthetic operator and
-rendered the new Recovery navigation/page with the expected historical-check and
-no-payload wording. The browser-control extension did not have file-URL access:
-its chooser returned zero selected files. A subsequent malformed selection path
-returned the expected sanitized HTTP 400. This does not establish successful
-native Edge file import or download, and no success screenshot is retained.
+An isolated Edge session activated successfully with the synthetic operator.
+Native file selection then exposed a real exact-byte bug: the request model's
+inherited whitespace normalization removed the CLI report's final newline after
+the browser had hashed it. The service correctly rejected the mismatch. The
+request model now preserves imported text byte-for-byte, and a regression case
+covers the CLI-style final newline.
 
-To close the gate, the owner must enable file-URL access for the Edge browser-
-control extension. Then select the exact generated READY and INCOMPLETE reports,
-confirm their expected dispositions/hashes, download the handoff, and compare its
-bytes/identity independently. This browser permission is not changed by ForgeGate.
+The next manual pass exposed that a successful review left the review button
+disabled after selecting another file. File changes now clear the prior result
+and enable a fresh explicit review; a production-TypeScript regression case
+covers READY followed by INCOMPLETE in one page session.
+
+The repaired build passed the following native Edge workflow:
+
+- READY source SHA-256
+  `257e526e7fb054dda638b4353b5b5a3352c7d885b7e3e8ff912ac76f82b7f39b`
+  rendered `READY_FOR_REHEARSAL` with handoff
+  `sha256:23ae5fd541481602ceee688df03e4a9a1b5910bfb9b607bc5622b143a58bef15`.
+- Its downloaded JSON independently hashed to
+  `c74b57d88f6af6d19adb78c273ed5ad608cea94d8037e6548bbc4e22df308c2d`.
+- INCOMPLETE source SHA-256
+  `a70cd6eefa7e0af7adecb7be971e27adb8aee12077c0deb62da9ed3644ff5a9b`
+  rendered `BLOCKED` and dependency `NOT_SUPPLIED`, with handoff
+  `sha256:e9703e4b35be98147d6d8331886e8284b5bdf48ac37fbd8076caacc1791b6da7`.
+- Its downloaded JSON independently hashed to
+  `8fa3b1a0ed290786eed1f4564d51c7b3267838aad965ca190daf4decf1bade45`.
+- Both downloaded documents passed strict `RecoveryReadinessHandoff` model
+  validation.
+
+Screenshots of the successful READY and BLOCKED states were captured in the
+interactive browser session. Browser policy blocked writing those captured bytes
+back through a `file://` bridge, so no repository screenshot is claimed or
+committed. The structured hashes above remain the durable local evidence.
 
 ## Evidence boundaries
 
 All data is synthetic. READY is a historical exact-snapshot observation, not
 current availability. No restore, failover, backup transfer, producer
 authentication, production-store access, GitHub action or MSP430 access occurred.
-The local implementation checkpoint may be committed while the manual browser
-gate remains explicitly open.
+The Edge checks used synthetic local data and do not expand those claims.

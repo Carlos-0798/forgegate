@@ -7,8 +7,8 @@
   validates its exact bytes and strict status into a downloadable content-
   addressed handoff. Backup payloads are not uploaded; live availability,
   producer identity and restore remain unverified/not performed. Automated
-  browser behavior passes, while native Edge file selection remains a manual
-  gate until the owner enables extension file-URL access. See
+  behavior and native Edge READY/BLOCKED selection, sequential reselection and
+  independently hashed downloads pass. See
   [Dashboard recovery handoff](DASHBOARD_RECOVERY_HANDOFF.md).
   Phase 42 offline recovery readiness remains implemented: explicit original
   backup mappings, exact ZIP/manifest/job/event/result checks, path-free READY
@@ -556,14 +556,14 @@ remaining OS assistive checks are separate.
 
 ## Accepted local checkpoint
 
-- Phase 43: 39 focused Python cases and 8 new production-TypeScript interaction
-  cases pass. The full gate passes with 1,246 tests, 3 environment-dependent
-  symlink skips and 95.72% branch-aware coverage across 12,371 statements and
+- Phase 43: 40 focused Python cases and 9 new production-TypeScript interaction
+  cases pass. The full gate passes with 1,247 tests, 3 environment-dependent
+  symlink skips and 95.72% branch-aware coverage across 12,372 statements and
   3,226 branches. Ruff, formatting, strict mypy across 109 source/tool files,
   53 document plus 3 artifact schemas, 28-path/30-operation Dashboard OpenAPI,
-  packaged assets and 138 total frontend cases pass. Edge navigation and operator
-  gating were observed; native file selection is not yet accepted because the
-  browser-control extension returned zero selected files without file-URL access.
+  packaged assets and 139 total frontend cases pass. Native Edge import exposed
+  and verified fixes for final-newline hash preservation and sequential report
+  reselection; READY/BLOCKED rendering and both downloaded hashes passed.
 - Phase 42: 26 new readiness tests and 120 combined cases pass. Full verification
   passes with 1,233 tests, 3 environment-dependent symlink skips and 95.72%
   branch-aware coverage; the new readiness module and workspace CLI each reach

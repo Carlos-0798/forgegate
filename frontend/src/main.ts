@@ -1488,6 +1488,11 @@ async function renderRecovery(): Promise<void> {
   form.append(label, el("p", "muted", "Maximum size: 262,144 bytes. The exact UTF-8 bytes are hashed before same-origin validation."), review);
   main.append(form, status);
   shell(main);
+  input.addEventListener("change", () => {
+    input.setCustomValidity("");
+    review.disabled = false;
+    status.replaceChildren();
+  });
   review.addEventListener("click", async () => {
     const file = input.files?.[0];
     if (file === undefined) {

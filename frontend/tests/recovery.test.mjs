@@ -103,6 +103,21 @@ for (const status of ["READY", "INCOMPLETE"]) {
   });
 }
 
+test("selecting another report after success enables a fresh explicit review", async () => {
+  const app = await start();
+  const first = select(app, report("READY"));
+  app.responses.push({status: 200, body: handoff(first.hash, "READY")});
+  await click(app, "Review recovery report");
+  assert.equal(named(app, "Review recovery report").disabled, true);
+
+  const second = select(app, report("INCOMPLETE"));
+  for (const listener of app.root.querySelector("input").listeners.change ?? []) listener();
+  assert.equal(named(app, "Review recovery report").disabled, false);
+  app.responses.push({status: 200, body: handoff(second.hash, "INCOMPLETE")});
+  await click(app, "Review recovery report");
+  assert.match(app.root.text, /Recovery is blocked/);
+});
+
 test("invalid schema and oversized report stay in the browser", async () => {
   const app = await start();
   select(app, {schema_version: "unknown"});

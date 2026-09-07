@@ -102,6 +102,22 @@ def test_dashboard_recovery_requires_origin_csrf_and_operator(tmp_path, reposito
         assert response.json()["error"]["code"] == "API_ROLE_FORBIDDEN"
 
 
+def test_dashboard_recovery_preserves_cli_trailing_newline_for_exact_hash(
+    tmp_path, repository_root
+):
+    document = json.dumps(report(), indent=2) + "\n"
+    digest = hashlib.sha256(document.encode()).hexdigest()
+    with _dashboard_client(tmp_path, repository_root) as client:
+        activated = _activate(client)
+        response = client.post(
+            "/app/api/recovery-review",
+            headers={**ORIGIN_HEADER, "X-ForgeGate-CSRF": activated["csrf_token"]},
+            json={"document": document, "expected_sha256": digest},
+        )
+    assert response.status_code == 200, response.text
+    assert response.json()["source_report_sha256"] == digest
+
+
 @pytest.mark.parametrize(
     "kind",
     ["hash", "schema", "duplicate", "nonfinite", "coherence", "empty", "too_large"],

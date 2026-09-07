@@ -729,8 +729,10 @@ gate. GitHub synchronization is paused.
 - [x] Cover READY/BLOCKED, authorization, malformed input, response consistency,
   409/413/429/500 presentation and stale responses in Python/TypeScript tests.
 - [x] Regenerate the document Schema, Dashboard OpenAPI and packaged assets.
-- [ ] Complete native Edge file-selection/download screenshot acceptance after
-  the owner enables file-URL access for the browser-control extension.
+- [x] Complete native Edge READY/BLOCKED file selection, sequential reselection,
+  download hashing and strict downloaded-document validation. Interactive
+  screenshots were captured but cannot be repository-retained through the
+  browser's blocked `file://` transfer path.
 
 Next engineering slice after manual acceptance: execute a new-directory-only
 recovery rehearsal from the same explicitly rechecked identity set and retain
