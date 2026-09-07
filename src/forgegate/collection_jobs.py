@@ -10,7 +10,7 @@ from collections.abc import Iterator
 from contextlib import closing, contextmanager
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
-from typing import Literal, Self
+from typing import Literal, Self, TypedDict, cast
 
 from pydantic import ConfigDict, Field, ValidationError, model_validator
 
@@ -43,6 +43,7 @@ JobState = Literal[
     "CANCELLED",
     "INTERRUPTED",
 ]
+JobArchiveFilter = Literal["all", "current", "archived"]
 ACTIVE = {"QUEUED", "RUNNING"}
 HAS_RESULT = {"SUCCEEDED", "REVIEW_REQUIRED", "REJECTED"}
 
@@ -198,6 +199,62 @@ class CollectionJobReview(StrictModel):
     events: list[CollectionJobEvent] = Field(min_length=1, max_length=MAX_JOB_REVISION + 1)
     result: CollectionJobResult | None
     archive: JobArchiveReceipt | None = None
+
+
+class JobCapacity(StrictModel):
+    schema_version: Literal["forgegate.job-capacity.v1"] = "forgegate.job-capacity.v1"
+    scope: Literal["store"] = "store"
+    store_version: Literal[3, 4]
+    archiving_enabled: bool
+    current_jobs: int = Field(ge=0, le=MAX_JOBS)
+    current_job_limit: Literal[100] = 100
+    current_job_slots_available: int = Field(ge=0, le=MAX_JOBS)
+    archived_jobs: int = Field(ge=0, le=1000)
+    archived_job_limit: Literal[1000] = 1000
+    archived_job_slots_available: int = Field(ge=0, le=1000)
+    pending_input_bytes: int = Field(ge=0, le=MAX_INPUT_BYTES)
+    pending_input_limit_bytes: Literal[16777216] = 16777216
+    live_result_bytes: int = Field(ge=0, le=MAX_RESULT_BYTES)
+    live_result_limit_bytes: Literal[33554432] = 33554432
+    external_backup_dependencies: list[str] = Field(max_length=1000)
+    dependency_availability: Literal["NOT_CHECKED"] = "NOT_CHECKED"
+    physical_database_size: Literal["NOT_REPORTED"] = "NOT_REPORTED"
+
+    @model_validator(mode="after")
+    def coherent_capacity(self) -> Self:
+        if self.current_job_slots_available != MAX_JOBS - self.current_jobs:
+            raise ValueError("current job capacity mismatch")
+        expected_archive_slots = 1000 - self.archived_jobs if self.archiving_enabled else 0
+        if self.archived_job_slots_available != expected_archive_slots:
+            raise ValueError("archive capacity mismatch")
+        if self.archiving_enabled != (self.store_version == 4):
+            raise ValueError("archiving capability mismatch")
+        if self.store_version == 3 and (self.archived_jobs or self.external_backup_dependencies):
+            raise ValueError("v3 archive capacity mismatch")
+        return self
+
+
+class JobProjectUsage(StrictModel):
+    schema_version: Literal["forgegate.job-project-usage.v1"] = "forgegate.job-project-usage.v1"
+    project_id: str = Field(pattern=SLUG_PATTERN)
+    store_version: Literal[3, 4]
+    archiving_enabled: bool
+    current_jobs: int = Field(ge=0, le=MAX_JOBS)
+    archived_jobs: int = Field(ge=0, le=1000)
+    pending_input_bytes: int = Field(ge=0, le=MAX_INPUT_BYTES)
+    live_result_bytes: int = Field(ge=0, le=MAX_RESULT_BYTES)
+    external_backup_dependencies: list[str] = Field(max_length=1000)
+    dependency_availability: Literal["NOT_CHECKED"] = "NOT_CHECKED"
+    store_capacity_remaining: Literal["NOT_DISCLOSED"] = "NOT_DISCLOSED"
+
+
+class _JobUsage(TypedDict):
+    store_version: Literal[3, 4]
+    current_jobs: int
+    archived_jobs: int
+    pending_input_bytes: int
+    live_result_bytes: int
+    external_backup_dependencies: list[str]
 
 
 def _json(model: StrictModel) -> str:
@@ -524,14 +581,95 @@ class CollectionJobStore:
         except ValueError as exc:
             raise JobError("JOB_STORE_CORRUPT") from exc
 
-    def list_jobs(self, *, after: str = "", limit: int = 25) -> list[CollectionJobRecordLike]:
+    def list_jobs(
+        self,
+        *,
+        after: str = "",
+        limit: int = 25,
+        project_id: str | None = None,
+        candidate_id: str | None = None,
+        archive_filter: JobArchiveFilter = "all",
+    ) -> list[CollectionJobRecordLike]:
         if not 1 <= limit <= 100:
             raise JobError("JOB_PAGE_INVALID")
+        if archive_filter not in {"all", "current", "archived"}:
+            raise JobError("JOB_ARCHIVE_FILTER_INVALID")
         with self._transaction() as con:
-            ids = con.execute(
-                "SELECT job_id FROM jobs WHERE job_id>? ORDER BY job_id LIMIT ?", (after, limit)
-            ).fetchall()
-            return [self._read(con, row[0])[0] for row in ids]
+            version = con.execute("PRAGMA user_version").fetchone()[0]
+            archived_ids = (
+                {str(row[0]) for row in con.execute("SELECT job_id FROM job_archives")}
+                if version == 4
+                else set()
+            )
+            result: list[CollectionJobRecordLike] = []
+            # Both quotas bound this scan to 1,100 identities; return remains caller-bounded.
+            query = "SELECT job_id FROM jobs WHERE job_id>? ORDER BY job_id"
+            for row in con.execute(query, (after,)):
+                archived = row[0] in archived_ids
+                if (archive_filter == "archived") != archived and archive_filter != "all":
+                    continue
+                record, _ = self._read(con, row[0])
+                if project_id is not None and record.project_id != project_id:
+                    continue
+                if candidate_id is not None and record.candidate_id != candidate_id:
+                    continue
+                result.append(record)
+                if len(result) == limit:
+                    break
+            return result
+
+    def _usage(self, con: sqlite3.Connection, project_id: str | None) -> _JobUsage:
+        version = cast(Literal[3, 4], con.execute("PRAGMA user_version").fetchone()[0])
+        current = 0
+        dependencies: set[str] = set()
+        archived = 0
+        pending = 0
+        results = 0
+        for item in con.execute("SELECT job_id FROM jobs ORDER BY job_id"):
+            record, row = self._read(con, item["job_id"])
+            if project_id is not None and record.project_id != project_id:
+                continue
+            receipt = self.archive_snapshot(con, record.job_id)
+            if receipt is not None:
+                archived += 1
+                dependencies.add(receipt.plan.backup_sha256)
+            else:
+                current += 1
+                pending += len((row["input"] or "").encode())
+                results += len((row["result"] or "").encode())
+        return _JobUsage(
+            store_version=version,
+            current_jobs=current,
+            archived_jobs=archived,
+            pending_input_bytes=pending,
+            live_result_bytes=results,
+            external_backup_dependencies=sorted(dependencies),
+        )
+
+    def capacity(self) -> JobCapacity:
+        """Return bounded logical quotas; never probe external backups or physical storage."""
+        with self._transaction() as con:
+            self._require_current(con)
+            usage = self._usage(con, None)
+            return JobCapacity(
+                **usage,
+                archiving_enabled=usage["store_version"] == 4,
+                current_job_slots_available=MAX_JOBS - usage["current_jobs"],
+                archived_job_slots_available=(
+                    1000 - usage["archived_jobs"] if usage["store_version"] == 4 else 0
+                ),
+            )
+
+    def project_usage(self, project_id: str) -> JobProjectUsage:
+        """Return only authorized project usage; global remaining capacity stays local CLI-only."""
+        with self._transaction() as con:
+            self._require_current(con)
+            usage = self._usage(con, project_id)
+            return JobProjectUsage(
+                project_id=project_id,
+                archiving_enabled=usage["store_version"] == 4,
+                **usage,
+            )
 
     def _update(
         self,

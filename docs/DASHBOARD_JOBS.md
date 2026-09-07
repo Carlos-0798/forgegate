@@ -53,7 +53,10 @@ Job submission and execution still recheck candidate eligibility separately.
 - Use **Close and refresh jobs** to inspect authoritative output and actors.
   `SUCCEEDED` can contain test failures or explicitly retained warnings.
 
-- Open **Jobs**, select a permitted project, optionally filter by candidate ID.
+- Open **Jobs**, select a permitted project, optionally filter by candidate ID
+  and **All / Current / Archived** task status. The page shows project-scoped
+  logical usage and external backup dependency hashes, but does not disclose
+  store-wide remaining capacity or claim dependency availability.
   Pages contain at most 25 entries, ordered lexically by ID, not creation time.
   Back/Next retain URL filters. This is not a transaction-wide snapshot or total.
 - Refresh explicitly to observe external CLI progress; there is no polling worker.
@@ -167,3 +170,6 @@ is available through the Phase 39 owner CLI. Phase 40 adds
 history and show archive time, original backup SHA-256 and logical result bytes.
 Archived results cannot use the Dashboard export/binding actions; stale requests
 conflict. The archive action itself is not exposed in the browser.
+
+Phase 41 adds [complete bounded filtering and project usage](JOB_CAPACITY.md).
+Pages are refreshed reads rather than a transaction-wide snapshot.

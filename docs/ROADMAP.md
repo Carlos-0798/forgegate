@@ -689,6 +689,21 @@ decision, GitHub operation or hardware access.
 - [x] Test corruption/staleness, binding protection, lock contention, transaction
   rollback, quota reuse, replay, exact readback and clean-wheel CLI recovery.
 
-Next engineering slice: read-only operational capacity/dependency visibility and
-archived-task filtering, before automatic workers. Native assistive technology
-remains a separate acceptance gate. GitHub synchronization is paused.
+## Phase 41 — capacity, dependency and archive visibility
+
+- [x] Add an owner-only, store-wide logical capacity document and CLI command.
+- [x] Distinguish v3 archive capability from the quota available after v4 migration.
+- [x] Report external backup hashes with availability explicitly not checked and
+  physical database size explicitly not reported.
+- [x] Add project-scoped Dashboard usage without leaking store-wide remaining
+  capacity or other-project counts.
+- [x] Filter All / Current / Archived tasks while scanning the complete bounded
+  identity set, including archive records beyond the first 100 IDs.
+- [x] Preserve filters through browser pagination/detail navigation and label
+  current versus archived records.
+- [x] Generate strict schemas/OpenAPI/assets and cover privacy, quotas, malformed
+  filters, model coherence, CLI and frontend behavior.
+
+Next engineering slice: owner-reviewed dependency verification and recovery
+readiness, before any automatic worker. Native assistive technology remains a
+separate acceptance gate. GitHub synchronization is paused.

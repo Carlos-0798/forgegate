@@ -1,0 +1,84 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "archived_jobs": {
+      "maximum": 1000,
+      "minimum": 0,
+      "title": "Archived Jobs",
+      "type": "integer"
+    },
+    "archiving_enabled": {
+      "title": "Archiving Enabled",
+      "type": "boolean"
+    },
+    "current_jobs": {
+      "maximum": 100,
+      "minimum": 0,
+      "title": "Current Jobs",
+      "type": "integer"
+    },
+    "dependency_availability": {
+      "const": "NOT_CHECKED",
+      "default": "NOT_CHECKED",
+      "title": "Dependency Availability",
+      "type": "string"
+    },
+    "external_backup_dependencies": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 1000,
+      "title": "External Backup Dependencies",
+      "type": "array"
+    },
+    "live_result_bytes": {
+      "maximum": 33554432,
+      "minimum": 0,
+      "title": "Live Result Bytes",
+      "type": "integer"
+    },
+    "pending_input_bytes": {
+      "maximum": 16777216,
+      "minimum": 0,
+      "title": "Pending Input Bytes",
+      "type": "integer"
+    },
+    "project_id": {
+      "pattern": "^[a-z][a-z0-9-]{1,62}$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "forgegate.job-project-usage.v1",
+      "default": "forgegate.job-project-usage.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "store_capacity_remaining": {
+      "const": "NOT_DISCLOSED",
+      "default": "NOT_DISCLOSED",
+      "title": "Store Capacity Remaining",
+      "type": "string"
+    },
+    "store_version": {
+      "enum": [
+        3,
+        4
+      ],
+      "title": "Store Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "project_id",
+    "store_version",
+    "archiving_enabled",
+    "current_jobs",
+    "archived_jobs",
+    "pending_input_bytes",
+    "live_result_bytes",
+    "external_backup_dependencies"
+  ],
+  "title": "JobProjectUsage",
+  "type": "object"
+}

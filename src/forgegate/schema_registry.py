@@ -17,6 +17,8 @@ from forgegate.collection_jobs import (
     CollectionJobRecord,
     CollectionJobRequest,
     CollectionJobResult,
+    JobCapacity,
+    JobProjectUsage,
     LegacyCollectionJobRecord,
 )
 from forgegate.collectors.analog_validation import AFE_RESULT_JSON_SCHEMA
@@ -59,6 +61,8 @@ SCHEMAS: dict[str, type[BaseModel]] = {
     "forgegate.collection-job.v1": LegacyCollectionJobRecord,
     "forgegate.collection-job.v2": CollectionJobRecord,
     "forgegate.collection-job-result.v1": CollectionJobResult,
+    "forgegate.job-capacity.v1": JobCapacity,
+    "forgegate.job-project-usage.v1": JobProjectUsage,
     "forgegate.assurance-bundle.v1": AssuranceBundle,
     "forgegate.assurance-bundle-manifest.v1": AssuranceBundleManifest,
     "forgegate.assurance-signature.v1": AssuranceSignature,

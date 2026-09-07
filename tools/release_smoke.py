@@ -17,6 +17,12 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_SDIST_PATHS = (
+    "tests/test_job_capacity.py",
+    "docs/JOB_CAPACITY.md",
+    "schemas/forgegate.job-capacity.v1.schema.json",
+    "schemas/forgegate.job-project-usage.v1.schema.json",
+    "reports/PHASE_41_JOB_CAPACITY_ACCEPTANCE.md",
+    "reports/PHASE_41_JOB_CAPACITY_ACCEPTANCE.json",
     "tools/workspace_backups_smoke.py",
     "tests/test_workspace_backups.py",
     "tests/test_job_archival.py",

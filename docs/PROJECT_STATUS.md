@@ -2,7 +2,13 @@
 
 - Date: 2026-09-07
 - Version: 0.1.0a1
-- Stage: Phase 40 reviewed job archival implemented: explicit v3-to-v4 job-store
+- Stage: Phase 41 read-only job capacity and archive visibility implemented:
+  owner CLI reports store-wide logical quotas, while the authenticated Dashboard
+  reports only project-scoped usage and filters All / Current / Archived tasks
+  across the complete bounded identity set. External backup availability and
+  physical database size remain explicitly unverified; no capacity/archive write,
+  hardware or GitHub action was added. See [capacity operations](JOB_CAPACITY.md).
+  Phase 40 reviewed job archival remains implemented: explicit v3-to-v4 job-store
   migration; one-job review/confirmation tied to an exact verified backup; live
   revision, candidate and binding checks; atomic result/receipt mutation; preserved
   audit/request keys and exact replay. Logical job/result quota is reclaimed, not
@@ -537,6 +543,11 @@ remaining OS assistive checks are separate.
 
 ## Accepted local checkpoint
 
+- Phase 41: strict capacity/project-usage documents, CLI filtering and complete
+  bounded scan are implemented. Focused tests cover exact accounting, an archived
+  identity beyond the first 100 rows, invalid filters, project privacy and browser
+  warnings/labels. Final full-suite, package and browser results are retained in
+  [Phase 41 evidence](../reports/PHASE_41_JOB_CAPACITY_ACCEPTANCE.md).
 - Phase 40: 46 new regressions and 94 combined archival/backup cases pass, with
   100% focused branch-aware coverage across four archival/model/workspace/CLI
   modules (533 statements, 60 branches). Exact-backup review, live binding and

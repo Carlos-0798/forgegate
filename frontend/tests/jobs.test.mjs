@@ -5,7 +5,8 @@ import {harness, flush} from "./harness.mjs";
 
 const job = {schema_version:"forgegate.collection-job.v2",job_id: `job-${"a".repeat(32)}`, candidate_id: `cand-${"b".repeat(24)}`, project_id: "sample-api", state: "QUEUED", revision: 0, created_at: "2026-09-01T00:00:00Z", updated_at: "2026-09-01T00:00:00Z", lease_expires_at: null, result_fingerprint: null, request_fingerprint: "sha256:fixture", error_code: null, source_bytes: "retained_pending", authority: "LOCAL_CLI_NOT_AUTHENTICATED",execution_owner_id:null,lease_renewal_count:0};
 const review = {record: job, events:[{record: job, actor:null}], result:null};
-const page = (changes = {}) => ({status:200, body:{enabled:true, project_id:"sample-api", jobs:[job], next_after_job_id: job.job_id, has_more:false, observed_at:job.updated_at, ...changes}});
+const usage = {schema_version:"forgegate.job-project-usage.v1",project_id:"sample-api",store_version:4,archiving_enabled:true,current_jobs:1,archived_jobs:0,pending_input_bytes:128,live_result_bytes:0,external_backup_dependencies:[],dependency_availability:"NOT_CHECKED",store_capacity_remaining:"NOT_DISCLOSED"};
+const page = (changes = {}) => ({status:200, body:{enabled:true, project_id:"sample-api", jobs:[job], next_after_job_id: job.job_id, has_more:false, observed_at:job.updated_at,project_usage:usage,archived_job_ids:[], ...changes}});
 async function start(hash = "#/jobs?project_id=sample-api", role="operator") {
   const app = await harness();
   runInContext(`session={principal:{role:${JSON.stringify(role)},project_ids:['sample-api'],display_name:'Test operator'},csrf_token:'fixture-csrf'};window.location.hash=${JSON.stringify(hash)};`,app.context);
@@ -13,6 +14,30 @@ async function start(hash = "#/jobs?project_id=sample-api", role="operator") {
 }
 function all(root, tag) { return [...(root.tag===tag?[root]:[]),...root.children.flatMap(child=>all(child,tag))]; }
 function named(app, label) { return all(app.root,"button").find(b=>b.text===label); }
+
+test("project usage and archive filter preserve scoped visibility boundaries",async()=>{
+  const archived={...job,job_id:`job-${"c".repeat(32)}`,state:"SUCCEEDED",revision:4};
+  const app=await start("#/jobs?project_id=sample-api&archive_filter=archived");
+  app.responses.push(page({jobs:[archived],next_after_job_id:archived.job_id,archived_job_ids:[archived.job_id],project_usage:{...usage,current_jobs:3,archived_jobs:1,pending_input_bytes:4096,live_result_bytes:3467,external_backup_dependencies:["d".repeat(64)]}}));
+  await runInContext("renderJobs()",app.context);
+  assert.match(app.requests.at(-1).path,/archive_filter=archived/);
+  assert.match(app.root.text,/Project task storage/);
+  assert.match(app.root.text,/Current tasks 3/);
+  assert.match(app.root.text,/Archived tasks 1/);
+  assert.match(app.root.text,/Availability was not checked/);
+  assert.match(app.root.text,/dddddddd/);
+  assert.match(app.root.text,/ARCHIVED/);
+  assert.match(all(app.root,"a").find(a=>a.text.includes("Inspect job-")).href,/archive_filter=archived/);
+});
+
+test("current archive filter and empty dependencies make no recovery claim",async()=>{
+  const app=await start("#/jobs?project_id=sample-api&archive_filter=current");
+  app.responses.push(page()); await runInContext("renderJobs()",app.context);
+  assert.match(app.requests.at(-1).path,/archive_filter=current/);
+  assert.match(app.root.text,/CURRENT/);
+  assert.match(app.root.text,/does not prove backup availability/);
+  assert.match(all(app.root,"a").find(a=>a.text==="First job page").href,/archive_filter=current/);
+});
 
 test("archived task shows backup dependency and history without result mutation actions",async()=>{
   const app=await start(`#/jobs?project_id=sample-api&job_id=${job.job_id}`);

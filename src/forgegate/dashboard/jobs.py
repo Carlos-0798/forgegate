@@ -24,7 +24,9 @@ from forgegate.collection_jobs import (
     CollectionJobRequest,
     CollectionJobReview,
     CollectionJobStore,
+    JobArchiveFilter,
     JobError,
+    JobProjectUsage,
 )
 from forgegate.dashboard.routes import (
     DASHBOARD_CSRF_HEADER,
@@ -44,6 +46,8 @@ class DashboardJobPage(StrictModel):
     next_after_job_id: str | None
     has_more: bool
     observed_at: datetime
+    project_usage: JobProjectUsage | None
+    archived_job_ids: list[str] = Field(max_length=25)
 
 
 class DashboardJobCommand(StrictModel):
@@ -182,20 +186,29 @@ def install_job_routes(
         project_id: Annotated[str, Query(pattern=SLUG_PATTERN)],
         after_job_id: Annotated[str | None, Query(pattern=JOB_ID_PATTERN)] = None,
         candidate_id: Annotated[str | None, Query(pattern=CANDIDATE_ID_PATTERN)] = None,
+        archive_filter: Annotated[JobArchiveFilter, Query()] = "all",
         limit: Annotated[int, Query(ge=1, le=25)] = 25,
     ) -> DashboardJobPage:
         authorize(request, project_id)
         visible = []
+        archived_ids: list[str] = []
+        capacity = None
         with _job_errors():
             if store is not None:
                 configured()
-                # Phase 34 hard-caps the entire store at 100 jobs. Filter before paging.
-                for record in store.list_jobs(after=after_job_id or "", limit=100):
-                    if record.project_id == project_id and (
-                        candidate_id is None or record.candidate_id == candidate_id
-                    ):
-                        review_for_project(store, record.job_id, project_id)
-                        visible.append(record)
+                # Scan is bounded by the 100 current + 1,000 archived quotas.
+                visible = store.list_jobs(
+                    after=after_job_id or "",
+                    limit=limit + 1,
+                    project_id=project_id,
+                    candidate_id=candidate_id,
+                    archive_filter=archive_filter,
+                )
+                for index, record in enumerate(visible):
+                    review = review_for_project(store, record.job_id, project_id)
+                    if index < limit and review.archive is not None:
+                        archived_ids.append(record.job_id)
+                capacity = store.project_usage(project_id)
         page = visible[:limit]
         return DashboardJobPage(
             enabled=store is not None,
@@ -204,6 +217,8 @@ def install_job_routes(
             next_after_job_id=page[-1].job_id if page else None,
             has_more=len(visible) > limit,
             observed_at=datetime.now(UTC),
+            project_usage=capacity,
+            archived_job_ids=archived_ids,
         )
 
     @app.get(

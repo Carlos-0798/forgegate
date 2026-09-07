@@ -116,6 +116,11 @@ no archive/restore button or browser-controlled file path. Restart the Dashboard
 and activate a fresh session after an application upgrade; do not rebuild assets
 under a running server.
 
+Phase 41 adds [read-only capacity and archive visibility](JOB_CAPACITY.md): the
+local CLI reports store-wide logical quotas, while the Dashboard exposes only
+project-scoped usage and filters. Dependency availability and physical database
+size remain explicitly unverified.
+
 ## Reproduce safely
 
 ```powershell

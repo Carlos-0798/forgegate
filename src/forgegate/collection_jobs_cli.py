@@ -15,6 +15,7 @@ from forgegate.collection_jobs import (
     MAX_JOB_REVISION,
     CollectionJobRequest,
     CollectionJobStore,
+    JobArchiveFilter,
     JobError,
 )
 
@@ -114,12 +115,24 @@ def show(store: Path, job_id: str) -> None:
 
 @jobs_app.command("list")
 def list_jobs(
-    store: Path, after: str = "", limit: Annotated[int, typer.Option(min=1, max=100)] = 25
+    store: Path,
+    after: str = "",
+    limit: Annotated[int, typer.Option(min=1, max=100)] = 25,
+    archive_filter: Annotated[JobArchiveFilter, typer.Option()] = "all",
 ) -> None:
-    """Page lexically by job ID; use the last ID as --after, not a timestamp."""
+    """Page by job ID and all/current/archived status; last ID is the cursor."""
     with _guard():
-        rows = CollectionJobStore(store).list_jobs(after=after, limit=limit)
+        rows = CollectionJobStore(store).list_jobs(
+            after=after, limit=limit, archive_filter=archive_filter
+        )
         typer.echo(json.dumps([row.model_dump(mode="json") for row in rows], indent=2))
+
+
+@jobs_app.command("capacity")
+def capacity(store: Path) -> None:
+    """Show store-wide logical quotas; external backup availability is not checked."""
+    with _guard():
+        typer.echo(CollectionJobStore(store).capacity().model_dump_json(indent=2))
 
 
 @jobs_app.command("run")

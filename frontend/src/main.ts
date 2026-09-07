@@ -30,6 +30,20 @@ interface JobPage {
   next_after_job_id: string | null;
   has_more: boolean;
   observed_at: string;
+  archived_job_ids: string[];
+  project_usage: {
+    schema_version: "forgegate.job-project-usage.v1";
+    project_id: string;
+    store_version: 3 | 4;
+    archiving_enabled: boolean;
+    current_jobs: number;
+    archived_jobs: number;
+    pending_input_bytes: number;
+    live_result_bytes: number;
+    external_backup_dependencies: string[];
+    dependency_availability: "NOT_CHECKED";
+    store_capacity_remaining: "NOT_DISCLOSED";
+  } | null;
 }
 
 interface JobReview {
@@ -1386,11 +1400,12 @@ async function renderAudit(): Promise<void> {
   }
 }
 
-function jobsHash(projectId: string, candidateId = "", after = "", jobId = ""): string {
+function jobsHash(projectId: string, candidateId = "", after = "", jobId = "", archiveFilter = "all"): string {
   const params = new URLSearchParams({ project_id: projectId });
   if (candidateId) params.set("candidate_id", candidateId);
   if (after) params.set("after_job_id", after);
   if (jobId) params.set("job_id", jobId);
+  if (archiveFilter !== "all") params.set("archive_filter", archiveFilter);
   return `#/jobs?${params.toString()}`;
 }
 
@@ -1411,8 +1426,10 @@ async function renderJobs(): Promise<void> {
   const candidateId = query.get("candidate_id") ?? "";
   const after = query.get("after_job_id") ?? "";
   const jobId = query.get("job_id") ?? "";
+  const archiveFilter = query.get("archive_filter") ?? "all";
   if (!scopes.includes(projectId) || (candidateId !== "" && !/^cand-[0-9a-f]{24}$/.test(candidateId)) ||
-      [after, jobId].some(value => value !== "" && !/^job-[0-9a-f]{32}$/.test(value))) {
+      [after, jobId].some(value => value !== "" && !/^job-[0-9a-f]{32}$/.test(value)) ||
+      !["all", "current", "archived"].includes(archiveFilter)) {
     main.append(emptyState("Invalid job selection", "Choose an authorized project and complete candidate/job identifiers."));
     const reset = el("a", "button secondary", "Reset job filters");
     reset.href = "#/jobs";
@@ -1438,19 +1455,29 @@ async function renderJobs(): Promise<void> {
   candidateInput.pattern = "cand-[0-9a-f]{24}";
   candidateInput.maxLength = 29;
   candidateLabel.append(candidateInput);
+  const archiveLabel = el("label", "field");
+  archiveLabel.append(el("span", undefined, "Archive status"));
+  const archiveSelector = el("select");
+  for (const [value, label] of [["all", "All tasks"], ["current", "Current tasks"], ["archived", "Archived tasks"]] as const) {
+    const option = el("option", undefined, label);
+    option.value = value;
+    archiveSelector.append(option);
+  }
+  archiveSelector.value = archiveFilter;
+  archiveLabel.append(archiveSelector);
   selector.addEventListener("change", () => { candidateInput.value = ""; });
   const apply = button("Apply job filters", "button primary");
   apply.type = "submit";
   form.addEventListener("submit", event => {
     event.preventDefault();
     if (candidateInput.value && !/^cand-[0-9a-f]{24}$/.test(candidateInput.value)) { candidateInput.reportValidity(); return; }
-    const next = jobsHash(selector.value, candidateInput.value);
+    const next = jobsHash(selector.value, candidateInput.value, "", "", archiveSelector.value);
     if (window.location.hash === next) void renderJobs();
     else window.location.hash = next;
   });
   const refresh = button("Refresh jobs", "button secondary");
   refresh.addEventListener("click", () => void renderJobs());
-  form.append(projectLabel, candidateLabel, apply, refresh);
+  form.append(projectLabel, candidateLabel, archiveLabel, apply, refresh);
   main.append(form, el("p", "command-boundary", "Submit from an unbound COLLECTING candidate, then separately review execution here. Execution parses retained reports; it does not run project tests. No automatic worker, evidence binding, hardware access or release decision occurs here. Pending raw reports stay in the configured local store; logical release is not secure erasure."));
   const results = el("section", "job-results");
   results.setAttribute("aria-live", "polite");
@@ -1463,13 +1490,14 @@ async function renderJobs(): Promise<void> {
       if (!active()) return;
       results.replaceChildren();
       const back = el("a", "button quiet", "Back to project jobs");
-      back.href = jobsHash(projectId, candidateId, after);
+      back.href = jobsHash(projectId, candidateId, after, "", archiveFilter);
       results.append(back, renderJobDetail(main, review));
       return;
     }
     const params = new URLSearchParams({ project_id: projectId, limit: "25" });
     if (candidateId) params.set("candidate_id", candidateId);
     if (after) params.set("after_job_id", after);
+    params.set("archive_filter", archiveFilter);
     const page = await api<JobPage>(`/app/api/jobs?${params}`);
     if (!active()) return;
     results.replaceChildren();
@@ -1477,23 +1505,46 @@ async function renderJobs(): Promise<void> {
       results.append(emptyState("Job store not enabled", "Start an isolated or explicitly approved Dashboard with --job-store pointing to an existing v2 store. No file was created or migrated. Existing services do not gain this capability automatically."));
       return;
     }
+    if (page.project_usage) {
+      const usage = page.project_usage;
+      const capacity = el("section", "panel");
+      capacity.append(el("h2", undefined, "Project task storage"));
+      const metrics = el("div", "metric-grid");
+      const values: Array<[string, number]> = [["Current tasks", usage.current_jobs], ["Archived tasks", usage.archived_jobs], ["Pending input bytes", usage.pending_input_bytes], ["Live result bytes", usage.live_result_bytes]];
+      for (const [label, value] of values) {
+        const metric = el("div", "metric-card");
+        metric.append(el("span", undefined, label), el("strong", undefined, String(value)));
+        metrics.append(metric);
+      }
+      capacity.append(metrics, el("p", "muted", `Project-scoped usage in job store v${usage.store_version}; archiving is ${usage.archiving_enabled ? "enabled" : "not enabled"}. Store-wide remaining capacity is intentionally not disclosed in the browser.`));
+      if (usage.external_backup_dependencies.length) {
+        capacity.append(el("h3", undefined, "External archive dependencies"),
+          el("p", "command-boundary", `${usage.external_backup_dependencies.length} original backup${usage.external_backup_dependencies.length === 1 ? " is" : "s are"} required. Availability was not checked by this page; retain and verify them with the owner CLI.`));
+        for (const dependency of usage.external_backup_dependencies.slice(0, 5)) capacity.append(el("p", "mono", dependency));
+        if (usage.external_backup_dependencies.length > 5) capacity.append(el("p", "muted", "Only the first 5 hashes are shown. Use jobs capacity for the complete store-wide list."));
+      } else {
+        capacity.append(el("p", "muted", "No external archive dependency is recorded for this project. This does not prove backup availability or recovery readiness."));
+      }
+      results.append(capacity);
+    }
     results.append(el("p", "pager-status", `${page.jobs.length} jobs shown · ${page.has_more ? "More jobs available" : "End of matching jobs"} · Read at ${formatDate(page.observed_at)}`));
     if (!page.jobs.length) results.append(emptyState("No matching jobs", "Submit a report task from a candidate or the local CLI, or change the filter. Empty results do not prove successful collection."));
     for (const job of page.jobs) {
       const item = el("article", "panel job-card");
       const link = el("a", "button quiet", `Inspect ${job.job_id}`);
-      link.href = jobsHash(projectId, candidateId, after, job.job_id);
-      item.append(statusBadge(job.state), el("p", "mono", job.candidate_id), el("p", "muted", `Revision ${job.revision} · Updated ${formatDate(job.updated_at)}`), link);
+      link.href = jobsHash(projectId, candidateId, after, job.job_id, archiveFilter);
+      const storage = page.archived_job_ids.includes(job.job_id) ? statusBadge("ARCHIVED") : statusBadge("CURRENT");
+      item.append(statusBadge(job.state), storage, el("p", "mono", job.candidate_id), el("p", "muted", `Revision ${job.revision} · Updated ${formatDate(job.updated_at)}`), link);
       results.append(item);
     }
     const pager = el("nav", "pager");
     pager.setAttribute("aria-label", "Job pages");
     const first = el("a", "button quiet", "First job page");
-    first.href = jobsHash(projectId, candidateId);
+    first.href = jobsHash(projectId, candidateId, "", "", archiveFilter);
     pager.append(first);
     if (page.has_more && page.next_after_job_id) {
       const next = el("a", "button secondary", "Next job page");
-      next.href = jobsHash(projectId, candidateId, page.next_after_job_id);
+      next.href = jobsHash(projectId, candidateId, page.next_after_job_id, "", archiveFilter);
       pager.append(next);
     }
     pager.append(el("p", "muted", "Sorted by job ID, not time. Browser Back restores filters; no snapshot total is claimed."));

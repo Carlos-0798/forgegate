@@ -1,0 +1,59 @@
+{
+  "phase": 41,
+  "date": "2026-09-07",
+  "result": "PASS_WITH_EXPLICIT_BOUNDARIES",
+  "verification": "LOCAL_HOST_TEST_SYNTHETIC",
+  "development_verification": {
+    "command": "python tools/verify.py",
+    "status": "PASS",
+    "pytest_passed": 1207,
+    "pytest_skipped": 3,
+    "branch_aware_coverage_percent": 95.67,
+    "statements": 12166,
+    "branches": 3180,
+    "ruff_format_mypy": "PASS",
+    "mypy_source_tool_files": 107,
+    "frontend_tests_passed": 130,
+    "interaction_smoke_cases": 33,
+    "document_schemas": 51,
+    "artifact_schemas": 3,
+    "schema_openapi_asset_drift": "PASS"
+  },
+  "focused_verification": {
+    "capacity_python_tests": 12,
+    "complete_identity_scan_limit": 1100,
+    "legacy_read_compatibility": "PASS",
+    "project_scope_privacy": "PASS"
+  },
+  "actual_browser": {
+    "browser": "Edge",
+    "status": "PASS",
+    "fixture": "manual_dashboard_jobs.py --archive-complete",
+    "current_jobs": 26,
+    "archived_jobs": 1,
+    "pending_input_bytes": 10472,
+    "live_result_bytes": 2583,
+    "external_backup_dependencies": 1,
+    "checks": ["all_filter", "archived_filter", "current_filter", "record_labels", "detail_back_filter_retention", "project_usage", "dependency_warning"],
+    "screenshot": "docs/assets/phase41-job-capacity-filter.jpg",
+    "screenshot_sha256": "833088164b3ef2382a2bd4b6194303569028b528e6c792836c9deb212dc1850d",
+    "temporary_server_stopped": true,
+    "browser_tab_closed": true
+  },
+  "release_smoke": {
+    "command": "python tools/release_smoke.py",
+    "status": "PASS",
+    "exit_code": 0,
+    "tested_wheel_sha256": "f6e3cb9e8b164009e8b6c8a8aefe0bdef67dcdc6941334f7f0909b973d59d984",
+    "tested_sdist_sha256": "f08e54fd785d4b8212f9fc1d195076ee83f1cddca41afbecf0a39fad8f80e7d7",
+    "artifact_scope": "local_smoke_build_before_final_report_edits_not_a_published_release"
+  },
+  "boundaries": {
+    "production_store_access": "NOT_PERFORMED",
+    "github_access_or_write": "NOT_PERFORMED",
+    "hardware_access": "NOT_PERFORMED",
+    "external_backup_availability_check": "NOT_PERFORMED",
+    "physical_database_measurement": "NOT_PERFORMED",
+    "capacity_or_archive_write": "NOT_PERFORMED"
+  }
+}
