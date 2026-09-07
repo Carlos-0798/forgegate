@@ -136,6 +136,67 @@
         "title": "ApiSessionCreateRequest",
         "type": "object"
       },
+      "ArchiveDependencyCheck": {
+        "additionalProperties": false,
+        "properties": {
+          "backup_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Backup Sha256",
+            "type": "string"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z][A-Z0-9_]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "job_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 1000,
+            "minItems": 1,
+            "title": "Job Ids",
+            "type": "array"
+          },
+          "jobs_without_result": {
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Jobs Without Result",
+            "type": "integer"
+          },
+          "result_payloads_verified": {
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Result Payloads Verified",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "VERIFIED",
+              "NOT_SUPPLIED",
+              "FAILED"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "backup_sha256",
+          "job_ids",
+          "status",
+          "result_payloads_verified",
+          "jobs_without_result"
+        ],
+        "title": "ArchiveDependencyCheck",
+        "type": "object"
+      },
       "ArtifactReference": {
         "additionalProperties": false,
         "properties": {
@@ -2164,6 +2225,28 @@
         "title": "DashboardPrincipal",
         "type": "object"
       },
+      "DashboardRecoveryReviewRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "document": {
+            "maxLength": 262144,
+            "minLength": 1,
+            "title": "Document",
+            "type": "string"
+          },
+          "expected_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Expected Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "document",
+          "expected_sha256"
+        ],
+        "title": "DashboardRecoveryReviewRequest",
+        "type": "object"
+      },
       "DashboardReportUpload": {
         "additionalProperties": false,
         "properties": {
@@ -3877,6 +3960,98 @@
         "title": "ProjectIdentity",
         "type": "object"
       },
+      "RecoveryReadinessHandoff": {
+        "additionalProperties": false,
+        "properties": {
+          "dependency_count": {
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Dependency Count",
+            "type": "integer"
+          },
+          "disposition": {
+            "enum": [
+              "READY_FOR_REHEARSAL",
+              "BLOCKED"
+            ],
+            "title": "Disposition",
+            "type": "string"
+          },
+          "handoff_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Handoff Id",
+            "type": "string"
+          },
+          "jobs_without_result": {
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Jobs Without Result",
+            "type": "integer"
+          },
+          "live_availability": {
+            "const": "NOT_CHECKED",
+            "default": "NOT_CHECKED",
+            "title": "Live Availability",
+            "type": "string"
+          },
+          "payload_transfer": {
+            "const": "NOT_INCLUDED",
+            "default": "NOT_INCLUDED",
+            "title": "Payload Transfer",
+            "type": "string"
+          },
+          "readiness": {
+            "$ref": "#/components/schemas/WorkspaceRecoveryReadiness"
+          },
+          "report_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Report Fingerprint",
+            "type": "string"
+          },
+          "restore": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Restore",
+            "type": "string"
+          },
+          "result_payloads_verified": {
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Result Payloads Verified",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "forgegate.recovery-readiness-handoff.v1",
+            "default": "forgegate.recovery-readiness-handoff.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_report_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Source Report Sha256",
+            "type": "string"
+          },
+          "verified_dependency_count": {
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Verified Dependency Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "handoff_id",
+          "source_report_sha256",
+          "report_fingerprint",
+          "disposition",
+          "readiness",
+          "dependency_count",
+          "verified_dependency_count",
+          "result_payloads_verified",
+          "jobs_without_result"
+        ],
+        "title": "RecoveryReadinessHandoff",
+        "type": "object"
+      },
       "RegisteredProject": {
         "additionalProperties": false,
         "description": "Immutable first-version registration of one ForgeGate project profile.",
@@ -4366,6 +4541,94 @@
         ],
         "title": "VerificationLevel",
         "type": "string"
+      },
+      "WorkspaceRecoveryReadiness": {
+        "additionalProperties": false,
+        "properties": {
+          "archived_job_count": {
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Archived Job Count",
+            "type": "integer"
+          },
+          "availability": {
+            "const": "observed_during_check_only",
+            "default": "observed_during_check_only",
+            "title": "Availability",
+            "type": "string"
+          },
+          "backup_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Backup Sha256",
+            "type": "string"
+          },
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "dependencies": {
+            "items": {
+              "$ref": "#/components/schemas/ArchiveDependencyCheck"
+            },
+            "maxItems": 1000,
+            "title": "Dependencies",
+            "type": "array"
+          },
+          "external_identity_and_artifact_files": {
+            "const": "NOT_CHECKED",
+            "default": "NOT_CHECKED",
+            "title": "External Identity And Artifact Files",
+            "type": "string"
+          },
+          "manifest_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Manifest Fingerprint",
+            "type": "string"
+          },
+          "producer_authenticity": {
+            "const": "NOT_VERIFIED",
+            "default": "NOT_VERIFIED",
+            "title": "Producer Authenticity",
+            "type": "string"
+          },
+          "restore": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Restore",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.workspace-recovery-readiness.v1",
+            "default": "forgegate.workspace-recovery-readiness.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "scope": {
+            "const": "snapshot_and_exact_archived_job_payloads",
+            "default": "snapshot_and_exact_archived_job_payloads",
+            "title": "Scope",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "READY",
+              "INCOMPLETE"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "backup_sha256",
+          "manifest_fingerprint",
+          "checked_at",
+          "status",
+          "archived_job_count",
+          "dependencies"
+        ],
+        "title": "WorkspaceRecoveryReadiness",
+        "type": "object"
       }
     }
   },
@@ -6032,6 +6295,62 @@
           }
         },
         "summary": "Dashboard Candidates"
+      }
+    },
+    "/app/api/recovery-review": {
+      "post": {
+        "operationId": "reviewDashboardRecoveryReadiness",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardRecoveryReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryReadinessHandoff"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Review Dashboard Recovery Readiness"
       }
     },
     "/app/api/session": {

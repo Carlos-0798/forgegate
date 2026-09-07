@@ -5,76 +5,18 @@ import re
 from contextlib import closing
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Literal, Self
-
-from pydantic import Field, model_validator
+from typing import Literal
 
 from forgegate.candidates.backups import _check_time, _connect, _deadline
-from forgegate.candidates.models import FINGERPRINT_PATTERN
 from forgegate.canonical import sha256_fingerprint
 from forgegate.collection_jobs import CollectionJobResult
-from forgegate.domain.models import SHA256_PATTERN, StrictModel
 from forgegate.job_archival import _snapshot
 from forgegate.job_archive_models import MAX_ARCHIVED_JOBS, JobArchivePlan, JobArchiveReceipt
+from forgegate.recovery_models import (
+    ArchiveDependencyCheck,
+    WorkspaceRecoveryReadiness,
+)
 from forgegate.workspace_backups import WorkspaceBackupError, _guard, _require, _verified
-
-
-class ArchiveDependencyCheck(StrictModel):
-    backup_sha256: str = Field(pattern=SHA256_PATTERN)
-    job_ids: list[str] = Field(min_length=1, max_length=MAX_ARCHIVED_JOBS)
-    status: Literal["VERIFIED", "NOT_SUPPLIED", "FAILED"]
-    error_code: str | None = Field(default=None, pattern=r"^[A-Z][A-Z0-9_]{0,79}$")
-    result_payloads_verified: int = Field(ge=0, le=MAX_ARCHIVED_JOBS)
-    jobs_without_result: int = Field(ge=0, le=MAX_ARCHIVED_JOBS)
-
-    @model_validator(mode="after")
-    def coherent(self) -> Self:
-        if self.job_ids != sorted(set(self.job_ids)) or any(
-            re.fullmatch(r"job-[0-9a-f]{32}", job) is None for job in self.job_ids
-        ):
-            raise ValueError("dependency job identities must be canonical and unique")
-        if (self.status == "FAILED") != (self.error_code is not None):
-            raise ValueError("only failed checks carry error codes")
-        count = self.result_payloads_verified + self.jobs_without_result
-        if count != (len(self.job_ids) if self.status == "VERIFIED" else 0):
-            raise ValueError("dependency verification counts disagree")
-        return self
-
-
-class WorkspaceRecoveryReadiness(StrictModel):
-    schema_version: Literal["forgegate.workspace-recovery-readiness.v1"] = (
-        "forgegate.workspace-recovery-readiness.v1"
-    )
-    backup_sha256: str = Field(pattern=SHA256_PATTERN)
-    manifest_fingerprint: str = Field(pattern=FINGERPRINT_PATTERN)
-    checked_at: datetime
-    status: Literal["READY", "INCOMPLETE"]
-    archived_job_count: int = Field(ge=0, le=MAX_ARCHIVED_JOBS)
-    dependencies: list[ArchiveDependencyCheck] = Field(max_length=MAX_ARCHIVED_JOBS)
-    scope: Literal["snapshot_and_exact_archived_job_payloads"] = (
-        "snapshot_and_exact_archived_job_payloads"
-    )
-    availability: Literal["observed_during_check_only"] = "observed_during_check_only"
-    restore: Literal["NOT_PERFORMED"] = "NOT_PERFORMED"
-    producer_authenticity: Literal["NOT_VERIFIED"] = "NOT_VERIFIED"
-    external_identity_and_artifact_files: Literal["NOT_CHECKED"] = "NOT_CHECKED"
-
-    @model_validator(mode="after")
-    def coherent(self) -> Self:
-        if self.checked_at.utcoffset() is None:
-            raise ValueError("check timestamp requires offset")
-        hashes = [item.backup_sha256 for item in self.dependencies]
-        jobs = [job for item in self.dependencies for job in item.job_ids]
-        if hashes != sorted(set(hashes)) or len(jobs) != len(set(jobs)):
-            raise ValueError("dependency identities must be unique and sorted")
-        if len(jobs) != self.archived_job_count:
-            raise ValueError("archived job count mismatch")
-        expected = (
-            "READY" if all(d.status == "VERIFIED" for d in self.dependencies) else "INCOMPLETE"
-        )
-        if self.status != expected:
-            raise ValueError("readiness disagrees with dependency checks")
-        return self
 
 
 def _check_dependency(

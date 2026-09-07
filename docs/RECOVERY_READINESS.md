@@ -22,6 +22,17 @@ original backup hashes needed. Supply each explicitly, quoting the entire
 python -m forgegate workspace recovery-check work/backups/latest.zip --sha256 LATEST_SHA256 --dependency "ORIGINAL_SHA256=work/backups/original.zip"
 ```
 
+Create a new path-free report for Dashboard review with `--output`. The command
+never replaces an existing file and does not create a missing parent directory:
+
+```powershell
+python -m forgegate workspace recovery-check work/backups/latest.zip --sha256 LATEST_SHA256 --dependency "ORIGINAL_SHA256=work/backups/original.zip" --output work/recovery-readiness.json
+```
+
+The JSON is written before the normal status exit, so an `INCOMPLETE` report is
+still available for review while the command returns exit 2. Console and file
+bytes are identical UTF-8 with a final newline.
+
 Repeat `--dependency` for each required hash. No directory search, network fetch,
 receipt path dereference or recursive archive extraction occurs. Duplicate,
 malformed and unrelated mappings are rejected. At most 1,000 dependencies may
@@ -60,9 +71,13 @@ authenticate producers, or verify external keys/trust stores/raw artifacts.
 The standard new-directory-only restore and separately hash-checked
 `archived-result` commands remain independent operations.
 
-Dashboard capacity continues to say `dependency_availability=NOT_CHECKED`:
-this offline report is not a live browser observation and is not uploaded or
-cached as current device/workspace health. No browser file path API is added.
+Dashboard capacity continues to say `dependency_availability=NOT_CHECKED`.
+The operator-only Recovery page accepts the report document and its browser-
+calculated exact-byte hash, not a server file path or ZIP. It returns a strict
+content-addressed handoff whose `live_availability` remains `NOT_CHECKED` and
+whose payload/restore fields remain `NOT_INCLUDED` / `NOT_PERFORMED`. The report
+is not cached as current device/workspace health. See
+[Dashboard recovery handoff](DASHBOARD_RECOVERY_HANDOFF.md).
 
 ## Reproduce
 

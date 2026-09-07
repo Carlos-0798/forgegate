@@ -19,12 +19,15 @@ export async function harness(origin = "http://127.0.0.1:8131") {
     textContent = "";
     className = "";
     disabled = false;
+    files = undefined;
+    customValidity = "";
     open = false;
     isConnected = true;
     constructor(tag) { this.tag = tag; }
     append(...children) { this.children.push(...children); }
     replaceChildren(...children) { this.children = children; }
     setAttribute(key, value) { this.attributes[key] = value; }
+    setCustomValidity(value) { this.customValidity = value; }
     addEventListener(name, listener) { (this.listeners[name] ??= []).push(listener); }
     focus() { activeElement = this; }
     click() { if (!this.disabled) for (const fn of this.listeners.click ?? []) fn(); }

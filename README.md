@@ -39,6 +39,9 @@ The current checkpoint demonstrates:
 - [offline recovery readiness](docs/RECOVERY_READINESS.md) checks explicitly
   supplied original backups against snapshot receipts and exact archived-job
   payloads, reporting missing or failed dependencies before recovery rehearsal;
+  an operator-only [recovery handoff](docs/DASHBOARD_RECOVERY_HANDOFF.md) page
+  validates an exact path-free report, separates READY from BLOCKED, and exports
+  a content-addressed review artifact without uploading backup payloads;
 - [durable local report jobs](docs/COLLECTION_JOBS.md) with idempotent submission,
   explicit execution/cancellation, expired-lease recovery and bounded pending
   input retention; v2 records expose non-credential execution ownership and
@@ -107,18 +110,19 @@ never converted into candidate evidence.
 
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 1233 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
-| Branch-aware coverage | 95.72% across 12,286 statements and 3,212 branches | Local host test |
-| Static quality | Ruff, formatting, and strict mypy passed across 108 source/tool files | Local host test |
+| Full Python suite | 1246 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
+| Branch-aware coverage | 95.72% across 12,371 statements and 3,226 branches | Local host test |
+| Static quality | Ruff, formatting, and strict mypy passed across 109 source/tool files | Local host test |
+| Recovery handoff | 39 focused Python cases and 8 production-TypeScript interaction cases passed; CLI creates new-only JSON reports and the Dashboard validates exact bytes into a content-addressed handoff | Local synthetic test; no restore, payload upload, live availability, producer authentication, hardware or publication; native Edge file-picker acceptance awaits extension file-access permission |
 | Offline recovery readiness | 26 new cases; 120 combined archive/backup/readiness cases; exact CLI READY/missing/wrong-hash outcomes | Local synthetic test; observed snapshot/payload readiness only; [Phase 42 evidence](reports/PHASE_42_RECOVERY_READINESS_ACCEPTANCE.md) |
 | Reviewed job archival | 46 new regressions; 94 combined archive/backup cases, 100% focused branch coverage; actual Edge detail and clean-wheel CLI recovery | Local synthetic test; history/idempotency retained; logical quota only; original external backups required |
 | Coordinated workspace recovery | 48 focused cases; backup/CLI modules 100% branch-aware coverage; paired snapshots, restored-copy execution and retention planning | Local synthetic test; no live replacement, automatic purge, encryption or power-loss certification |
 | Durable local report jobs | 99 focused Python cases plus actual synthetic browser execution; CLI lifecycle, v1/v2-to-v3 store migration, cooperative cancellation/renewal, exact browser export and reviewed binding | Local synthetic test; no automatic worker, mid-parser preemption, candidate transition, policy decision or hardware |
 | Candidate-store backup | 27 focused cases; backup module 100% branch-aware coverage; installed CLI round trip passes | Local host test; no automatic restore, encryption or blanket domain validation |
-| Contracts | 52 document and 3 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI (27 paths, 29 operations) passed drift checks | Local host test |
+| Contracts | 53 document and 3 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI (28 paths, 30 operations) passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
-| Dashboard automation | 130 TypeScript host interaction tests passed, including capacity/archive filtering and 55 earlier job-management/submission/handoff/archive cases | Local host test; [Phase 41 actual Edge checks](reports/PHASE_41_JOB_CAPACITY_ACCEPTANCE.md) verify scoped usage, dependency warning and filters; not exhaustive browser/OS certification |
+| Dashboard automation | 138 TypeScript host interaction tests passed, including recovery READY/BLOCKED/import/error isolation and earlier job-management/submission/handoff/archive cases | Local host test; [Phase 41 actual Edge checks](reports/PHASE_41_JOB_CAPACITY_ACCEPTANCE.md) verify scoped usage, dependency warning and filters; not exhaustive browser/OS certification |
 | Dashboard browser interaction | Full reviewed Edge workflow, Edge/Chrome keyboard/focus, 129-record pagination, 390 px responsive, 409/413/422/429/500 recovery, exact Edge 100–200% zoom, and clean-console paths passed | Windows local browser test; uncommon errors use a zero-write presentation harness; Narrator is bounded PASS, while spoken output, high contrast, and real Remote Desktop remain open |
 | MSP430 report collector | 34 focused tests plus clean-wheel CLI collection passed; one LaunchPad HIL migration fixture produced 17 normalized records with retained warnings | Local artifact test; the fixture is a historical upstream result, not a new run or physical-measurement claim |
 | MSP430 live status | COM4 opened input-only at 115200 8-N-1; authenticated Devices page showed `CONNECTED`, heartbeat `NORMAL`, device `FAULT`, flags `0015`; sequence advanced 58007→58017 over 10 seconds with 10 accepted frames and no sequence gap | Owner-authorized Windows physical-device observation; one earlier invalid frame was rejected, no command or firmware/debug action, measurement validation, release evidence, or long-duration stability claim |

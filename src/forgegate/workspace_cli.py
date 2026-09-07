@@ -41,6 +41,10 @@ def recovery_check(
         list[str] | None,
         typer.Option(help="Explicit SHA256=PATH mapping; repeat for each original backup."),
     ] = None,
+    output: Annotated[
+        Path | None,
+        typer.Option(help="Create one new path-free JSON report for Dashboard review."),
+    ] = None,
     timeout_seconds: Timeout = 30,
 ) -> None:
     """Check an exact snapshot and archived payload dependencies; no restore or live reads."""
@@ -56,9 +60,28 @@ def recovery_check(
         report = check_recovery_readiness(
             backup, expected_sha256=sha256, dependencies=mappings, timeout_seconds=timeout_seconds
         )
-        typer.echo(report.model_dump_json(indent=2))
+        document = f"{report.model_dump_json(indent=2)}\n"
+        if output is not None:
+            _write_new_report(output, document.encode("utf-8"))
+        typer.echo(document, nl=False)
         if report.status != "READY":
             raise typer.Exit(code=2)
+
+
+def _write_new_report(path: Path, content: bytes) -> None:
+    """Create exactly one report; never replace an existing file or create parents."""
+    try:
+        descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+    except FileExistsError as exc:
+        raise WorkspaceBackupError("RECOVERY_OUTPUT_EXISTS") from exc
+    try:
+        with os.fdopen(descriptor, "wb") as stream:
+            stream.write(content)
+            stream.flush()
+            os.fsync(stream.fileno())
+    except Exception:
+        path.unlink(missing_ok=True)
+        raise
 
 
 @contextmanager

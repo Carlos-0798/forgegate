@@ -179,6 +179,49 @@ def test_cli_status_exits_duplicate_and_path_privacy(fixture, tmp_path):
         assert str(tmp_path) not in result.output and "secret-invalid-path" not in result.output
 
 
+def test_cli_can_create_bounded_dashboard_report_without_overwrite(fixture, tmp_path):
+    root, digest, original, old_digest, _, _ = archived(fixture, tmp_path)
+    destination = tmp_path / "recovery-readiness.json"
+    runner = CliRunner()
+    args = [
+        "workspace",
+        "recovery-check",
+        str(root),
+        "--sha256",
+        digest,
+        "--dependency",
+        f"{old_digest}={original}",
+        "--output",
+        str(destination),
+    ]
+    created = runner.invoke(cli, args)
+    assert created.exit_code == 0
+    assert destination.read_bytes() == created.stdout.encode("utf-8")
+    assert json.loads(destination.read_text(encoding="utf-8"))["status"] == "READY"
+    repeated = runner.invoke(cli, args)
+    assert repeated.exit_code == 3 and "RECOVERY_OUTPUT_EXISTS" in repeated.stderr
+    assert destination.read_bytes() == created.stdout.encode("utf-8")
+
+
+def test_cli_writes_incomplete_report_before_status_exit(fixture, tmp_path):
+    root, digest, _, _, _, _ = archived(fixture, tmp_path)
+    destination = tmp_path / "incomplete.json"
+    result = CliRunner().invoke(
+        cli,
+        [
+            "workspace",
+            "recovery-check",
+            str(root),
+            "--sha256",
+            digest,
+            "--output",
+            str(destination),
+        ],
+    )
+    assert result.exit_code == 2
+    assert json.loads(destination.read_text(encoding="utf-8"))["status"] == "INCOMPLETE"
+
+
 def test_report_cannot_claim_ready_or_duplicate_success(fixture, tmp_path):
     root, digest, _, _, _, _ = archived(fixture, tmp_path)
     report = rr.check_recovery_readiness(root, expected_sha256=digest, dependencies={})

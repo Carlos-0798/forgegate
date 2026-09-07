@@ -59,12 +59,14 @@ from forgegate.dashboard.models import (
     DashboardLogoutResponse,
     DashboardOverview,
     DashboardPrincipal,
+    DashboardRecoveryReviewRequest,
     DashboardSessionResponse,
 )
 from forgegate.dashboard.sessions import DashboardSessionManager
 from forgegate.domain.models import SLUG_PATTERN
 from forgegate.live_status import DisabledLiveStatusProvider, LiveStatusPage, LiveStatusProvider
 from forgegate.projects import RegisteredProjectPage
+from forgegate.recovery_models import RecoveryReadinessHandoff, build_recovery_handoff
 
 DASHBOARD_SESSION_COOKIE = "forgegate_dashboard"
 DASHBOARD_ACTIVATION_COOKIE = "forgegate_dashboard_activation"
@@ -285,6 +287,35 @@ def install_dashboard_routes(
                 "The service is not approved for non-loopback or production deployment.",
             ),
         )
+
+    @app.post(
+        "/app/api/recovery-review",
+        response_model=RecoveryReadinessHandoff,
+        operation_id="reviewDashboardRecoveryReadiness",
+        include_in_schema=False,
+    )
+    def review_dashboard_recovery_readiness(
+        request: Request,
+        command: DashboardRecoveryReviewRequest,
+        csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> RecoveryReadinessHandoff:
+        _require_same_origin(request, required=True)
+        stored, principal = manager.session(request.cookies.get(DASHBOARD_SESSION_COOKIE))
+        request.state.authenticated_principal = principal
+        manager.require_csrf(stored, csrf_token)
+        if principal.role.value != "operator":
+            raise ApiAuthenticationError(
+                "API_ROLE_FORBIDDEN",
+                "operator role required for recovery report review",
+                status_code=403,
+            )
+        try:
+            return build_recovery_handoff(command.document, command.expected_sha256)
+        except (ValueError, UnicodeError) as exc:
+            raise CandidateStoreError(
+                "DASHBOARD_RECOVERY_REPORT_INVALID",
+                "recovery readiness report failed strict validation",
+            ) from exc
 
     @app.get(
         "/app/api/live-status",

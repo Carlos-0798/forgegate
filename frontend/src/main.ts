@@ -1,7 +1,42 @@
 import "./styles.css";
 
 type Role = "operator" | "producer";
-type Route = "overview" | "devices" | "projects" | "candidates" | "evidence" | "decision" | "assurance" | "audit" | "jobs";
+type Route = "overview" | "devices" | "projects" | "candidates" | "evidence" | "decision" | "assurance" | "audit" | "jobs" | "recovery";
+
+interface RecoveryDependency {
+  backup_sha256: string;
+  job_ids: string[];
+  status: "VERIFIED" | "NOT_SUPPLIED" | "FAILED";
+  error_code: string | null;
+  result_payloads_verified: number;
+  jobs_without_result: number;
+}
+
+interface RecoveryHandoff {
+  schema_version: "forgegate.recovery-readiness-handoff.v1";
+  handoff_id: string;
+  source_report_sha256: string;
+  report_fingerprint: string;
+  disposition: "READY_FOR_REHEARSAL" | "BLOCKED";
+  readiness: {
+    schema_version: "forgegate.workspace-recovery-readiness.v1";
+    backup_sha256: string;
+    manifest_fingerprint: string;
+    checked_at: string;
+    status: "READY" | "INCOMPLETE";
+    archived_job_count: number;
+    dependencies: RecoveryDependency[];
+    availability: "observed_during_check_only";
+    restore: "NOT_PERFORMED";
+  };
+  dependency_count: number;
+  verified_dependency_count: number;
+  result_payloads_verified: number;
+  jobs_without_result: number;
+  payload_transfer: "NOT_INCLUDED";
+  live_availability: "NOT_CHECKED";
+  restore: "NOT_PERFORMED";
+}
 
 interface CollectionJob {
   schema_version: "forgegate.collection-job.v1" | "forgegate.collection-job.v2";
@@ -383,8 +418,10 @@ let liveStatusGeneration = 0;
 let lastLiveAnnouncement = "";
 let auditViewGeneration = 0;
 let jobsViewGeneration = 0;
+let recoveryViewGeneration = 0;
 
 const MAX_DASHBOARD_IMPORT_BYTES = 3_900_000;
+const MAX_RECOVERY_REPORT_BYTES = 262_144;
 
 function el<K extends keyof HTMLElementTagNameMap>(
   tag: K,
@@ -431,7 +468,7 @@ function keepFocusInsideDialog(dialog: HTMLDialogElement, event: KeyboardEvent):
 function routeFromHash(): Route {
   const candidate = window.location.hash.replace(/^#\/?/, "").split("?", 1)[0];
   return candidate === "devices" || candidate === "projects" || candidate === "candidates" ||
-    candidate === "evidence" || candidate === "decision" || candidate === "assurance" || candidate === "audit" || candidate === "jobs"
+    candidate === "evidence" || candidate === "decision" || candidate === "assurance" || candidate === "audit" || candidate === "jobs" || candidate === "recovery"
     ? candidate
     : "overview";
 }
@@ -758,6 +795,7 @@ function shell(content: HTMLElement): void {
     ["projects", "Projects", "Immutable profiles"],
     ["candidates", "Candidates", "Release work and audit"],
     ["jobs", "Jobs", "Collection lifecycle"],
+    ["recovery", "Recovery", "Offline readiness handoff"],
     ["evidence", "Evidence", "Bound records and sources"],
     ["decision", "Decision", "Rules and explanations"],
     ["assurance", "Assurance", "Attestation and limits"],
@@ -833,6 +871,7 @@ async function loadSession(): Promise<void> {
 function renderActivation(notice?: string): void {
   jobsViewGeneration += 1;
   auditViewGeneration += 1;
+  recoveryViewGeneration += 1;
   clearActivationTimer();
   clearSessionExpiryTimer();
   clearLiveStatusTimer();
@@ -990,6 +1029,7 @@ async function logoutSession(): Promise<void> {
 async function renderRoute(): Promise<void> {
   jobsViewGeneration += 1;
   auditViewGeneration += 1;
+  recoveryViewGeneration += 1;
   if (session === null) {
     renderActivation();
     return;
@@ -1001,6 +1041,7 @@ async function renderRoute(): Promise<void> {
   if (currentRoute === "projects") await renderProjects();
   if (currentRoute === "audit") await renderAudit();
   if (currentRoute === "jobs") await renderJobs();
+  if (currentRoute === "recovery") await renderRecovery();
   if (currentRoute === "candidates") await renderCandidates();
   if (currentRoute === "evidence") await renderEvidence();
   if (currentRoute === "decision") await renderDecision();
@@ -1398,6 +1439,158 @@ async function renderAudit(): Promise<void> {
     if (!active()) return;
     handleProtectedProblem(results, error, "Check the project scope, then use Refresh audit page. No write was performed.");
   }
+}
+
+function validRecoveryHandoff(value: unknown, sourceHash: string): value is RecoveryHandoff {
+  if (!isJsonObject(value) || value.schema_version !== "forgegate.recovery-readiness-handoff.v1") return false;
+  const readiness = value.readiness;
+  return typeof value.handoff_id === "string" && /^sha256:[0-9a-f]{64}$/.test(value.handoff_id) &&
+    value.source_report_sha256 === sourceHash &&
+    (value.disposition === "READY_FOR_REHEARSAL" || value.disposition === "BLOCKED") &&
+    isJsonObject(readiness) && readiness.schema_version === "forgegate.workspace-recovery-readiness.v1" &&
+    (readiness.status === "READY" || readiness.status === "INCOMPLETE") &&
+    typeof readiness.backup_sha256 === "string" && /^[0-9a-f]{64}$/.test(readiness.backup_sha256) &&
+    typeof readiness.checked_at === "string" && Array.isArray(readiness.dependencies) &&
+    Number.isSafeInteger(value.dependency_count) && value.dependency_count === readiness.dependencies.length &&
+    ((readiness.status === "READY") === (value.disposition === "READY_FOR_REHEARSAL"));
+}
+
+async function renderRecovery(): Promise<void> {
+  const generation = ++recoveryViewGeneration;
+  const owner = session;
+  const active = () => generation === recoveryViewGeneration && session === owner && currentRoute === "recovery";
+  const main = page(
+    "Recovery handoff",
+    "HISTORICAL OFFLINE CHECK",
+    "Review a CLI-generated readiness report and hand its validated identity to a recovery rehearsal. No backup payload is uploaded."
+  );
+  if (owner?.principal.role !== "operator") {
+    main.append(emptyState("Operator session required", "Recovery report review requires an operator session. No document was sent."));
+    shell(main);
+    return;
+  }
+  const form = el("section", "panel recovery-import");
+  form.append(
+    el("p", "eyebrow", "LOCAL REPORT IMPORT"),
+    el("h2", undefined, "Select an offline readiness report"),
+    el("p", "muted", "Use forgegate.workspace-recovery-readiness.v1 output from workspace recovery-check. The report contains identities and outcomes, not ZIP payloads or local paths.")
+  );
+  const label = el("label", "field file-field");
+  label.append(el("span", undefined, "Recovery readiness JSON"));
+  const input = el("input");
+  input.type = "file";
+  input.accept = ".json,application/json";
+  input.required = true;
+  label.append(input);
+  const review = button("Review recovery report", "button primary");
+  const status = el("section", "recovery-review");
+  status.setAttribute("aria-live", "polite");
+  form.append(label, el("p", "muted", "Maximum size: 262,144 bytes. The exact UTF-8 bytes are hashed before same-origin validation."), review);
+  main.append(form, status);
+  shell(main);
+  review.addEventListener("click", async () => {
+    const file = input.files?.[0];
+    if (file === undefined) {
+      input.setCustomValidity("Select one recovery readiness JSON document.");
+      input.reportValidity();
+      return;
+    }
+    input.setCustomValidity("");
+    if (file.size === 0 || file.size > MAX_RECOVERY_REPORT_BYTES) {
+      showProblem(status, new RequestProblem(413, "DASHBOARD_RECOVERY_IMPORT_TOO_LARGE", "The selected report is empty or exceeds 262,144 bytes.", "browser-side", null, "browser"), "Choose the exact bounded JSON report created by recovery-check.");
+      return;
+    }
+    review.disabled = true;
+    status.replaceChildren(el("p", "muted", "Hashing and validating the selected report…"));
+    try {
+      const bytes = await file.arrayBuffer();
+      if (bytes.byteLength !== file.size) throw new Error("The selected file changed while it was read.");
+      const document = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+      const parsed: unknown = JSON.parse(document);
+      if (!isJsonObject(parsed) || parsed.schema_version !== "forgegate.workspace-recovery-readiness.v1") {
+        throw new Error("Expected schema_version forgegate.workspace-recovery-readiness.v1.");
+      }
+      const sourceHash = await sha256Hex(bytes);
+      const handoff = await api<RecoveryHandoff>("/app/api/recovery-review", {
+        method: "POST",
+        headers: { "X-ForgeGate-CSRF": owner.csrf_token },
+        body: JSON.stringify({ document, expected_sha256: sourceHash })
+      });
+      if (!active()) return;
+      if (!validRecoveryHandoff(handoff, sourceHash)) {
+        throw new RequestProblem(500, "DASHBOARD_RECOVERY_RESPONSE_INVALID", "The service returned an inconsistent recovery handoff.", "unavailable", null);
+      }
+      const heading = el("div", "card-heading");
+      const title = el("div");
+      title.append(el("p", "eyebrow", "VALIDATED HANDOFF"), el("h2", undefined, handoff.disposition === "READY_FOR_REHEARSAL" ? "Ready for an explicit rehearsal" : "Recovery is blocked"));
+      heading.append(title, statusBadge(handoff.disposition));
+      const metrics = el("section", "metric-grid");
+      for (const [name, value] of [
+        ["Archived tasks", String(handoff.readiness.archived_job_count)],
+        ["Dependencies verified", `${handoff.verified_dependency_count} / ${handoff.dependency_count}`],
+        ["Result payloads", String(handoff.result_payloads_verified)],
+        ["No-result tasks", String(handoff.jobs_without_result)]
+      ]) {
+        const card = el("article", "metric-card");
+        card.append(el("span", undefined, name), el("strong", undefined, value));
+        metrics.append(card);
+      }
+      const identity = el("dl", "definition-list");
+      identity.append(
+        definition("Handoff ID", handoff.handoff_id, true),
+        definition("Imported file SHA-256", handoff.source_report_sha256, true),
+        definition("Root backup SHA-256", handoff.readiness.backup_sha256, true),
+        definition("Root manifest", handoff.readiness.manifest_fingerprint, true),
+        definition("Observed during offline check", formatDate(handoff.readiness.checked_at)),
+        definition("Restore", handoff.restore),
+        definition("Backup payload transfer", handoff.payload_transfer),
+        definition("Live availability", handoff.live_availability)
+      );
+      const dependencies = el("section", "dependency-list");
+      dependencies.append(el("h3", undefined, "Original backup dependencies"));
+      if (handoff.readiness.dependencies.length === 0) {
+        dependencies.append(emptyState("No archived payload dependency", "This validated snapshot contains no archived task requiring an original result backup."));
+      }
+      for (const dependency of handoff.readiness.dependencies) {
+        const item = el("details", "panel dependency-item");
+        const summary = el("summary");
+        summary.append(statusBadge(dependency.status), el("span", undefined, `${shortHash(dependency.backup_sha256)} · ${dependency.job_ids.length} task(s)`));
+        const values = el("dl", "definition-list");
+        values.append(
+          definition("Backup SHA-256", dependency.backup_sha256, true),
+          definition("Tasks", dependency.job_ids.join(", "), true),
+          definition("Verified result payloads", String(dependency.result_payloads_verified)),
+          definition("Valid tasks without result", String(dependency.jobs_without_result)),
+          definition("Failure code", dependency.error_code ?? "none")
+        );
+        item.append(summary, values);
+        dependencies.append(item);
+      }
+      const boundary = el("p", "command-boundary", "This handoff records a past offline observation. Before recovery, rerun recovery-check against the files you will use. Downloading this JSON performs no restore, availability probe, candidate write, hardware action, or publication.");
+      const actions = el("div", "dialog-actions");
+      const download = button("Download reviewed handoff JSON", "button secondary");
+      const downloadStatus = el("p", "muted");
+      download.addEventListener("click", async () => {
+        const serialized = `${JSON.stringify(handoff, null, 2)}\n`;
+        const encoded = new TextEncoder().encode(serialized);
+        const exportedHash = await sha256Hex(encoded.buffer);
+        saveLocalDownload({
+          blob: new Blob([encoded], { type: "application/json" }),
+          filename: `recovery-handoff-${handoff.handoff_id.replace(/^sha256:/, "")}.json`
+        });
+        downloadStatus.textContent = `Browser download requested · exported file SHA-256 ${exportedHash}`;
+      });
+      actions.append(download);
+      status.replaceChildren(heading, metrics, identity, dependencies, boundary, actions, downloadStatus);
+      download.focus();
+    } catch (error) {
+      if (!active()) return;
+      const normalized = error instanceof RequestProblem ? error : new RequestProblem(422, "DASHBOARD_RECOVERY_IMPORT_INVALID", error instanceof Error ? error.message : "The selected report is invalid.", "browser-side", null, "browser");
+      showProblem(status, normalized, "Generate a fresh report with workspace recovery-check, then select its exact JSON output.");
+      review.disabled = false;
+    }
+  });
+  input.focus();
 }
 
 function jobsHash(projectId: string, candidateId = "", after = "", jobId = "", archiveFilter = "all"): string {

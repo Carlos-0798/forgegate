@@ -2,6 +2,7 @@
 
 | Capability | Planned evidence | Current status |
 |---|---|---|
+| Reviewed recovery handoff | 39 focused Python cases, 8 production-TypeScript cases, strict Schema/OpenAPI/assets and isolated Edge navigation | AUTOMATED LOCAL PASS / MANUAL FILE GATE OPEN — operator-only exact JSON/hash validation and content-addressed download contract; Edge extension returned zero files without file-URL access, so no successful native import/download screenshot is claimed |
 | Offline archive recovery readiness | 26 new cases, 120 combined archive/backup/readiness cases and independent CLI checks | LOCAL PASS — root hash, explicit originals, exact manifest/job/event/result association; READY/INCOMPLETE and exit 0/2/3; check-time observation, no restore or live availability claim |
 | Job capacity and archive visibility | strict capacity/project-usage models, complete bounded scan, CLI/API/frontend tests | LOCAL PASS — owner CLI sees global logical quotas; Dashboard sees only authorized project usage; dependency availability and physical database size remain unverified |
 | Reviewed terminal job archival | 46 new regressions; 94 combined archival/backup cases; exact preserved rows, lock contention, rollback, quotas and replay | LOCAL PASS — verified pre-archive backup, live candidate/binding checks, immutable receipt; logical quota only, no secure erasure or physical shrink |
@@ -93,7 +94,7 @@
 | Request correlation and error sanitization | generated/supplied/invalid IDs + injected exception | PASS — local host |
 | Loopback-only API bind | IPv4/IPv6/localhost allowlist + external-address rejection | PASS — local host |
 | OpenAPI 3.1 contract | committed byte comparison + installed-wheel export | PASS — drift-checked |
-| Dashboard BFF OpenAPI contract | separate build-time export + committed byte and installed-wheel comparison | PASS — 27 paths / 29 `/app/api/` operations with explicit operation IDs; not served as interactive docs |
+| Dashboard BFF OpenAPI contract | separate build-time export + committed byte and installed-wheel comparison | PASS — 28 paths / 30 `/app/api/` operations with explicit operation IDs; not served as interactive docs |
 | Authenticated local API | Ed25519 challenge, Bearer session, trust recheck | PASS — local host, loopback only |
 | User interaction acceptance | deterministic CLI plus authenticated REST smoke | PASS — 33/33 expected outputs; ephemeral identity/database; Swagger/ReDoc deliberately return 404 |
 | Local Web Dashboard design | architecture, UX requirements, threat model, acceptance matrix | DESIGN PASS — Phase 23 frozen; Phase 24 implementation preserves the defined same-origin boundary |

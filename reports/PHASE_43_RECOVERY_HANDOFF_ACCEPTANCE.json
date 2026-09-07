@@ -1,0 +1,44 @@
+{
+  "phase": 43,
+  "date": "2026-09-07",
+  "verification": "LOCAL_HOST_TEST_SYNTHETIC",
+  "status": "AUTOMATED_PASS_NATIVE_EDGE_FILE_GATE_OPEN",
+  "focused_python_tests_passed": 39,
+  "new_frontend_tests_passed": 8,
+  "frontend_tests_passed": 138,
+  "full_verification": {
+    "command": "python tools/verify.py",
+    "status": "PASS",
+    "exit_code": 0,
+    "tests_passed": 1246,
+    "tests_skipped": 3,
+    "branch_aware_coverage_percent": 95.72,
+    "statements": 12371,
+    "branches": 3226,
+    "mypy_source_tool_files": 109,
+    "interaction_smoke_passed": 33,
+    "document_schemas": 53,
+    "artifact_schemas": 3,
+    "dashboard_openapi_paths": 28,
+    "dashboard_openapi_operations": 30,
+    "schema_openapi_asset_drift": "PASS"
+  },
+  "browser": {
+    "engine": "Microsoft Edge",
+    "activation_and_navigation": "PASS",
+    "native_file_selection": "BLOCKED_EXTENSION_FILE_URL_ACCESS_DISABLED",
+    "successful_import_or_download": "NOT_ESTABLISHED",
+    "success_screenshot": "NOT_RETAINED"
+  },
+  "release_smoke": {
+    "command": "python tools/release_smoke.py",
+    "status": "PASS",
+    "exit_code": 0,
+    "wheel_sha256": "a3cd44b0b555772f6478d188c31c91e8411d7e13df777d3e3b5add98c495b890",
+    "sdist_sha256": "dd660ce2ba6f6d6a1899a0719fb7d8c115b487f1144e07385deb708ba04d251f"
+  },
+  "restore": "NOT_PERFORMED",
+  "hardware_access": "NOT_PERFORMED",
+  "production_store_access": "NOT_PERFORMED",
+  "github_access_or_write": "NOT_PERFORMED"
+}

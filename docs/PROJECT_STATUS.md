@@ -2,7 +2,15 @@
 
 - Date: 2026-09-07
 - Version: 0.1.0a1
-- Stage: Phase 42 offline recovery readiness implemented: explicit original
+- Stage: Phase 43 reviewed recovery handoff implemented locally: the CLI can
+  create a new-only path-free report, and an operator-only Dashboard page
+  validates its exact bytes and strict status into a downloadable content-
+  addressed handoff. Backup payloads are not uploaded; live availability,
+  producer identity and restore remain unverified/not performed. Automated
+  browser behavior passes, while native Edge file selection remains a manual
+  gate until the owner enables extension file-URL access. See
+  [Dashboard recovery handoff](DASHBOARD_RECOVERY_HANDOFF.md).
+  Phase 42 offline recovery readiness remains implemented: explicit original
   backup mappings, exact ZIP/manifest/job/event/result checks, path-free READY
   or INCOMPLETE reports, and fail-closed root/deadline handling. This reports
   snapshot-time payload readiness; restore and external identity files remain
@@ -548,6 +556,14 @@ remaining OS assistive checks are separate.
 
 ## Accepted local checkpoint
 
+- Phase 43: 39 focused Python cases and 8 new production-TypeScript interaction
+  cases pass. The full gate passes with 1,246 tests, 3 environment-dependent
+  symlink skips and 95.72% branch-aware coverage across 12,371 statements and
+  3,226 branches. Ruff, formatting, strict mypy across 109 source/tool files,
+  53 document plus 3 artifact schemas, 28-path/30-operation Dashboard OpenAPI,
+  packaged assets and 138 total frontend cases pass. Edge navigation and operator
+  gating were observed; native file selection is not yet accepted because the
+  browser-control extension returned zero selected files without file-URL access.
 - Phase 42: 26 new readiness tests and 120 combined cases pass. Full verification
   passes with 1,233 tests, 3 environment-dependent symlink skips and 95.72%
   branch-aware coverage; the new readiness module and workspace CLI each reach
@@ -714,11 +730,11 @@ remaining OS assistive checks are separate.
 - committed JSON Schema, direct API OpenAPI, and Dashboard BFF OpenAPI drift
   checks: PASS
 - project/policy/candidate/transition example documents: VALID
-- forty-nine canonical versioned document Schemas plus Benchmark, Analog
+- fifty canonical versioned document Schemas plus Benchmark, Analog
   Validation, and MSP430 validation-report artifact Schemas: drift-checked and
   parsed
 - complete sdist manifest and ForgeGate/sample-plugin wheel builds: PASS
-- clean-wheel MSP430 report collection, Dashboard OpenAPI export (27 paths, 29 operations),
+- clean-wheel MSP430 report collection, Dashboard OpenAPI export (28 paths, 30 operations),
   installed-package workflow, optional `pyserial` install, and uninstall: PASS
 - Windows sandbox focus: 20 passed across probe failure isolation, client/server
   identity, rootless/local/WSL requirements, command controls, strict verifier

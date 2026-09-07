@@ -12,6 +12,8 @@ from forgegate.candidates.models import CandidateTransition
 from forgegate.domain.models import SLUG_PATTERN, StrictModel
 from forgegate.policy import PolicyEvaluationDocument, PolicyMaterial
 
+MAX_DASHBOARD_RECOVERY_REPORT_BYTES = 256 * 1024
+
 
 class DashboardPrincipal(StrictModel):
     session_id: str = Field(pattern=r"^sess-[0-9a-f]{32}$")
@@ -117,6 +119,11 @@ class DashboardAssuranceExportRequest(StrictModel):
     expected_bundle_id: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
 
 
+class DashboardRecoveryReviewRequest(StrictModel):
+    document: str = Field(min_length=1, max_length=MAX_DASHBOARD_RECOVERY_REPORT_BYTES)
+    expected_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
 __all__ = [
     "DashboardActivationCompleted",
     "DashboardActivationStart",
@@ -127,5 +134,6 @@ __all__ = [
     "DashboardLogoutResponse",
     "DashboardOverview",
     "DashboardPrincipal",
+    "DashboardRecoveryReviewRequest",
     "DashboardSessionResponse",
 ]

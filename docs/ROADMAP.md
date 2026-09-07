@@ -718,3 +718,20 @@ Next engineering slice: operator recovery rehearsal and artifact handoff UX,
 using the explicit snapshot identities without presenting old offline reports
 as live availability. Native assistive technology remains a separate acceptance
 gate. GitHub synchronization is paused.
+
+## Phase 43 — reviewed recovery handoff
+
+- [x] Add new-only CLI report output for both READY and INCOMPLETE results.
+- [x] Add an operator-only same-origin Dashboard import with browser and server
+  byte/hash/schema bounds; no server path or backup-payload input.
+- [x] Derive a strict content-addressed handoff with dependency totals and
+  explicit `NOT_CHECKED`, `NOT_INCLUDED` and `NOT_PERFORMED` boundaries.
+- [x] Cover READY/BLOCKED, authorization, malformed input, response consistency,
+  409/413/429/500 presentation and stale responses in Python/TypeScript tests.
+- [x] Regenerate the document Schema, Dashboard OpenAPI and packaged assets.
+- [ ] Complete native Edge file-selection/download screenshot acceptance after
+  the owner enables file-URL access for the browser-control extension.
+
+Next engineering slice after manual acceptance: execute a new-directory-only
+recovery rehearsal from the same explicitly rechecked identity set and retain
+post-restore verification evidence. GitHub synchronization remains paused.

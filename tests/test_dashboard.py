@@ -514,6 +514,7 @@ def test_dashboard_openapi_export_is_deterministic_and_complete(tmp_path: Path) 
         "/app/api/overview",
         "/app/api/projects",
         "/app/api/projects/{project_id}/candidates",
+        "/app/api/recovery-review",
         "/app/api/session",
     }
     assert first["paths"]["/app/api/candidates"]["post"]["operationId"] == (
@@ -538,6 +539,9 @@ def test_dashboard_openapi_export_is_deterministic_and_complete(tmp_path: Path) 
     assert first["paths"]["/app/api/session"]["delete"]["operationId"] == ("endDashboardSession")
     assert first["paths"]["/app/api/live-status"]["get"]["operationId"] == (
         "getDashboardLiveStatus"
+    )
+    assert first["paths"]["/app/api/recovery-review"]["post"]["operationId"] == (
+        "reviewDashboardRecoveryReadiness"
     )
     assert (
         first["paths"]["/app/api/candidates/{candidate_id}/assurance-review"]["get"]["operationId"]

@@ -6,6 +6,10 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
+- [Phase 43 reviewed recovery handoff](PHASE_43_RECOVERY_HANDOFF_ACCEPTANCE.md) —
+  strict exact-byte report import and content-addressed handoff are fully
+  automated locally; native Edge file-selection/download acceptance remains open
+  until the owner enables extension file-URL access
 - [Phase 42 offline recovery readiness](PHASE_42_RECOVERY_READINESS_ACCEPTANCE.md) — explicit original backups, exact archived-job association and READY/INCOMPLETE report; retained [synthetic CLI values](PHASE_42_RECOVERY_READINESS_ACCEPTANCE.json), no live availability or hardware claim
 - [Phase 41 capacity and archive visibility](PHASE_41_JOB_CAPACITY_ACCEPTANCE.md) — owner-only global logical quotas, privacy-preserving project usage, complete bounded archive filtering and explicit unverified dependency availability; no write, backup probe, hardware or GitHub action
 - [Phase 40 reviewed job archival](PHASE_40_JOB_ARCHIVAL_ACCEPTANCE.md) — exact verified-backup review, immutable receipt, logical quota release, external result readback and actual isolated Edge detail; no secure erasure, automatic purge or hardware
