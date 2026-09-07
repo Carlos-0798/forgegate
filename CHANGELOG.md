@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+- Added operator-reviewed canonical assembly download and separately confirmed
+  reuse of a retained `SUCCEEDED` job result through the existing immutable
+  candidate-evidence binding service. Exact job/result/assembly/candidate
+  identities, byte hashing, idempotency, actor attribution and stale-state gates
+  are enforced; no automatic transition, policy decision, source-byte export or
+  hardware access. Added 21 backend and 23 frontend regressions plus actual Edge
+  synthetic download/binding/readback evidence and a hash-overflow UI correction.
 - Added separately reviewed Dashboard job submission and foreground report
   parsing, frozen bytes/metadata, warning consent, namespaced idempotency,
   per-instance busy rejection and atomic initiating-operator attribution.

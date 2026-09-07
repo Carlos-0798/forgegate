@@ -2,12 +2,18 @@
 
 - Date: 2026-09-06
 - Version: 0.1.0a1
-- Stage: Phase 36 reviewed Dashboard report submission and explicit foreground
-  parsing implemented, with immutable request selection, warning consent,
+- Stage: Phase 37 reviewed Dashboard job-result handoff implemented: exact
+  canonical assembly download plus separately confirmed immutable candidate
+  evidence binding, guarded by current job/result/assembly/candidate identities.
+  Actual Edge download, binding, duplicate review and independent CLI/store
+  readback passed on an isolated synthetic fixture. Candidate state and revision
+  remain unchanged; no policy evaluation, raw-source export or hardware access.
+  Phase 36 reviewed Dashboard report submission and explicit foreground parsing
+  remains implemented, with immutable request selection, warning consent,
   identity/project-namespaced idempotency, per-instance busy rejection and
   atomic initiating-operator attribution. Real Edge single/combined/warning
   workflows and forbidden-XML preview rejection verified on synthetic data.
-  No automatic worker, test-command execution, evidence binding or hardware access.
+  No automatic worker, test-command execution or hardware access.
   Phase 35 opt-in operator Dashboard job list/detail/results, reviewed
   cancellation and expired-lease recovery implemented. Explicit job-store v2
   migration adds event actors without rewriting historical records; no automatic
@@ -494,6 +500,16 @@ remaining OS assistive checks are separate.
 
 ## Accepted local checkpoint
 
+- Phase 37: 21 additional Python and 23 frontend result-handoff regressions;
+  operator-only canonical download and immutable binding with exact stale-state,
+  authorization, response identity and no-retry checks. Actual Edge downloaded
+  2,010 canonical bytes whose SHA-256 matched the binding fingerprint, then bound
+  the retained one-failure assembly. Independent CLI/store readback confirmed one
+  attributed binding while the candidate remained COLLECTING revision 1 and the
+  job remained SUCCEEDED revision 2. A dialog hash-overflow defect found in the
+  browser was corrected and retested without horizontal overflow. See
+  [acceptance evidence](../reports/PHASE_37_JOB_RESULT_HANDOFF_ACCEPTANCE.md).
+  Isolated port 8136 only; MSP430 and GitHub not accessed.
 - Phase 36: 23 additional Python and 14 frontend report-job regressions;
   actual Edge frozen submission, separate parsing, single-failure counts,
   combined LCOV 50% results, warning retention and forbidden-XML rejection.
@@ -537,15 +553,16 @@ remaining OS assistive checks are separate.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 1072 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.50% across 11,343 statements and 3,042 branches
+- pytest: 1093 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.51% across 11,401 statements and 3,052 branches
 - MSP430 live-status focus: 17 passed across parser, state classification,
   staleness, invalid/recovery, counters, dependency/I/O failure, and input-only
   monitor lifecycle
 - Historical Phase 30 Dashboard focus: 80 passed with 98.60% branch-aware coverage across 728
   statements and 130 branches
-- Frontend host regressions: 104 passed, including 31 jobs and 30 combined-collection/import,
-  18 JUnit collection, 12 Audit and 13 activation cases; separate from Python
+- Frontend host regressions: 127 passed, including 54 job management/submission/result-handoff,
+  30 combined-collection/import, 18 JUnit collection, 12 Audit and 13 activation
+  cases; separate from Python
   coverage and browser tests
 - Phase 30 browser checkpoint: real Edge file selection, independent binding,
   lifecycle and policy PASS/FAIL, explicit warning retention, forbidden-XML
@@ -620,7 +637,7 @@ remaining OS assistive checks are separate.
   Validation, and MSP430 validation-report artifact Schemas: drift-checked and
   parsed
 - complete sdist manifest and ForgeGate/sample-plugin wheel builds: PASS
-- clean-wheel MSP430 report collection, Dashboard OpenAPI export (25 paths, 27 operations),
+- clean-wheel MSP430 report collection, Dashboard OpenAPI export (27 paths, 29 operations),
   installed-package workflow, optional `pyserial` install, and uninstall: PASS
 - Windows sandbox focus: 20 passed across probe failure isolation, client/server
   identity, rootless/local/WSL requirements, command controls, strict verifier

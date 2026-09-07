@@ -496,6 +496,8 @@ def test_dashboard_openapi_export_is_deterministic_and_complete(tmp_path: Path) 
         "/app/api/live-status",
         "/app/api/jobs",
         "/app/api/jobs/{job_id}",
+        "/app/api/jobs/{job_id}/assembly-export",
+        "/app/api/jobs/{job_id}/bind-evidence",
         "/app/api/jobs/{job_id}/cancel",
         "/app/api/jobs/{job_id}/recover",
         "/app/api/jobs/{job_id}/run",
@@ -534,6 +536,16 @@ def test_dashboard_openapi_export_is_deterministic_and_complete(tmp_path: Path) 
     export_operation = first["paths"]["/app/api/candidates/{candidate_id}/assurance-export"]["post"]
     assert export_operation["operationId"] == "exportDashboardCandidateAssurance"
     assert "application/zip" in export_operation["responses"]["200"]["content"]
+    assembly_export = first["paths"]["/app/api/jobs/{job_id}/assembly-export"]["post"]
+    assert assembly_export["operationId"] == "exportDashboardJobAssembly"
+    assert (
+        "application/vnd.forgegate.evidence-bundle-assembly+json"
+        in assembly_export["responses"]["200"]["content"]
+    )
+    assert (
+        first["paths"]["/app/api/jobs/{job_id}/bind-evidence"]["post"]["operationId"]
+        == "bindDashboardJobEvidence"
+    )
     assert "HTTPBearer" not in first.get("components", {}).get("securitySchemes", {})
 
     rejected = runner.invoke(

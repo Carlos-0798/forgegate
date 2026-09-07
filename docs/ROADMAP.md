@@ -624,8 +624,23 @@ separate gates; host regressions do not replace actual OS acceptance.
   combined, warning-consent and forbidden-XML workflows; retain screenshots.
 - [x] Keep parsing completion separate from test success, policy PASS and binding.
 
-Next engineering slice: reviewed export/reuse of retained job results into the
-existing candidate-evidence workflow, with exact-byte/fingerprint and stale-state
-checks. Automatic workers, cooperative shutdown and coordinated job retention/
-backup require separate lifecycle design and acceptance. Native assistive-technology
-gates remain open; this phase makes no production or hardware claim.
+## Phase 37 — reviewed job-result evidence handoff
+
+- [x] Add operator-only canonical assembly export with frozen job revision,
+  result fingerprint and assembly identity checks; return exact no-store bytes.
+- [x] Verify response media, identities, size and SHA-256 in the browser before
+  offering the local download; original report bytes remain excluded.
+- [x] Re-read the authoritative candidate and require exact project, commit,
+  revision, fingerprint, `COLLECTING` state and absent binding before confirmation.
+- [x] Reuse the immutable candidate-evidence binding service with namespaced
+  idempotency and actor attribution; leave job, candidate revision and policy unchanged.
+- [x] Cover authorization, stale/conflict/non-bindable/unknown-outcome behavior
+  in host tests and complete an isolated actual-Edge download/binding/readback run.
+- [x] Retain screenshot and machine-readable acceptance evidence with explicit
+  synthetic/no-hardware/no-production boundaries.
+
+Next engineering slice: design a durable execution lifecycle before adding any
+automatic worker—cooperative stop, lease renewal, restart ownership and explicit
+operator controls—plus coordinated job/candidate backup and retention. Native
+assistive-technology gates remain separate; Phase 37 makes no production or
+hardware claim.

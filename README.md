@@ -31,8 +31,10 @@ The current checkpoint demonstrates:
   explicit execution/cancellation, expired-lease recovery and bounded pending
   input retention; CLI and explicitly reviewed browser submission/execution;
 - [opt-in Dashboard job management](docs/DASHBOARD_JOBS.md): project-scoped
-  list/detail/results, reviewed submission/parsing, cancellation and expired-lease recovery with
-  retained operator attribution; no automatic evidence binding or policy PASS;
+  list/detail/results, reviewed submission/parsing, cancellation and expired-lease
+  recovery with retained operator attribution, plus exact assembly download and
+  separately confirmed immutable evidence binding; no automatic binding, candidate
+  transition or policy PASS;
 - deterministic policy decisions over commit-bound evidence;
 - immutable project profiles, release candidates, and append-only audit history;
 - content-addressed attestations and portable assurance bundles;
@@ -91,15 +93,15 @@ never converted into candidate evidence.
 
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 1072 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
-| Branch-aware coverage | 95.50% across 11,343 statements and 3,042 branches | Local host test |
+| Full Python suite | 1093 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
+| Branch-aware coverage | 95.51% across 11,401 statements and 3,052 branches | Local host test |
 | Static quality | Ruff, formatting, and strict mypy passed across 102 source/tool files | Local host test |
-| Durable local report jobs | 71 focused Python cases; CLI lifecycle and explicit store migration smoke | Local synthetic host test; no automatic worker or hardware |
+| Durable local report jobs | 92 focused Python cases; CLI lifecycle, explicit store migration, exact browser export and reviewed binding | Local synthetic host test; no automatic worker, candidate transition, policy decision or hardware |
 | Candidate-store backup | 27 focused cases; backup module 100% branch-aware coverage; installed CLI round trip passes | Local host test; no automatic restore, encryption or blanket domain validation |
-| Contracts | 44 document and 3 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI (25 paths, 27 operations) passed drift checks | Local host test |
+| Contracts | 44 document and 3 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI (27 paths, 29 operations) passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
-| Dashboard automation | 104 TypeScript host interaction tests passed, including 31 job-management/submission cases | Local host test; [Phase 36 actual Edge checks](reports/PHASE_36_DASHBOARD_JOB_SUBMISSION_ACCEPTANCE.md) separately verify report selection, queueing and explicit parsing; not exhaustive browser/OS certification |
+| Dashboard automation | 127 TypeScript host interaction tests passed, including 54 job-management/submission/handoff cases | Local host test; [Phase 37 actual Edge checks](reports/PHASE_37_JOB_RESULT_HANDOFF_ACCEPTANCE.md) separately verify exact download, reviewed binding and readback; not exhaustive browser/OS certification |
 | Dashboard browser interaction | Full reviewed Edge workflow, Edge/Chrome keyboard/focus, 129-record pagination, 390 px responsive, 409/413/422/429/500 recovery, exact Edge 100–200% zoom, and clean-console paths passed | Windows local browser test; uncommon errors use a zero-write presentation harness; Narrator is bounded PASS, while spoken output, high contrast, and real Remote Desktop remain open |
 | MSP430 report collector | 34 focused tests plus clean-wheel CLI collection passed; one LaunchPad HIL migration fixture produced 17 normalized records with retained warnings | Local artifact test; the fixture is a historical upstream result, not a new run or physical-measurement claim |
 | MSP430 live status | COM4 opened input-only at 115200 8-N-1; authenticated Devices page showed `CONNECTED`, heartbeat `NORMAL`, device `FAULT`, flags `0015`; sequence advanced 58007→58017 over 10 seconds with 10 accepted frames and no sequence gap | Owner-authorized Windows physical-device observation; one earlier invalid frame was rejected, no command or firmware/debug action, measurement validation, release evidence, or long-duration stability claim |
@@ -223,6 +225,19 @@ It found and corrected a shared-policy binding defect; SQLite schema v9 permits
 multiple candidates to reuse exact policy content while preserving one immutable
 binding per candidate. Existing databases require a backup and explicit migration.
 See the [Phase 30 report](reports/PHASE_30_JUNIT_COLLECTION_ACCEPTANCE.md).
+
+A completed retained task now exposes two deliberately separate actions: export
+the exact canonical assembly, or bind that same assembly through the existing
+candidate-evidence workflow after a fresh candidate check and confirmation.
+
+![ForgeGate retained job result with separately reviewed download and evidence-binding actions](docs/assets/phase37-job-result-actions.jpg)
+
+The [Phase 37 acceptance report](reports/PHASE_37_JOB_RESULT_HANDOFF_ACCEPTANCE.md)
+records the actual Edge download, byte-for-byte SHA-256 validation, immutable
+binding and independent CLI/store readback. Its synthetic test summary deliberately
+contains one failure; the candidate stays `COLLECTING` revision 1 and no policy
+decision is made. This is local host evidence, not producer authentication,
+hardware validation or production approval.
 
 For startup diagnosis, use `python -m forgegate dashboard-check --port 8131`.
 The [Windows operation guide](docs/WINDOWS_DASHBOARD_OPERATIONS.md) and

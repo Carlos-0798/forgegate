@@ -52,9 +52,10 @@ export async function harness(origin = "http://127.0.0.1:8131") {
   let timerId = 0;
   const context = createContext({
     exports: {}, require: () => ({}), Headers, URL, URLSearchParams, crypto: webcrypto,
-    TextDecoder, btoa,
+    Blob, TextDecoder, TextEncoder, btoa,
     document: {
       querySelector: () => root, createElement: (tag) => new Element(tag),
+      body: root,
       get activeElement() { return activeElement; }
     },
     window: {
@@ -68,10 +69,15 @@ export async function harness(origin = "http://127.0.0.1:8131") {
       assert.notEqual(next, undefined, `Unexpected request: ${path}`);
       const value = typeof next === "function" ? await next() : next;
       if (value instanceof Error) throw value;
+      const responseBytes = value.bytes ?? new TextEncoder().encode(
+        value.text ?? JSON.stringify(value.body ?? { error: { code: "FIXTURE_ERROR", request_id: "fixture-request" } })
+      );
       return {
         ok: value.status < 400, status: value.status,
         headers: new Headers(value.headers),
-        json: async () => value.body ?? { error: { code: "FIXTURE_ERROR", request_id: "fixture-request" } }
+        json: async () => value.body ?? { error: { code: "FIXTURE_ERROR", request_id: "fixture-request" } },
+        arrayBuffer: async () => responseBytes.buffer.slice(responseBytes.byteOffset, responseBytes.byteOffset + responseBytes.byteLength),
+        blob: async () => new Blob([responseBytes])
       };
     }
   });

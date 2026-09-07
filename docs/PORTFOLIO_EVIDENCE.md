@@ -33,6 +33,7 @@ digests are retained in the
 the [Phase 26 assurance-review record](../reports/DASHBOARD_ASSURANCE_REVIEW_EVIDENCE_2026-09-05.json),
 the [Phase 27 interaction record](../reports/DASHBOARD_PHASE27_INTERACTION_EVIDENCE_2026-09-05.json),
 the [Phase 28 assurance-export record](../reports/DASHBOARD_PHASE28_ASSURANCE_EXPORT_EVIDENCE_2026-09-05.json),
+the [Phase 37 job-result handoff record](../reports/PHASE_37_JOB_RESULT_HANDOFF_EVIDENCE.json),
 the [MSP430 live-status record](../reports/PHASE_25_MSP430_LIVE_STATUS_EVIDENCE_2026-09-05.json),
 and the [owner-assisted unplug/replug follow-up](../reports/MSP430_MANUAL_UNPLUG_REPLUG_EVIDENCE_2026-09-05.json).
 
@@ -250,6 +251,20 @@ All evidence remains local while GitHub synchronization is paused.
 ![Combined evidence retained](assets/forgegate-dashboard-multi-report-bound.jpg)
 
 ![Combined policy expected and actual values](assets/forgegate-dashboard-multi-report-rules.jpg)
+
+### Phase 37 retained-result handoff
+
+![Succeeded task with separately reviewed exact-download and evidence-binding actions](assets/phase37-job-result-actions.jpg)
+
+![Binding completion that explicitly leaves candidate transition and policy decision unperformed](assets/phase37-evidence-binding-result.jpg)
+
+The isolated Edge fixture deliberately retained a four-test summary with one
+failure. The browser downloaded and independently hashed the 2,010-byte canonical
+assembly, then bound the same content through a separate confirmation. CLI/store
+readback matched the assembly and binding identities while the candidate remained
+`COLLECTING` revision 1. The images support local interaction, exact-byte and
+immutable-binding claims only; they do not authenticate the synthetic producer,
+turn the failed summary into PASS, access hardware or approve production use.
 
 ### Previously accepted browser workflow boundaries
 

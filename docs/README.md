@@ -13,7 +13,7 @@ analysis, compatibility contracts, and historical acceptance evidence.
 6. [Security policy](../SECURITY.md) — supported scope and responsible reporting
 
 Latest local engineering slice: [reviewed report jobs](DASHBOARD_JOBS.md), with
-[Phase 36 host/browser evidence](../reports/PHASE_36_DASHBOARD_JOB_SUBMISSION_ACCEPTANCE.md).
+[Phase 37 exact export/binding evidence](../reports/PHASE_37_JOB_RESULT_HANDOFF_ACCEPTANCE.md).
 
 ## Product and trust model
 
@@ -32,7 +32,7 @@ Latest local engineering slice: [reviewed report jobs](DASHBOARD_JOBS.md), with
 - [Evidence bundle assembly](architecture/EVIDENCE_BUNDLE_ASSEMBLY.md)
 - [Candidate evidence binding](architecture/CANDIDATE_EVIDENCE_BINDING.md)
 - [Durable local collection jobs](COLLECTION_JOBS.md) — CLI lifecycle, restart/cancel semantics and private data boundaries
-- [Dashboard job management](DASHBOARD_JOBS.md) — explicit store upgrade/configuration, operator-only inspection and reviewed actions
+- [Dashboard job management](DASHBOARD_JOBS.md) — explicit store upgrade/configuration, operator-only inspection, parsing, exact export and immutable evidence handoff
 - [Policy engine](architecture/POLICY_ENGINE.md)
 - [Candidate lifecycle](architecture/CANDIDATE_LIFECYCLE.md)
 - [Attestations](architecture/ATTESTATIONS.md)

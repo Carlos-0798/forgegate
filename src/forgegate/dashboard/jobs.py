@@ -1,20 +1,22 @@
-"""Opt-in operator/project-scoped jobs with explicitly confirmed report parsing."""
+"""Reviewed Dashboard job parsing, exact export, and candidate evidence handoff."""
 
 from collections.abc import Iterator
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from threading import Lock
-from typing import Annotated
+from typing import Annotated, Literal
 
-from fastapi import FastAPI, Header, Query, Request
+from fastapi import FastAPI, Header, Query, Request, Response
 from fastapi import Path as ApiPath
-from pydantic import Field
+from pydantic import Field, field_validator
 
 from forgegate.api.auth import ApiAuthenticationError, ApiAuthenticator, ApiPrincipal
-from forgegate.application import CandidateApplication
-from forgegate.candidates.models import CANDIDATE_ID_PATTERN
-from forgegate.canonical import sha256_fingerprint
+from forgegate.application import CandidateApplication, CandidateBindEvidenceCommand
+from forgegate.assembly import EvidenceBundleAssembly
+from forgegate.candidates import CandidateEvidenceBinding
+from forgegate.candidates.models import CANDIDATE_ID_PATTERN, FINGERPRINT_PATTERN
+from forgegate.canonical import canonical_json, sha256_fingerprint
 from forgegate.collection_jobs import (
     CollectionJobRecord,
     CollectionJobRequest,
@@ -44,6 +46,39 @@ class DashboardJobPage(StrictModel):
 
 class DashboardJobCommand(StrictModel):
     expected_revision: int = Field(ge=0, le=2)
+
+
+class DashboardJobAssemblyCommand(StrictModel):
+    expected_job_revision: int = Field(ge=0, le=2)
+    expected_result_fingerprint: str = Field(pattern=FINGERPRINT_PATTERN)
+    expected_assembly_id: str = Field(pattern=FINGERPRINT_PATTERN)
+
+
+class DashboardJobBindEvidenceCommand(DashboardJobAssemblyCommand):
+    expected_candidate_revision: int = Field(ge=0)
+    expected_candidate_fingerprint: str = Field(pattern=FINGERPRINT_PATTERN)
+    bound_at: datetime
+
+    @field_validator("bound_at")
+    @classmethod
+    def bound_at_must_include_timezone(cls, value: datetime) -> datetime:
+        if value.tzinfo is None or value.utcoffset() is None:
+            raise ValueError("bound_at must include a UTC offset")
+        return value
+
+
+class DashboardJobEvidenceBindingResult(StrictModel):
+    schema_version: Literal["forgegate.dashboard-job-evidence-binding.v1"] = (
+        "forgegate.dashboard-job-evidence-binding.v1"
+    )
+    job_id: str = Field(pattern=JOB_ID_PATTERN)
+    result_fingerprint: str = Field(pattern=FINGERPRINT_PATTERN)
+    assembly_id: str = Field(pattern=FINGERPRINT_PATTERN)
+    assembly_fingerprint: str = Field(pattern=FINGERPRINT_PATTERN)
+    binding: CandidateEvidenceBinding
+    candidate_transition: Literal["NOT_PERFORMED"] = "NOT_PERFORMED"
+    policy_decision: Literal["NOT_PERFORMED"] = "NOT_PERFORMED"
+    source_artifact_bytes: Literal["not_embedded"] = "not_embedded"
 
 
 @contextmanager
@@ -111,6 +146,27 @@ def install_job_routes(
         if candidate.project_id != project_id:
             raise JobError("JOB_NOT_FOUND")
         return review
+
+    def bindable_assembly(
+        job_store: CollectionJobStore,
+        job_id: str,
+        project_id: str,
+        command: DashboardJobAssemblyCommand,
+    ) -> tuple[CollectionJobRecord, EvidenceBundleAssembly, str]:
+        review = review_for_project(job_store, job_id, project_id)
+        record = review.record
+        if record.state != "SUCCEEDED" or review.result is None or review.result.assembly is None:
+            raise JobError("JOB_RESULT_NOT_BINDABLE")
+        if record.revision != command.expected_job_revision:
+            raise JobError("JOB_STATE_CONFLICT")
+        assembly = review.result.assembly
+        assembly_fingerprint = sha256_fingerprint(assembly.model_dump(mode="json"))
+        if (
+            record.result_fingerprint != command.expected_result_fingerprint
+            or assembly.assembly_id != command.expected_assembly_id
+        ):
+            raise JobError("JOB_RESULT_IDENTITY_CONFLICT")
+        return record, assembly, assembly_fingerprint
 
     @app.get(
         "/app/api/jobs",
@@ -256,6 +312,104 @@ def install_job_routes(
                 )
             finally:
                 execution_lock.release()
+
+    @app.post(
+        "/app/api/jobs/{job_id}/assembly-export",
+        response_class=Response,
+        operation_id="exportDashboardJobAssembly",
+        include_in_schema=False,
+        responses={
+            200: {
+                "description": "Exact canonical evidence assembly JSON",
+                "content": {
+                    "application/vnd.forgegate.evidence-bundle-assembly+json": {
+                        "schema": {"type": "string", "format": "binary"}
+                    }
+                },
+            }
+        },
+    )
+    def export_job_assembly(
+        request: Request,
+        job_id: Annotated[str, ApiPath(pattern=JOB_ID_PATTERN)],
+        project_id: Annotated[str, Query(pattern=SLUG_PATTERN)],
+        command: DashboardJobAssemblyCommand,
+        csrf: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> Response:
+        authorize(request, project_id, write=True, csrf=csrf)
+        with _job_errors():
+            _record, assembly, assembly_fingerprint = bindable_assembly(
+                configured(), job_id, project_id, command
+            )
+        content = canonical_json(assembly.model_dump(mode="json")).encode("utf-8")
+        filename = f"evidence-assembly-{assembly.assembly_id.removeprefix('sha256:')}.json"
+        return Response(
+            content=content,
+            media_type="application/vnd.forgegate.evidence-bundle-assembly+json",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "X-ForgeGate-Job-Result": command.expected_result_fingerprint,
+                "X-ForgeGate-Assembly": assembly.assembly_id,
+                "X-ForgeGate-Assembly-Fingerprint": assembly_fingerprint,
+            },
+        )
+
+    @app.post(
+        "/app/api/jobs/{job_id}/bind-evidence",
+        response_model=DashboardJobEvidenceBindingResult,
+        operation_id="bindDashboardJobEvidence",
+        include_in_schema=False,
+    )
+    def bind_job_evidence(
+        request: Request,
+        job_id: Annotated[str, ApiPath(pattern=JOB_ID_PATTERN)],
+        project_id: Annotated[str, Query(pattern=SLUG_PATTERN)],
+        command: DashboardJobBindEvidenceCommand,
+        idempotency_key: Annotated[
+            str,
+            Header(
+                alias="Idempotency-Key",
+                min_length=1,
+                max_length=128,
+                pattern=r"^[A-Za-z0-9][A-Za-z0-9._:/-]*$",
+            ),
+        ],
+        csrf: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> DashboardJobEvidenceBindingResult:
+        principal = authorize(request, project_id, write=True, csrf=csrf)
+        with _job_errors():
+            record, assembly, assembly_fingerprint = bindable_assembly(
+                configured(), job_id, project_id, command
+            )
+            candidate = application.get_candidate(record.candidate_id)
+            candidate_fingerprint = sha256_fingerprint(candidate.model_dump(mode="json"))
+            if (
+                candidate.revision != command.expected_candidate_revision
+                or candidate_fingerprint != command.expected_candidate_fingerprint
+                or candidate_fingerprint != record.candidate_fingerprint
+            ):
+                raise JobError("JOB_CANDIDATE_CONFLICT")
+        key = "dashboard-job-bind:" + sha256_fingerprint(
+            {
+                "identity": principal.audit_actor().identity_id,
+                "project": project_id,
+                "job": job_id,
+                "key": idempotency_key,
+            }
+        ).removeprefix("sha256:")
+        binding = application.bind_evidence(
+            record.candidate_id,
+            CandidateBindEvidenceCommand(assembly=assembly, bound_at=command.bound_at),
+            idempotency_key=key,
+            actor=principal.audit_actor(),
+        )
+        return DashboardJobEvidenceBindingResult(
+            job_id=job_id,
+            result_fingerprint=command.expected_result_fingerprint,
+            assembly_id=assembly.assembly_id,
+            assembly_fingerprint=assembly_fingerprint,
+            binding=binding,
+        )
 
     @app.post(
         "/app/api/jobs/{job_id}/cancel",

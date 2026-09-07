@@ -17,6 +17,14 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_SDIST_PATHS = (
+    "reports/PHASE_37_JOB_RESULT_HANDOFF_ACCEPTANCE.md",
+    "reports/PHASE_37_JOB_RESULT_HANDOFF_EVIDENCE.json",
+    "tests/test_dashboard_job_result_handoff.py",
+    "frontend/tests/job-result-handoff.test.mjs",
+    "docs/assets/phase37-job-result-actions.jpg",
+    "docs/assets/phase37-assembly-download-review.jpg",
+    "docs/assets/phase37-evidence-binding-result.jpg",
+    "docs/assets/phase37-bound-evidence.jpg",
     "reports/PHASE_36_DASHBOARD_JOB_SUBMISSION_ACCEPTANCE.md",
     "reports/PHASE_36_DASHBOARD_JOB_SUBMISSION_EVIDENCE.json",
     "tests/test_dashboard_job_submission.py",

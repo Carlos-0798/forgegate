@@ -1,10 +1,12 @@
-# Durable local collection jobs (Phases 34–36)
+# Durable local collection jobs (Phases 34–37)
 
 Submission/execution use an explicit local task lifecycle, not a worker service,
 scheduler or production queue. Phases 35–36 add an opt-in authenticated
 [Dashboard management view](DASHBOARD_JOBS.md) with reviewed submission/parsing.
-It adds no device access. The candidate store remains schema v9; new job stores
-use a separate v2 SQLite file. Existing browser previews remain ephemeral.
+Phase 37 adds reviewed canonical assembly export and explicit reuse through the
+existing candidate-evidence binding service. It adds no device access, candidate
+transition or policy decision. The candidate store remains schema v9; new job
+stores use a separate v2 SQLite file. Existing browser previews remain ephemeral.
 Legacy v1 jobs require explicit `jobs migrate STORE` before Dashboard use.
 
 ## Small reproducible acceptance
@@ -119,8 +121,10 @@ and result commands exit 0, operational/input failures 3, CLI usage errors 2.
   authority. Browser management instead requires the authenticated operator and
   project/CSRF checks documented separately; it records actors on new events.
 - The candidate must still match before and after parsing. No candidate data,
-  audit event, policy decision or binding is written by a job. Review/export an
-  assembly and use the existing separate binding workflow, with its own guards.
+  audit event, policy decision or binding is written by job execution. Review/export
+  an assembly and use the existing separate binding workflow, with its own guards.
+  The Phase 37 Dashboard handoff is that explicit separate candidate-store write;
+  it leaves the retained job unchanged and does not advance candidate state.
   Two databases are not a distributed atomic transaction; later candidate
   changes cannot be ruled out by a completed job record.
 - Canonical fingerprints link retained input, result and assembly; model checks
@@ -149,7 +153,8 @@ mutations. Exceptions in execution persist only `JOB_EXECUTION_FAILED`.
 
 ## Deferred gates
 
-Browser job-result export/binding, cooperative worker shutdown, scheduled execution,
-lease renewal and private artifact lifecycle/backup UI remain separate future work.
-Phases 35–36 browser acceptance is documented separately. Existing MSP430 live telemetry is not
-connected to this report queue and does not become release evidence.
+Cooperative worker shutdown, scheduled execution, lease renewal, coordinated
+job/candidate backup and private artifact lifecycle/retention UI remain separate
+future work. Phases 35–37 browser acceptance is documented separately. Existing
+MSP430 live telemetry is not connected to this report queue and does not become
+release evidence.

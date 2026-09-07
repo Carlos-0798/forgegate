@@ -1737,6 +1737,80 @@
         "title": "DashboardJUnitPreviewRequest",
         "type": "object"
       },
+      "DashboardJobAssemblyCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_assembly_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Expected Assembly Id",
+            "type": "string"
+          },
+          "expected_job_revision": {
+            "maximum": 2.0,
+            "minimum": 0.0,
+            "title": "Expected Job Revision",
+            "type": "integer"
+          },
+          "expected_result_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Expected Result Fingerprint",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_job_revision",
+          "expected_result_fingerprint",
+          "expected_assembly_id"
+        ],
+        "title": "DashboardJobAssemblyCommand",
+        "type": "object"
+      },
+      "DashboardJobBindEvidenceCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "bound_at": {
+            "format": "date-time",
+            "title": "Bound At",
+            "type": "string"
+          },
+          "expected_assembly_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Expected Assembly Id",
+            "type": "string"
+          },
+          "expected_candidate_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Expected Candidate Fingerprint",
+            "type": "string"
+          },
+          "expected_candidate_revision": {
+            "minimum": 0.0,
+            "title": "Expected Candidate Revision",
+            "type": "integer"
+          },
+          "expected_job_revision": {
+            "maximum": 2.0,
+            "minimum": 0.0,
+            "title": "Expected Job Revision",
+            "type": "integer"
+          },
+          "expected_result_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Expected Result Fingerprint",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_job_revision",
+          "expected_result_fingerprint",
+          "expected_assembly_id",
+          "expected_candidate_revision",
+          "expected_candidate_fingerprint",
+          "bound_at"
+        ],
+        "title": "DashboardJobBindEvidenceCommand",
+        "type": "object"
+      },
       "DashboardJobCommand": {
         "additionalProperties": false,
         "properties": {
@@ -1751,6 +1825,67 @@
           "expected_revision"
         ],
         "title": "DashboardJobCommand",
+        "type": "object"
+      },
+      "DashboardJobEvidenceBindingResult": {
+        "additionalProperties": false,
+        "properties": {
+          "assembly_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Assembly Fingerprint",
+            "type": "string"
+          },
+          "assembly_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Assembly Id",
+            "type": "string"
+          },
+          "binding": {
+            "$ref": "#/components/schemas/CandidateEvidenceBinding"
+          },
+          "candidate_transition": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Candidate Transition",
+            "type": "string"
+          },
+          "job_id": {
+            "pattern": "^job-[0-9a-f]{32}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "policy_decision": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Policy Decision",
+            "type": "string"
+          },
+          "result_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Result Fingerprint",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.dashboard-job-evidence-binding.v1",
+            "default": "forgegate.dashboard-job-evidence-binding.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_artifact_bytes": {
+            "const": "not_embedded",
+            "default": "not_embedded",
+            "title": "Source Artifact Bytes",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "result_fingerprint",
+          "assembly_id",
+          "assembly_fingerprint",
+          "binding"
+        ],
+        "title": "DashboardJobEvidenceBindingResult",
         "type": "object"
       },
       "DashboardJobPage": {
@@ -4803,6 +4938,171 @@
           }
         },
         "summary": "Show Job"
+      }
+    },
+    "/app/api/jobs/{job_id}/assembly-export": {
+      "post": {
+        "operationId": "exportDashboardJobAssembly",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^job-[0-9a-f]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardJobAssemblyCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.forgegate.evidence-bundle-assembly+json": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Exact canonical evidence assembly JSON"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Job Assembly"
+      }
+    },
+    "/app/api/jobs/{job_id}/bind-evidence": {
+      "post": {
+        "operationId": "bindDashboardJobEvidence",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^job-[0-9a-f]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$",
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardJobBindEvidenceCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardJobEvidenceBindingResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Bind Job Evidence"
       }
     },
     "/app/api/jobs/{job_id}/cancel": {

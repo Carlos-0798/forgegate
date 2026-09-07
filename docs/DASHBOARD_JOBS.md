@@ -1,10 +1,12 @@
-# Dashboard collection-job management (Phases 35–36)
+# Dashboard collection-job management (Phases 35–37)
 
 An opt-in, operator-only view of the separate local job store. It can list and
 inspect retained jobs/results, cancel queued or running work after confirmation,
 and mark an expired running lease INTERRUPTED. Phase 36 adds reviewed browser
-submission and separately confirmed foreground parsing. No automatic worker,
-retry, test-command execution, evidence binding or policy PASS is added.
+submission and separately confirmed foreground parsing. Phase 37 adds an exact
+canonical-assembly download and a separately confirmed handoff into the existing
+immutable candidate-evidence binding. No automatic worker, retry, test-command
+execution, automatic binding, candidate transition or policy PASS is added.
 
 ## Explicit configuration
 
@@ -52,6 +54,17 @@ Job submission and execution still recheck candidate eligibility separately.
 - Inspect the exact state, revision, lease, fingerprints and available result.
   The page shows at most 25 records and 25 issues per collection with truncation
   labels. `jobs result STORE JOB_ID` exports the complete exact retained document.
+- For a `SUCCEEDED` task with an assembly, **Review assembly download** freezes
+  the job revision, result fingerprint and assembly ID. The client checks the
+  response media type, identity headers, 32 MiB ceiling and SHA-256 of the exact
+  canonical bytes before offering a local file. Export changes no state and
+  contains normalized assembly data, not original source-report bytes.
+- **Review evidence binding from task** first reads the authoritative candidate.
+  It requires the same project/commit, the frozen candidate fingerprint and
+  revision, `COLLECTING`, and no existing binding. A second confirmation sends
+  exactly one idempotent write. The response explicitly reports that candidate
+  transition and policy evaluation were `NOT_PERFORMED`; repeat review links to
+  the existing immutable binding instead of replacing it.
 - Cancellation freezes the reviewed revision and requires confirmation. Escape or
   Back makes no write. It prevents result publication, but does **not** kill a
   parser, change candidate evidence, or securely erase bytes.
@@ -91,11 +104,27 @@ Closing a tab, request loss, cancellation or session expiry does not forcibly
 stop parsing. Cancellation revokes publication; manual recovery handles expired
 leases. Busy/error responses have no automatic retry; refresh before acting.
 
+`POST /app/api/jobs/{job_id}/assembly-export?project_id=...` accepts the frozen
+job revision, result fingerprint and assembly ID. Only an operator-scoped,
+same-origin, CSRF-protected request for a bindable `SUCCEEDED` result succeeds.
+The response is canonical `application/vnd.forgegate.evidence-bundle-assembly+json`
+with independent result, assembly and assembly-fingerprint headers plus
+`Cache-Control: no-store`. It performs no durable write.
+
+`POST /app/api/jobs/{job_id}/bind-evidence?project_id=...` additionally requires
+the current candidate revision/fingerprint, an explicit UTC binding time and a
+namespaced `Idempotency-Key`. The server reloads both stores, rejects stale or
+non-bindable identities, and invokes the existing candidate binding service with
+the retained assembly. The job is not changed. The job/result link is content
+identity: the exact assembly ID and canonical assembly fingerprint are shared;
+no new job ID field is invented inside the frozen binding contract. The two
+SQLite files are still not a distributed transaction.
+
 New browser-created records have `AUTHENTICATED_DASHBOARD` creation authority.
 The v1 public record enum is extended; older strict readers must be upgraded to
 read that value. Historical CLI records are unchanged. Event actors identify the
 operator who initiated the request, not proof of an active session at completion.
-No migration beyond the existing explicit v2 actor storage is added in Phase 36.
+No migration beyond the existing explicit v2 actor storage is added in Phase 37.
 
 Do not rebuild/replace packaged assets beneath a running server. Static resource
 allowlists are loaded at startup; an in-place rebuild can produce new-asset 404s.
@@ -112,9 +141,11 @@ retain explanations. No result is not an empty successful test run.
 See [job lifecycle/quotas](COLLECTION_JOBS.md) and the
 [Phase 35 acceptance report](../reports/PHASE_35_DASHBOARD_JOBS_ACCEPTANCE.md).
 See also [Phase 36 browser submission acceptance](../reports/PHASE_36_DASHBOARD_JOB_SUBMISSION_ACCEPTANCE.md).
+Phase 37 exact export/binding acceptance is retained in the
+[job-result handoff report](../reports/PHASE_37_JOB_RESULT_HANDOFF_ACCEPTANCE.md).
 The isolated fixture generator `tools/manual_dashboard_jobs.py` creates 27 synthetic
 jobs and a temporary test identity, but starts no server or device. Its expired
 lease is seeded, not evidence of an observed crash. Keep its private files local.
 
-Still deferred: reviewed browser job-result export/binding, cooperative parser stop, scheduler,
-lease renewal, job backup/restore/retention UI, and new native accessibility tests.
+Still deferred: cooperative parser stop, scheduler, lease renewal, coordinated
+job/candidate backup, job retention UI, and new native accessibility tests.

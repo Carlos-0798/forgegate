@@ -14,6 +14,7 @@ interface CollectionJob {
   lease_expires_at: string | null;
   result_fingerprint: string | null;
   request_fingerprint: string;
+  candidate_fingerprint: string;
   error_code: string | null;
   source_bytes: string;
   authority: string;
@@ -37,7 +38,11 @@ interface JobReview {
       warnings: Array<{code: string; message: string}>;
       rejected_records: Array<{code: string; message: string}>;
     }>;
-    assembly: { assembly_id: string; warning_disposition: string } | null;
+    assembly: {
+      assembly_id: string; warning_disposition: string;
+      bundle: {candidate_commit: string; generated_at: string; producer: string; evidence: EvidenceRecord[]};
+      collections: Array<{collector_name: string; collector_version: string; warnings: Array<{code: string; message: string}>}>;
+    } | null;
   } | null;
 }
 
@@ -205,6 +210,7 @@ interface EvidenceRecord {
 interface EvidenceBinding {
   binding_id: string;
   bound_at: string;
+  candidate_fingerprint: string;
   assembly_fingerprint: string;
   assembly: {
     assembly_id: string;
@@ -212,6 +218,18 @@ interface EvidenceBinding {
     bundle: { generated_at: string; producer: string; evidence: EvidenceRecord[] };
     collections: Array<{ collector_name: string; collector_version: string; warnings: Array<{ code: string; message: string }> }>;
   };
+}
+
+interface DashboardJobEvidenceBindingResult {
+  schema_version: "forgegate.dashboard-job-evidence-binding.v1";
+  job_id: string;
+  result_fingerprint: string;
+  assembly_id: string;
+  assembly_fingerprint: string;
+  binding: EvidenceBinding;
+  candidate_transition: "NOT_PERFORMED";
+  policy_decision: "NOT_PERFORMED";
+  source_artifact_bytes: "not_embedded";
 }
 
 interface PolicyMaterial {
@@ -303,9 +321,13 @@ interface ApiProblem {
   error?: { code?: string; message?: string; request_id?: string };
 }
 
-interface AssuranceDownload {
+interface LocalDownload {
   blob: Blob;
   filename: string;
+}
+
+interface AssemblyDownload extends LocalDownload {
+  fingerprint: string;
 }
 
 class RequestProblem extends Error {
@@ -447,7 +469,7 @@ async function downloadAssuranceArchive(
   candidateId: string,
   revision: number,
   bundleId: string
-): Promise<AssuranceDownload> {
+): Promise<LocalDownload> {
   if (session === null) throw new Error("Dashboard session is unavailable");
   const response = await fetch(
     `/app/api/candidates/${encodeURIComponent(candidateId)}/assurance-export`,
@@ -495,7 +517,62 @@ async function downloadAssuranceArchive(
   };
 }
 
-function saveLocalDownload(download: AssuranceDownload): void {
+async function downloadJobAssembly(
+  job: CollectionJob,
+  assemblyId: string
+): Promise<AssemblyDownload> {
+  if (session === null || job.result_fingerprint === null) throw new Error("Dashboard job result is unavailable");
+  const mediaType = "application/vnd.forgegate.evidence-bundle-assembly+json";
+  const response = await fetch(
+    `/app/api/jobs/${encodeURIComponent(job.job_id)}/assembly-export?${new URLSearchParams({project_id: job.project_id})}`,
+    {
+      method: "POST",
+      credentials: "same-origin",
+      cache: "no-store",
+      headers: {
+        "Accept": mediaType,
+        "Content-Type": "application/json",
+        "X-ForgeGate-CSRF": session.csrf_token,
+        "X-Request-ID": requestId()
+      },
+      body: JSON.stringify({
+        expected_job_revision: job.revision,
+        expected_result_fingerprint: job.result_fingerprint,
+        expected_assembly_id: assemblyId
+      })
+    }
+  );
+  if (!response.ok) {
+    const payload: unknown = await response.json().catch(() => ({}));
+    throw requestProblem(response, payload);
+  }
+  if (
+    response.headers.get("Content-Type")?.split(";", 1)[0] !== mediaType
+    || response.headers.get("X-ForgeGate-Job-Result") !== job.result_fingerprint
+    || response.headers.get("X-ForgeGate-Assembly") !== assemblyId
+  ) {
+    throw new RequestProblem(500, "DASHBOARD_EXPORT_RESPONSE_INVALID", "The local service returned an unexpected job-result or assembly identity.", response.headers.get("X-Request-ID") ?? "unavailable", null);
+  }
+  const assemblyFingerprint = response.headers.get("X-ForgeGate-Assembly-Fingerprint");
+  if (assemblyFingerprint === null || !/^sha256:[0-9a-f]{64}$/.test(assemblyFingerprint)) {
+    throw new RequestProblem(500, "DASHBOARD_EXPORT_RESPONSE_INVALID", "The local service omitted the canonical assembly fingerprint.", response.headers.get("X-Request-ID") ?? "unavailable", null);
+  }
+  const contentLength = response.headers.get("Content-Length");
+  if (contentLength !== null && (!/^\d+$/.test(contentLength) || Number(contentLength) > 33_554_432)) {
+    throw new RequestProblem(500, "DASHBOARD_EXPORT_RESPONSE_INVALID", "The local service returned an oversized assembly export.", response.headers.get("X-Request-ID") ?? "unavailable", null);
+  }
+  const bytes = await response.arrayBuffer();
+  if (bytes.byteLength === 0 || bytes.byteLength > 33_554_432 || `sha256:${await sha256Hex(bytes)}` !== assemblyFingerprint) {
+    throw new RequestProblem(500, "DASHBOARD_EXPORT_RESPONSE_INVALID", "The downloaded assembly bytes do not match the reviewed fingerprint.", response.headers.get("X-Request-ID") ?? "unavailable", null);
+  }
+  return {
+    blob: new Blob([bytes], {type: mediaType}),
+    filename: `evidence-assembly-${assemblyId.replace(/^sha256:/, "")}.json`,
+    fingerprint: assemblyFingerprint
+  };
+}
+
+function saveLocalDownload(download: LocalDownload): void {
   const url = URL.createObjectURL(download.blob);
   const link = el("a");
   link.href = url;
@@ -1435,6 +1512,13 @@ function renderJobDetail(main: HTMLElement, review: JobReview): HTMLElement {
   const candidate = el("a", "button secondary", "Review candidate evidence separately");
   candidate.href = candidateReviewHash("evidence", job.candidate_id);
   panel.append(candidate);
+  if (session?.principal.role === "operator" && job.state === "SUCCEEDED" && review.result?.assembly !== null && review.result?.assembly !== undefined) {
+    const download = button("Review assembly download", "button secondary");
+    download.addEventListener("click", () => reviewJobAssemblyDownload(main, review, download));
+    const bind = button("Review evidence binding from task", "button primary");
+    bind.addEventListener("click", () => void reviewJobEvidenceBinding(main, review, bind));
+    panel.append(download, bind);
+  }
   if (job.state === "QUEUED") {
     const run = button("Review execution", "button primary");
     run.addEventListener("click", () => reviewJobAction(main, job, "run", run));
@@ -1472,6 +1556,202 @@ function renderJobDetail(main: HTMLElement, review: JobReview): HTMLElement {
     }
   }
   return panel;
+}
+
+function reviewJobAssemblyDownload(main: HTMLElement, review: JobReview, returnFocus: HTMLElement): void {
+  const owner = session;
+  const assembly = review.result?.assembly;
+  const job = review.record;
+  if (owner?.principal.role !== "operator" || assembly === null || assembly === undefined || job.result_fingerprint === null) return;
+  const route = window.location.hash;
+  const generation = jobsViewGeneration;
+  const dialog = el("dialog", "review-dialog");
+  dialog.setAttribute("aria-labelledby", "job-assembly-export-title");
+  const active = () => dialog.open && dialog.isConnected && session === owner && window.location.hash === route && generation === jobsViewGeneration;
+  const heading = el("h2", undefined, "Confirm exact assembly download");
+  heading.id = "job-assembly-export-title";
+  const details = el("dl", "definition-list");
+  details.append(
+    definition("Job", job.job_id, true),
+    definition("Candidate", job.candidate_id, true),
+    definition("Job revision", String(job.revision)),
+    definition("Result fingerprint", job.result_fingerprint, true),
+    definition("Assembly ID", assembly.assembly_id, true),
+    definition("Evidence records", String(assembly.bundle.evidence.length)),
+    definition("Collector receipts", String(assembly.collections.length)),
+    definition("Warning disposition", assembly.warning_disposition)
+  );
+  const status = el("div", "dialog-status");
+  status.setAttribute("aria-live", "polite");
+  const controls = el("div", "dialog-actions");
+  const close = button("Cancel", "button quiet");
+  close.addEventListener("click", () => dialog.close());
+  const confirm = button("Download canonical assembly", "button primary");
+  let busy = false;
+  confirm.addEventListener("click", async () => {
+    if (!active() || busy) return;
+    busy = true;
+    close.disabled = confirm.disabled = true;
+    status.replaceChildren(el("p", "muted", "Retrieving and verifying the reviewed canonical bytes…"));
+    try {
+      const download = await downloadJobAssembly(job, assembly.assembly_id);
+      if (!active()) return;
+      saveLocalDownload(download);
+      heading.textContent = "Download requested";
+      status.replaceChildren(statusBadge("Exact bytes verified"), el("p", undefined, `${download.filename} was handed to the browser after SHA-256 verification: ${download.fingerprint}.`));
+      const done = button("Done", "button primary");
+      done.addEventListener("click", () => dialog.close());
+      controls.replaceChildren(done);
+      done.focus();
+    } catch (error) {
+      if (!active()) return;
+      if (handleProtectedProblem(status, error, "Close and refresh the task before reviewing a new export. No automatic retry occurs.")) return;
+      close.disabled = false;
+      close.textContent = "Close and refresh";
+      controls.replaceChildren(close);
+      close.focus();
+    } finally {
+      busy = false;
+    }
+  });
+  controls.append(close, confirm);
+  dialog.append(
+    el("p", "eyebrow", "REVIEWED LOCAL EXPORT"),
+    heading,
+    el("p", "command-boundary", "This downloads the canonical assembly already retained in the terminal job. It excludes original source-report bytes, changes no state, starts no test, binds no candidate and makes no policy decision."),
+    details,
+    status,
+    controls
+  );
+  dialog.addEventListener("cancel", event => { event.preventDefault(); if (!busy) dialog.close(); });
+  dialog.addEventListener("keydown", event => keepFocusInsideDialog(dialog, event));
+  dialog.addEventListener("close", () => { dialog.remove(); if (returnFocus.isConnected) returnFocus.focus(); });
+  main.append(dialog);
+  dialog.showModal();
+  close.focus();
+}
+
+async function reviewJobEvidenceBinding(main: HTMLElement, review: JobReview, returnFocus: HTMLElement): Promise<void> {
+  const owner = session;
+  const assembly = review.result?.assembly;
+  const job = review.record;
+  if (owner?.principal.role !== "operator" || assembly === null || assembly === undefined || job.result_fingerprint === null) return;
+  const route = window.location.hash;
+  const generation = jobsViewGeneration;
+  const dialog = el("dialog", "review-dialog");
+  dialog.setAttribute("aria-labelledby", "job-evidence-bind-title");
+  let busy = false;
+  const active = () => dialog.open && dialog.isConnected && session === owner && window.location.hash === route && generation === jobsViewGeneration;
+  const heading = el("h2", undefined, "Review evidence binding from task");
+  heading.id = "job-evidence-bind-title";
+  const content = el("section", "review-panel");
+  content.append(el("p", "eyebrow", "REVIEWED EVIDENCE WRITE"), heading, el("p", "muted", "Loading the current candidate before any write…"));
+  dialog.append(content);
+  dialog.addEventListener("cancel", event => { event.preventDefault(); if (!busy) dialog.close(); });
+  dialog.addEventListener("keydown", event => keepFocusInsideDialog(dialog, event));
+  dialog.addEventListener("close", () => { dialog.remove(); if (returnFocus.isConnected) returnFocus.focus(); });
+  main.append(dialog);
+  dialog.showModal();
+  try {
+    const candidateReview = await api<CandidateAssuranceReview>(`/app/api/candidates/${encodeURIComponent(job.candidate_id)}/assurance-review`);
+    if (!active()) return;
+    const candidate = candidateReview.candidate;
+    if (candidate.candidate_id !== job.candidate_id || candidate.project_id !== job.project_id || assembly.bundle.candidate_commit !== candidate.commit_sha) {
+      throw new RequestProblem(0, "DASHBOARD_BINDING_REVIEW_INVALID", "The task and current candidate identities do not match.", "not issued", null, "browser");
+    }
+    if (candidateReview.evidence_binding !== null || candidate.status !== "COLLECTING" || candidate.revision !== 1) {
+      content.replaceChildren(el("p", "eyebrow", "NO WRITE AVAILABLE"), heading, el("p", "command-boundary", candidateReview.evidence_binding === null ? "The candidate is no longer an unbound revision-one COLLECTING candidate. No binding request was sent." : "The candidate already has an immutable evidence binding. Compare its assembly identity on the Evidence page; no replacement request was sent."));
+      const inspect = el("a", "button primary", "Review current candidate evidence");
+      inspect.href = candidateReviewHash("evidence", candidate.candidate_id);
+      content.append(inspect);
+      inspect.focus();
+      return;
+    }
+    const boundAt = new Date().toISOString();
+    const body = {
+      expected_job_revision: job.revision,
+      expected_result_fingerprint: job.result_fingerprint,
+      expected_assembly_id: assembly.assembly_id,
+      expected_candidate_revision: candidate.revision,
+      expected_candidate_fingerprint: job.candidate_fingerprint,
+      bound_at: boundAt
+    };
+    const details = el("dl", "definition-list");
+    details.append(
+      definition("Job", job.job_id, true),
+      definition("Result fingerprint", job.result_fingerprint, true),
+      definition("Assembly ID", assembly.assembly_id, true),
+      definition("Candidate", candidate.candidate_id, true),
+      definition("Candidate revision", String(candidate.revision)),
+      definition("Candidate fingerprint", job.candidate_fingerprint, true),
+      definition("Candidate commit", candidate.commit_sha, true),
+      definition("Evidence records", String(assembly.bundle.evidence.length)),
+      definition("Collector receipts", String(assembly.collections.length)),
+      definition("Warning disposition", assembly.warning_disposition),
+      definition("Bound at", formatDate(boundAt))
+    );
+    const status = el("div", "dialog-status");
+    status.setAttribute("aria-live", "polite");
+    const controls = el("div", "dialog-actions");
+    const close = button("Back without binding", "button quiet");
+    close.addEventListener("click", () => { if (!busy) dialog.close(); });
+    const confirm = button("Confirm evidence binding", "button primary");
+    const key = `dashboard:job-bind:${crypto.randomUUID()}`;
+    confirm.addEventListener("click", async () => {
+      if (!active() || busy) return;
+      busy = true;
+      close.disabled = confirm.disabled = true;
+      status.replaceChildren(el("p", "muted", "Submitting the frozen job, result, assembly and candidate identities once…"));
+      try {
+        const response = await api<DashboardJobEvidenceBindingResult>(`/app/api/jobs/${encodeURIComponent(job.job_id)}/bind-evidence?${new URLSearchParams({project_id: job.project_id})}`, {method: "POST", headers: {"X-ForgeGate-CSRF": owner.csrf_token, "Idempotency-Key": key}, body: JSON.stringify(body)});
+        if (!active()) return;
+        if (
+          response.schema_version !== "forgegate.dashboard-job-evidence-binding.v1"
+          || response.job_id !== job.job_id
+          || response.result_fingerprint !== job.result_fingerprint
+          || response.assembly_id !== assembly.assembly_id
+          || response.binding.assembly.assembly_id !== assembly.assembly_id
+          || response.binding.candidate_fingerprint !== job.candidate_fingerprint
+          || response.binding.assembly_fingerprint !== response.assembly_fingerprint
+          || response.candidate_transition !== "NOT_PERFORMED"
+          || response.policy_decision !== "NOT_PERFORMED"
+          || response.source_artifact_bytes !== "not_embedded"
+        ) throw new Error("Unexpected binding response identity; inspect candidate evidence before any new write.");
+        heading.textContent = "Evidence binding retained";
+        status.replaceChildren(statusBadge("Binding completed"), el("p", undefined, `Binding ${response.binding.binding_id} now retains assembly fingerprint ${response.assembly_fingerprint}. The candidate was not advanced to READY and no policy decision was made.`));
+        const inspect = el("a", "button primary", "Review bound evidence");
+        inspect.href = candidateReviewHash("evidence", candidate.candidate_id);
+        controls.replaceChildren(inspect);
+        inspect.focus();
+      } catch (error) {
+        if (!active()) return;
+        if (handleProtectedProblem(status, error, "Inspect current candidate evidence before attempting any new binding. No automatic retry occurs.")) return;
+        const inspect = el("a", "button secondary", "Inspect candidate evidence");
+        inspect.href = candidateReviewHash("evidence", candidate.candidate_id);
+        controls.replaceChildren(inspect);
+        inspect.focus();
+      } finally {
+        busy = false;
+      }
+    });
+    controls.append(close, confirm);
+    content.replaceChildren(
+      el("p", "eyebrow", "REVIEWED EVIDENCE WRITE"),
+      heading,
+      el("p", "command-boundary", "This binds the terminal job's existing assembly to this candidate. It does not rerun parsing, embed raw source reports, authenticate their producer, advance the candidate to READY, evaluate policy, publish or access hardware."),
+      details,
+      status,
+      controls
+    );
+    close.focus();
+  } catch (error) {
+    if (!active()) return;
+    if (handleProtectedProblem(content, error, "Close, refresh the task and inspect current candidate state.")) return;
+    const close = button("Close", "button primary");
+    close.addEventListener("click", () => dialog.close());
+    content.append(close);
+    close.focus();
+  }
 }
 
 function reviewJobAction(main: HTMLElement, job: CollectionJob, action: "cancel" | "recover" | "run", returnFocus: HTMLElement): void {
