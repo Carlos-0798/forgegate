@@ -46,6 +46,9 @@ The current checkpoint demonstrates:
   against exact original backups, restores only into a new directory, verifies
   copied database bytes/history and retains a final receipt without switching
   live stores or rehydrating archived result payloads;
+- the operator-only [rehearsal receipt review](docs/DASHBOARD_RECOVERY_REHEARSAL_REVIEW.md)
+  validates and displays that exact completion receipt without accepting a path,
+  running recovery, rehydrating results or switching the live workspace;
 - [durable local report jobs](docs/COLLECTION_JOBS.md) with idempotent submission,
   explicit execution/cancellation, expired-lease recovery and bounded pending
   input retention; v2 records expose non-credential execution ownership and
@@ -114,9 +117,10 @@ never converted into candidate evidence.
 
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 1285 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
-| Branch-aware coverage | 95.76% across 12,488 statements and 3,238 branches | Local host test |
+| Full Python suite | 1295 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
+| Branch-aware coverage | 95.77% across 12,536 statements and 3,246 branches | Local host test |
 | Static quality | Ruff, formatting, and strict mypy passed across 110 source/tool files | Local host test |
+| Rehearsal receipt review | 93 focused Python cases, 148 production-TypeScript cases and actual isolated Edge import/reselection passed | Local synthetic test; 27 tasks/43 events plus exact restored-copy identities displayed; no restore execution, live switch, continuing-availability or hardware claim; [Phase 45 evidence](reports/PHASE_45_RECOVERY_REHEARSAL_REVIEW_ACCEPTANCE.md) |
 | Recovery rehearsal | 38 new tests; 160 combined recovery/archive cases; actual CLI with the earlier Edge handoff and independent readback | Local synthetic test; 27 tasks/43 events restored, 4-test/1-failure archived result preserved; no live replacement or payload rehydration |
 | Recovery handoff | 40 focused Python cases, 9 production-TypeScript cases and native Edge READY/BLOCKED imports plus independently hashed downloads passed | Local synthetic test; exact-byte trailing-newline and sequential-reselection regressions fixed; no restore, payload upload, live availability, producer authentication, hardware or publication |
 | Offline recovery readiness | 26 new cases; 120 combined archive/backup/readiness cases; exact CLI READY/missing/wrong-hash outcomes | Local synthetic test; observed snapshot/payload readiness only; [Phase 42 evidence](reports/PHASE_42_RECOVERY_READINESS_ACCEPTANCE.md) |
@@ -124,10 +128,10 @@ never converted into candidate evidence.
 | Coordinated workspace recovery | 48 focused cases; backup/CLI modules 100% branch-aware coverage; paired snapshots, restored-copy execution and retention planning | Local synthetic test; no live replacement, automatic purge, encryption or power-loss certification |
 | Durable local report jobs | 99 focused Python cases plus actual synthetic browser execution; CLI lifecycle, v1/v2-to-v3 store migration, cooperative cancellation/renewal, exact browser export and reviewed binding | Local synthetic test; no automatic worker, mid-parser preemption, candidate transition, policy decision or hardware |
 | Candidate-store backup | 27 focused cases; backup module 100% branch-aware coverage; installed CLI round trip passes | Local host test; no automatic restore, encryption or blanket domain validation |
-| Contracts | 54 document and 3 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI (28 paths, 30 operations) passed drift checks | Local host test |
+| Contracts | 55 document and 3 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI (29 paths, 31 operations) passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
-| Dashboard automation | 139 TypeScript host interaction tests passed, including recovery READY/BLOCKED/import/reselection/error isolation and earlier job-management/submission/handoff/archive cases | Local host test; [Phase 43 actual Edge checks](reports/PHASE_43_RECOVERY_HANDOFF_ACCEPTANCE.md) verify exact-byte imports and downloads; not exhaustive browser/OS certification |
+| Dashboard automation | 148 TypeScript host interaction tests passed, including recovery READY/BLOCKED and completed-rehearsal import/reselection/error isolation plus earlier job-management/submission/handoff/archive cases | Local host test; [Phase 45 actual Edge checks](reports/PHASE_45_RECOVERY_REHEARSAL_REVIEW_ACCEPTANCE.md) verify exact receipt presentation; not exhaustive browser/OS certification |
 | Dashboard browser interaction | Full reviewed Edge workflow, Edge/Chrome keyboard/focus, 129-record pagination, 390 px responsive, 409/413/422/429/500 recovery, exact Edge 100–200% zoom, and clean-console paths passed | Windows local browser test; uncommon errors use a zero-write presentation harness; Narrator is bounded PASS, while spoken output, high contrast, and real Remote Desktop remain open |
 | MSP430 report collector | 34 focused tests plus clean-wheel CLI collection passed; one LaunchPad HIL migration fixture produced 17 normalized records with retained warnings | Local artifact test; the fixture is a historical upstream result, not a new run or physical-measurement claim |
 | MSP430 live status | COM4 opened input-only at 115200 8-N-1; authenticated Devices page showed `CONNECTED`, heartbeat `NORMAL`, device `FAULT`, flags `0015`; sequence advanced 58007→58017 over 10 seconds with 10 accepted frames and no sequence gap | Owner-authorized Windows physical-device observation; one earlier invalid frame was rejected, no command or firmware/debug action, measurement validation, release evidence, or long-duration stability claim |
@@ -387,9 +391,9 @@ The next maturity gates are:
 
 1. complete Windows high-contrast, spoken Narrator-output, and real Remote
    Desktop evidence without claiming full accessibility certification;
-2. expose completed recovery-rehearsal receipt review in the Dashboard, building
-   on implemented capacity/archive filters, offline checks and new-directory
-   recovery before considering automatic workers;
+2. add an owner-reviewed live-workspace adoption plan and rollback proof before
+   considering any restore switch or automatic worker; the read-only completed-
+   rehearsal receipt review is implemented;
 3. align future MSP430 report revisions through the frozen artifact contract
    while keeping live UART status separate from evidence;
 4. establish publisher provenance and broader hostile-plugin compatibility;

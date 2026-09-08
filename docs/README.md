@@ -12,9 +12,11 @@ analysis, compatibility contracts, and historical acceptance evidence.
 5. [Portfolio evidence gallery](PORTFOLIO_EVIDENCE.md) — retained screenshots, exact fixture data, hashes, and claim boundaries
 6. [Security policy](../SECURITY.md) — supported scope and responsible reporting
 
-Latest local engineering slice: [reviewed recovery rehearsal](RECOVERY_REHEARSAL.md),
-with fresh exact-backup checks, new-directory-only copying and verified readback.
-It follows [Recovery-page handoff review](DASHBOARD_RECOVERY_HANDOFF.md) and
+Latest local engineering slice: [Dashboard rehearsal receipt review](DASHBOARD_RECOVERY_REHEARSAL_REVIEW.md),
+which presents the exact content-addressed restored-copy receipt without adding
+browser restore or workspace-switch authority. It follows the
+[reviewed recovery rehearsal](RECOVERY_REHEARSAL.md),
+[Recovery-page handoff review](DASHBOARD_RECOVERY_HANDOFF.md) and
 [offline readiness checks](RECOVERY_READINESS.md).
 Previous slice: [durable report-job lifecycle](COLLECTION_JOBS.md)
 with visible execution ownership, bounded lease renewal and cooperative stop

@@ -5,6 +5,8 @@ import hashlib
 import json
 import re
 import shutil
+import subprocess
+import sys
 import zipfile
 from datetime import UTC, datetime, timedelta
 from io import BytesIO
@@ -59,6 +61,24 @@ from tools.manual_dashboard_fault_server import (
 ORIGIN = "http://127.0.0.1"
 ORIGIN_HEADER = {"Origin": ORIGIN}
 runner = CliRunner()
+
+
+def test_recovery_rehearsal_can_import_before_lazy_dashboard_route_exports() -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from forgegate.recovery_rehearsal import RecoveryRehearsalReview; "
+            "import forgegate.dashboard as dashboard; "
+            "assert dashboard.DASHBOARD_CSRF_HEADER == 'X-ForgeGate-CSRF'; "
+            "assert callable(dashboard.install_dashboard_routes); "
+            "assert RecoveryRehearsalReview.__name__ == 'RecoveryRehearsalReview'",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
 
 
 def test_dashboard_help_describes_current_job_store_boundary() -> None:
@@ -515,6 +535,7 @@ def test_dashboard_openapi_export_is_deterministic_and_complete(tmp_path: Path) 
         "/app/api/projects",
         "/app/api/projects/{project_id}/candidates",
         "/app/api/recovery-review",
+        "/app/api/recovery-rehearsal-review",
         "/app/api/session",
     }
     assert first["paths"]["/app/api/candidates"]["post"]["operationId"] == (
@@ -542,6 +563,9 @@ def test_dashboard_openapi_export_is_deterministic_and_complete(tmp_path: Path) 
     )
     assert first["paths"]["/app/api/recovery-review"]["post"]["operationId"] == (
         "reviewDashboardRecoveryReadiness"
+    )
+    assert first["paths"]["/app/api/recovery-rehearsal-review"]["post"]["operationId"] == (
+        "reviewDashboardRecoveryRehearsal"
     )
     assert (
         first["paths"]["/app/api/candidates/{candidate_id}/assurance-review"]["get"]["operationId"]

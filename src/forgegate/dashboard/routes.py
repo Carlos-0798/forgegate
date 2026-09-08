@@ -59,6 +59,7 @@ from forgegate.dashboard.models import (
     DashboardLogoutResponse,
     DashboardOverview,
     DashboardPrincipal,
+    DashboardRecoveryRehearsalReviewRequest,
     DashboardRecoveryReviewRequest,
     DashboardSessionResponse,
 )
@@ -67,6 +68,7 @@ from forgegate.domain.models import SLUG_PATTERN
 from forgegate.live_status import DisabledLiveStatusProvider, LiveStatusPage, LiveStatusProvider
 from forgegate.projects import RegisteredProjectPage
 from forgegate.recovery_models import RecoveryReadinessHandoff, build_recovery_handoff
+from forgegate.recovery_rehearsal import RecoveryRehearsalReview, build_rehearsal_review
 
 DASHBOARD_SESSION_COOKIE = "forgegate_dashboard"
 DASHBOARD_ACTIVATION_COOKIE = "forgegate_dashboard_activation"
@@ -315,6 +317,35 @@ def install_dashboard_routes(
             raise CandidateStoreError(
                 "DASHBOARD_RECOVERY_REPORT_INVALID",
                 "recovery readiness report failed strict validation",
+            ) from exc
+
+    @app.post(
+        "/app/api/recovery-rehearsal-review",
+        response_model=RecoveryRehearsalReview,
+        operation_id="reviewDashboardRecoveryRehearsal",
+        include_in_schema=False,
+    )
+    def review_dashboard_recovery_rehearsal(
+        request: Request,
+        command: DashboardRecoveryRehearsalReviewRequest,
+        csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> RecoveryRehearsalReview:
+        _require_same_origin(request, required=True)
+        stored, principal = manager.session(request.cookies.get(DASHBOARD_SESSION_COOKIE))
+        request.state.authenticated_principal = principal
+        manager.require_csrf(stored, csrf_token)
+        if principal.role.value != "operator":
+            raise ApiAuthenticationError(
+                "API_ROLE_FORBIDDEN",
+                "operator role required for recovery rehearsal review",
+                status_code=403,
+            )
+        try:
+            return build_rehearsal_review(command.document, command.expected_sha256)
+        except (ValueError, UnicodeError) as exc:
+            raise CandidateStoreError(
+                "DASHBOARD_RECOVERY_REHEARSAL_INVALID",
+                "recovery rehearsal receipt failed strict validation",
             ) from exc
 
     @app.get(

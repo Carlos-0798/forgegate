@@ -50,12 +50,13 @@ from forgegate.projects import (
     RegisteredProjectPage,
 )
 from forgegate.recovery_models import RecoveryReadinessHandoff, WorkspaceRecoveryReadiness
-from forgegate.recovery_rehearsal import RecoveryRehearsalReceipt
+from forgegate.recovery_rehearsal import RecoveryRehearsalReceipt, RecoveryRehearsalReview
 from forgegate.security_events import ApiSecurityEvent, ApiSecurityEventPage
 from forgegate.workspace_backups import WorkspaceBackupManifest, WorkspaceBackupManifestV2
 
 SCHEMAS: dict[str, type[BaseModel]] = {
     "forgegate.recovery-rehearsal.v1": RecoveryRehearsalReceipt,
+    "forgegate.recovery-rehearsal-review.v1": RecoveryRehearsalReview,
     "forgegate.workspace-recovery-readiness.v1": WorkspaceRecoveryReadiness,
     "forgegate.recovery-readiness-handoff.v1": RecoveryReadinessHandoff,
     "forgegate.job-archive-plan.v1": JobArchivePlan,

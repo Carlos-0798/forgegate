@@ -2,7 +2,15 @@
 
 - Date: 2026-09-07
 - Version: 0.1.0a1
-- Stage: Phase 44 reviewed recovery rehearsal implemented locally: exact-hash
+- Stage: Phase 45 read-only Dashboard rehearsal receipt review implemented and
+  accepted in isolated Microsoft Edge. Exact bytes, strict schema/coherence and
+  content-derived identities are revalidated before displaying 27 restored tasks,
+  43 events, one archived task and one verified external result. Different-name
+  reselection, no-retry error paths and clean-console presentation pass; a
+  screenshot is retained. The page accepts no path and performs no restore,
+  rehydration, live switch, continuing-availability check or hardware action.
+  See [Dashboard rehearsal receipt review](DASHBOARD_RECOVERY_REHEARSAL_REVIEW.md).
+  Phase 44 reviewed recovery rehearsal remains implemented locally: exact-hash
   handoff loading, fresh root/original checks, new-directory-only copying,
   cold SQLite/history readback and final content-addressed `REHEARSAL.json`.
   The actual Phase 43 Edge download restored 27 tasks/43 events; the one archived
@@ -563,6 +571,16 @@ remaining OS assistive checks are separate.
 
 ## Accepted local checkpoint
 
+- Phase 45: 93 focused Python cases and all 148 production-TypeScript interaction
+  cases pass. Full verification passes with 1,295 tests, 3 Windows symlink skips
+  and 95.77% branch-aware coverage (12,536 statements, 3,246 branches). Ruff,
+  formatting, strict mypy across 110 source/tool files, 55 document plus 3
+  artifact schemas, 29-path/31-operation Dashboard OpenAPI, packaged assets and
+  33 interaction-smoke controls pass. Actual isolated Edge exact receipt import,
+  different-name reselection and clean console pass; the
+  [screenshot](assets/phase45-recovery-rehearsal-review.png) and
+  [machine evidence](../reports/PHASE_45_RECOVERY_REHEARSAL_REVIEW_EVIDENCE.json)
+  are retained. No restore, live switch, hardware or GitHub operation occurred.
 - Phase 44: 38 new tests and 160 combined recovery/archive cases pass. Full
   verification passes with 1,285 tests, 3 Windows symlink skips and 95.76%
   branch-aware coverage (12,488 statements, 3,238 branches). The new rehearsal
@@ -668,16 +686,16 @@ remaining OS assistive checks are separate.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 1285 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.76% across 12,488 statements and 3,238 branches
+- pytest: 1295 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.77% across 12,536 statements and 3,246 branches
 - MSP430 live-status focus: 17 passed across parser, state classification,
   staleness, invalid/recovery, counters, dependency/I/O failure, and input-only
   monitor lifecycle
 - Historical Phase 30 Dashboard focus: 80 passed with 98.60% branch-aware coverage across 728
   statements and 130 branches
-- Frontend host regressions: 139 passed, including job management, collection,
-  recovery handoff, Audit and activation; separate from Python coverage and
-  actual browser tests
+- Frontend host regressions: 148 passed, including job management, collection,
+  recovery handoff and rehearsal receipt review, Audit and activation; separate
+  from Python coverage and actual browser tests
 - Phase 30 browser checkpoint: real Edge file selection, independent binding,
   lifecycle and policy PASS/FAIL, explicit warning retention, forbidden-XML
   rejection and unchanged canceled-preview state pass. Shared-policy reuse

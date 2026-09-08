@@ -755,3 +755,23 @@ Next bounded slice: add a read-only Dashboard review/import of the completed
 rehearsal receipt, clearly distinguishing the earlier readiness observation from
 the restored-copy verification. No browser filesystem restore or live workspace
 switch is implied. Assistive acceptance remains separate; GitHub stays paused.
+
+## Phase 45 — Dashboard rehearsal receipt review
+
+- [x] Add an operator-only, same-origin exact-byte import for the completed
+  `forgegate.recovery-rehearsal.v1` receipt.
+- [x] Derive and return a strict content-addressed review without accepting a
+  path, backup, database, key, destination or recovery command.
+- [x] Display restored task/event and external-dependency totals, database hashes,
+  inspection identity and explicit non-action boundaries.
+- [x] Cover authentication, role, CSRF, malformed/coherence/size limits,
+  409/413/429/500 presentation, response forgery and stale-result isolation.
+- [x] Complete actual isolated Edge file selection and different-name reselection;
+  retain a repository screenshot and confirm an empty warning/error console.
+- [x] Regenerate the strict Schema, Dashboard OpenAPI and packaged assets; pass
+  the full branch-aware development gate.
+
+Next bounded engineering slice: design an owner-reviewed live-workspace adoption
+and rollback plan. Do not implement a switch until process ownership, quiescence,
+health verification and reversible failure handling are specified and tested.
+Assistive acceptance remains separate; GitHub synchronization stays paused.

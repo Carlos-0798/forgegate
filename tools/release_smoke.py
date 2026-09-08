@@ -17,6 +17,10 @@ from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_SDIST_PATHS = (
+    "docs/DASHBOARD_RECOVERY_REHEARSAL_REVIEW.md",
+    "reports/PHASE_45_RECOVERY_REHEARSAL_REVIEW_ACCEPTANCE.md",
+    "reports/PHASE_45_RECOVERY_REHEARSAL_REVIEW_EVIDENCE.json",
+    "schemas/forgegate.recovery-rehearsal-review.v1.schema.json",
     "docs/DASHBOARD_RECOVERY_HANDOFF.md",
     "reports/PHASE_43_RECOVERY_HANDOFF_ACCEPTANCE.md",
     "reports/PHASE_43_RECOVERY_HANDOFF_ACCEPTANCE.json",
@@ -794,6 +798,10 @@ def main(
             )
         dashboard_openapi = json.loads(exported_dashboard_openapi.read_text(encoding="utf-8"))
         dashboard_operations = {
+            (
+                "/app/api/recovery-rehearsal-review",
+                "post",
+            ): "reviewDashboardRecoveryRehearsal",
             (
                 "/app/api/recovery-review",
                 "post",

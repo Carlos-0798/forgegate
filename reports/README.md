@@ -6,6 +6,10 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
+- [Phase 45 Dashboard rehearsal receipt review](PHASE_45_RECOVERY_REHEARSAL_REVIEW_ACCEPTANCE.md) —
+  strict read-only receipt validation plus actual isolated Edge import,
+  reselection and [repository-retained screenshot](../docs/assets/phase45-recovery-rehearsal-review.png);
+  no restore execution, live switch, continuing-availability or hardware claim
 - [Phase 44 reviewed recovery rehearsal](PHASE_44_RECOVERY_REHEARSAL_ACCEPTANCE.md) —
   exact handoff rechecks, new-directory copy, cold history/member verification and
   [actual synthetic CLI evidence](PHASE_44_RECOVERY_REHEARSAL_EVIDENCE.json);

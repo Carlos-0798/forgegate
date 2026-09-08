@@ -38,6 +38,38 @@ interface RecoveryHandoff {
   restore: "NOT_PERFORMED";
 }
 
+interface RecoveryRehearsalReview {
+  schema_version: "forgegate.recovery-rehearsal-review.v1";
+  review_id: string;
+  source_receipt_sha256: string;
+  disposition: "VERIFIED_RESTORED_COPY";
+  receipt: {
+    schema_version: "forgegate.recovery-rehearsal.v1";
+    rehearsal_id: string;
+    handoff_sha256: string;
+    handoff: RecoveryHandoff;
+    completed_at: string;
+    candidate_store: { sha256: string; size_bytes: number };
+    job_store: { sha256: string; size_bytes: number };
+    post_restore_job_count: number;
+    post_restore_job_event_count: number;
+    post_restore_inspection_fingerprint: string;
+    status: "RESTORED_COPY_VERIFIED";
+    restore_mode: "new_directory_only";
+    archived_payloads: "VERIFIED_EXTERNAL_NOT_REHYDRATED";
+    live_workspace_changed: false;
+    automatic_execution: "NOT_PERFORMED";
+    hardware_access: "NOT_PERFORMED";
+    producer_authenticity: "NOT_VERIFIED";
+    external_identity_and_artifact_files: "NOT_CHECKED";
+    availability: "observed_during_rehearsal_only";
+  };
+  path_input: "NOT_ACCEPTED";
+  restore_execution: "NOT_PERFORMED_BY_REVIEW";
+  live_workspace_switch: "NOT_PERFORMED";
+  continuing_availability: "NOT_CHECKED";
+}
+
 interface CollectionJob {
   schema_version: "forgegate.collection-job.v1" | "forgegate.collection-job.v2";
   job_id: string;
@@ -1455,6 +1487,57 @@ function validRecoveryHandoff(value: unknown, sourceHash: string): value is Reco
     ((readiness.status === "READY") === (value.disposition === "READY_FOR_REHEARSAL"));
 }
 
+function validRecoveryRehearsalReview(
+  value: unknown,
+  sourceHash: string
+): value is RecoveryRehearsalReview {
+  if (
+    !isJsonObject(value) ||
+    value.schema_version !== "forgegate.recovery-rehearsal-review.v1" ||
+    typeof value.review_id !== "string" ||
+    !/^sha256:[0-9a-f]{64}$/.test(value.review_id) ||
+    value.source_receipt_sha256 !== sourceHash ||
+    value.disposition !== "VERIFIED_RESTORED_COPY" ||
+    value.path_input !== "NOT_ACCEPTED" ||
+    value.restore_execution !== "NOT_PERFORMED_BY_REVIEW" ||
+    value.live_workspace_switch !== "NOT_PERFORMED" ||
+    value.continuing_availability !== "NOT_CHECKED"
+  ) return false;
+  const receipt = value.receipt;
+  return isJsonObject(receipt) &&
+    receipt.schema_version === "forgegate.recovery-rehearsal.v1" &&
+    receipt.status === "RESTORED_COPY_VERIFIED" &&
+    receipt.restore_mode === "new_directory_only" &&
+    receipt.live_workspace_changed === false &&
+    receipt.archived_payloads === "VERIFIED_EXTERNAL_NOT_REHYDRATED" &&
+    typeof receipt.rehearsal_id === "string" && /^sha256:[0-9a-f]{64}$/.test(receipt.rehearsal_id) &&
+    typeof receipt.handoff_sha256 === "string" && /^[0-9a-f]{64}$/.test(receipt.handoff_sha256) &&
+    typeof receipt.completed_at === "string" &&
+    typeof receipt.post_restore_job_count === "number" && Number.isSafeInteger(receipt.post_restore_job_count) &&
+    receipt.post_restore_job_count >= 0 &&
+    typeof receipt.post_restore_job_event_count === "number" && Number.isSafeInteger(receipt.post_restore_job_event_count) &&
+    receipt.post_restore_job_event_count >= receipt.post_restore_job_count &&
+    isJsonObject(receipt.candidate_store) &&
+    typeof receipt.candidate_store.sha256 === "string" && /^[0-9a-f]{64}$/.test(receipt.candidate_store.sha256) &&
+    typeof receipt.candidate_store.size_bytes === "number" &&
+    Number.isSafeInteger(receipt.candidate_store.size_bytes) && receipt.candidate_store.size_bytes >= 0 &&
+    isJsonObject(receipt.job_store) &&
+    typeof receipt.job_store.sha256 === "string" && /^[0-9a-f]{64}$/.test(receipt.job_store.sha256) &&
+    typeof receipt.job_store.size_bytes === "number" &&
+    Number.isSafeInteger(receipt.job_store.size_bytes) && receipt.job_store.size_bytes >= 0 &&
+    typeof receipt.post_restore_inspection_fingerprint === "string" &&
+    /^sha256:[0-9a-f]{64}$/.test(receipt.post_restore_inspection_fingerprint) &&
+    receipt.automatic_execution === "NOT_PERFORMED" &&
+    receipt.hardware_access === "NOT_PERFORMED" &&
+    receipt.producer_authenticity === "NOT_VERIFIED" &&
+    receipt.external_identity_and_artifact_files === "NOT_CHECKED" &&
+    receipt.availability === "observed_during_rehearsal_only" &&
+    isJsonObject(receipt.handoff) &&
+    typeof receipt.handoff.source_report_sha256 === "string" &&
+    /^[0-9a-f]{64}$/.test(receipt.handoff.source_report_sha256) &&
+    validRecoveryHandoff(receipt.handoff, receipt.handoff.source_report_sha256);
+}
+
 async function renderRecovery(): Promise<void> {
   const generation = ++recoveryViewGeneration;
   const owner = session;
@@ -1486,7 +1569,28 @@ async function renderRecovery(): Promise<void> {
   const status = el("section", "recovery-review");
   status.setAttribute("aria-live", "polite");
   form.append(label, el("p", "muted", "Maximum size: 262,144 bytes. The exact UTF-8 bytes are hashed before same-origin validation."), review);
-  main.append(form, status);
+  const rehearsalForm = el("section", "panel recovery-import");
+  rehearsalForm.append(
+    el("p", "eyebrow", "COMPLETED REHEARSAL IMPORT"),
+    el("h2", undefined, "Review a verified restored-copy receipt"),
+    el("p", "muted", "Use forgegate.recovery-rehearsal.v1 from workspace rehearse-recovery. The browser submits exact receipt text, never a restored database, backup ZIP, local path, or private key.")
+  );
+  const rehearsalLabel = el("label", "field file-field");
+  rehearsalLabel.append(el("span", undefined, "Recovery rehearsal JSON"));
+  const rehearsalInput = el("input");
+  rehearsalInput.type = "file";
+  rehearsalInput.accept = ".json,application/json";
+  rehearsalInput.required = true;
+  rehearsalLabel.append(rehearsalInput);
+  const rehearsalReview = button("Review rehearsal receipt", "button primary");
+  const rehearsalStatus = el("section", "recovery-review");
+  rehearsalStatus.setAttribute("aria-live", "polite");
+  rehearsalForm.append(
+    rehearsalLabel,
+    el("p", "muted", "Maximum size: 1,048,576 bytes. Exact UTF-8 bytes and the content-derived receipt are validated."),
+    rehearsalReview
+  );
+  main.append(form, status, rehearsalForm, rehearsalStatus);
   shell(main);
   input.addEventListener("change", () => {
     input.setCustomValidity("");
@@ -1593,6 +1697,87 @@ async function renderRecovery(): Promise<void> {
       const normalized = error instanceof RequestProblem ? error : new RequestProblem(422, "DASHBOARD_RECOVERY_IMPORT_INVALID", error instanceof Error ? error.message : "The selected report is invalid.", "browser-side", null, "browser");
       showProblem(status, normalized, "Generate a fresh report with workspace recovery-check, then select its exact JSON output.");
       review.disabled = false;
+    }
+  });
+  rehearsalInput.addEventListener("change", () => {
+    rehearsalInput.setCustomValidity("");
+    rehearsalReview.disabled = false;
+    rehearsalStatus.replaceChildren();
+  });
+  rehearsalReview.addEventListener("click", async () => {
+    const file = rehearsalInput.files?.[0];
+    if (file === undefined) {
+      rehearsalInput.setCustomValidity("Select one recovery rehearsal JSON document.");
+      rehearsalInput.reportValidity();
+      return;
+    }
+    rehearsalInput.setCustomValidity("");
+    if (file.size === 0 || file.size > 1_048_576) {
+      showProblem(
+        rehearsalStatus,
+        new RequestProblem(413, "DASHBOARD_REHEARSAL_IMPORT_TOO_LARGE", "The selected receipt is empty or exceeds 1,048,576 bytes.", "browser-side", null, "browser"),
+        "Choose the exact bounded REHEARSAL.json created by rehearse-recovery."
+      );
+      return;
+    }
+    rehearsalReview.disabled = true;
+    rehearsalStatus.replaceChildren(el("p", "muted", "Hashing and validating the completed rehearsal receipt…"));
+    try {
+      const bytes = await file.arrayBuffer();
+      if (bytes.byteLength !== file.size) throw new Error("The selected file changed while it was read.");
+      const document = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+      const parsed: unknown = JSON.parse(document);
+      if (!isJsonObject(parsed) || parsed.schema_version !== "forgegate.recovery-rehearsal.v1") {
+        throw new Error("Expected schema_version forgegate.recovery-rehearsal.v1.");
+      }
+      const sourceHash = await sha256Hex(bytes);
+      const reviewed = await api<RecoveryRehearsalReview>("/app/api/recovery-rehearsal-review", {
+        method: "POST",
+        headers: { "X-ForgeGate-CSRF": owner.csrf_token },
+        body: JSON.stringify({ document, expected_sha256: sourceHash })
+      });
+      if (!active()) return;
+      if (!validRecoveryRehearsalReview(reviewed, sourceHash)) {
+        throw new RequestProblem(500, "DASHBOARD_REHEARSAL_RESPONSE_INVALID", "The service returned an inconsistent rehearsal review.", "unavailable", null);
+      }
+      const receipt = reviewed.receipt;
+      const heading = el("div", "card-heading");
+      const title = el("div");
+      title.append(el("p", "eyebrow", "VALIDATED COMPLETION RECEIPT"), el("h2", undefined, "Restored copy verified"));
+      heading.append(title, statusBadge(reviewed.disposition));
+      const metrics = el("section", "metric-grid");
+      for (const [name, value] of [
+        ["Restored tasks", String(receipt.post_restore_job_count)],
+        ["Task events", String(receipt.post_restore_job_event_count)],
+        ["Archived tasks", String(receipt.handoff.readiness.archived_job_count)],
+        ["External results verified", String(receipt.handoff.result_payloads_verified)]
+      ]) {
+        const card = el("article", "metric-card");
+        card.append(el("span", undefined, name), el("strong", undefined, value));
+        metrics.append(card);
+      }
+      const identity = el("dl", "definition-list");
+      identity.append(
+        definition("Rehearsal ID", receipt.rehearsal_id, true),
+        definition("Review ID", reviewed.review_id, true),
+        definition("Imported receipt SHA-256", reviewed.source_receipt_sha256, true),
+        definition("Root backup SHA-256", receipt.handoff.readiness.backup_sha256, true),
+        definition("Candidate database", `${receipt.candidate_store.sha256} · ${receipt.candidate_store.size_bytes} bytes`, true),
+        definition("Job database", `${receipt.job_store.sha256} · ${receipt.job_store.size_bytes} bytes`, true),
+        definition("Post-restore inspection", receipt.post_restore_inspection_fingerprint, true),
+        definition("Completed", formatDate(receipt.completed_at)),
+        definition("Restore mode", receipt.restore_mode),
+        definition("Archived payload handling", receipt.archived_payloads)
+      );
+      const boundary = el("p", "command-boundary", "This page validated a completed local rehearsal receipt. It did not read a server path, execute recovery, upload database or backup bytes, rehydrate archived results, switch the live workspace, check continuing availability, run queued tasks, authenticate producers, or control hardware.");
+      rehearsalStatus.replaceChildren(heading, metrics, identity, boundary);
+      rehearsalStatus.setAttribute("tabindex", "-1");
+      rehearsalStatus.focus();
+    } catch (error) {
+      if (!active()) return;
+      const normalized = error instanceof RequestProblem ? error : new RequestProblem(422, "DASHBOARD_REHEARSAL_IMPORT_INVALID", error instanceof Error ? error.message : "The selected receipt is invalid.", "browser-side", null, "browser");
+      showProblem(rehearsalStatus, normalized, "Select the exact REHEARSAL.json from a completed new-directory rehearsal.");
+      rehearsalReview.disabled = false;
     }
   });
   input.focus();

@@ -2,6 +2,7 @@
 
 | Capability | Planned evidence | Current status |
 |---|---|---|
+| Dashboard rehearsal receipt review | 93 focused Python cases, 148 production-TypeScript cases, strict Schema/OpenAPI/assets and actual isolated Edge import/reselection | LOCAL PASS — exact receipt/review identities and 27-task/43-event restored-copy summary displayed; screenshot retained; no path input, restore execution, live switch, continuing-availability or hardware claim |
 | Reviewed recovery rehearsal | 38 new cases, 160 combined regressions and actual CLI over an Edge-downloaded handoff | LOCAL PASS — exact recheck/new-directory copy, cold history and member hashes; 27 tasks/43 events plus exact 4-test/1-failure archived readback; no live replacement, payload rehydration, hardware or new browser test |
 | Reviewed recovery handoff | 40 focused Python cases, 9 production-TypeScript cases, strict Schema/OpenAPI/assets and native Edge READY/BLOCKED workflow | LOCAL PASS — exact CLI trailing newline preserved; sequential reselection works; both downloaded handoffs independently hash and validate; interactive screenshots captured but not repository-retained due browser policy |
 | Offline archive recovery readiness | 26 new cases, 120 combined archive/backup/readiness cases and independent CLI checks | LOCAL PASS — root hash, explicit originals, exact manifest/job/event/result association; READY/INCOMPLETE and exit 0/2/3; check-time observation, no restore or live availability claim |
@@ -29,7 +30,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — 54 document plus three artifact schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — 55 document plus three artifact schemas |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Analog Validation result Schema mirror | committed upstream-consumer contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |

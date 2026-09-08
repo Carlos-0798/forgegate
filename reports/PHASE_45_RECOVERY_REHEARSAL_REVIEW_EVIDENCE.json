@@ -1,0 +1,68 @@
+{
+  "phase": 45,
+  "date": "2026-09-07",
+  "verification": "LOCAL_HOST_TEST_SYNTHETIC",
+  "status": "PASS_NATIVE_EDGE_SYNTHETIC",
+  "receipt_review": {
+    "schema_version": "forgegate.recovery-rehearsal-review.v1",
+    "disposition": "VERIFIED_RESTORED_COPY",
+    "review_id": "sha256:e23c1694064087783c8ba4bdb08f2951726ad57683a2c20cb8cd2e8dd43e025d",
+    "source_receipt_sha256": "5dfdb55522082076c8042437f3877344a2a0c510dcaba4ac4362af7ab2221aeb",
+    "rehearsal_id": "sha256:d5dfce05aee92f2ee3c97934e849f6f1e8384ef976a1fbecaaf52295932ba6dd",
+    "root_backup_sha256": "b38f8123fa22c0010db5e68c1638fe304cd8b9fd3eb31e6f2db7ffa588eb0d37",
+    "candidate_store_sha256": "af932fe2b248719bfc5fdfbd16290f3f9b14aa336054a4d0566512cf413c5c46",
+    "candidate_store_size_bytes": 225280,
+    "job_store_sha256": "9813669e74c2bd5b77ad67650ed41b5482e7b12746b87f9357dfbf2ffe1b85f6",
+    "job_store_size_bytes": 118784,
+    "post_restore_inspection_fingerprint": "sha256:bee90c88a066f05b1205dc751a08a8c78fb9aaa4b390f98265c5d1c648ccdde7",
+    "restored_job_count": 27,
+    "job_event_count": 43,
+    "archived_job_count": 1,
+    "external_results_verified": 1
+  },
+  "browser": {
+    "engine": "Microsoft Edge",
+    "origin": "http://127.0.0.1:8145",
+    "activation_and_navigation": "PASS",
+    "native_file_selection": "PASS",
+    "first_review": "PASS_HTTP_200",
+    "different_name_reselection_cleared_result": true,
+    "second_review": "PASS_HTTP_200",
+    "console_warning_or_error_count": 0,
+    "screenshot": {
+      "path": "docs/assets/phase45-recovery-rehearsal-review.png",
+      "size_bytes": 169873,
+      "sha256": "e2337d5b9a77522e77de04db72da968fe02ded0c74e4ed7a623b802970701c7f"
+    }
+  },
+  "automation": {
+    "focused_python_tests_passed": 93,
+    "frontend_tests_passed": 148,
+    "full_verification": "PASS",
+    "tests_passed": 1295,
+    "tests_skipped": 3,
+    "branch_aware_coverage_percent": 95.77,
+    "statements": 12536,
+    "branches": 3246,
+    "mypy_source_tool_files": 110,
+    "interaction_smoke_passed": 33,
+    "document_schemas": 55,
+    "artifact_schemas": 3,
+    "dashboard_openapi_paths": 29,
+    "dashboard_openapi_operations": 31,
+    "schema_openapi_asset_drift": "PASS"
+  },
+  "release_smoke": {
+    "command": "python tools/release_smoke.py",
+    "status": "PASS",
+    "exit_code": 0,
+    "wheel_sha256": "71d74a9a225e97a27a09d8df6ea6c3015c7265539bd5f515267af2ede1781a9a",
+    "sdist_sha256": "791f2985c7f939bd5fcea650c01cb9b5a05175b1e547a7ae1e2c196aad22e78e"
+  },
+  "path_input": "NOT_ACCEPTED",
+  "restore_execution": "NOT_PERFORMED_BY_REVIEW",
+  "live_workspace_switch": "NOT_PERFORMED",
+  "continuing_availability": "NOT_CHECKED",
+  "hardware_access": "NOT_PERFORMED",
+  "github_operations": "NOT_PERFORMED"
+}

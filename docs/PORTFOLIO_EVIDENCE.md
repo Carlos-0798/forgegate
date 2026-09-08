@@ -34,8 +34,20 @@ the [Phase 26 assurance-review record](../reports/DASHBOARD_ASSURANCE_REVIEW_EVI
 the [Phase 27 interaction record](../reports/DASHBOARD_PHASE27_INTERACTION_EVIDENCE_2026-09-05.json),
 the [Phase 28 assurance-export record](../reports/DASHBOARD_PHASE28_ASSURANCE_EXPORT_EVIDENCE_2026-09-05.json),
 the [Phase 37 job-result handoff record](../reports/PHASE_37_JOB_RESULT_HANDOFF_EVIDENCE.json),
+the [Phase 45 recovery receipt review record](../reports/PHASE_45_RECOVERY_REHEARSAL_REVIEW_EVIDENCE.json),
 the [MSP430 live-status record](../reports/PHASE_25_MSP430_LIVE_STATUS_EVIDENCE_2026-09-05.json),
 and the [owner-assisted unplug/replug follow-up](../reports/MSP430_MANUAL_UNPLUG_REPLUG_EVIDENCE_2026-09-05.json).
+
+## Restored-copy receipt review
+
+![ForgeGate Recovery page showing the exact validated restored-copy receipt and explicit non-action boundary](assets/phase45-recovery-rehearsal-review.png)
+
+This isolated Edge capture uses the actual synthetic Phase 44 completion receipt.
+It shows 27 restored tasks, 43 events, one archived task and one verified external
+result, together with content-derived receipt/review identities and exact database
+hashes. It demonstrates read-only receipt presentation, not a restore execution,
+live-workspace switch, continuing-availability check, producer authentication,
+hardware operation or production acceptance.
 
 ## 1. Authority and limitations
 

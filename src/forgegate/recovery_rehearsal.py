@@ -37,6 +37,7 @@ from forgegate.workspace_backups import (
 
 # The handoff wraps a bounded readiness report with fixed additional metadata.
 MAX_HANDOFF_BYTES = MAX_RECOVERY_REPORT_BYTES + 4096
+MAX_RECOVERY_RECEIPT_BYTES = 1024 * 1024
 
 
 class RecoveryRehearsalReceipt(StrictModel):
@@ -97,6 +98,28 @@ class RecoveryRehearsalReceipt(StrictModel):
         return self
 
 
+class RecoveryRehearsalReview(StrictModel):
+    schema_version: Literal["forgegate.recovery-rehearsal-review.v1"] = (
+        "forgegate.recovery-rehearsal-review.v1"
+    )
+    review_id: str = Field(pattern=FINGERPRINT_PATTERN)
+    source_receipt_sha256: str = Field(pattern=SHA256_PATTERN)
+    receipt: RecoveryRehearsalReceipt
+    disposition: Literal["VERIFIED_RESTORED_COPY"] = "VERIFIED_RESTORED_COPY"
+    path_input: Literal["NOT_ACCEPTED"] = "NOT_ACCEPTED"
+    restore_execution: Literal["NOT_PERFORMED_BY_REVIEW"] = "NOT_PERFORMED_BY_REVIEW"
+    live_workspace_switch: Literal["NOT_PERFORMED"] = "NOT_PERFORMED"
+    continuing_availability: Literal["NOT_CHECKED"] = "NOT_CHECKED"
+
+    @model_validator(mode="after")
+    def coherent(self) -> Self:
+        if self.review_id != sha256_fingerprint(
+            self.model_dump(mode="json", exclude={"review_id"})
+        ):
+            raise ValueError("rehearsal review identity mismatch")
+        return self
+
+
 def _identities(report: WorkspaceRecoveryReadiness) -> dict[str, object]:
     # Old local clock observations are not freshness or authorization tokens.
     return report.model_dump(mode="json", exclude={"checked_at"})
@@ -120,6 +143,38 @@ def _load_handoff(path: Path, expected_sha256: str, deadline: float) -> Recovery
         parse_constant=lambda _: (_ for _ in ()).throw(ValueError("non-finite JSON")),
     )
     return RecoveryReadinessHandoff.model_validate(document)
+
+
+def build_rehearsal_review(document: str, expected_sha256: str) -> RecoveryRehearsalReview:
+    """Validate exact imported receipt bytes and derive a path-free review."""
+    raw = document.encode("utf-8")
+    if (
+        not raw
+        or len(raw) > MAX_RECOVERY_RECEIPT_BYTES
+        or re.fullmatch(SHA256_PATTERN, expected_sha256) is None
+        or hashlib.sha256(raw).hexdigest() != expected_sha256
+    ):
+        raise ValueError("recovery rehearsal receipt bytes or hash invalid")
+    enforce_json_structure_limits(raw, max_nodes=50_000, max_depth=30)
+    payload = json.loads(
+        document,
+        object_pairs_hook=_unique,
+        parse_constant=lambda _: (_ for _ in ()).throw(ValueError("non-finite JSON")),
+    )
+    receipt = RecoveryRehearsalReceipt.model_validate(payload)
+    values: dict[str, object] = {
+        "schema_version": "forgegate.recovery-rehearsal-review.v1",
+        "source_receipt_sha256": expected_sha256,
+        "receipt": receipt.model_dump(mode="json"),
+        "disposition": "VERIFIED_RESTORED_COPY",
+        "path_input": "NOT_ACCEPTED",
+        "restore_execution": "NOT_PERFORMED_BY_REVIEW",
+        "live_workspace_switch": "NOT_PERFORMED",
+        "continuing_availability": "NOT_CHECKED",
+    }
+    return RecoveryRehearsalReview.model_validate(
+        {"review_id": sha256_fingerprint(values), **values}
+    )
 
 
 def rehearse_recovery(

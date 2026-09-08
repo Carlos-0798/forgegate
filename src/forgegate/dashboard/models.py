@@ -13,6 +13,7 @@ from forgegate.domain.models import SLUG_PATTERN, StrictModel
 from forgegate.policy import PolicyEvaluationDocument, PolicyMaterial
 
 MAX_DASHBOARD_RECOVERY_REPORT_BYTES = 256 * 1024
+MAX_DASHBOARD_RECOVERY_RECEIPT_BYTES = 1024 * 1024
 
 
 class DashboardPrincipal(StrictModel):
@@ -128,6 +129,13 @@ class DashboardRecoveryReviewRequest(StrictModel):
     expected_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
 
 
+class DashboardRecoveryRehearsalReviewRequest(StrictModel):
+    model_config = ConfigDict(str_strip_whitespace=False)
+
+    document: str = Field(min_length=1, max_length=MAX_DASHBOARD_RECOVERY_RECEIPT_BYTES)
+    expected_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
 __all__ = [
     "DashboardActivationCompleted",
     "DashboardActivationStart",
@@ -138,6 +146,7 @@ __all__ = [
     "DashboardLogoutResponse",
     "DashboardOverview",
     "DashboardPrincipal",
+    "DashboardRecoveryRehearsalReviewRequest",
     "DashboardRecoveryReviewRequest",
     "DashboardSessionResponse",
 ]
