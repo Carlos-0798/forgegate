@@ -19,6 +19,7 @@ from forgegate.job_archival import (
     read_archived_result,
 )
 from forgegate.recovery_readiness import check_recovery_readiness
+from forgegate.recovery_rehearsal import rehearse_recovery
 from forgegate.workspace_backups import (
     WorkspaceBackupError,
     backup_workspace,
@@ -49,14 +50,7 @@ def recovery_check(
 ) -> None:
     """Check an exact snapshot and archived payload dependencies; no restore or live reads."""
     with _guard():
-        mappings: dict[str, Path] = {}
-        for entry in dependency or []:
-            digest, separator, path = entry.partition("=")
-            if not separator or not path or not re.fullmatch(r"[0-9a-f]{64}", digest):
-                raise WorkspaceBackupError("RECOVERY_DEPENDENCY_MAP_INVALID")
-            if digest in mappings:
-                raise WorkspaceBackupError("RECOVERY_DUPLICATE_DEPENDENCY")
-            mappings[digest] = Path(path)
+        mappings = _dependency_map(dependency)
         report = check_recovery_readiness(
             backup, expected_sha256=sha256, dependencies=mappings, timeout_seconds=timeout_seconds
         )
@@ -66,6 +60,45 @@ def recovery_check(
         typer.echo(document, nl=False)
         if report.status != "READY":
             raise typer.Exit(code=2)
+
+
+def _dependency_map(entries: list[str] | None) -> dict[str, Path]:
+    mappings: dict[str, Path] = {}
+    for entry in entries or []:
+        digest, separator, path = entry.partition("=")
+        if not separator or not path or not re.fullmatch(r"[0-9a-f]{64}", digest):
+            raise WorkspaceBackupError("RECOVERY_DEPENDENCY_MAP_INVALID")
+        if digest in mappings:
+            raise WorkspaceBackupError("RECOVERY_DUPLICATE_DEPENDENCY")
+        mappings[digest] = Path(path)
+    return mappings
+
+
+@workspace_app.command("rehearse-recovery")
+def rehearsal(
+    backup: Path,
+    destination: Path,
+    handoff: Path,
+    handoff_sha256: Annotated[str, typer.Option(help="Exact reviewed handoff file SHA-256.")],
+    dependency: Annotated[
+        list[str] | None, typer.Option(help="Explicit SHA256=PATH original backup mapping.")
+    ] = None,
+    timeout_seconds: Timeout = 30,
+) -> None:
+    """Recheck a READY handoff and restore into a NEW directory; REHEARSAL.json is final.
+
+    On failure, do not use any partial destination. No live files are replaced.
+    """
+    with _guard():
+        receipt = rehearse_recovery(
+            backup,
+            destination,
+            handoff,
+            handoff_sha256=handoff_sha256,
+            dependencies=_dependency_map(dependency),
+            timeout_seconds=timeout_seconds,
+        )
+        typer.echo(receipt.model_dump_json(indent=2))
 
 
 def _write_new_report(path: Path, content: bytes) -> None:

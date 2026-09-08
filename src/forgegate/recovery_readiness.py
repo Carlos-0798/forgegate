@@ -65,13 +65,22 @@ def check_recovery_readiness(
 ) -> WorkspaceRecoveryReadiness:
     """Read only explicit files; root corruption/timeouts fail without a READY report."""
     with _guard():
+        return _check_recovery_readiness(
+            backup, expected_sha256, dependencies, _deadline(timeout_seconds)
+        )
+
+
+def _check_recovery_readiness(
+    backup: Path, expected_sha256: str, dependencies: dict[str, Path], deadline: float
+) -> WorkspaceRecoveryReadiness:
+    """Share the caller's deadline across a multi-stage owner operation."""
+    with _guard():
         _require(expected_sha256 is not None, "WORKSPACE_HASH_INVALID")
         _require(
             len(dependencies) <= MAX_ARCHIVED_JOBS
             and all(re.fullmatch(r"[0-9a-f]{64}", key) for key in dependencies),
             "RECOVERY_DEPENDENCY_MAP_INVALID",
         )
-        deadline = _deadline(timeout_seconds)
         with _verified(backup, expected_sha256, deadline) as (root, manifest, digest, details):
             plans: dict[str, list[JobArchivePlan]] = {}
             if manifest.job_store_version == 4:

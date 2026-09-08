@@ -2,7 +2,14 @@
 
 - Date: 2026-09-07
 - Version: 0.1.0a1
-- Stage: Phase 43 reviewed recovery handoff implemented locally: the CLI can
+- Stage: Phase 44 reviewed recovery rehearsal implemented locally: exact-hash
+  handoff loading, fresh root/original checks, new-directory-only copying,
+  cold SQLite/history readback and final content-addressed `REHEARSAL.json`.
+  The actual Phase 43 Edge download restored 27 tasks/43 events; the one archived
+  result still reports four tests with one failure. Original external payloads
+  remain external; no live workspace switch, hardware or GitHub operation.
+  See [recovery rehearsal](RECOVERY_REHEARSAL.md).
+  Phase 43 reviewed recovery handoff remains implemented locally: the CLI can
   create a new-only path-free report, and an operator-only Dashboard page
   validates its exact bytes and strict status into a downloadable content-
   addressed handoff. Backup payloads are not uploaded; live availability,
@@ -102,7 +109,7 @@ package jobs, but its final generic Action job did not start because GitHub
 reported an account payment/spending-limit restriction. The overall run is
 not green. Billing changes require owner action; local acceptance is separate.
 
-Per the owner's current instruction, Phases 32–42 work is local-only. No GitHub
+Per the owner's current instruction, Phases 32–44 work is local-only. No GitHub
 inspection, push, PR creation or merge was performed for this checkpoint.
 
 ## Implemented
@@ -556,6 +563,17 @@ remaining OS assistive checks are separate.
 
 ## Accepted local checkpoint
 
+- Phase 44: 38 new tests and 160 combined recovery/archive cases pass. Full
+  verification passes with 1,285 tests, 3 Windows symlink skips and 95.76%
+  branch-aware coverage (12,488 statements, 3,238 branches). The new rehearsal
+  module has 100% branch-aware coverage across 104 statements and 12 branches.
+  Ruff/formatting, strict mypy across 110 source/tool files, 54 document plus 3
+  artifact schemas and existing OpenAPI/assets pass; 139 frontend tests pass.
+  Clean-wheel build/install/rehearsal/refusal/readback/uninstall smoke passes;
+  the corrected exact-error smoke assertion and tested package hashes are
+  retained in the [acceptance report](../reports/PHASE_44_RECOVERY_REHEARSAL_ACCEPTANCE.md).
+  Actual CLI use of the earlier Edge download and independent hash/job/result
+  readback are retained in [Phase 44 evidence](../reports/PHASE_44_RECOVERY_REHEARSAL_EVIDENCE.json).
 - Phase 43: 40 focused Python cases and 9 new production-TypeScript interaction
   cases pass. The full gate passes with 1,247 tests, 3 environment-dependent
   symlink skips and 95.72% branch-aware coverage across 12,372 statements and
@@ -650,17 +668,16 @@ remaining OS assistive checks are separate.
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 1195 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.66% across 12,060 statements and 3,154 branches
+- pytest: 1285 passed, 3 skipped (Windows symlink creation unavailable)
+- branch-aware coverage: 95.76% across 12,488 statements and 3,238 branches
 - MSP430 live-status focus: 17 passed across parser, state classification,
   staleness, invalid/recovery, counters, dependency/I/O failure, and input-only
   monitor lifecycle
 - Historical Phase 30 Dashboard focus: 80 passed with 98.60% branch-aware coverage across 728
   statements and 130 branches
-- Frontend host regressions: 128 passed, including 55 job management/submission/result-handoff/archive,
-  30 combined-collection/import, 18 JUnit collection, 12 Audit and 13 activation
-  cases; separate from Python
-  coverage and browser tests
+- Frontend host regressions: 139 passed, including job management, collection,
+  recovery handoff, Audit and activation; separate from Python coverage and
+  actual browser tests
 - Phase 30 browser checkpoint: real Edge file selection, independent binding,
   lifecycle and policy PASS/FAIL, explicit warning retention, forbidden-XML
   rejection and unchanged canceled-preview state pass. Shared-policy reuse
@@ -730,7 +747,7 @@ remaining OS assistive checks are separate.
 - committed JSON Schema, direct API OpenAPI, and Dashboard BFF OpenAPI drift
   checks: PASS
 - project/policy/candidate/transition example documents: VALID
-- fifty canonical versioned document Schemas plus Benchmark, Analog
+- 54 canonical versioned document Schemas plus Benchmark, Analog
   Validation, and MSP430 validation-report artifact Schemas: drift-checked and
   parsed
 - complete sdist manifest and ForgeGate/sample-plugin wheel builds: PASS

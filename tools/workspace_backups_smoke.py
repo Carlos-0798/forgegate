@@ -30,7 +30,13 @@ ROOT = Path(__file__).resolve().parents[1]
 XML = b'<testsuite tests="4" failures="1" errors="0" skipped="0" time="0.5"/>'
 
 
-def invoke(root: Path, *args: str, expected: int = 0, json_output: bool = True) -> dict[str, Any]:
+def invoke(
+    root: Path,
+    *args: str,
+    expected: int = 0,
+    json_output: bool = True,
+    expected_error: str = "WORKSPACE_DESTINATION_EXISTS",
+) -> dict[str, Any]:
     env = os.environ.copy()
     env.pop("PYTHONPATH", None)
     completed = subprocess.run(
@@ -45,7 +51,7 @@ def invoke(root: Path, *args: str, expected: int = 0, json_output: bool = True) 
     if completed.returncode != expected:
         raise RuntimeError("workspace smoke failed; private command/output not echoed")
     if expected == 3:
-        assert "WORKSPACE_DESTINATION_EXISTS" in completed.stderr
+        assert completed.stderr.strip() == f"ERROR: {expected_error}"
         return {"expected_rejection": True}
     if not json_output:
         assert "v4" in completed.stdout
@@ -257,6 +263,37 @@ def main() -> int:
         )
         assert wrong["status"] == "INCOMPLETE"
         assert wrong["dependencies"][0]["error_code"] == "WORKSPACE_HASH_MISMATCH"
+        from forgegate.recovery_models import build_recovery_handoff
+        from forgegate.recovery_rehearsal import RecoveryRehearsalReceipt
+
+        reviewed_bytes = (json.dumps(ready, indent=2) + "\n").encode()
+        handoff = build_recovery_handoff(
+            reviewed_bytes.decode(), hashlib.sha256(reviewed_bytes).hexdigest()
+        )
+        handoff_file = root / "reviewed-handoff.json"
+        handoff_bytes = (handoff.model_dump_json(indent=2) + "\n").encode()
+        handoff_file.write_bytes(handoff_bytes)
+        rehearsal_target = root / "rehearsal-copy"
+        rehearsal_args = (
+            "workspace",
+            "rehearse-recovery",
+            str(archived_backup),
+            str(rehearsal_target),
+            str(handoff_file),
+            "--handoff-sha256",
+            hashlib.sha256(handoff_bytes).hexdigest(),
+        )
+        invoke(
+            root, *rehearsal_args, expected=3, expected_error="REHEARSAL_DEPENDENCIES_INCOMPLETE"
+        )
+        assert not rehearsal_target.exists()
+        rehearsal = invoke(root, *rehearsal_args, "--dependency", f"{digest}={backup}")
+        verified_rehearsal = RecoveryRehearsalReceipt.model_validate(rehearsal)
+        assert verified_rehearsal.status == "RESTORED_COPY_VERIFIED"
+        assert json.loads((rehearsal_target / "REHEARSAL.json").read_bytes()) == rehearsal
+        assert rows(rehearsal_target / "jobs.db") == rows(jp)
+        assert rows(rehearsal_target / "candidates.db") == rows(database)
+        invoke(root, *rehearsal_args, "--dependency", f"{digest}={backup}", expected=3)
         archive_restore = root / "recovered-archived"
         invoke(
             root,
@@ -287,6 +324,8 @@ def main() -> int:
                 "external_archived_result_exact_failure_summary",
                 "v4_backup_dependencies_and_restore",
                 "recovery_readiness_ready_missing_and_wrong_hash",
+                "reviewed_rehearsal_fresh_check_exact_copy_and_final_receipt",
+                "rehearsal_missing_dependency_and_existing_target_refusal",
                 "temporary_cleanup",
             ],
             "backup_sha256": digest,
@@ -294,6 +333,7 @@ def main() -> int:
             "manifest_fingerprint": receipt["manifest_fingerprint"],
             "expected_test_summary": summary,
             "recovery_readiness": ready,
+            "recovery_rehearsal": rehearsal,
             "missing_dependency_readiness": missing,
             "wrong_dependency_readiness": wrong,
             "source_sha256": hashlib.sha256(XML).hexdigest(),

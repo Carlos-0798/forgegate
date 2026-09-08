@@ -734,6 +734,24 @@ gate. GitHub synchronization is paused.
   screenshots were captured but cannot be repository-retained through the
   browser's blocked `file://` transfer path.
 
-Next engineering slice after manual acceptance: execute a new-directory-only
-recovery rehearsal from the same explicitly rechecked identity set and retain
-post-restore verification evidence. GitHub synchronization remains paused.
+The planned new-directory recovery rehearsal is implemented in Phase 44 below.
+GitHub synchronization remains paused.
+
+## Phase 44 — reviewed new-directory recovery rehearsal
+
+- [x] Require a bounded, exact-hash READY handoff and explicit original backups.
+- [x] Recheck all reviewed identities using one shared operation deadline; never
+  promote an old report into live file availability or producer authentication.
+- [x] Exclusively create a new directory, copy verified database members, recheck
+  SQLite/history details and exact post-copy member hashes.
+- [x] Publish a strict content-addressed completion receipt only after readback;
+  retain partial directories without adoption, overwrite or recursive deletion.
+- [x] Cover blocked/tampered/missing/deep/oversize inputs, v3/v4 snapshots,
+  cancelled tasks, mismatches, partial failures and no-overwrite outcomes.
+- [x] Exercise the actual Phase 43 Edge-downloaded handoff through the new CLI,
+  independently read its archived result and retain exact machine evidence.
+
+Next bounded slice: add a read-only Dashboard review/import of the completed
+rehearsal receipt, clearly distinguishing the earlier readiness observation from
+the restored-copy verification. No browser filesystem restore or live workspace
+switch is implied. Assistive acceptance remains separate; GitHub stays paused.

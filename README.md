@@ -42,6 +42,10 @@ The current checkpoint demonstrates:
   an operator-only [recovery handoff](docs/DASHBOARD_RECOVERY_HANDOFF.md) page
   validates an exact path-free report, separates READY from BLOCKED, and exports
   a content-addressed review artifact without uploading backup payloads;
+- [reviewed recovery rehearsal](docs/RECOVERY_REHEARSAL.md) rechecks that handoff
+  against exact original backups, restores only into a new directory, verifies
+  copied database bytes/history and retains a final receipt without switching
+  live stores or rehydrating archived result payloads;
 - [durable local report jobs](docs/COLLECTION_JOBS.md) with idempotent submission,
   explicit execution/cancellation, expired-lease recovery and bounded pending
   input retention; v2 records expose non-credential execution ownership and
@@ -110,16 +114,17 @@ never converted into candidate evidence.
 
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 1247 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
-| Branch-aware coverage | 95.72% across 12,372 statements and 3,226 branches | Local host test |
-| Static quality | Ruff, formatting, and strict mypy passed across 109 source/tool files | Local host test |
+| Full Python suite | 1285 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
+| Branch-aware coverage | 95.76% across 12,488 statements and 3,238 branches | Local host test |
+| Static quality | Ruff, formatting, and strict mypy passed across 110 source/tool files | Local host test |
+| Recovery rehearsal | 38 new tests; 160 combined recovery/archive cases; actual CLI with the earlier Edge handoff and independent readback | Local synthetic test; 27 tasks/43 events restored, 4-test/1-failure archived result preserved; no live replacement or payload rehydration |
 | Recovery handoff | 40 focused Python cases, 9 production-TypeScript cases and native Edge READY/BLOCKED imports plus independently hashed downloads passed | Local synthetic test; exact-byte trailing-newline and sequential-reselection regressions fixed; no restore, payload upload, live availability, producer authentication, hardware or publication |
 | Offline recovery readiness | 26 new cases; 120 combined archive/backup/readiness cases; exact CLI READY/missing/wrong-hash outcomes | Local synthetic test; observed snapshot/payload readiness only; [Phase 42 evidence](reports/PHASE_42_RECOVERY_READINESS_ACCEPTANCE.md) |
 | Reviewed job archival | 46 new regressions; 94 combined archive/backup cases, 100% focused branch coverage; actual Edge detail and clean-wheel CLI recovery | Local synthetic test; history/idempotency retained; logical quota only; original external backups required |
 | Coordinated workspace recovery | 48 focused cases; backup/CLI modules 100% branch-aware coverage; paired snapshots, restored-copy execution and retention planning | Local synthetic test; no live replacement, automatic purge, encryption or power-loss certification |
 | Durable local report jobs | 99 focused Python cases plus actual synthetic browser execution; CLI lifecycle, v1/v2-to-v3 store migration, cooperative cancellation/renewal, exact browser export and reviewed binding | Local synthetic test; no automatic worker, mid-parser preemption, candidate transition, policy decision or hardware |
 | Candidate-store backup | 27 focused cases; backup module 100% branch-aware coverage; installed CLI round trip passes | Local host test; no automatic restore, encryption or blanket domain validation |
-| Contracts | 53 document and 3 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI (28 paths, 30 operations) passed drift checks | Local host test |
+| Contracts | 54 document and 3 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI (28 paths, 30 operations) passed drift checks | Local host test |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
 | Dashboard automation | 139 TypeScript host interaction tests passed, including recovery READY/BLOCKED/import/reselection/error isolation and earlier job-management/submission/handoff/archive cases | Local host test; [Phase 43 actual Edge checks](reports/PHASE_43_RECOVERY_HANDOFF_ACCEPTANCE.md) verify exact-byte imports and downloads; not exhaustive browser/OS certification |
@@ -382,8 +387,9 @@ The next maturity gates are:
 
 1. complete Windows high-contrast, spoken Narrator-output, and real Remote
    Desktop evidence without claiming full accessibility certification;
-2. expose read-only capacity/backup-dependency health and archived-task filtering,
-   building on reviewed archival/recovery before automatic workers;
+2. expose completed recovery-rehearsal receipt review in the Dashboard, building
+   on implemented capacity/archive filters, offline checks and new-directory
+   recovery before considering automatic workers;
 3. align future MSP430 report revisions through the frozen artifact contract
    while keeping live UART status separate from evidence;
 4. establish publisher provenance and broader hostile-plugin compatibility;

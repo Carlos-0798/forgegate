@@ -70,6 +70,9 @@ rehydrate data, start services, verify disk space or ACLs, provide encryption,
 authenticate producers, or verify external keys/trust stores/raw artifacts.
 The standard new-directory-only restore and separately hash-checked
 `archived-result` commands remain independent operations.
+The [reviewed rehearsal command](RECOVERY_REHEARSAL.md) now joins a READY
+Dashboard handoff to fresh verification, a new-directory copy and cold readback;
+it never treats this older report as a current availability guarantee.
 
 Dashboard capacity continues to say `dependency_availability=NOT_CHECKED`.
 The operator-only Recovery page accepts the report document and its browser-

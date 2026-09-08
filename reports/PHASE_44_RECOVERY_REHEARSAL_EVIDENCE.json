@@ -1,0 +1,146 @@
+{
+  "verification": "LOCAL_HOST_TEST_SYNTHETIC",
+  "source": "Phase 43 native Edge downloaded handoff; Phase 44 actual CLI and independent readback",
+  "rehearsal": {
+    "schema_version": "forgegate.recovery-rehearsal.v1",
+    "rehearsal_id": "sha256:d5dfce05aee92f2ee3c97934e849f6f1e8384ef976a1fbecaaf52295932ba6dd",
+    "handoff_sha256": "c74b57d88f6af6d19adb78c273ed5ad608cea94d8037e6548bbc4e22df308c2d",
+    "handoff": {
+      "schema_version": "forgegate.recovery-readiness-handoff.v1",
+      "handoff_id": "sha256:23ae5fd541481602ceee688df03e4a9a1b5910bfb9b607bc5622b143a58bef15",
+      "source_report_sha256": "257e526e7fb054dda638b4353b5b5a3352c7d885b7e3e8ff912ac76f82b7f39b",
+      "report_fingerprint": "sha256:2023f3c0e2cc1e0ce86fc4671fe4afb8278a08fa1241d4e0405996803f273ff1",
+      "disposition": "READY_FOR_REHEARSAL",
+      "readiness": {
+        "schema_version": "forgegate.workspace-recovery-readiness.v1",
+        "backup_sha256": "b38f8123fa22c0010db5e68c1638fe304cd8b9fd3eb31e6f2db7ffa588eb0d37",
+        "manifest_fingerprint": "sha256:bbc4cb6486b8f3ab9fc4d8e3c52840d60aae3d992ad6f8f310cdf61d66133680",
+        "checked_at": "2026-09-07T23:24:13.622668Z",
+        "status": "READY",
+        "archived_job_count": 1,
+        "dependencies": [
+          {
+            "backup_sha256": "e3fdbc9c6e82714a5de6063a1cf9d8d78a183ed46a97c0db1c27d43d390497f1",
+            "job_ids": [
+              "job-94538e9703afe567ce216104e3be2b63"
+            ],
+            "status": "VERIFIED",
+            "error_code": null,
+            "result_payloads_verified": 1,
+            "jobs_without_result": 0
+          }
+        ],
+        "scope": "snapshot_and_exact_archived_job_payloads",
+        "availability": "observed_during_check_only",
+        "restore": "NOT_PERFORMED",
+        "producer_authenticity": "NOT_VERIFIED",
+        "external_identity_and_artifact_files": "NOT_CHECKED"
+      },
+      "dependency_count": 1,
+      "verified_dependency_count": 1,
+      "result_payloads_verified": 1,
+      "jobs_without_result": 0,
+      "payload_transfer": "NOT_INCLUDED",
+      "live_availability": "NOT_CHECKED",
+      "restore": "NOT_PERFORMED"
+    },
+    "rechecked_readiness": {
+      "schema_version": "forgegate.workspace-recovery-readiness.v1",
+      "backup_sha256": "b38f8123fa22c0010db5e68c1638fe304cd8b9fd3eb31e6f2db7ffa588eb0d37",
+      "manifest_fingerprint": "sha256:bbc4cb6486b8f3ab9fc4d8e3c52840d60aae3d992ad6f8f310cdf61d66133680",
+      "checked_at": "2026-09-08T00:45:59.733082Z",
+      "status": "READY",
+      "archived_job_count": 1,
+      "dependencies": [
+        {
+          "backup_sha256": "e3fdbc9c6e82714a5de6063a1cf9d8d78a183ed46a97c0db1c27d43d390497f1",
+          "job_ids": [
+            "job-94538e9703afe567ce216104e3be2b63"
+          ],
+          "status": "VERIFIED",
+          "error_code": null,
+          "result_payloads_verified": 1,
+          "jobs_without_result": 0
+        }
+      ],
+      "scope": "snapshot_and_exact_archived_job_payloads",
+      "availability": "observed_during_check_only",
+      "restore": "NOT_PERFORMED",
+      "producer_authenticity": "NOT_VERIFIED",
+      "external_identity_and_artifact_files": "NOT_CHECKED"
+    },
+    "completed_at": "2026-09-08T00:45:59.780981Z",
+    "manifest": {
+      "created_at": "2026-09-07T23:24:12.704528Z",
+      "candidate_store_version": 9,
+      "candidate_store": {
+        "sha256": "af932fe2b248719bfc5fdfbd16290f3f9b14aa336054a4d0566512cf413c5c46",
+        "size_bytes": 225280
+      },
+      "job_store": {
+        "sha256": "9813669e74c2bd5b77ad67650ed41b5482e7b12746b87f9357dfbf2ffe1b85f6",
+        "size_bytes": 118784
+      },
+      "consistency": "simultaneous_sqlite_write_reservations",
+      "running_jobs": 0,
+      "encrypted": false,
+      "includes_pending_report_bytes": true,
+      "external_identity_and_artifact_files": "not_included",
+      "producer_authenticity": "NOT_VERIFIED",
+      "schema_version": "forgegate.workspace-backup.v2",
+      "job_store_version": 4,
+      "archived_result_payloads": "external_backups_required"
+    },
+    "candidate_store": {
+      "sha256": "af932fe2b248719bfc5fdfbd16290f3f9b14aa336054a4d0566512cf413c5c46",
+      "size_bytes": 225280
+    },
+    "job_store": {
+      "sha256": "9813669e74c2bd5b77ad67650ed41b5482e7b12746b87f9357dfbf2ffe1b85f6",
+      "size_bytes": 118784
+    },
+    "post_restore_job_count": 27,
+    "post_restore_job_event_count": 43,
+    "post_restore_inspection_fingerprint": "sha256:bee90c88a066f05b1205dc751a08a8c78fb9aaa4b390f98265c5d1c648ccdde7",
+    "status": "RESTORED_COPY_VERIFIED",
+    "restore_mode": "new_directory_only",
+    "validation_scope": "exact_member_bytes_sqlite_job_and_referenced_candidate_history",
+    "archived_payloads": "VERIFIED_EXTERNAL_NOT_REHYDRATED",
+    "all_candidate_domain_history_validation": "NOT_PERFORMED",
+    "live_workspace_changed": false,
+    "automatic_execution": "NOT_PERFORMED",
+    "hardware_access": "NOT_PERFORMED",
+    "producer_authenticity": "NOT_VERIFIED",
+    "external_identity_and_artifact_files": "NOT_CHECKED",
+    "availability": "observed_during_rehearsal_only"
+  },
+  "readback": {
+    "exact_zip_members": true,
+    "files_unchanged_during_readback": true,
+    "marker_sha256": "5dfdb55522082076c8042437f3877344a2a0c510dcaba4ac4362af7ab2221aeb",
+    "job_id": "job-94538e9703afe567ce216104e3be2b63",
+    "job_state": "SUCCEEDED",
+    "job_revision": 4,
+    "expected_test_summary": {
+      "total": 4,
+      "passed": 3,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "duration_seconds": 0.5
+    },
+    "actual_test_summary": {
+      "duration_seconds": 0.5,
+      "errors": 0,
+      "failures": 1,
+      "passed": 3,
+      "skipped": 0,
+      "total": 4
+    },
+    "expected_matches_actual": true
+  },
+  "browser_test_this_phase": "NOT_PERFORMED",
+  "hardware_access": "NOT_PERFORMED",
+  "live_workspace_switch": "NOT_PERFORMED",
+  "github_operations": "NOT_PERFORMED"
+}

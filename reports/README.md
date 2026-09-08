@@ -6,6 +6,10 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
+- [Phase 44 reviewed recovery rehearsal](PHASE_44_RECOVERY_REHEARSAL_ACCEPTANCE.md) —
+  exact handoff rechecks, new-directory copy, cold history/member verification and
+  [actual synthetic CLI evidence](PHASE_44_RECOVERY_REHEARSAL_EVIDENCE.json);
+  external archived results remain external, no live workspace switch
 - [Phase 43 reviewed recovery handoff](PHASE_43_RECOVERY_HANDOFF_ACCEPTANCE.md) —
   strict exact-byte report import and content-addressed handoff pass automation
   and native Edge READY/BLOCKED selection, sequential reselection and independently
