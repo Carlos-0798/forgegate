@@ -19,6 +19,11 @@ conclusions when their policy/profile authority differs.
 
 ## Current status
 
+**Feature freeze effective 2026-09-09.** The remaining milestone is code
+closeout, real-project acceptance and a reproducible Windows demonstration.
+See the [finite completion gates](docs/ALPHA_COMPLETION_PLAN.md); new platform
+features are deferred unless required to resolve an observed acceptance blocker.
+
 > **Testable Windows Alpha `0.1.0a1`** — the end-to-end local CLI assurance
 > workflow, reviewed local Dashboard actions, optional read-only MSP430 live
 > status, artifact-only MSP430 report collection, candidate-bound assurance
@@ -162,14 +167,14 @@ never converted into candidate evidence.
 
 ## Verified results
 
-Aggregate regression figures below use the Phase 52 recorded checkpoint.
+Aggregate regression figures below use the Phase 58 recorded checkpoint.
 Named earlier-phase rows describe their historical scope, not additional totals.
 
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 1,423 passed, 3 skipped; 95.80% branch-aware coverage | Local host test; skips require unavailable Windows symlink creation |
-| Branch-aware coverage | 95.80% at the Phase 52 checkpoint | Local host test; historical statement/branch totals are not mixed into this checkpoint |
-| Static quality | Ruff, formatting, and strict mypy passed across 120 source/tool files | Phase 52 local host test |
+| Full Python suite | 1,433 passed, 3 skipped; 95.80% branch-aware coverage | Local host test; skips require unavailable Windows symlink creation |
+| Branch-aware coverage | 95.80% at the Phase 58 checkpoint | Local host test; historical statement/branch totals are not mixed into this checkpoint |
+| Static quality | Ruff, formatting, and strict mypy passed | Phase 58 local host test |
 | Standard CI Dashboard workflow | Four report families; 35 focused Python and 10 new frontend cases; actual Edge preview, binding, six-rule PASS and malformed-SARIF rejection | Synthetic acceptance only, not measured production performance; [Phase 49 evidence](reports/PHASE_49_STANDARD_CI_ACCEPTANCE.md) |
 | Existing-only paired startup | 36 new cases, 98 focused regressions and independent CLI startup/restart/refusal checks | Selected file identities and public runtime correlation, not authenticated process ownership or live adoption; [Phase 48 evidence](reports/PHASE_48_EXISTING_PAIR_ACCEPTANCE.md) |
 | Adoption preflight | 49 new tests and independent-process MATCH/DIFFERENT/refusal checks | Offline local snapshot comparison and cold-copy preservation; not runtime adoption, live freshness or authenticated lineage; [Phase 47 evidence](reports/PHASE_47_ADOPTION_PREFLIGHT_ACCEPTANCE.md) |
@@ -184,7 +189,7 @@ Named earlier-phase rows describe their historical scope, not additional totals.
 | Contracts | 58 document and 3 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI (30 paths, 32 operations) | Current local contract inventory; drift checks are part of development verification |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
-| Dashboard automation | 168 TypeScript host interaction tests passed at Phase 52, including source replay and earlier standard-CI/recovery/job cases | Local host test; [Phase 49 actual Edge checks](reports/PHASE_49_STANDARD_CI_ACCEPTANCE.md) verify the four-report direct workflow; not exhaustive browser/OS certification |
+| Dashboard automation | 248 TypeScript host interaction tests passed at Phase 58, including quick assessment, source replay and evaluation comparison | Local host test; [Phase 58 actual Edge checks](reports/PHASE_58_WINDOWS_DELIVERY_ACCEPTANCE.md) verify the installed workflow; not exhaustive browser/OS certification |
 | Dashboard browser interaction | Full reviewed Edge workflow, Edge/Chrome keyboard/focus, 129-record pagination, 390 px responsive, 409/413/422/429/500 recovery, exact Edge 100–200% zoom, and clean-console paths passed | Windows local browser test; uncommon errors use a zero-write presentation harness; Narrator is bounded PASS, while spoken output, high contrast, and real Remote Desktop remain open |
 | MSP430 report collector | 34 focused tests plus clean-wheel CLI collection passed; one LaunchPad HIL migration fixture produced 17 normalized records with retained warnings | Local artifact test; the fixture is a historical upstream result, not a new run or physical-measurement claim |
 | MSP430 live status | COM4 opened input-only at 115200 8-N-1; authenticated Devices page showed `CONNECTED`, heartbeat `NORMAL`, device `FAULT`, flags `0015`; sequence advanced 58007→58017 over 10 seconds with 10 accepted frames and no sequence gap | Owner-authorized Windows physical-device observation; one earlier invalid frame was rejected, no command or firmware/debug action, measurement validation, release evidence, or long-duration stability claim |

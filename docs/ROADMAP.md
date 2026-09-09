@@ -1,6 +1,14 @@
 # Roadmap
 
-## Active priority — Phase 58 refreshed Windows delivery accepted
+## Active priority — feature freeze and finite Alpha completion
+
+Owner direction on 2026-09-09 freezes feature scope. Execute Phase 59 code
+closeout, Phase 60 real-project acceptance and Phase 61 final demonstration,
+using the [completion plan](ALPHA_COMPLETION_PLAN.md) and its explicit exit gates.
+Only reproduced acceptance blockers justify implementation changes during this
+milestone. Preserve earlier real AVS acceptance and all open quality limitations.
+
+## Previous engineering checkpoint — Phase 58 Windows delivery
 
 Owner direction on 2026-09-08: Phase 53B human comparison is **DEFERRED**.
 Phase 53A inputs remain retained; human gains remain unmeasured. Continue with

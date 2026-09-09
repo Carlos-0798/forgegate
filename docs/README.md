@@ -12,7 +12,11 @@ analysis, compatibility contracts, and historical acceptance evidence.
 5. [Portfolio evidence gallery](PORTFOLIO_EVIDENCE.md) — retained screenshots, exact fixture data, hashes, and claim boundaries
 6. [Security policy](../SECURITY.md) — supported scope and responsible reporting
 
-Current engineering slice: [Phase 58 Windows installed-wheel acceptance](../reports/PHASE_58_WINDOWS_DELIVERY_ACCEPTANCE.md),
+Current milestone: [feature freeze and Alpha completion](ALPHA_COMPLETION_PLAN.md).
+Phase 59 closes the local source/build baseline; Phases 60 and 61 have finite
+real-project and demonstration exit criteria.
+
+Previous engineering slice: [Phase 58 Windows installed-wheel acceptance](../reports/PHASE_58_WINDOWS_DELIVERY_ACCEPTANCE.md),
 covering installed Quick Assessment, Evidence Replay, assurance and comparison.
 It builds on [Evaluation comparison](DECISION_COMPARISON.md) and
 [Phase 57 acceptance](../reports/PHASE_57_DECISION_COMPARISON_ACCEPTANCE.md), building

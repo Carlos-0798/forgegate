@@ -1,8 +1,12 @@
 # Project status
 
-- Date: 2026-09-08
+- Date: 2026-09-09
 - Version: 0.1.0a1
-- Active checkpoint: Phase 58 refreshed Windows installed-wheel acceptance.
+- Active checkpoint: Phase 59 feature freeze and local code closeout.
+  Remaining acceptance is bounded by the [Alpha completion plan](ALPHA_COMPLETION_PLAN.md).
+  Existing real AVS acceptance is retained, not reset to NOT RUN. Percentage
+  maturity estimates are replaced by explicit exit criteria. GitHub remains paused.
+- Previous checkpoint: Phase 58 refreshed Windows installed-wheel acceptance.
   A fresh-sdist wheel installed into isolated Python 3.12 completed actual Edge
   synthetic Quick Assessment, private Evidence Replay, portable assurance and
   Evaluation Comparison. Both downloads independently verify VALID / PASS;
@@ -218,7 +222,7 @@ package jobs, but its final generic Action job did not start because GitHub
 reported an account payment/spending-limit restriction. The overall run is
 not green. Billing changes require owner action; local acceptance is separate.
 
-Per the owner's current instruction, Phases 32–48 work is local-only. No GitHub
+Per the owner's current instruction, current closeout work is local-only. No GitHub
 inspection, push, PR creation or merge was performed for this checkpoint.
 
 ## Implemented

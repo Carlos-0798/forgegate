@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- Frozen the Windows local Alpha scope for code closeout, real-project acceptance
+  and final demonstration; recorded finite completion gates and open limitations.
+- Consolidated accepted Phase 46-58 work: offline adoption preflight, existing-only
+  paired startup, standard CI Dashboard reports, reviewed Quick Assessment,
+  saved policy reuse, private original-report replay, retained rule comparison,
+  bounded real AVS host-report handling and fresh-sdist Windows delivery.
+  Historical producer FAIL and unsigned-local evidence boundaries are retained.
+
 - Added coordinated candidate v9/job v3 backup, strict offline archive verification,
   restored copies in new directories and snapshot-bound retention planning.
   Both database writers are reserved during copying; running jobs block backup.
