@@ -19,12 +19,16 @@ conclusions when their policy/profile authority differs.
 
 ## Current status
 
-**Feature freeze effective 2026-09-09.** The remaining milestone is code
-closeout, real-project acceptance and a reproducible Windows demonstration.
+**Feature freeze effective 2026-09-09.** Code closeout and frozen-package
+real-project acceptance are complete; the only remaining milestone is a
+reproducible Windows demonstration.
 See the [finite completion gates](docs/ALPHA_COMPLETION_PLAN.md); new platform
 features are deferred unless required to resolve an observed acceptance blocker.
 The [Phase 59 closeout record](reports/PHASE_59_CODE_CLOSEOUT_ACCEPTANCE.md)
 binds the local delivery to its exact clean source commit and records limitations.
+The [Phase 60 acceptance](reports/PHASE_60_REAL_PROJECT_ACCEPTANCE.md) uses that
+exact installed wheel to reproduce the retained AVS `VALID / FAIL` decision and
+the MSP430 artifact-only `COMPLETE` result without new upstream or hardware work.
 
 > **Testable Windows Alpha `0.1.0a1`** — the end-to-end local CLI assurance
 > workflow, reviewed local Dashboard actions, optional read-only MSP430 live

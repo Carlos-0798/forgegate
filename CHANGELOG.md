@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Accepted the frozen Phase 59 wheel against retained real AVS and MSP430
+  project evidence. AVS remains correctly `VALID / FAIL`; MSP430 artifact
+  collection is `COMPLETE` with `system_observed` evidence and retained scope/
+  correction warnings. Wrong-commit controls fail closed; no new upstream run,
+  serial access, producer authentication, browser rerun or GitHub action occurred.
 - Frozen the Windows local Alpha scope for code closeout, real-project acceptance
   and final demonstration; recorded finite completion gates and open limitations.
 - Consolidated accepted Phase 46-58 work: offline adoption preflight, existing-only

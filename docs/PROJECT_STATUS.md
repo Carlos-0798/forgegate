@@ -2,15 +2,22 @@
 
 - Date: 2026-09-09
 - Version: 0.1.0a1
-- Active checkpoint: Phase 59 feature freeze and local code closeout PASS.
+- Active checkpoint: Phase 60 frozen-package real-project acceptance PASS.
   Remaining acceptance is bounded by the [Alpha completion plan](ALPHA_COMPLETION_PLAN.md).
   Existing real AVS acceptance is retained, not reset to NOT RUN. Percentage
   maturity estimates are replaced by explicit exit criteria. GitHub remains paused.
+  The exact Phase 59 installed wheel reproduces retained AVS `VALID / FAIL`
+  with four collections, 130 records and all 12 rule results, and collects the
+  retained MSP430 artifact as `COMPLETE` with 17 `system_observed` records and
+  both limitation warnings. Wrong-commit controls fail closed. No upstream run,
+  serial access, browser rerun or GitHub action occurred. See
+  [Phase 60](../reports/PHASE_60_REAL_PROJECT_ACCEPTANCE.md).
+  Next and final frozen milestone: Phase 61 reproducible Windows demonstration.
+- Previous checkpoint: Phase 59 feature freeze and local code closeout PASS.
   Clean source `e424292c04e3e44c41ea41048e0b227aa5960699`: 1,433 tests pass,
   three symlink skips, 95.80% coverage; 248 frontend tests and release smoke pass.
   The exact retained wheel installs independently; all 109 runtime members match
   the Phase 58 browser-accepted wheel. See [Phase 59](../reports/PHASE_59_CODE_CLOSEOUT_ACCEPTANCE.md).
-  Next: Phase 60 frozen-package real-project acceptance, then Phase 61 final demo.
 - Previous checkpoint: Phase 58 refreshed Windows installed-wheel acceptance.
   A fresh-sdist wheel installed into isolated Python 3.12 completed actual Edge
   synthetic Quick Assessment, private Evidence Replay, portable assurance and

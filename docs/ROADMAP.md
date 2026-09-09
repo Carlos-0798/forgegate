@@ -8,10 +8,13 @@ using the [completion plan](ALPHA_COMPLETION_PLAN.md) and its explicit exit gate
 Only reproduced acceptance blockers justify implementation changes during this
 milestone. Preserve earlier real AVS acceptance and all open quality limitations.
 
-Phase 59 is locally accepted: integrated implementation and freeze plan committed,
-clean-checkout regression and fresh-sdist delivery pass; retained wheel runtime
-bytes match Phase 58. [Acceptance record](../reports/PHASE_59_CODE_CLOSEOUT_ACCEPTANCE.md).
-Next: Phase 60 checks retained real-project artifacts with the frozen package.
+Phases 59 and 60 are locally accepted: the clean source/delivery relationship is
+fixed, and that exact installed wheel independently reproduces retained AVS
+`VALID / FAIL` and MSP430 artifact-only `COMPLETE` outcomes with fail-closed
+commit controls. [Phase 59](../reports/PHASE_59_CODE_CLOSEOUT_ACCEPTANCE.md) and
+[Phase 60](../reports/PHASE_60_REAL_PROJECT_ACCEPTANCE.md) record the boundaries.
+Next and final checkpoint: Phase 61 packages and executes the reproducible Windows
+demonstration without expanding frozen product scope.
 
 ## Previous engineering checkpoint — Phase 58 Windows delivery
 

@@ -6,6 +6,10 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
+- [Phase 60 frozen-package real-project acceptance](PHASE_60_REAL_PROJECT_ACCEPTANCE.md) —
+  exact isolated Phase 59 wheel reproduces retained AVS `VALID / FAIL` and MSP430
+  artifact-only `COMPLETE`, including wrong-commit controls and explicit non-claims;
+  [machine evidence](PHASE_60_REAL_PROJECT_ACCEPTANCE_EVIDENCE.json).
 - [Phase 59 feature freeze and code closeout](PHASE_59_CODE_CLOSEOUT_ACCEPTANCE.md) —
   coherent local commit baseline, finite completion gates, clean-source delivery
   and exact installed-artifact checks; [machine evidence](PHASE_59_CODE_CLOSEOUT_EVIDENCE.json).

@@ -1,0 +1,65 @@
+{
+  "format": "forgegate.phase60-real-project-acceptance.v1",
+  "date": "2026-09-09",
+  "status": "LOCAL_REAL_PROJECT_ACCEPTANCE_PASS",
+  "frozen_package": {
+    "version": "0.1.0a1",
+    "wheel_sha256": "2262755565c0defb8be477a6f61c8f16da1a60df9c1111f97067d7efa395ff5d",
+    "source_commit": "e424292c04e3e44c41ea41048e0b227aa5960699",
+    "installed_isolated": true
+  },
+  "avs": {
+    "scope": "RETAINED_REAL_AVS_HOST_REPORTS_NOT_NEW_PRODUCER_EXECUTION",
+    "producer_commit": "bf8c4c6f59ba9063524aea7db01df87d35170483",
+    "original_report_hashes_match": true,
+    "replay_archive_sha256": "961e6f953b7a7497d1f0a289c9d1ba884cfc54bb299553a130f47099b223ce8e",
+    "status": "VALID",
+    "decision": "FAIL",
+    "collections": 4,
+    "evidence_records": 130,
+    "rule_results_exact_match": 12,
+    "wrong_commit_exit": 3,
+    "producer_authentication": "NOT_PERFORMED",
+    "hardware_access": "NOT_PERFORMED",
+    "current_upstream_run": "NOT_PERFORMED"
+  },
+  "msp430": {
+    "producer_checkpoint_commit": "151fdcfa60661bce1ba04af13c1d3509706f7d4a",
+    "reported_subject_commit": "0850241c1b2aa34704228146600501346ee81745",
+    "private_checkpoint_archive_sha256": "02491635ff4b607ec3ab98b035c5121c7341a752eda9bd6e6dfc2903fce4dda2",
+    "formal_migration_report_sha256": "90b74521075dfc1af43a0775ccae5397c704c606072ed802379e6a4e73ae9fce",
+    "all_three_source_artifact_hashes_and_sizes_match_private_archive": true,
+    "reviewed_summary_values_match_formal_report": true,
+    "collector_status": "COMPLETE",
+    "evidence_records": 17,
+    "verification_level": "system_observed",
+    "warning_codes": [
+      "MSP430_HIL_SCOPE_RETAINED",
+      "MSP430_REVIEW_CORRECTION_RETAINED"
+    ],
+    "wrong_commit_exit": 3,
+    "physical_measurements": false,
+    "new_hardware_access": "NOT_PERFORMED",
+    "formal_artifact_origin": "PRIVACY_SAFE_MIGRATION_FIXTURE_TRANSCRIBED_FROM_RETAINED_PHASE6_EVIDENCE"
+  },
+  "development_verification": {
+    "result": "PASS",
+    "python_passed": 1433,
+    "environment_skipped": 3,
+    "branch_aware_coverage_percent": 95.80,
+    "interaction_smoke_passed": 33,
+    "interaction_smoke_failed": 0,
+    "dashboard_asset_inventory": "PASS",
+    "schemas_and_openapi": "PASS"
+  },
+  "boundaries": {
+    "github_sync": "NOT_PERFORMED",
+    "browser_interaction": "RETAINED_PHASE56_NOT_RERUN",
+    "new_upstream_execution": "NOT_PERFORMED",
+    "serial_port": "NOT_OPENED",
+    "board_command": "NOT_SENT",
+    "producer_authentication": "NOT_ESTABLISHED",
+    "human_efficiency": "NOT_MEASURED",
+    "production_ready": false
+  }
+}
