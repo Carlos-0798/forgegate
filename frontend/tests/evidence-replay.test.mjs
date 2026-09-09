@@ -58,6 +58,7 @@ test("prepared originals need no reselection and still require privacy consent",
   const a=await start();a.dialog.close();a.context.prepared=a.input.files;
   runInContext("openReplayExportDialog(document.querySelector('#app'),review,undefined,prepared)",a.context);
   a.dialog=all(a.root,"dialog").at(-1);[a.input,a.consent]=all(a.dialog,"input");
+  assert.match(a.dialog.text,/2 original source files \(reports plus exact collection receipts\)/);
   assert.equal(a.input.disabled,true);await click(a,"Review selected originals");
   await click(a,"Confirm private replay download");assert.equal(a.requests.length,1);
   assert.match(a.dialog.text,/acknowledge/);

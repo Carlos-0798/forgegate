@@ -3301,7 +3301,7 @@ function openQuickAssessment(main: HTMLElement, initialCandidate: Candidate, ret
       try {
         originals = await quickReplayFiles(reports, result);
         assertCurrent();
-        status.append(el("p", "muted", `${originals.length} original reports and exact receipts are held for this dialog. After assessment, save the private replay ZIP before closing to retain them.`));
+        status.append(el("p", "muted", `${originals.length} original source files (reports plus exact collection receipts) are held for this dialog. After assessment, save the private replay ZIP before closing to retain them.`));
       } catch {
         status.append(el("p", "command-boundary", "Automatic source handoff is unavailable: exact receipts and reports must fit 1 MiB per file / 2 MiB total. Assessment can continue; retain originals for the individual replay workflow."));
       }
@@ -4467,7 +4467,7 @@ function openReplayExportDialog(main: HTMLElement, review: CandidateAssuranceRev
     } catch (error) { if (active === generation) { showProblem(status,error,"Select the complete original files and review again."); input.disabled = false; inspect.disabled = false; } }
   });
   controls.append(close,inspect);
-  panel.append(heading,el("p","muted",preparedFiles ? `${preparedFiles.length} original reports and exact receipts from this assessment are already selected. Review them, then download to save permanently.` : `Select ${required.size} original report and collection-result files. Files are matched by SHA-256 regardless of filename.`),label,input,warning,consent,consentLabel,status,controls);
+  panel.append(heading,el("p","muted",preparedFiles ? `${preparedFiles.length} original source files (reports plus exact collection receipts) from this assessment are already selected. Review them, then download to save permanently.` : `Select ${required.size} original report and collection-result files. Files are matched by SHA-256 regardless of filename.`),label,input,warning,consent,consentLabel,status,controls);
   dialog.append(panel); main.append(dialog); dialog.showModal(); input.focus();
 }
 

@@ -121,6 +121,22 @@ test("prepared replay keeps exact receipt bytes including decimal spelling",asyn
   await assert.rejects(runInContext("quickReplayFiles(reports,preview)",a.context),/Exact original/);
 });
 
+test("quick assessment labels the combined report and receipt count accurately",async()=>{
+  const a=await setup("DRAFT");
+  a.inputs["quick-files"].files=[file(bytes[0],"single.xml")];
+  const receipt=Buffer.from('{"status":"COMPLETE"}');
+  const response=preview();
+  response.body.collections=[response.body.collections[0]];
+  response.body.collection_json=[receipt.toString()];
+  response.body.assembly.collections=[{
+    source:{sha256:createHash("sha256").update(receipt).digest("hex"),size_bytes:receipt.length},
+    artifacts:[{sha256:createHash("sha256").update(bytes[0]).digest("hex"),size_bytes:bytes[0].length}]
+  }];
+  response.body.assembly_json=JSON.stringify(response.body.assembly);
+  a.responses.push({status:200,body:{candidate}},response);await click(a,"Start collection and preview");
+  assert.match(a.dialog.text,/2 original source files \(reports plus exact collection receipts\)/);
+});
+
 test("different report tools and times are submitted exactly",async()=>{
   const a=await setup();
   a.inputs["quick-tool"].value="pytest";a.inputs["quick-tool-version"].value="8.4.2";
