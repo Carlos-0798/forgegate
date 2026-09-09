@@ -4,6 +4,11 @@ Phase 44 connects a reviewed Recovery-page handoff to an owner-operated CLI
 restore and post-copy verification. Only a **new directory** may be created.
 It never replaces live databases, changes launch settings or starts a worker.
 
+Phase 47 preserves this contract while reading back destination bytes into
+disposable SQLite inspection copies. New rehearsal directories no longer acquire
+WAL/SHM sidecars from the inspection itself. Existing directories are not cleaned
+automatically; see [cold-copy preflight](WORKSPACE_ADOPTION_PREFLIGHT.md).
+
 ## Run and inspect
 
 1. Run `workspace recovery-check` with the root ZIP's retained SHA-256 and each

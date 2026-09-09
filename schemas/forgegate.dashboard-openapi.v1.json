@@ -1095,7 +1095,7 @@
             "items": {
               "$ref": "#/components/schemas/CollectionResult"
             },
-            "maxItems": 2,
+            "maxItems": 4,
             "minItems": 1,
             "title": "Collections",
             "type": "array"
@@ -1649,6 +1649,15 @@
             "title": "Candidate Id",
             "type": "string"
           },
+          "collection_json": {
+            "description": "Exact receipt bytes used by assembly references, including JSON numbers.",
+            "items": {
+              "type": "string"
+            },
+            "readOnly": true,
+            "title": "Collection Json",
+            "type": "array"
+          },
           "collections": {
             "items": {
               "$ref": "#/components/schemas/CollectionResult"
@@ -1684,6 +1693,7 @@
           "expected_revision",
           "collections",
           "assembly",
+          "collection_json",
           "assembly_json"
         ],
         "title": "DashboardCollectionPreview",
@@ -1706,7 +1716,7 @@
             "items": {
               "$ref": "#/components/schemas/DashboardReportUpload"
             },
-            "maxItems": 2,
+            "maxItems": 4,
             "minItems": 1,
             "title": "Reports",
             "type": "array"
@@ -2160,6 +2170,59 @@
         "title": "DashboardOverview",
         "type": "object"
       },
+      "DashboardPolicyChoice": {
+        "additionalProperties": false,
+        "properties": {
+          "material": {
+            "$ref": "#/components/schemas/PolicyMaterial"
+          },
+          "material_json": {
+            "readOnly": true,
+            "title": "Material Json",
+            "type": "string"
+          }
+        },
+        "required": [
+          "material",
+          "material_json"
+        ],
+        "title": "DashboardPolicyChoice",
+        "type": "object"
+      },
+      "DashboardPolicyChoices": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_id": {
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "choices": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardPolicyChoice"
+            },
+            "maxItems": 10,
+            "title": "Choices",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "forgegate.dashboard-policy-choices.v1",
+            "default": "forgegate.dashboard-policy-choices.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "truncated": {
+            "title": "Truncated",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "choices",
+          "truncated"
+        ],
+        "title": "DashboardPolicyChoices",
+        "type": "object"
+      },
       "DashboardPrincipal": {
         "additionalProperties": false,
         "properties": {
@@ -2269,6 +2332,65 @@
         "title": "DashboardRecoveryReviewRequest",
         "type": "object"
       },
+      "DashboardReplayExportRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "acknowledge_private_sources": {
+            "const": true,
+            "title": "Acknowledge Private Sources",
+            "type": "boolean"
+          },
+          "expected_bundle_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Expected Bundle Id",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardReplayFile"
+            },
+            "maxItems": 32,
+            "minItems": 2,
+            "title": "Files",
+            "type": "array"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "expected_bundle_id",
+          "files",
+          "acknowledge_private_sources"
+        ],
+        "title": "DashboardReplayExportRequest",
+        "type": "object"
+      },
+      "DashboardReplayFile": {
+        "additionalProperties": false,
+        "properties": {
+          "content_base64": {
+            "maxLength": 1398104,
+            "minLength": 0,
+            "title": "Content Base64",
+            "type": "string"
+          },
+          "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sha256",
+          "content_base64"
+        ],
+        "title": "DashboardReplayFile",
+        "type": "object"
+      },
       "DashboardReportUpload": {
         "additionalProperties": false,
         "properties": {
@@ -2287,7 +2409,9 @@
             "enum": [
               "junit",
               "coverage_xml",
-              "lcov"
+              "lcov",
+              "sarif",
+              "benchmark_json"
             ],
             "title": "Format",
             "type": "string"
@@ -5756,6 +5880,72 @@
         "summary": "Bind Dashboard Candidate Evidence"
       }
     },
+    "/app/api/candidates/{candidate_id}/evidence-replay-export": {
+      "post": {
+        "operationId": "exportDashboardEvidenceReplay",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardReplayExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Verified private source replay ZIP"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Dashboard Evidence Replay"
+      }
+    },
     "/app/api/candidates/{candidate_id}/junit-preview": {
       "post": {
         "operationId": "previewDashboardCandidateJUnit",
@@ -5820,6 +6010,45 @@
           }
         },
         "summary": "Preview Dashboard Candidate Junit"
+      }
+    },
+    "/app/api/candidates/{candidate_id}/policy-choices": {
+      "get": {
+        "operationId": "listDashboardCandidatePolicyChoices",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPolicyChoices"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Dashboard Policy Choices"
       }
     },
     "/app/api/candidates/{candidate_id}/transitions": {

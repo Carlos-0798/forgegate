@@ -1787,6 +1787,57 @@ class SQLiteCandidateRepository:
                 )
             return history.policy_material
 
+    def reusable_policy_materials(self, candidate_id: str) -> tuple[PolicyMaterial, ...]:
+        """Bounded, validated choices from the same frozen profile and track.
+
+        Return at most eleven entries so callers can expose ten plus truncation.
+        Historical storage is not an endorsement of a policy's engineering quality.
+        """
+        with self._transaction(write=False) as connection:
+            target = self._load_history(connection, candidate_id).candidate
+            if not isinstance(target, ProfileBoundReleaseCandidate):
+                return ()
+            rows = connection.execute(
+                """
+                SELECT MIN(m.candidate_id) AS candidate_id
+                FROM candidate_policy_materials m
+                JOIN candidates c ON c.candidate_id = m.candidate_id
+                JOIN candidate_profile_bindings p ON p.candidate_id = c.candidate_id
+                WHERE c.project_id = ? AND p.profile_id = ?
+                  AND p.profile_version = ? AND c.release_track = ?
+                GROUP BY m.material_id ORDER BY m.material_id LIMIT 11
+                """,
+                (
+                    target.project_id,
+                    target.project_profile_id,
+                    target.project_profile_version,
+                    target.release_track,
+                ),
+            ).fetchall()
+            materials = []
+            for row in rows:
+                source = self._load_history(connection, str(row["candidate_id"]))
+                material = source.policy_material
+                _require(material is not None, "reusable policy is missing")
+                assert material is not None
+                _require(
+                    (
+                        material.project_id,
+                        material.project_profile_id,
+                        material.project_profile_version,
+                        material.release_track,
+                    )
+                    == (
+                        target.project_id,
+                        target.project_profile_id,
+                        target.project_profile_version,
+                        target.release_track,
+                    ),
+                    "reusable policy differs from the target profile and track",
+                )
+                materials.append(material)
+            return tuple(materials)
+
     def record_evaluation(
         self, candidate_id: str, evaluation: PolicyEvaluation
     ) -> PolicyEvaluation:
@@ -2135,7 +2186,8 @@ class SQLiteCandidateRepository:
             )
         try:
             connection = sqlite3.connect(
-                path,
+                path.as_uri() + "?mode=rw" if require_exists else path,
+                uri=require_exists,
                 timeout=self.timeout_seconds,
                 isolation_level=None,
             )

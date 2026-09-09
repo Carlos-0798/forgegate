@@ -23,11 +23,18 @@ def main() -> None:
     parser.add_argument(
         "--multi-report", action="store_true", help="use synthetic test + coverage policy"
     )
+    parser.add_argument(
+        "--standard-reports", action="store_true", help="use synthetic four-family CI policy"
+    )
     args = parser.parse_args()
     output: Path = args.output
     output.mkdir(parents=True, exist_ok=False)
     root = Path(__file__).resolve().parents[1] / (
-        "examples/dashboard-multi-report" if args.multi_report else "examples/dashboard-junit"
+        "examples/dashboard-standard-ci"
+        if args.standard_reports
+        else "examples/dashboard-multi-report"
+        if args.multi_report
+        else "examples/dashboard-junit"
     )
     application = CandidateApplication.for_database(output / "forgegate.db")
     application.initialize()

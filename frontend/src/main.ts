@@ -305,7 +305,7 @@ interface EvidenceBinding {
     assembly_id: string;
     warning_disposition: string;
     bundle: { generated_at: string; producer: string; evidence: EvidenceRecord[] };
-    collections: Array<{ collector_name: string; collector_version: string; warnings: Array<{ code: string; message: string }> }>;
+    collections: Array<{ collector_name: string; collector_version: string; source: ArtifactReference; artifacts: ArtifactReference[]; warnings: Array<{ code: string; message: string }> }>;
   };
 }
 
@@ -2275,7 +2275,7 @@ async function renderCandidates(): Promise<void> {
   const main = page(
     "Release candidates",
     "PROJECT-SCOPED WORK",
-    "Each lifecycle, evidence, evaluation, and attestation write is independently reviewed; successful writes reload authoritative state."
+    "Choose individual reviewed commands or Quick assessment to process a reviewed report batch through evaluation and attestation."
   );
   try {
     const visible = await ensureProjects();
@@ -2305,6 +2305,9 @@ async function renderCandidates(): Promise<void> {
       const create = button("Create candidate", "button primary");
       create.addEventListener("click", () => openCandidateDialog(main, create));
       toolbar.append(create);
+      const quick = button("Quick assessment", "button secondary");
+      quick.addEventListener("click", () => openCandidateDialog(main, quick, undefined, true));
+      toolbar.append(quick);
     } else {
       const readOnly = el("p", "muted", "Producer sessions are read-only.");
       toolbar.append(readOnly);
@@ -2407,7 +2410,8 @@ function candidateTable(candidates: Candidate[], main: HTMLElement): HTMLElement
 function openCandidateDialog(
   main: HTMLElement,
   returnFocus?: HTMLElement,
-  initialValues?: Record<string, string>
+  initialValues?: Record<string, string>,
+  quick = false
 ): void {
   const dialog = el("dialog", "review-dialog");
   dialog.setAttribute("aria-labelledby", "candidate-dialog-title");
@@ -2449,7 +2453,7 @@ function openCandidateDialog(
       return;
     }
     commit.input.setCustomValidity("");
-    renderCandidateReview(dialog, values, returnFocus);
+    renderCandidateReview(dialog, values, returnFocus, quick);
   });
   controls.append(cancel, review);
   form.append(controls);
@@ -2487,7 +2491,8 @@ function field(label: string, name: string, placeholder: string, type: string, r
 function renderCandidateReview(
   dialog: HTMLDialogElement,
   values: Record<string, string>,
-  returnFocus?: HTMLElement
+  returnFocus?: HTMLElement,
+  quick = false
 ): void {
   const review = el("section", "review-panel");
   const heading = el("h2", undefined, "Confirm one durable write");
@@ -2509,7 +2514,7 @@ function renderCandidateReview(
   back.addEventListener("click", () => {
     dialog.close();
     const workspace = document.querySelector<HTMLElement>("#workspace");
-    if (workspace !== null) openCandidateDialog(workspace, returnFocus, values);
+    if (workspace !== null) openCandidateDialog(workspace, returnFocus, values, quick);
   });
   const confirm = button("Confirm creation", "button primary");
   const idempotencyKey = `dashboard:candidate:${crypto.randomUUID()}`;
@@ -2531,9 +2536,11 @@ function renderCandidateReview(
       const eyebrow = review.querySelector<HTMLElement>(".eyebrow");
       if (eyebrow !== null) eyebrow.textContent = "DRAFT CREATED";
       status.replaceChildren(statusBadge("Request completed"), el("p", undefined, `Candidate ${created.candidate_id} is ${created.status}. No policy decision has been made.`));
-      const done = button("Inspect candidate", "button primary");
+      const done = button(quick ? "Select reports and assess" : "Inspect candidate", "button primary");
       done.addEventListener("click", async () => {
+        const parent = document.querySelector<HTMLElement>("#workspace");
         dialog.close();
+        if (quick && parent !== null) { openQuickAssessment(parent, created); return; }
         resetCandidatePagination();
         await renderCandidates();
         const workspace = document.querySelector<HTMLElement>("#workspace");
@@ -2815,11 +2822,384 @@ function sortedJsonValue(value: unknown): unknown {
   return value;
 }
 
+type QuickReportFormat = "junit" | "coverage_xml" | "lcov" | "sarif" | "benchmark_json";
+
+function detectQuickReport(content: ArrayBuffer): QuickReportFormat {
+  const text = new TextDecoder("utf-8", {fatal: true}).decode(content).trim();
+  // Routing only. The existing server collectors validate the complete original bytes.
+  if (text.startsWith("{")) {
+    const value: unknown = JSON.parse(text);
+    if (isJsonObject(value)) {
+      const sarif = value.version === "2.1.0" && "runs" in value;
+      const benchmark = value.schema_version === "forgegate.benchmark.v1";
+      if (sarif && benchmark) throw new Error("Ambiguous JSON report family.");
+      if (sarif) return "sarif";
+      if (benchmark) return "benchmark_json";
+    }
+  }
+  const xml = text.replace(/^(?:\s|<\?xml[\s\S]*?\?>|<!--[\s\S]*?-->)+/, "");
+  if (/^<testsuites?(?:\s|\/?>)/.test(xml)) return "junit";
+  if (/^<coverage(?:\s|\/?>)/.test(xml)) return "coverage_xml";
+  if (/^(?:TN:[^\r\n]*\r?\n)?SF:/m.test(text) && !text.startsWith("<")) return "lcov";
+  throw new Error("Unsupported report. Select JUnit, Cobertura/LCOV, SARIF 2.1.0 or ForgeGate benchmark JSON.");
+}
+
+interface QuickReport {
+  file: File;
+  bytes: ArrayBuffer;
+  format: QuickReportFormat;
+  fingerprint: string;
+  content_base64: string;
+}
+
+async function readQuickReports(files: File[]): Promise<QuickReport[]> {
+  if (!files.length || files.length > 4) throw new Error("Select 1–4 report files; keep policy and unrelated files outside the report folder.");
+  if (files.some(file => file.size < 1 || file.size > 1048576) || files.reduce((sum, file) => sum + file.size, 0) > 2097152) throw new Error("Reports allow 1 MiB per file and 2 MiB total.");
+  const reports: QuickReport[] = [];
+  const families = new Set<string>();
+  for (const file of files) {
+    const bytes = await file.arrayBuffer();
+    if (bytes.byteLength !== file.size) throw new Error("Report changed while reading; select the files again.");
+    const format = detectQuickReport(bytes);
+    const family = format === "lcov" ? "coverage_xml" : format;
+    const fingerprint = await sha256Hex(bytes);
+    if (families.has(family) || reports.some(report => report.fingerprint === fingerprint)) throw new Error("Duplicate report family or bytes. Select one report per family, including only one coverage format.");
+    families.add(family);
+    let binary = "";
+    for (const byte of new Uint8Array(bytes)) binary += String.fromCharCode(byte);
+    reports.push({file, bytes, format, fingerprint, content_base64: btoa(binary)});
+  }
+  return reports;
+}
+
+async function quickReplayFiles(reports: QuickReport[], result: Record<string, unknown>): Promise<File[]> {
+  const invalid = () => new Error("Exact original reports and receipts are unavailable for replay. Keep the original files and use the individual source-replay workflow.");
+  if (!Array.isArray(result.collection_json) || result.collection_json.length !== reports.length || !isJsonObject(result.assembly) || !Array.isArray(result.assembly.collections)) throw invalid();
+  const required = new Map<string, number>();
+  for (const receipt of result.assembly.collections) {
+    if (!isJsonObject(receipt) || !isJsonObject(receipt.source) || !Array.isArray(receipt.artifacts)) throw invalid();
+    for (const ref of [receipt.source, ...receipt.artifacts]) {
+      if (!isJsonObject(ref) || typeof ref.sha256 !== "string" || typeof ref.size_bytes !== "number") throw invalid();
+      required.set(ref.sha256, ref.size_bytes);
+    }
+  }
+  const files = [...reports.map(report => new File([report.bytes], report.file.name)), ...result.collection_json.map((text, index) => {
+    if (typeof text !== "string") throw invalid();
+    return new File([text], `collection-${index + 1}.json`, {type:"application/json"});
+  })];
+  const seen = new Set<string>();
+  for (const file of files) {
+    const digest = await sha256Hex(await file.arrayBuffer());
+    if (required.get(digest) !== file.size || seen.has(digest)) throw invalid();
+    seen.add(digest);
+  }
+  if (seen.size !== required.size || files.some(file => file.size > 1048576) || files.reduce((sum, file) => sum + file.size, 0) > 2097152) throw invalid();
+  return files;
+}
+
+function openQuickAssessment(main: HTMLElement, initialCandidate: Candidate, returnFocus?: HTMLElement): void {
+  const owner = session;
+  if (owner?.principal.role !== "operator" || !["DRAFT", "COLLECTING"].includes(initialCandidate.status)) return;
+  const route = window.location.hash;
+  let candidate = initialCandidate;
+  let busy = false;
+  const dialog = el("dialog", "review-dialog");
+  const form = el("form", "candidate-form");
+  form.addEventListener("submit", event => event.preventDefault());
+  const title = el("h2", undefined, "Quick assessment");
+  title.id = "quick-assessment-title";
+  dialog.setAttribute("aria-labelledby", title.id);
+  const addField = (label: string, name: string, type: string, required = true) => {
+    const item = field(label, name, "", type, required);
+    form.append(item.wrapper);
+    return item.input;
+  };
+  form.append(title, el("p", "muted", `${candidate.version} · ${candidate.project_id} · ${candidate.commit_sha}`),
+    el("p", "muted", "1. Select reports → 2. Review parsed evidence → 3. Confirm assessment → 4. Download assurance."),
+    el("p", "command-boundary", "Choose files or a folder containing only reports (1–4 files, 1 MiB each, 2 MiB total). Formats are detected from content. ZIP input is not supported. Source bytes remain declared evidence; keep originals for later replay."));
+  const filesInput = addField("Report files", "quick-files", "file", false);
+  filesInput.multiple = true;
+  const folderInput = addField("Or select report folder", "quick-folder", "file", false);
+  folderInput.multiple = true;
+  folderInput.setAttribute("webkitdirectory", "");
+  filesInput.addEventListener("change", () => { folderInput.value = ""; });
+  folderInput.addEventListener("change", () => { filesInput.value = ""; });
+  const policyInput = addField("Profile-authorized policy material JSON", "quick-policy", "file");
+  policyInput.accept = ".json";
+  const policyChoices = el("select"); policyChoices.id = "quick-policy-choice";
+  policyChoices.append(Object.assign(el("option", undefined, "Choose a policy file"), {value:""}));
+  const policyLabel = el("label", "field-label", "Saved policy for this profile and track"); policyLabel.htmlFor = policyChoices.id;
+  const loadPolicies = button("Load saved policies");
+  const policyNote = el("p", "muted", "Reuse a previously evaluated policy with this exact project profile and release track, or select a policy file.");
+  form.append(policyLabel, policyChoices, loadPolicies, policyNote);
+  const savedPolicies = new Map<string, File>();
+  policyChoices.addEventListener("change", () => {
+    policyInput.disabled = !!policyChoices.value;
+    policyInput.required = !policyChoices.value;
+  });
+  const source = addField("JUnit / coverage source tool (same run)", "quick-tool", "text");
+  const version = addField("JUnit / coverage tool version", "quick-tool-version", "text");
+  const collected = addField("Original report time for this run (UTC offset)", "quick-time", "text");
+  collected.placeholder = "2026-09-08T12:00:00Z";
+  form.append(el("p", "muted", "Shared metadata is the default. For different tools or report times, expand the overrides below. SARIF and benchmark tool identities come from their reports."));
+  const overrides = el("details");
+  overrides.append(el("summary", undefined, "Per-report metadata overrides (optional)"));
+  const overrideField = (label: string, name: string) => {
+    const item = field(label, name, "", "text", false);
+    item.input.value = "";
+    overrides.append(item.wrapper);
+    return item.input;
+  };
+  const coverageTool = overrideField("Coverage source tool override", "quick-coverage-tool");
+  const coverageVersion = overrideField("Coverage tool version override", "quick-coverage-version");
+  const reportTimes = {
+    coverage: overrideField("Coverage report time override", "quick-coverage-time"),
+    sarif: overrideField("SARIF report time override", "quick-sarif-time"),
+    benchmark: overrideField("Benchmark report time override", "quick-benchmark-time")
+  };
+  form.append(overrides);
+  const status = el("div", "dialog-status");
+  status.setAttribute("aria-live", "polite");
+  const controls = el("div", "dialog-actions");
+  const close = button("Close", "button quiet");
+  close.addEventListener("click", () => dialog.close());
+  const preview = button(candidate.status === "DRAFT" ? "Start collection and preview" : "Preview batch", "button primary");
+  controls.append(close, preview);
+  form.append(status, controls);
+  dialog.append(form);
+  const current = () => dialog.open && dialog.isConnected && session === owner && window.location.hash === route;
+  loadPolicies.addEventListener("click", async () => {
+    if (busy || !current() || loadPolicies.disabled) return;
+    loadPolicies.disabled = true;
+    try {
+      const response = await api<{candidate_id:string;choices:Array<{material:Record<string, unknown>;material_json:string}>;truncated:boolean}>(`/app/api/candidates/${encodeURIComponent(candidate.candidate_id)}/policy-choices`);
+      if (!current()) return;
+      if (response.candidate_id !== candidate.candidate_id || !Array.isArray(response.choices) || response.choices.length > 10) throw new Error("Policy choices do not match this candidate.");
+      for (const choice of response.choices) {
+        if (typeof choice.material_json !== "string" || JSON.stringify(sortedJsonValue(JSON.parse(choice.material_json))) !== JSON.stringify(sortedJsonValue(choice.material))) throw new Error("Saved policy bytes do not match their preview.");
+        const file = new File([choice.material_json], "saved-policy.json", {type:"application/json"});
+        if (file.size > 1048576) continue;
+        policyImportMutation(candidate, choice.material, file, await sha256Hex(await file.arrayBuffer()));
+        if (!current()) return;
+        const id = String(choice.material.material_id);
+        if (savedPolicies.has(id)) continue;
+        savedPolicies.set(id, file);
+        policyChoices.append(Object.assign(el("option", undefined, `${candidate.release_track} · ${id.slice(7, 19)}`), {value:id}));
+      }
+      policyNote.textContent = `${savedPolicies.size} reusable policies loaded. Select one and review its rules before assessment.${response.truncated ? " More exist; use an exact policy file for an unlisted material." : ""}${savedPolicies.size ? "" : " No compatible material is saved yet; select a policy file for this first run."}`;
+    } catch (error) {
+      if (current()) policyNote.textContent = `Saved policies could not be loaded. Select a policy file or try again. ${error instanceof RequestProblem ? error.code : ""}`;
+    } finally { if (current() && !busy) loadPolicies.disabled = false; }
+  });
+  const assertCurrent = () => { if (!current()) throw new Error("Assessment stopped because the page or session changed. Inspect the candidate before continuing."); };
+  const post = async <T>(endpoint: string, body: string, key: string | null = null): Promise<T> => {
+    assertCurrent();
+    const headers: Record<string, string> = {"X-ForgeGate-CSRF": owner.csrf_token};
+    if (key !== null) headers["Idempotency-Key"] = key;
+    const result = await api<T>(endpoint, {method: "POST", headers, body});
+    assertCurrent();
+    return result;
+  };
+  const path = `/app/api/candidates/${encodeURIComponent(candidate.candidate_id)}`;
+  const inspect = () => {
+    const link = el("a", "button secondary", "Inspect retained candidate");
+    link.href = candidateReviewHash("evidence", candidate.candidate_id);
+    controls.append(link);
+  };
+  const stop = (error: unknown) => {
+    busy = false;
+    if (!current()) return;
+    close.disabled = false;
+    controls.replaceChildren(close);
+    inspect();
+    status.append(el("p", "command-boundary", "Processing stopped. Completed steps remain retained; inspect the candidate before another attempt. No automatic retry occurs."));
+    const problem = el("div"); status.append(problem);
+    showProblem(problem, error, "Inspect retained candidate state before continuing.");
+  };
+  const advance = async (target: string) => {
+    const prior = candidate;
+    const mutation = transitionMutation(candidate, target);
+    const result = await post<{candidate: Candidate}>(mutation.endpoint, JSON.stringify(mutation.body), `${mutation.idempotencyPrefix}:${crypto.randomUUID()}`);
+    if (result.candidate?.candidate_id !== prior.candidate_id || result.candidate.commit_sha !== prior.commit_sha || result.candidate.project_id !== prior.project_id || result.candidate.status !== target || result.candidate.revision !== prior.revision + 1) throw new Error("Unexpected transition response. Inspect retained candidate state.");
+    candidate = result.candidate;
+    status.append(el("p", undefined, `Completed: ${target} · revision ${candidate.revision}`));
+  };
+  preview.addEventListener("click", async () => {
+    if (busy || !current() || !form.reportValidity()) return;
+    busy = true;
+    preview.disabled = true;
+    const inputs = [filesInput, folderInput, policyInput, policyChoices, loadPolicies, source, version, collected, coverageTool, coverageVersion, ...Object.values(reportTimes)];
+    inputs.forEach(input => { input.disabled = true; });
+    status.replaceChildren(el("p", "muted", "Reading and identifying selected files…"));
+    try {
+      const direct = Array.from(filesInput.files ?? []), folder = Array.from(folderInput.files ?? []);
+      if (direct.length && folder.length) throw new Error("Select files or a folder, not both.");
+      const reports = await readQuickReports(direct.length ? direct : folder);
+      const policyFile = savedPolicies.get(policyChoices.value) ?? policyInput.files?.[0];
+      if (!policyFile || policyFile.size < 1 || policyFile.size > 1048576) throw new Error("Select policy material JSON up to 1 MiB.");
+      const policyBytes = await policyFile.arrayBuffer();
+      if (policyBytes.byteLength !== policyFile.size) throw new Error("Policy file changed while reading.");
+      const policyText = new TextDecoder("utf-8", {fatal: true}).decode(policyBytes);
+      const policy: unknown = JSON.parse(policyText);
+      if (!isJsonObject(policy)) throw new Error("Policy material must be a JSON object.");
+      const policyHash = await sha256Hex(policyBytes);
+      policyImportMutation(candidate, policy, policyFile, policyHash);
+      if (!source.value.trim() || !version.value.trim()) throw new Error("Provide the source tool and version for this run.");
+      if (!/(Z|[+-]\d{2}:\d{2})$/i.test(collected.value) || !Number.isFinite(Date.parse(collected.value)) || Date.parse(collected.value) > Date.now()) throw new Error("Provide the original report time with a UTC offset, not a future time.");
+      if (!!coverageTool.value.trim() !== !!coverageVersion.value.trim()) throw new Error("Provide both coverage tool and version overrides, or leave both blank.");
+      const requestReports = reports.map(report => {
+        const coverage = ["coverage_xml", "lcov"].includes(report.format);
+        const embedded = ["sarif", "benchmark_json"].includes(report.format);
+        const override = coverage ? reportTimes.coverage : report.format === "sarif" ? reportTimes.sarif : report.format === "benchmark_json" ? reportTimes.benchmark : null;
+        const time = override?.value.trim() || collected.value;
+        if (!/(Z|[+-]\d{2}:\d{2})$/i.test(time) || !Number.isFinite(Date.parse(time)) || Date.parse(time) > Date.now()) throw new Error("Every report time must include a UTC offset and must not be in the future.");
+        return {format: report.format, content_base64: report.content_base64,
+          source_tool: embedded ? "report-embedded" : coverage && coverageTool.value.trim() ? coverageTool.value.trim() : source.value.trim(),
+          source_version: embedded ? "report-embedded" : coverage && coverageVersion.value.trim() ? coverageVersion.value.trim() : version.value.trim(), collected_at: time};
+      });
+      assertCurrent();
+      status.replaceChildren(el("h3", undefined, "Detected reports"));
+      const table = el("table");
+      const head = el("tr");
+      for (const label of ["File", "Format", "Bytes", "SHA-256"]) head.append(el("th", undefined, label));
+      table.append(head);
+      for (const report of reports) {
+        const row = el("tr");
+        for (const value of [report.file.name, report.format, String(report.file.size), report.fingerprint]) row.append(el("td", "mono", value));
+        table.append(row);
+      }
+      for (const report of requestReports) status.append(el("p", "muted", `${report.format} · ${report.source_tool} ${report.source_version} · ${report.collected_at}`));
+      const wrap = el("div", "table-wrap"); wrap.append(table); status.append(wrap);
+      status.append(el("p", "muted", `Policy SHA-256: ${policyHash}`));
+      if (isJsonObject(policy.policy) && Array.isArray(policy.policy.rules)) {
+        status.append(el("h3", undefined, `Selected policy: ${String(policy.policy.name)} · ${policy.policy.rules.length} rules`));
+        for (const rule of policy.policy.rules.slice(0, 25)) if (isJsonObject(rule)) {
+          const where = isJsonObject(rule.where) ? rule.where : {};
+          status.append(el("p", undefined, `${String(rule.id)} · ${String(rule.evidence_kind)} / ${String(where.field ?? rule.aggregation)} ${String(rule.operator).replaceAll("_", " ")} ${JSON.stringify(rule.expected)} · missing: ${String(rule.on_missing)}`));
+        }
+        if (policy.policy.rules.length > 25) status.append(el("p", "muted", "Showing first 25 rules. Review the selected policy file for the full rule set."));
+      }
+      if (candidate.status === "DRAFT") await advance("COLLECTING");
+      const command = {expected_revision: candidate.revision, reported_commit: candidate.commit_sha,
+        reports: requestReports, retain_warnings: false};
+      const result = await post<Record<string, unknown>>(`${path}/collection-preview`, JSON.stringify(command));
+      const finishPreview = async (result: Record<string, unknown>, warningsReviewed = false): Promise<void> => {
+      assertCurrent();
+      if (result.candidate_id !== candidate.candidate_id || result.expected_revision !== candidate.revision || !Array.isArray(result.collections) || result.collections.length !== reports.length) throw new Error("Unexpected preview identity or report count.");
+      let warningCount = 0;
+      for (const [index, raw] of result.collections.entries()) {
+        const report = reports[index];
+        if (!report || !isJsonObject(raw) || !Array.isArray(raw.artifacts) || !raw.artifacts.some(item => isJsonObject(item) && item.sha256 === report.fingerprint && item.size_bytes === report.file.size)) throw new Error("Preview source hash does not match the selected bytes.");
+        status.append(el("h3", undefined, `${report.format}: ${String(raw.status)}`));
+        for (const issue of [...(Array.isArray(raw.warnings) ? raw.warnings : []), ...(Array.isArray(raw.rejected_records) ? raw.rejected_records : [])].slice(0, 25)) {
+          if (isJsonObject(issue)) status.append(el("p", "command-boundary", `${String(issue.code)}: ${String(issue.message)}`));
+        }
+        if (Array.isArray(raw.evidence)) for (const record of raw.evidence.slice(0, 25)) {
+          if (isJsonObject(record)) status.append(el("p", "mono", `${String(record.kind)} · ${String(record.scope)} · ${JSON.stringify(record.value)}`));
+        }
+        if (raw.status !== "COMPLETE" || !Array.isArray(raw.warnings) || !Array.isArray(raw.rejected_records) || raw.rejected_records.length || raw.warnings.length > 25) {
+          throw new RequestProblem(
+            422,
+            "DASHBOARD_QUICK_REPORT_REVIEW_REQUIRED",
+            "A report was rejected or its warning list exceeds the review limit. No partial selection will be bound; use the individual workflow or CLI.",
+            "browser-side",
+            null,
+            "browser"
+          );
+        }
+        warningCount += raw.warnings.length;
+      }
+      if (warningCount && !warningsReviewed) {
+        status.append(el("p", "command-boundary", `${warningCount} collector warning(s) require explicit review. Retaining them preserves their limitations; it does not fix them or change policy thresholds.`));
+        const consentLabel = el("label", "field");
+        const consent = el("input"); consent.type = "checkbox";
+        consentLabel.append(consent, el("span", undefined, "I reviewed these collector warnings and want to retain them unchanged."));
+        status.append(consentLabel);
+        const retain = button("Retain reviewed warnings and preview", "button primary");
+        controls.replaceChildren(close, retain);
+        busy = false;
+        retain.addEventListener("click", async () => {
+          if (busy || retain.disabled || !current()) return;
+          if (!consent.checked) { consent.setCustomValidity("Review and acknowledge the displayed warnings first."); consent.reportValidity(); return; }
+          consent.setCustomValidity(""); busy = true; retain.disabled = consent.disabled = true;
+          try {
+            const reviewed = await post<Record<string, unknown>>(`${path}/collection-preview`, JSON.stringify({...command, retain_warnings:true}));
+            if (JSON.stringify(sortedJsonValue(reviewed.collections)) !== JSON.stringify(sortedJsonValue(result.collections)) || JSON.stringify(reviewed.collection_json) !== JSON.stringify(result.collection_json)) throw new Error("Collection results changed after warning review. Inspect the candidate and start a new review.");
+            await finishPreview(reviewed, true);
+          } catch (error) { stop(error); }
+        });
+        consent.focus(); return;
+      }
+      const assembly = result.assembly;
+      if (!isJsonObject(assembly) || typeof result.assembly_json !== "string" || JSON.stringify(sortedJsonValue(JSON.parse(result.assembly_json))) !== JSON.stringify(sortedJsonValue(assembly))) throw new Error("Missing or inconsistent exact assembly JSON.");
+      const assemblyText = result.assembly_json;
+      evidenceImportMutation(candidate, assembly, reports[0]!.file, reports[0]!.fingerprint);
+      let originals: File[] | undefined;
+      try {
+        originals = await quickReplayFiles(reports, result);
+        assertCurrent();
+        status.append(el("p", "muted", `${originals.length} original reports and exact receipts are held for this dialog. After assessment, save the private replay ZIP before closing to retain them.`));
+      } catch {
+        status.append(el("p", "command-boundary", "Automatic source handoff is unavailable: exact receipts and reports must fit 1 MiB per file / 2 MiB total. Assessment can continue; retain originals for the individual replay workflow."));
+      }
+      status.append(el("p", "command-boundary", "Confirming will bind this complete selection immutably, mark it READY, evaluate the selected policy, and generate an unsigned local attestation for the actual decision. Missing policy evidence can produce REVIEW. Review included reports before continuing."));
+      const confirm = button("Confirm assessment and attestation", "button primary");
+      controls.replaceChildren(close, confirm);
+      busy = false;
+      let submitted = false;
+      confirm.addEventListener("click", async () => {
+        if (busy || submitted || !current()) return;
+        busy = submitted = true;
+        confirm.disabled = close.disabled = true;
+        try {
+          const binding = evidenceImportMutation(candidate, assembly, reports[0]!.file, reports[0]!.fingerprint);
+          await post(binding.endpoint, exactDocumentBody(binding.body, "assembly", assemblyText), `${binding.idempotencyPrefix}:${crypto.randomUUID()}`);
+          status.append(el("p", undefined, "Completed: immutable evidence binding"));
+          await advance("READY");
+          await advance("EVALUATING");
+          const evaluation = policyImportMutation(candidate, policy, policyFile, policyHash);
+          await post(evaluation.endpoint, exactDocumentBody(evaluation.body, "policy_material", policyText), `${evaluation.idempotencyPrefix}:${crypto.randomUUID()}`);
+          const review = await api<CandidateAssuranceReview>(`${path}/assurance-review`);
+          assertCurrent();
+          if (review.candidate.candidate_id !== candidate.candidate_id || review.candidate.commit_sha !== candidate.commit_sha || review.candidate.revision !== candidate.revision + 1 || !["PASS", "FAIL", "REVIEW", "ERROR"].includes(review.candidate.status)) throw new Error("Evaluation readback did not match this candidate.");
+          candidate = review.candidate;
+          status.append(el("h3", undefined, `Engineering decision: ${candidate.status}`));
+          for (const rule of review.policy_evaluation?.rule_results ?? []) {
+            status.append(el("p", undefined, `${rule.rule_id}: ${rule.decision} · actual ${JSON.stringify(rule.actual)} / expected ${JSON.stringify(rule.expected)} · ${rule.explanation}`));
+          }
+          const attestation = attestMutation(candidate);
+          await post(attestation.endpoint, JSON.stringify(attestation.body));
+          const completed = await api<CandidateAssuranceReview>(`${path}/assurance-review`);
+          assertCurrent();
+          if (completed.candidate.candidate_id !== candidate.candidate_id || completed.candidate.commit_sha !== candidate.commit_sha || completed.candidate.evaluation_id !== candidate.evaluation_id || !completed.attestation || !completed.assurance_bundle_id) throw new Error("Attestation readback unavailable; inspect Assurance.");
+          status.append(el("p", undefined, "Completed: attestation retained. The assurance package is ready to review and download."));
+          const download = button("Review assurance download", "button primary");
+          download.addEventListener("click", () => { openAssuranceExportDialog(main, completed, download); });
+          controls.replaceChildren(close, download);
+          if (originals) {
+            const replay = button("Save originals for offline replay", "button primary");
+            replay.addEventListener("click", () => openReplayExportDialog(main, completed, replay, originals));
+            controls.append(replay);
+          }
+          inspect(); close.disabled = false; busy = false; download.focus();
+        } catch (error) { stop(error); }
+      });
+      confirm.focus();
+      };
+      await finishPreview(result);
+    } catch (error) { stop(error); }
+  });
+  dialog.addEventListener("cancel", event => { event.preventDefault(); if (!busy) dialog.close(); });
+  dialog.addEventListener("keydown", event => keepFocusInsideDialog(dialog, event));
+  dialog.addEventListener("close", () => { dialog.remove(); if (returnFocus?.isConnected) returnFocus.focus(); }, {once: true});
+  main.append(dialog); dialog.showModal(); filesInput.focus();
+}
+
 function openJUnitImport(main: HTMLElement, candidate: Candidate, returnFocus?: HTMLElement, multi = false, durable = false): void {
   const invalid = (message: string): RequestProblem => new RequestProblem(422, multi ? "DASHBOARD_COLLECTION_INVALID" : "DASHBOARD_JUNIT_INVALID", message, "browser-side", null, "browser");
   const dialog = el("dialog", "review-dialog");
   dialog.setAttribute("aria-labelledby", "candidate-command-dialog-title");
-  const heading = el("h2", undefined, durable ? "Prepare durable report task" : multi ? "Collect test + coverage reports" : "Collect JUnit report");
+  const heading = el("h2", undefined, durable ? "Prepare durable report task" : multi ? "Collect standard CI reports" : "Collect JUnit report");
   heading.id = "candidate-command-dialog-title";
   const form = el("form", "candidate-form");
   form.addEventListener("submit", (event) => event.preventDefault());
@@ -2864,6 +3244,18 @@ function openJUnitImport(main: HTMLElement, candidate: Candidate, returnFocus?: 
     wrap.append(el("span", undefined, "Coverage format — select explicitly"), format);
     form.append(wrap);
   }
+  const supplements = multi ? [
+    {format: "sarif", label: "Security scan — SARIF 2.1.0", accept: ".sarif,.json,application/json"},
+    {format: "benchmark_json", label: "Performance — ForgeGate benchmark JSON", accept: ".json,application/json"}
+  ].map((item) => {
+    const file = field(`${item.label} (optional)`, "file");
+    file.accept = item.accept;
+    file.required = false;
+    const time = field(`${item.label}: original collection time (UTC offset)`, "text");
+    time.required = false;
+    return {...item, file, time};
+  }) : [];
+  if (multi) form.append(el("p", "command-boundary", "Include security and performance reports here when your policy requires them: binding cannot be extended later. Maximum 2 MiB for the complete selection. SARIF and benchmark tool identities come from the report itself, not the test/coverage fields. A successful parser does not mean a passing scan or benchmark."));
   const status = el("div", "dialog-status");
   status.setAttribute("aria-live", "polite");
   const controls = el("div", "dialog-actions");
@@ -2887,10 +3279,13 @@ function openJUnitImport(main: HTMLElement, candidate: Candidate, returnFocus?: 
     collect.disabled = true;
     for (const input of [fileInput, commit, tool, version, time]) input.disabled = true;
     if (coverage !== null) for (const input of Object.values(coverage)) input.disabled = true;
+    for (const item of supplements) { item.file.disabled = true; item.time.disabled = true; }
     format.disabled = true;
     status.replaceChildren(el("p", "muted", "Reading the selected report. Closing discards the preview; an already submitted server request may finish."));
     const file = fileInput.files?.[0];
     try {
+      const selectedFiles = [file, coverage?.file.files?.[0], ...supplements.map(item => item.file.files?.[0])];
+      if (selectedFiles.reduce((total, item) => total + (item?.size ?? 0), 0) > 2097152) throw invalid("The complete report selection must not exceed 2 MiB.");
       if (file === undefined || file.size === 0 || file.size > 1048576) throw invalid("Choose one non-empty XML file no larger than 1 MiB.");
       if (commit.value !== candidate.commit_sha) throw invalid("Reported commit must match this candidate. A matching declaration does not authenticate the report.");
       if (!/(Z|[+-]\d{2}:\d{2})$/i.test(time.value) || !Number.isFinite(Date.parse(time.value)) || Date.parse(time.value) > Date.now()) throw invalid("Provide the original collection time with a UTC offset, not a future time.");
@@ -2919,6 +3314,24 @@ function openJUnitImport(main: HTMLElement, candidate: Candidate, returnFocus?: 
         for (const byte of new Uint8Array(coverageBytes)) encoded += String.fromCharCode(byte);
         reports.push({format: format.value, content_base64: btoa(encoded), source_tool: coverage.tool.value, source_version: coverage.version.value, collected_at: coverage.time.value});
         sources.push({file: coverageFile, fingerprint: coverageHash, size: coverageBytes.byteLength, format: format.value});
+      }
+      for (const item of supplements) {
+        const selected = item.file.files?.[0];
+        if (selected === undefined) {
+          if (item.time.value.trim()) throw invalid(`Select the ${item.label} report or clear its collection time.`);
+          continue;
+        }
+        if (selected.size === 0 || selected.size > 1048576) throw invalid(`${item.label} must contain 1 byte to 1 MiB.`);
+        if (!/(Z|[+-]\d{2}:\d{2})$/i.test(item.time.value) || !Number.isFinite(Date.parse(item.time.value)) || Date.parse(item.time.value) > Date.now()) throw invalid(`Provide the original ${item.label} time with a UTC offset, not a future time.`);
+        const content = await selected.arrayBuffer();
+        if (content.byteLength !== selected.size) throw invalid("Selected report size changed; reopen the selection.");
+        const digest = await sha256Hex(content);
+        if (!current()) return;
+        if (sources.some(source => source.fingerprint === digest)) throw invalid("Duplicate report bytes are not allowed.");
+        let encoded = "";
+        for (const byte of new Uint8Array(content)) encoded += String.fromCharCode(byte);
+        reports.push({format: item.format, content_base64: btoa(encoded), source_tool: "report-embedded", source_version: "report-embedded", collected_at: item.time.value});
+        sources.push({file: selected, fingerprint: digest, size: content.byteLength, format: item.format});
       }
       const preview = async (retainWarnings: boolean): Promise<void> => {
         if (!current() || owner === null) return;
@@ -2979,9 +3392,12 @@ function openJUnitImport(main: HTMLElement, candidate: Candidate, returnFocus?: 
               }
               const mutation = evidenceImportMutation(candidate, assembly, file, fingerprint);
               mutation.serializedBody = exactDocumentBody(mutation.body, "assembly", assemblyJson);
-              mutation.summary = `Bind this ${multi ? "combined test + coverage" : "single-report"} assembly. Source bytes are not retained, reported metadata is unverified, and evidence stays unsigned_local / declared. This does not mark the candidate READY or PASS.`;
+              mutation.summary = `Bind this ${multi ? "standard CI report" : "single-report"} assembly. Source bytes are not retained, reported metadata is unverified, and evidence stays unsigned_local / declared. This does not mark the candidate READY or PASS.`;
               mutation.details = mutation.details.map(([label, value, mono]) => [label === "Selected file SHA-256" ? "Original report SHA-256" : label, value, mono ?? false]);
-              for (const source of sources.slice(1)) mutation.details.push(["Coverage report", `${source.file.name} · ${source.size} bytes`], ["Coverage report SHA-256", source.fingerprint, true]);
+              for (const source of sources.slice(1)) {
+                const label = ["lcov", "coverage_xml"].includes(source.format) ? "Coverage report" : source.format;
+                mutation.details.push([label, `${source.file.name} · ${source.size} bytes`], [`${label} SHA-256`, source.fingerprint, true]);
+              }
               renderReviewedMutation(dialog, candidate, mutation);
             });
             controls.append(review);
@@ -3176,6 +3592,11 @@ function candidateWorkflowPanel(
     return panel;
   }
   const candidate = review.candidate;
+  if (["DRAFT", "COLLECTING"].includes(candidate.status) && review.evidence_binding === null) {
+    const quick = button("Quick assessment", "button primary");
+    quick.addEventListener("click", () => openQuickAssessment(main, candidate, quick));
+    panel.append(quick, el("p", "muted", "Select a batch of reports, review the parsed evidence, then run binding, evaluation and attestation together."));
+  }
   let label = "";
   let explanation = "";
   let action: ((buttonNode: HTMLButtonElement) => void) | null = null;
@@ -3215,11 +3636,11 @@ function candidateWorkflowPanel(
   if (candidate.status === "COLLECTING" && review.evidence_binding === null) {
     const collect = button("Collect JUnit report", "button quiet");
     collect.addEventListener("click", () => openJUnitImport(main, candidate, collect));
-    const combined = button("Collect test + coverage reports", "button quiet");
+    const combined = button("Collect standard CI reports", "button quiet");
     combined.addEventListener("click", () => openJUnitImport(main, candidate, combined, true));
     const queue = button("Prepare JUnit task", "button quiet");
     queue.addEventListener("click", () => openJUnitImport(main, candidate, queue, false, true));
-    const queueCombined = button("Prepare test + coverage task", "button quiet");
+    const queueCombined = button("Prepare standard CI task", "button quiet");
     queueCombined.addEventListener("click", () => openJUnitImport(main, candidate, queueCombined, true, true));
     panel.append(collect, combined, queue, queueCombined);
   }
@@ -3484,6 +3905,157 @@ async function renderEvidence(): Promise<void> {
   shell(main);
 }
 
+interface DecisionComparison {
+  blockers: string[];
+  rows: Array<{ before: RuleEvaluation; after: RuleEvaluation; change: string }>;
+}
+
+function compareDecisions(baseline: CandidateAssuranceReview, current: CandidateAssuranceReview): DecisionComparison {
+  const blockers: string[] = [];
+  const a = baseline.candidate, b = current.candidate;
+  if (a.candidate_id === b.candidate_id) blockers.push("Choose two different candidates.");
+  for (const key of ["project_id", "release_track", "project_profile_id", "project_profile_version"] as const) {
+    if (a[key] !== b[key] || a[key] === null) blockers.push(`Different or unavailable ${key}.`);
+  }
+  for (const [label, review] of [["Baseline", baseline], ["Current", current]] as const) {
+    const { candidate, policy_evaluation: evaluation, policy_material: material } = review;
+    if (!evaluation || !material) {
+      blockers.push(`${label}: retained evaluation and policy material are required.`);
+      continue;
+    }
+    if (evaluation.candidate_commit !== candidate.commit_sha || evaluation.evaluation_id !== candidate.evaluation_id ||
+        evaluation.decision !== candidate.status || evaluation.policy_fingerprint !== material.policy_fingerprint ||
+        evaluation.policy_material_id !== material.material_id || material.project_profile_id !== candidate.project_profile_id ||
+        material.project_profile_version !== candidate.project_profile_version || material.release_track !== candidate.release_track ||
+        evaluation.project_profile_id !== candidate.project_profile_id || evaluation.project_profile_version !== candidate.project_profile_version) {
+      blockers.push(`${label}: retained candidate, evaluation and policy references do not agree.`);
+    }
+    const ruleIds = evaluation.rule_results.map(rule => rule.rule_id).sort();
+    const materialIds = material.policy.rules.map(rule => rule.id).sort();
+    if (new Set(ruleIds).size !== ruleIds.length || JSON.stringify(ruleIds) !== JSON.stringify(materialIds)) {
+      blockers.push(`${label}: rule results do not match the retained policy rule set.`);
+    }
+  }
+  const oldEvaluation = baseline.policy_evaluation, evaluation = current.policy_evaluation;
+  const oldMaterial = baseline.policy_material, material = current.policy_material;
+  if (oldMaterial && material && (oldMaterial.policy_fingerprint !== material.policy_fingerprint ||
+      oldMaterial.artifact.sha256 !== material.artifact.sha256)) blockers.push("Policy fingerprint or source bytes changed.");
+  if (blockers.length || !oldEvaluation || !evaluation) return { blockers, rows: [] };
+  const previous = new Map(oldEvaluation.rule_results.map(rule => [rule.rule_id, rule]));
+  const rows: DecisionComparison["rows"] = [];
+  for (const after of evaluation.rule_results) {
+    const before = previous.get(after.rule_id);
+    if (!before || before.claim !== after.claim || before.mandatory !== after.mandatory ||
+        JSON.stringify(sortedJsonValue(before.expected)) !== JSON.stringify(sortedJsonValue(after.expected))) {
+      blockers.push("Rule identity or expected value changed despite matching policy references.");
+      break;
+    }
+    let change = "Unchanged";
+    if (after.decision === "FAIL" && before.decision !== "FAIL") change = "New failure";
+    else if (before.decision === "FAIL" && after.decision === "PASS") change = "Rule restored to PASS";
+    else if (before.decision !== after.decision) change = `Now ${after.decision}`;
+    else if (before.reason_code !== after.reason_code || JSON.stringify(sortedJsonValue(before.actual)) !== JSON.stringify(sortedJsonValue(after.actual))) change = "Changed result";
+    rows.push({ before, after, change });
+  }
+  if (rows.length !== oldEvaluation.rule_results.length && !blockers.length) blockers.push("Rule sets differ.");
+  return { blockers, rows: blockers.length ? [] : rows };
+}
+
+function decisionComparisonPanel(current: CandidateAssuranceReview): HTMLElement {
+  const panel = el("section", "panel");
+  panel.setAttribute("aria-label", "Compare evaluations");
+  panel.append(el("p", "eyebrow", "READ-ONLY COMPARISON"), el("h2", undefined, "Compare evaluations"),
+    el("p", "muted", "Choose a baseline explicitly. Current means the candidate on this page, not the newest run. Matching policy/profile authority is required; no candidate or release decision is changed."));
+  const owner = session, route = window.location.hash;
+  let generation = 0, busy = false, cursor: string | null = null;
+  const active = () => session === owner && window.location.hash === route && panel.isConnected;
+  const choices = new Map<string, Candidate>();
+  const pickerLabel = el("label", "field");
+  const picker = el("select");
+  picker.value = "";
+  const placeholder = el("option", undefined, "Select an evaluated baseline"); placeholder.value = "";
+  picker.append(placeholder); pickerLabel.append(el("span", undefined, "Baseline evaluation"), picker);
+  const load = button("Load baseline choices");
+  const compare = button("Compare with current", "button primary"); compare.disabled = true;
+  const status = el("p", "muted"); status.setAttribute("role", "status");
+  const output = el("div");
+  const controls = el("div", "toolbar"); controls.append(load, pickerLabel, compare);
+  panel.append(controls, status, output);
+  picker.addEventListener("change", () => {
+    generation++; output.replaceChildren(); status.textContent = "Baseline changed. Compare to load its retained evaluation.";
+    compare.disabled = busy || !choices.has(picker.value);
+  });
+  load.addEventListener("click", async () => {
+    if (busy || !active()) return;
+    busy = true; load.disabled = true; compare.disabled = true;
+    const token = ++generation; output.replaceChildren(); status.textContent = "Loading candidate page…";
+    try {
+      const query = new URLSearchParams({limit: "100"});
+      if (cursor !== null) query.set("after_candidate_id", cursor);
+      const page = await api<CandidatePage>(`/app/api/projects/${encodeURIComponent(current.candidate.project_id)}/candidates?${query}`);
+      if (!active() || token !== generation) return;
+      for (const candidate of page.candidates) {
+        if (candidate.project_id !== current.candidate.project_id || candidate.candidate_id === current.candidate.candidate_id || !candidate.evaluation_id || choices.has(candidate.candidate_id)) continue;
+        choices.set(candidate.candidate_id, candidate);
+        const option = el("option", undefined, `${candidate.version} · ${candidate.status} · ${shortHash(candidate.commit_sha)} · ${candidate.candidate_id}`);
+        option.value = candidate.candidate_id; picker.append(option);
+      }
+      if (page.has_more && (!page.next_after_candidate_id || page.next_after_candidate_id === cursor)) throw new Error("Candidate pagination did not advance.");
+      cursor = page.has_more ? page.next_after_candidate_id : null;
+      load.textContent = page.has_more ? "Load more baseline choices" : "Refresh baseline choices";
+      status.textContent = `${choices.size} evaluated baseline choices loaded. ${page.has_more ? "More candidates are available; load the next page if needed." : "End of candidate list."} No baseline is selected automatically.`;
+    } catch (error) {
+      if (active() && token === generation) { status.textContent = "Could not load baseline choices."; handleProtectedProblem(output, error, "Retry loading baseline choices."); }
+    } finally {
+      busy = false; load.disabled = false; compare.disabled = !choices.has(picker.value);
+    }
+  });
+  compare.addEventListener("click", async () => {
+    if (busy || !active() || !choices.has(picker.value)) return;
+    busy = true; compare.disabled = true; load.disabled = true;
+    const token = ++generation, baselineId = picker.value;
+    output.replaceChildren(); status.textContent = "Loading both retained evaluations…";
+    try {
+      const [baseline, fresh] = await Promise.all([baselineId, current.candidate.candidate_id].map(id =>
+        api<CandidateAssuranceReview>(`/app/api/candidates/${encodeURIComponent(id)}/assurance-review`)));
+      if (!active() || token !== generation) return;
+      if (!baseline || !fresh || baseline.candidate.candidate_id !== baselineId || fresh.candidate.candidate_id !== current.candidate.candidate_id ||
+          baseline.candidate.project_id !== current.candidate.project_id || fresh.candidate.project_id !== current.candidate.project_id) throw new Error("Unexpected candidate identity in comparison response.");
+      const result = compareDecisions(baseline, fresh);
+      const identities = el("dl", "definition-list");
+      for (const [label, review] of [["Baseline", baseline], ["Current", fresh]] as const) {
+        identities.append(definition(label, `${review.candidate.version} · ${review.candidate.candidate_id}`),
+          definition(`${label} commit`, review.candidate.commit_sha, true),
+          definition(`${label} evaluation`, `${review.policy_evaluation?.evaluation_id ?? "unavailable"} · ${review.policy_evaluation?.evaluated_at ?? "unavailable"}`, true));
+      }
+      output.append(identities);
+      if (result.blockers.length) {
+        status.textContent = "NOT COMPARABLE — no regression or recovery conclusion.";
+        output.append(el("p", "command-boundary", result.blockers.join(" ")));
+        return;
+      }
+      const count = (change: string) => result.rows.filter(row => row.change === change).length;
+      const missing = result.rows.filter(row => row.after.reason_code === "EVIDENCE_MISSING").length;
+      const newMissing = result.rows.filter(row => row.after.reason_code === "EVIDENCE_MISSING" && row.before.reason_code !== "EVIDENCE_MISSING").length;
+      status.textContent = `COMPARABLE · ${count("New failure")} new failures · ${count("Rule restored to PASS")} rules restored to PASS · ${missing} current missing-evidence rules (${newMissing} newly missing).`;
+      output.append(el("p", "command-boundary", "Rule-level comparison of retained results only. A restored rule does not prove an individual defect was fixed. Missing evidence means EVIDENCE_MISSING; permitted absence, stale data and insufficient assurance are separate reasons. This is not producer authentication, policy re-execution, hardware verification or release approval."));
+      output.append(paginatedReviewTable("Evaluation changes", ["Rule / claim", "Change", "Baseline → current", "Expected", "Actual: baseline → current", "Evidence / reason: baseline → current"], result.rows.map(({before, after, change}) => () => {
+        const row = el("tr");
+        row.append(el("td", "strong-cell", `${after.rule_id} · ${after.claim}`), el("td", undefined, change),
+          el("td", undefined, `${before.decision} → ${after.decision}`), el("td", "mono", textValue(after.expected)),
+          el("td", "mono", `${textValue(before.actual)} → ${textValue(after.actual)}`),
+          el("td", undefined, `${before.reason_code}: ${before.explanation} [${before.evidence_ids.join(", ") || "none"}] → ${after.reason_code}: ${after.explanation} [${after.evidence_ids.join(", ") || "none"}]`));
+        return row;
+      })));
+    } catch (error) {
+      if (active() && token === generation) { status.textContent = "Comparison unavailable. No prior comparison is shown."; handleProtectedProblem(output, error, "Check session/project access and retry comparison."); }
+    } finally {
+      busy = false; load.disabled = false; compare.disabled = !choices.has(picker.value);
+    }
+  });
+  return panel;
+}
+
 async function renderDecision(): Promise<void> {
   loadingPage("Decision");
   const main = page(
@@ -3549,7 +4121,7 @@ async function renderDecision(): Promise<void> {
           return result;
         })
       );
-      main.append(summary, columns, ruleTable);
+      main.append(summary, decisionComparisonPanel(review), columns, ruleTable);
     }
   } catch (error) {
     if (handleProtectedProblem(main, error, "Return to Candidates and confirm the selected candidate is in scope.")) return;
@@ -3645,6 +4217,97 @@ function openAssuranceExportDialog(
   confirm.focus();
 }
 
+function openReplayExportDialog(main: HTMLElement, review: CandidateAssuranceReview, returnFocus?: HTMLElement, preparedFiles?: File[]): void {
+  if (!review.evidence_binding || !review.assurance_bundle_id) return;
+  const owner = session, route = window.location.hash;
+  const invalid = (message: string): RequestProblem => new RequestProblem(422, "DASHBOARD_REPLAY_SELECTION_INVALID", message, "browser-side", null, "browser");
+  const required = new Map<string, number>();
+  for (const receipt of review.evidence_binding.assembly.collections) {
+    for (const ref of [receipt.source, ...receipt.artifacts]) required.set(ref.sha256, ref.size_bytes);
+  }
+  const dialog = el("dialog", "review-dialog"), panel = el("section", "review-panel");
+  dialog.setAttribute("aria-labelledby", "replay-export-title");
+  const heading = el("h2", undefined, "Export original evidence for offline replay");
+  heading.id = "replay-export-title";
+  const label = el("label", "field-label", "Original reports and collection results");
+  const input = el("input"); input.type = "file"; input.multiple = true;
+  if (preparedFiles) input.disabled = true;
+  input.id = "replay-source-files"; label.htmlFor = input.id;
+  const warning = el("p", "command-boundary", "Original bytes are preserved. Reports may contain private paths or data. Keep this archive private; review its contents before sharing. Replay checks report parsing and policy results; it does not rerun producer tests or authenticate their origin.");
+  const consentLabel = el("label", "field-label", "I reviewed the source-data privacy boundary");
+  const consent = el("input"); consent.type = "checkbox"; consent.id = "replay-private-consent";
+  consentLabel.htmlFor = consent.id;
+  const status = el("div", "dialog-status"); status.setAttribute("aria-live", "polite");
+  const controls = el("div", "dialog-actions");
+  const close = button("Cancel", "button quiet"), inspect = button("Review selected originals", "button primary");
+  let generation = 0;
+  const isCurrent = (active: number) => active === generation && dialog.open && dialog.isConnected && session === owner && window.location.hash === route;
+  const end = () => { generation++; dialog.close(); };
+  close.addEventListener("click", end);
+  dialog.addEventListener("cancel", e => { e.preventDefault(); end(); });
+  dialog.addEventListener("keydown", e => keepFocusInsideDialog(dialog, e));
+  dialog.addEventListener("close", () => { generation++; dialog.remove(); if (returnFocus?.isConnected) returnFocus.focus(); }, {once:true});
+  inspect.addEventListener("click", async () => {
+    const active = ++generation;
+    inspect.disabled = true; input.disabled = true;
+    try {
+      const selected = preparedFiles ?? Array.from(input.files ?? []);
+      if (selected.length !== required.size || selected.length > 32 || selected.some(f => f.size > 1048576)
+          || selected.reduce((sum, f) => sum + f.size, 0) > 2097152) throw invalid(`Select all ${required.size} required report and receipt files once: at most 1 MiB per file and 2 MiB total.`);
+      const files: Array<{sha256:string;content_base64:string}> = [];
+      const seen = new Set<string>();
+      for (const file of selected) {
+        const content = await file.arrayBuffer();
+        if (!isCurrent(active)) return;
+        const digest = await sha256Hex(content);
+        if (!isCurrent(active)) return;
+        if (content.byteLength !== file.size || required.get(digest) !== content.byteLength || seen.has(digest)) throw invalid("A selected file is duplicated, changed or does not match a retained source hash. Use the original report and collection-result bytes.");
+        seen.add(digest);
+        let binary = "";
+        for (const value of new Uint8Array(content)) binary += String.fromCharCode(value);
+        files.push({sha256:digest,content_base64:btoa(binary)});
+      }
+      const details = el("dl", "definition-list");
+      details.append(definition("Candidate", review.candidate.candidate_id, true), definition("Commit", review.candidate.commit_sha, true), definition("Matching source files", String(files.length)));
+      status.replaceChildren(details, el("p", undefined, "All selected hashes match. The service will reparse these exact bytes and recompute the retained policy before export."));
+      const download = button("Confirm private replay download", "button primary");
+      controls.replaceChildren(close, download);
+      let submitted = false;
+      download.addEventListener("click", async () => {
+        if (submitted || !isCurrent(active)) return;
+        if (!consent.checked) { status.append(el("p", "command-boundary", "Review and acknowledge the source-data privacy boundary first.")); return; }
+        submitted = true;
+        download.disabled = true; consent.disabled = true;
+        try {
+          if (session === null) throw new Error("Dashboard session is unavailable");
+          const response = await fetch(`/app/api/candidates/${encodeURIComponent(review.candidate.candidate_id)}/evidence-replay-export`, {
+            method:"POST", credentials:"same-origin", cache:"no-store",
+            headers:{"Content-Type":"application/json","Accept":"application/zip","X-ForgeGate-CSRF":session.csrf_token,"X-Request-ID":requestId()},
+            body:JSON.stringify({expected_revision:review.candidate.revision,expected_bundle_id:review.assurance_bundle_id,files,acknowledge_private_sources:true})
+          });
+          if (!isCurrent(active)) return;
+          if (!response.ok) throw requestProblem(response, await response.json().catch(()=>({})));
+          const filename = response.headers.get("X-ForgeGate-Replay-Archive") ?? "";
+          if (response.headers.get("X-ForgeGate-Assurance-Bundle") !== review.assurance_bundle_id || response.headers.get("Content-Type")?.split(";",1)[0] !== "application/zip" || !/^replay-[0-9a-f]{64}\.zip$/.test(filename)) throw new Error("Replay response identity or media type is invalid.");
+          const blob = await response.blob();
+          if (blob.size === 0 || blob.size > 20971520) throw new Error("Replay archive exceeds the response size limit.");
+          const digest = await sha256Hex(await blob.arrayBuffer());
+          if (!isCurrent(active)) return;
+          if (digest !== response.headers.get("X-ForgeGate-Archive-SHA256")) throw new Error("Replay archive response hash does not match.");
+          saveLocalDownload({blob,filename});
+          heading.textContent = "Private replay archive downloaded";
+          status.replaceChildren(el("p", undefined, `${files.length} original files included. Retained engineering decision: ${review.candidate.status}.`), el("code", "mono", `forgegate evidence-replay verify ${filename} --expected-commit ${review.candidate.commit_sha}`));
+          close.textContent = "Done"; controls.replaceChildren(close); close.focus();
+        } catch (error) { if (active === generation) { showProblem(status,error,"Close and reopen this review before retrying."); controls.replaceChildren(close); } }
+      });
+      download.focus();
+    } catch (error) { if (active === generation) { showProblem(status,error,"Select the complete original files and review again."); input.disabled = false; inspect.disabled = false; } }
+  });
+  controls.append(close,inspect);
+  panel.append(heading,el("p","muted",preparedFiles ? `${preparedFiles.length} original reports and exact receipts from this assessment are already selected. Review them, then download to save permanently.` : `Select ${required.size} original report and collection-result files. Files are matched by SHA-256 regardless of filename.`),label,input,warning,consent,consentLabel,status,controls);
+  dialog.append(panel); main.append(dialog); dialog.showModal(); input.focus();
+}
+
 async function renderAssurance(): Promise<void> {
   loadingPage("Assurance");
   const main = page(
@@ -3698,6 +4361,9 @@ async function renderAssurance(): Promise<void> {
         const exportButton = button("Review assurance download", "button primary");
         exportButton.addEventListener("click", () => openAssuranceExportDialog(main, review, exportButton));
         exportPanel.append(exportButton);
+        const replayButton = button("Export original evidence", "button quiet");
+        replayButton.addEventListener("click", () => openReplayExportDialog(main, review, replayButton));
+        exportPanel.append(replayButton);
       } else {
         exportPanel.append(el("p", "command-boundary", "An operator session is required to export this complete assurance artifact. Producer sessions remain read-only review sessions."));
       }

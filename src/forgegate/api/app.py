@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import re
 import uuid
 from collections.abc import AsyncIterator
@@ -56,6 +57,7 @@ from forgegate.candidates import (
     ReleaseCandidatePage,
 )
 from forgegate.candidates.models import CandidateTransitionResult
+from forgegate.dashboard.startup import DashboardStartupError, ExistingDashboardPair
 from forgegate.network import is_loopback_host
 from forgegate.policy import PolicyMaterial
 from forgegate.projects import (
@@ -123,15 +125,35 @@ def create_api_app(
     dashboard_static_root: Path | None = None,
     dashboard_live_status_provider: LiveStatusProvider | None = None,
     dashboard_job_store_path: Path | None = None,
+    dashboard_existing_pair: bool = False,
 ) -> FastAPI:
     if authenticator is None and not contract_only:
         raise ValueError("authenticated API construction requires an ApiAuthenticator")
+    pair = None
+    if dashboard_existing_pair:
+        if (
+            not dashboard
+            or dashboard_job_store_path is None
+            or dashboard_live_status_provider is not None
+        ):
+            raise DashboardStartupError("DASHBOARD_EXISTING_PAIR_REQUIRES_JOBS_AND_NO_HARDWARE")
+        pair = ExistingDashboardPair.prepare(database, dashboard_job_store_path)
+        if application is not None and application.repository.database_path != pair.candidate_path:
+            raise DashboardStartupError("DASHBOARD_PAIR_APPLICATION_MISMATCH")
     candidate_application = application or CandidateApplication.for_database(database)
 
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-        candidate_application.initialize()
-        yield
+        if pair is None:
+            candidate_application.initialize()
+        else:
+            pair.start()
+            print("ForgeGate runtime: " + json.dumps(pair.report(), sort_keys=True), flush=True)
+        try:
+            yield
+        finally:
+            if pair is not None:
+                pair.stop()
 
     app = FastAPI(
         title="ForgeGate Local API",
@@ -144,6 +166,7 @@ def create_api_app(
     )
     app.state.candidate_application = candidate_application
     app.state.authenticator = authenticator
+    app.state.dashboard_pair = pair
 
     def require_project(
         principal: ApiPrincipal,
@@ -346,7 +369,17 @@ def create_api_app(
         operation_id="getHealth",
         tags=["system"],
     )
-    def health() -> HealthResponse:
+    def health(response: Response) -> HealthResponse:
+        if pair is not None:
+            try:
+                response.headers.update(pair.headers())
+            except DashboardStartupError as exc:
+                raise ApiAuthenticationError(
+                    "DASHBOARD_PAIR_UNAVAILABLE",
+                    "Runtime pair correlation unavailable.",
+                    status_code=503,
+                ) from exc
+            response.headers["Cache-Control"] = "no-store"
         return HealthResponse(forgegate_version=__version__)
 
     @app.post(

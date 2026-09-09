@@ -1,0 +1,119 @@
+{
+  "phase": 57,
+  "date": "2026-09-08",
+  "scope": "local-working-tree-retained-result-comparison",
+  "fixtures": "SYNTHETIC; reused retained Phase 54 evaluations plus a separate changed-policy control",
+  "browser_acceptance": "PASS_WINDOWS_EDGE",
+  "browser_cases": {
+    "pass_to_fail": {
+      "new_failures": 1,
+      "restored_rules": 0,
+      "missing_rules": 0,
+      "rule": "security-clean",
+      "expected": 0,
+      "actual_before": 0,
+      "actual_after": 1
+    },
+    "fail_to_pass": {
+      "new_failures": 0,
+      "restored_rules": 1,
+      "missing_rules": 0,
+      "rule": "security-clean",
+      "expected": 0,
+      "actual_before": 1,
+      "actual_after": 0
+    },
+    "pass_to_missing": {
+      "new_failures": 0,
+      "restored_rules": 0,
+      "missing_rules": 1,
+      "newly_missing": 1,
+      "rule": "latency-bound",
+      "expected": 50,
+      "actual_before": 42.75,
+      "actual_after": null,
+      "decision_after": "REVIEW"
+    },
+    "changed_policy": {
+      "outcome": "NOT COMPARABLE",
+      "claim_of_recovery": false,
+      "same_evidence_actual": 1,
+      "expected_before": 0,
+      "expected_after": 1
+    }
+  },
+  "candidates": {
+    "pass": {
+      "candidate_id": "cand-69eefb88b1ee359a4750e690",
+      "evaluation_id": "sha256:6a1c1d341bbef63d485d1cfcb1a082892698b1f35272e3c0bbdd1feab0e0d477",
+      "policy_fingerprint": "sha256:43252a1d0bcdb40ce680b4e4335d3cc937e703e73fc56dd9e02282917693235d",
+      "decision": "PASS"
+    },
+    "fail": {
+      "candidate_id": "cand-23efd988202f3a2108a21831",
+      "evaluation_id": "sha256:dc6de22b6695a5e93b3130df33fe3238ac3f295b707ec8f3b2b18912740abdf4",
+      "policy_fingerprint": "sha256:43252a1d0bcdb40ce680b4e4335d3cc937e703e73fc56dd9e02282917693235d",
+      "decision": "FAIL"
+    },
+    "missing": {
+      "candidate_id": "cand-151de8d9119c4851f9008514",
+      "evaluation_id": "sha256:78975390782594ade8eb3acec92b103942a1bd59063dab2a71bae35b2b5aee92",
+      "policy_fingerprint": "sha256:43252a1d0bcdb40ce680b4e4335d3cc937e703e73fc56dd9e02282917693235d",
+      "decision": "REVIEW"
+    },
+    "changed_policy": {
+      "candidate_id": "cand-e3b6936d6aab9ebbdab57387",
+      "evaluation_id": "sha256:0daab555ecb791043ea0c42273f91ba009bb9c3e21e168ec5fba9a6de6926767",
+      "policy_fingerprint": "sha256:77e6413429c73bd2c08409f804e4321d822758ad2fce039f66acc2f3905ca8e9",
+      "decision": "PASS"
+    }
+  },
+  "verification": {
+    "development": "PASS",
+    "python_passed": 1433,
+    "python_skipped": 3,
+    "branch_aware_coverage_percent": 95.8,
+    "frontend_passed": 248,
+    "new_comparison_tests": 38,
+    "typescript": "PASS",
+    "release_smoke": "PASS",
+    "wheel_sha256": "ccc8fb0566db6b021c905769c35bd500d1789d3e3c615382b0e5c9a25b0548c3",
+    "sdist_sha256": "46d1418062de94cb66301660ec60b79552a2e07284cbef4d0230ce9f32f58411"
+  },
+  "screenshots": [
+    {
+      "path": "phase57-browser/missing-evidence.png",
+      "sha256": "3909eca2983e26c64b42c28bac1c4ac0f81930c68971e88a7c33679bbe9bc959",
+      "size_bytes": 215740
+    },
+    {
+      "path": "phase57-browser/new-failure.png",
+      "sha256": "2ee8fe780ad9d93f5c20b2715a9fd8d4cc086e57b2852be8b4a8a68d3ccfc69d",
+      "size_bytes": 249834
+    },
+    {
+      "path": "phase57-browser/not-comparable.png",
+      "sha256": "ca370ee29c0a6e18eb16fc3b74abef31c0476014d1c22c5cbbe4a8d5fe676849",
+      "size_bytes": 199603
+    },
+    {
+      "path": "phase57-browser/restored-rule.png",
+      "sha256": "4547c870af23687985108b2d5093592a66c3798fef00df5e15bbd16732ece71b",
+      "size_bytes": 213785
+    }
+  ],
+  "packaged_javascript": {
+    "path": "assets/index-t7wEu1HM.js",
+    "sha256": "0730d97bd4fb4812706cd77e47025f9027cbb1ce2b4b97e07cf7d243fec0471f"
+  },
+  "boundaries": {
+    "comparison_candidate_writes": "NONE; GET only",
+    "setup_writes": "one isolated synthetic candidate and policy material; old candidates unchanged",
+    "hardware": "NOT_PERFORMED",
+    "upstream_tests": "NOT_RERUN",
+    "github": "NOT_PERFORMED",
+    "producer_authentication": "NOT_ESTABLISHED",
+    "human_efficiency": "NOT_MEASURED",
+    "existing_installed_dashboard": "NOT_UPGRADED"
+  }
+}

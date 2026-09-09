@@ -17,7 +17,7 @@
           "items": {
             "$ref": "#/$defs/DashboardReportUpload"
           },
-          "maxItems": 2,
+          "maxItems": 4,
           "minItems": 1,
           "title": "Reports",
           "type": "array"
@@ -54,7 +54,9 @@
           "enum": [
             "junit",
             "coverage_xml",
-            "lcov"
+            "lcov",
+            "sarif",
+            "benchmark_json"
           ],
           "title": "Format",
           "type": "string"

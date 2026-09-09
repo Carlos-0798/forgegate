@@ -6,6 +6,54 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
+- [Phase 58 refreshed Windows delivery](PHASE_58_WINDOWS_DELIVERY_ACCEPTANCE.md) —
+  isolated installed wheel completes actual Edge synthetic quick assessment,
+  replay, assurance and comparison; dirty-tree local artifact, not public release.
+- [Phase 57 evaluation comparison](PHASE_57_DECISION_COMPARISON_ACCEPTANCE.md) —
+  four actual Edge controls, including changed-policy rejection; 38 new / 248
+  total frontend tests. Rule-level retained comparison, not defect-fix proof.
+- [Phase 56 real AVS quick assessment](PHASE_56_AVS_QUICK_ACCEPTANCE.md) —
+  real archived report metadata and warnings preserved through the shorter UI;
+  actual downloaded replay VALID / FAIL, 12 matching rules and 130 matching
+  records except artifact reference paths. No producer rerun.
+- [Phase 55 repeated-use quick handoff](PHASE_55_QUICK_HANDOFF_ACCEPTANCE.md) —
+  exact compatible saved-policy choices and reviewed original-file replay download
+  without repeat file selection; actual Edge ZIP independently VALID / PASS.
+- [Phase 54 quick assessment](PHASE_54_QUICK_ASSESSMENT_ACCEPTANCE.md) —
+  content-detected batch, explicit preview/confirmation, existing sequenced
+  binding/evaluation/attestation; actual Edge PASS/FAIL/REVIEW, directory import,
+  invalid-report safe stop and offline VALID download; no measured human-efficiency claim
+- [Phase 53A matched efficiency fixtures](PHASE_53A_EFFICIENCY_FIXTURE_ACCEPTANCE.md) —
+  sealed participant/assessor split, independently hashed A/B inputs, non-leaking
+  run order and 12 real ForgeGate cross-checks; human review and timed trials are
+  still NOT PERFORMED, so no efficiency or accuracy improvement is claimed
+- [Phase 52 reviewed Windows delivery](PHASE_52_WINDOWS_DELIVERY_ACCEPTANCE.md) —
+  fresh-sdist wheel construction, exact packaged assets, isolated install/start,
+  actual Edge operator workflow and independently verified assurance download;
+  local working-tree acceptance, not a clean-commit or public release
+- [Phase 51 private source replay](PHASE_51_SOURCE_REPLAY_ACCEPTANCE.md) —
+  original collector inputs, deterministic ZIP, actual Edge rejection/reselection/
+  download and database-independent policy replay; [machine evidence](PHASE_51_SOURCE_REPLAY_EVIDENCE.json).
+  VALID archive, retained AVS decision FAIL; no new producer test execution
+- [Phase 50 real AVS host-report integration](PHASE_50_AVS_HOST_ACCEPTANCE.md) —
+  actual producer reports, 130 records, browser-reviewed FAIL decision and verified
+  assurance download; [machine evidence](PHASE_50_AVS_HOST_EVIDENCE.json) and
+  [upstream handoff](PHASE_50_AVS_UPSTREAM_HANDOFF.md). Integration accepted, not
+  producer release approval, hardware validation or authenticated report origin
+- [Phase 49 standard CI Dashboard collection](PHASE_49_STANDARD_CI_ACCEPTANCE.md) —
+  four-family evidence-to-decision workflow, synthetic expected outputs,
+  actual Edge acceptance and screenshots; no measured production or hardware claim
+- [Phase 48 existing-only paired startup](PHASE_48_EXISTING_PAIR_ACCEPTANCE.md) —
+  no-init/no-migration checks and public runtime correlation, with
+  [independent-process evidence](PHASE_48_EXISTING_PAIR_EVIDENCE.json);
+  not authenticated ownership, probation, a writer fence or live adoption
+- [Phase 47 read-only adoption preflight](PHASE_47_ADOPTION_PREFLIGHT_ACCEPTANCE.md) —
+  bounded complete supported-table comparison, cold-copy validation and independent
+  CLI expected outputs; [synthetic evidence](PHASE_47_ADOPTION_PREFLIGHT_EVIDENCE.json);
+  no live-source freshness, process control, adoption or hardware claim
+- [Phase 46 workspace adoption design review](PHASE_46_WORKSPACE_ADOPTION_DESIGN_REVIEW.md) —
+  source-traced design and explicit fault matrix; no runtime adoption, rollback,
+  browser or hardware acceptance claimed; GitHub synchronization paused
 - [Phase 45 Dashboard rehearsal receipt review](PHASE_45_RECOVERY_REHEARSAL_REVIEW_ACCEPTANCE.md) —
   strict read-only receipt validation plus actual isolated Edge import,
   reselection and [repository-retained screenshot](../docs/assets/phase45-recovery-rehearsal-review.png);

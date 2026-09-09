@@ -527,7 +527,7 @@
       "items": {
         "$ref": "#/$defs/CollectionResult"
       },
-      "maxItems": 2,
+      "maxItems": 4,
       "minItems": 1,
       "title": "Collections",
       "type": "array"

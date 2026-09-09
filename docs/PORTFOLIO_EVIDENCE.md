@@ -9,6 +9,17 @@ measurement, or production environment.
 
 ## Evidence boundary
 
+The [Phase 56 real AVS quick assessment](../reports/PHASE_56_AVS_QUICK_ACCEPTANCE.md)
+adds actual Edge screenshots and independent downloaded-replay comparison with
+the retained real host baseline. All 12 rules preserve the engineering FAIL.
+This is a new ForgeGate interaction test, not a new AVS test execution.
+
+The [Phase 55 quick-handoff acceptance](../reports/PHASE_55_QUICK_HANDOFF_ACCEPTANCE.md)
+retains current Windows Edge screenshots of a completed synthetic assessment and
+its reviewed original-file replay download, with hashes and independent VALID /
+PASS readback. It demonstrates saved-policy reuse and no repeat report selection,
+not a measured human speedup. Those captures use an isolated fixture workspace.
+
 The [Phase 29 project Audit report](../reports/PHASE_29_PROJECT_AUDIT_ACCEPTANCE.md)
 adds a separate generic 28-event fixture and exact screenshot hashes. Its
 operator page does not imply authenticated actors for historical CLI records.

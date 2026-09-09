@@ -12,7 +12,38 @@ analysis, compatibility contracts, and historical acceptance evidence.
 5. [Portfolio evidence gallery](PORTFOLIO_EVIDENCE.md) — retained screenshots, exact fixture data, hashes, and claim boundaries
 6. [Security policy](../SECURITY.md) — supported scope and responsible reporting
 
-Latest local engineering slice: [Dashboard rehearsal receipt review](DASHBOARD_RECOVERY_REHEARSAL_REVIEW.md),
+Current engineering slice: [Phase 58 Windows installed-wheel acceptance](../reports/PHASE_58_WINDOWS_DELIVERY_ACCEPTANCE.md),
+covering installed Quick Assessment, Evidence Replay, assurance and comparison.
+It builds on [Evaluation comparison](DECISION_COMPARISON.md) and
+[Phase 57 acceptance](../reports/PHASE_57_DECISION_COMPARISON_ACCEPTANCE.md), building
+on [Quick assessment](QUICK_ASSESSMENT.md) and its
+[real AVS quick-handoff acceptance](../reports/PHASE_56_AVS_QUICK_ACCEPTANCE.md).
+The [Phase 53 efficiency and accuracy protocol](product/EFFICIENCY_ACCEPTANCE.md)
+and [blank observation record](product/EFFICIENCY_RUN_TEMPLATE.md) are retained,
+but human comparison is deferred by owner. The [product brief](product/PRODUCT_BRIEF.md)
+continues to prioritize report-review and handoff benefits without unmeasured claims.
+
+Current product slice: [reviewed Windows installed-wheel delivery](../reports/PHASE_52_WINDOWS_DELIVERY_ACCEPTANCE.md)
+using the [Windows operating guide](WINDOWS_DASHBOARD_OPERATIONS.md), plus
+[private original-report export and offline replay](EVIDENCE_REPLAY.md),
+with [Phase 51 acceptance](../reports/PHASE_51_SOURCE_REPLAY_ACCEPTANCE.md).
+It extends [real AVS host acceptance](../reports/PHASE_50_AVS_HOST_ACCEPTANCE.md)
+and its [file-only consumer pack](../examples/analog-validation-studio-host/README.md),
+using the [standard CI collection contracts](DASHBOARD_COLLECTION_CONTRACT.md).
+The integration is accepted; its frozen producer baseline correctly remains FAIL.
+Real artifact delivery takes priority over further process management.
+
+Deferred engineering design: [workspace adoption and rollback](WORKSPACE_ADOPTION_DESIGN.md),
+with source-traced gaps, recovery-point review and 24 NOT RUN fault-injection
+cases. No live switch or managed lifecycle is implemented by this design.
+
+Earlier Phase 48 local slice: [existing-only paired startup and runtime correlation](WINDOWS_DASHBOARD_OPERATIONS.md),
+with explicit no-initialization/no-migration startup and public per-start IDs,
+not authenticated process ownership or a writer fence. Previous slice:
+[read-only adoption preflight](WORKSPACE_ADOPTION_PREFLIGHT.md),
+which compares exact snapshots and a cold rehearsal directory without process
+control or switch authority. Latest browser slice:
+[Dashboard rehearsal receipt review](DASHBOARD_RECOVERY_REHEARSAL_REVIEW.md),
 which presents the exact content-addressed restored-copy receipt without adding
 browser restore or workspace-switch authority. It follows the
 [reviewed recovery rehearsal](RECOVERY_REHEARSAL.md),

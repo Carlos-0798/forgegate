@@ -1,0 +1,99 @@
+{
+  "format": "phase52-windows-delivery-acceptance.v1",
+  "date": "2026-09-08",
+  "scope": "LOCAL_WINDOWS_INSTALLED_WHEEL_AND_BROWSER",
+  "source_commit": "81710fb0cf954bee886a9cb9f551d175ad08cf4e",
+  "source_state": "WORKING_TREE_WITH_CHANGES",
+  "build": {
+    "construction": "wheel_built_from_generated_sdist_in_fresh_directory",
+    "wheel_sha256": "48b1a87383e54a0e38feb3c20fa029b96f763c2da9c6d4c50edee31e1485bc3c",
+    "wheel_size_bytes": 344029,
+    "wheel_members": 114,
+    "dashboard_assets": 5,
+    "sdist_sha256": "5dad0bcbada7f77e32c774988f9d3d15c228a07d4fe14e74e27f850ff4fda9d7",
+    "sdist_size_bytes": 6556071,
+    "existing_destination_exit": 3,
+    "stale_direct_build": "REJECTED_ASSET_INVENTORY_MISMATCH"
+  },
+  "runtime": {
+    "windows": "Windows 11 10.0.26200",
+    "python": "3.12.10",
+    "package_version": "0.1.0a1",
+    "package_origin": "ISOLATED_SITE_PACKAGES",
+    "dependency_check": "PASS",
+    "dashboard_asset_check": "PASS",
+    "dashboard_check": "DASHBOARD_REACHABLE",
+    "health_http_status": 200,
+    "dashboard_http_status": 200,
+    "database_source": "SQLITE_BACKUP_COPY",
+    "msp430_option_enabled": false
+  },
+  "browser": {
+    "application": "Microsoft Edge",
+    "activation": "AUTHENTICATED",
+    "role": "operator",
+    "project_scope": "analog-validation-studio",
+    "pages_reviewed": [
+      "overview",
+      "projects",
+      "candidates",
+      "evidence",
+      "decision",
+      "assurance"
+    ],
+    "candidate_id": "cand-3a006df37a4f29d6cf66210b",
+    "candidate_revision": 4,
+    "evidence_records": 130,
+    "collections": 4,
+    "policy_rules": 12,
+    "policy_pass": 10,
+    "policy_fail": 2,
+    "decision": "FAIL",
+    "console_errors_or_warnings": 0,
+    "session_ended": true,
+    "temporary_tab_closed": true
+  },
+  "downloaded_assurance": {
+    "sha256": "9cd5d14725a02b9847706a056cc7bf8936775b26954b603e9f47de1fbd9dcc47",
+    "size_bytes": 245775,
+    "bundle_id": "sha256:0d18e39dcceccf5a99e2b29d08fc71d8982ad5711d26a62dcf7373b364577bd9",
+    "offline_status": "VALID",
+    "offline_decision": "FAIL",
+    "assurance": "unsigned_local",
+    "source_artifact_bytes": "not_embedded"
+  },
+  "verification": {
+    "python_passed": 1423,
+    "python_skipped": 3,
+    "branch_aware_coverage_percent": 95.80,
+    "mypy_source_files": 120,
+    "interaction_passed": 33,
+    "interaction_failed": 0,
+    "frontend_passed": 168,
+    "frontend_failed": 0,
+    "development_gate": "PASS",
+    "clean_install_release_smoke": "PASS"
+  },
+  "screenshots": [
+    {
+      "path": "phase52-browser/installed-wheel-overview.png",
+      "sha256": "b99c26e1cc335f5e423be6cef74bb9fc851090638f60211d86d0659aaddb899f",
+      "size_bytes": 136735
+    },
+    {
+      "path": "phase52-browser/installed-wheel-decision.png",
+      "sha256": "15ac7179eeb209c8572a2b3e687678bcfe09051011a6b578c2ae265452b7551d",
+      "size_bytes": 181828
+    },
+    {
+      "path": "phase52-browser/installed-wheel-assurance-download.png",
+      "sha256": "2c286df5b7997b673b8efe268501deab6ab88acc157bbb1fc51227e772c182d3",
+      "size_bytes": 108651
+    }
+  ],
+  "evidence_page_public_capture": "REQUIRES_REVIEW_FOR_UPSTREAM_LOCAL_PATHS",
+  "hardware_access": "NOT_PERFORMED",
+  "producer_tests_rerun": false,
+  "github_sync": "NOT_PERFORMED",
+  "publication": "NOT_PERFORMED"
+}

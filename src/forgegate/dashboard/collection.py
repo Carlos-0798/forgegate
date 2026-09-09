@@ -22,6 +22,11 @@ from forgegate.collectors.base import (
     CollectionStatus,
     IssueSeverity,
 )
+from forgegate.collectors.benchmark import (
+    BENCHMARK_MEDIA_TYPE,
+    BenchmarkCollectionRequest,
+    BenchmarkJsonCollector,
+)
 from forgegate.collectors.coverage import (
     COVERAGE_XML_MEDIA_TYPE,
     LCOV_MEDIA_TYPE,
@@ -30,10 +35,12 @@ from forgegate.collectors.coverage import (
     LcovCollector,
 )
 from forgegate.collectors.junit import JUNIT_MEDIA_TYPE, JUnitCollectionRequest, JUnitCollector
+from forgegate.collectors.sarif import SARIF_MEDIA_TYPE, SarifCollectionRequest, SarifCollector
 from forgegate.domain.enums import EvidenceTrust, VerificationLevel
 from forgegate.domain.models import COMMIT_PATTERN, ArtifactReference, ExecutionContext, StrictModel
 
 MAX_REPORT_BYTES = 1024 * 1024
+MAX_SELECTION_BYTES = 2 * MAX_REPORT_BYTES
 MAX_REPORT_BASE64 = 4 * ((MAX_REPORT_BYTES + 2) // 3)
 MAX_PREVIEW_RECORDS = 512
 
@@ -117,7 +124,7 @@ class DashboardJUnitPreview(StrictModel):
 
 
 class DashboardReportUpload(StrictModel):
-    format: Literal["junit", "coverage_xml", "lcov"]
+    format: Literal["junit", "coverage_xml", "lcov", "sarif", "benchmark_json"]
     content_base64: str = Field(min_length=4, max_length=MAX_REPORT_BASE64)
     source_tool: str = Field(min_length=1, max_length=120)
     source_version: str = Field(min_length=1, max_length=120)
@@ -137,16 +144,24 @@ class DashboardReportUpload(StrictModel):
 class DashboardCollectionPreviewRequest(StrictModel):
     expected_revision: int = Field(ge=0)
     reported_commit: str = Field(pattern=COMMIT_PATTERN)
-    reports: list[DashboardReportUpload] = Field(min_length=1, max_length=2)
+    reports: list[DashboardReportUpload] = Field(min_length=1, max_length=4)
     retain_warnings: bool = False
 
     @model_validator(mode="after")
     def distinct_reports(self) -> Self:
-        families = ["junit" if item.format == "junit" else "coverage" for item in self.reports]
+        families = [
+            "coverage" if item.format in {"coverage_xml", "lcov"} else item.format
+            for item in self.reports
+        ]
         if len(set(families)) != len(families):
-            raise ValueError("select at most one JUnit and one coverage report")
+            raise ValueError("select at most one report from each standard evidence family")
         if len({item.content_base64 for item in self.reports}) != len(self.reports):
             raise ValueError("duplicate report bytes are not allowed")
+        if (
+            sum(len(base64.b64decode(item.content_base64)) for item in self.reports)
+            > MAX_SELECTION_BYTES
+        ):
+            raise ValueError("combined decoded reports must not exceed 2 MiB")
         return self
 
 
@@ -160,6 +175,12 @@ class DashboardCollectionPreview(StrictModel):
     assembly: EvidenceBundleAssembly | None
     persistence: Literal["NOT_RETAINED"] = "NOT_RETAINED"
     source_artifact_bytes: Literal["not_retained"] = "not_retained"
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def collection_json(self) -> list[str]:
+        """Exact receipt bytes used by assembly references, including JSON numbers."""
+        return [canonical_json(item.model_dump(mode="json")) for item in self.collections]
 
     @computed_field  # type: ignore[prop-decorator]
     @property
@@ -262,8 +283,12 @@ def preview_collection(
             continue
         content = base64.b64decode(report.content_base64, validate=True)
         digest = hashlib.sha256(content).hexdigest()
-        media_type = COVERAGE_XML_MEDIA_TYPE if report.format == "coverage_xml" else LCOV_MEDIA_TYPE
-        suffix = "xml" if report.format == "coverage_xml" else "info"
+        media_type, suffix = {
+            "coverage_xml": (COVERAGE_XML_MEDIA_TYPE, "xml"),
+            "lcov": (LCOV_MEDIA_TYPE, "info"),
+            "sarif": (SARIF_MEDIA_TYPE, "sarif"),
+            "benchmark_json": (BENCHMARK_MEDIA_TYPE, "json"),
+        }[report.format]
         source = _UploadedSource(
             RegisteredArtifact(
                 reference=ArtifactReference(
@@ -275,17 +300,38 @@ def preview_collection(
                 content=content,
             )
         )
+        context = ExecutionContext(commit_sha=command.reported_commit)
+        if report.format in {"sarif", "benchmark_json"}:
+            # Self-describing formats retain their embedded tool identities, not
+            # the upload envelope's caller-declared tool/version placeholders.
+            metadata = dict(
+                source_path=source.artifact.reference.path_or_uri,
+                execution_context=context,
+                collected_at=report.collected_at,
+                trust=EvidenceTrust.UNSIGNED_LOCAL,
+                verification_level=VerificationLevel.DECLARED,
+            )
+            if report.format == "sarif":
+                result = SarifCollector(
+                    source, max_nodes=25_000, max_depth=32, max_runs=32, max_results=512
+                ).collect(SarifCollectionRequest.model_validate(metadata))
+            else:
+                result = BenchmarkJsonCollector(
+                    source, max_nodes=25_000, max_depth=32, max_metrics=512
+                ).collect(BenchmarkCollectionRequest.model_validate(metadata))
+            results.append(_browser_bounded_result(result))
+            continue
         request = CoverageCollectionRequest(
             source_path=source.artifact.reference.path_or_uri,
             source_tool=report.source_tool,
             source_version=report.source_version,
-            execution_context=ExecutionContext(commit_sha=command.reported_commit),
+            execution_context=context,
             collected_at=report.collected_at,
             trust=EvidenceTrust.UNSIGNED_LOCAL,
             verification_level=VerificationLevel.DECLARED,
         )
         collector = (
-            CoverageXmlCollector(source, max_elements=10_000, max_depth=32)
+            CoverageXmlCollector(source, max_elements=25_000, max_depth=32)
             if report.format == "coverage_xml"
             else LcovCollector(source, max_lines=10_000)
         )

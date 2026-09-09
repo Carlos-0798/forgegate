@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+import hashlib
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
@@ -58,13 +60,17 @@ from forgegate.dashboard.models import (
     DashboardCandidateAssuranceReview,
     DashboardLogoutResponse,
     DashboardOverview,
+    DashboardPolicyChoice,
+    DashboardPolicyChoices,
     DashboardPrincipal,
     DashboardRecoveryRehearsalReviewRequest,
     DashboardRecoveryReviewRequest,
+    DashboardReplayExportRequest,
     DashboardSessionResponse,
 )
 from forgegate.dashboard.sessions import DashboardSessionManager
 from forgegate.domain.models import SLUG_PATTERN
+from forgegate.evidence_replay import EvidenceReplayError, render_evidence_replay
 from forgegate.live_status import DisabledLiveStatusProvider, LiveStatusPage, LiveStatusProvider
 from forgegate.projects import RegisteredProjectPage
 from forgegate.recovery_models import RecoveryReadinessHandoff, build_recovery_handoff
@@ -617,6 +623,24 @@ def install_dashboard_routes(
         return candidate
 
     @app.get(
+        "/app/api/candidates/{candidate_id}/policy-choices",
+        response_model=DashboardPolicyChoices,
+        operation_id="listDashboardCandidatePolicyChoices",
+        include_in_schema=False,
+    )
+    def get_dashboard_policy_choices(request: Request, candidate_id: str) -> DashboardPolicyChoices:
+        _require_same_origin(request, required=False)
+        principal = _dashboard_principal(manager, request)
+        candidate = application.get_candidate(candidate_id)
+        authenticator.require_project(principal, candidate.project_id, write=True)
+        materials = application.reusable_policy_materials(candidate_id)
+        return DashboardPolicyChoices(
+            candidate_id=candidate_id,
+            choices=[DashboardPolicyChoice(material=item) for item in materials[:10]],
+            truncated=len(materials) > 10,
+        )
+
+    @app.get(
         "/app/api/candidates/{candidate_id}/assurance-review",
         response_model=DashboardCandidateAssuranceReview,
         operation_id="getDashboardCandidateAssuranceReview",
@@ -662,7 +686,8 @@ def install_dashboard_routes(
                 None if assurance_bundle is None else assurance_bundle.source_artifact_bytes
             ),
             limitations=(
-                "Stored documents are validated on read; collectors are not re-run by this page.",
+                "Opening this review validates stored documents; source replay export "
+                "separately reparses selected reports.",
                 "Artifact hashes establish retained-byte integrity, not producer authenticity.",
                 (
                     "Source artifact bytes are referenced but are not embedded in this "
@@ -718,6 +743,61 @@ def install_dashboard_routes(
             headers={
                 "Content-Disposition": f'attachment; filename="{filename}"',
                 "X-ForgeGate-Assurance-Bundle": bundle.bundle_id,
+            },
+        )
+
+    @app.post(
+        "/app/api/candidates/{candidate_id}/evidence-replay-export",
+        response_class=Response,
+        operation_id="exportDashboardEvidenceReplay",
+        include_in_schema=False,
+        responses={
+            200: {
+                "description": "Verified private source replay ZIP",
+                "content": {"application/zip": {"schema": {"type": "string", "format": "binary"}}},
+            }
+        },
+    )
+    def export_dashboard_evidence_replay(
+        request: Request,
+        candidate_id: str,
+        command: DashboardReplayExportRequest,
+        csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> Response:
+        _dashboard_write_principal(
+            manager, authenticator, application, request, candidate_id, csrf_token
+        )
+        candidate = application.get_candidate(candidate_id)
+        bundle = application.get_assurance_bundle(candidate_id)
+        if (
+            candidate.revision != command.expected_revision
+            or bundle.bundle_id != command.expected_bundle_id
+        ):
+            raise CandidateStoreError(
+                "STORE_REVISION_CONFLICT", "Reload the candidate before exporting."
+            )
+        try:
+            filename, archive = render_evidence_replay(
+                bundle,
+                {
+                    item.sha256: base64.b64decode(item.content_base64, validate=True)
+                    for item in command.files
+                },
+            )
+        except (EvidenceReplayError, ValueError) as exc:
+            raise CandidateStoreError(
+                getattr(exc, "code", "REPLAY_INVALID"),
+                "Source reports could not reproduce the retained candidate; "
+                "check the complete original selection.",
+            ) from exc
+        return Response(
+            content=archive,
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "X-ForgeGate-Assurance-Bundle": bundle.bundle_id,
+                "X-ForgeGate-Replay-Archive": filename,
+                "X-ForgeGate-Archive-SHA256": hashlib.sha256(archive).hexdigest(),
             },
         )
 

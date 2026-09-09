@@ -11,6 +11,7 @@ from typing import Annotated
 
 import typer
 
+from forgegate.adoption_preflight import preflight_adoption
 from forgegate.canonical import sha256_fingerprint
 from forgegate.job_archival import (
     archive_job,
@@ -32,6 +33,52 @@ workspace_app = typer.Typer(
     help="Coordinated private candidate/job backup, recovery and retention planning."
 )
 Timeout = Annotated[float, typer.Option(min=0.1, max=300)]
+
+
+@workspace_app.command("adoption-preflight")
+def adoption_preflight(
+    source_backup: Path,
+    target_backup: Path,
+    target: Path,
+    source_sha256: Annotated[str, typer.Option()],
+    receipt_sha256: Annotated[str, typer.Option()],
+    source_dependency: Annotated[
+        list[str] | None, typer.Option(help="Source SHA256=PATH mapping.")
+    ] = None,
+    target_dependency: Annotated[
+        list[str] | None, typer.Option(help="Target SHA256=PATH mapping.")
+    ] = None,
+    offset: Annotated[int, typer.Option(min=0, max=200_000)] = 0,
+    limit: Annotated[int, typer.Option(min=1, max=200)] = 100,
+    output: Annotated[Path | None, typer.Option(help="New-only path-free JSON report.")] = None,
+    timeout_seconds: Timeout = 30,
+) -> None:
+    """Compare a source snapshot with an exact cold rehearsal copy; never switch or stop services.
+
+    Exit 0: snapshot MATCH; 2: DIFFERENT (review required); 3: refused/incomplete.
+    Neither successful comparison authorizes adoption or proves live availability.
+    """
+    with _guard():
+        if output is not None and target.resolve() in output.resolve().parents:
+            raise WorkspaceBackupError("ADOPTION_OUTPUT_IN_TARGET")
+        report = preflight_adoption(
+            source_backup,
+            target_backup,
+            target,
+            source_sha256=source_sha256,
+            receipt_sha256=receipt_sha256,
+            source_dependencies=_dependency_map(source_dependency),
+            target_dependencies=_dependency_map(target_dependency),
+            offset=offset,
+            limit=limit,
+            timeout_seconds=timeout_seconds,
+        )
+        content = report.model_dump_json(indent=2) + "\n"
+        if output is not None:
+            _write_new_report(output, content.encode("utf-8"))
+        typer.echo(content, nl=False)
+        if report.comparison != "MATCH":
+            raise typer.Exit(code=2)
 
 
 @workspace_app.command("recovery-check")

@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+from forgegate.adoption_models import WorkspaceAdoptionPreflight
 from forgegate.assembly import EvidenceBundleAssembly
 from forgegate.assurance import AssuranceBundle, AssuranceBundleManifest
 from forgegate.attestations import ReleaseAttestation
@@ -25,6 +26,7 @@ from forgegate.collectors.analog_validation import AFE_RESULT_JSON_SCHEMA
 from forgegate.collectors.benchmark import BENCHMARK_JSON_SCHEMA
 from forgegate.collectors.msp430_validation import MSP430_REPORT_JSON_SCHEMA
 from forgegate.domain.models import EvidenceBundle, PolicyConfig, ProjectConfig
+from forgegate.evidence_replay import EvidenceReplayManifest, EvidenceReplayVerification
 from forgegate.github_actions import GitHubActionReport
 from forgegate.identity import AssuranceSignature, SigningIdentity, TrustStore
 from forgegate.job_archive_models import JobArchivePlan, JobArchiveReceipt
@@ -55,6 +57,9 @@ from forgegate.security_events import ApiSecurityEvent, ApiSecurityEventPage
 from forgegate.workspace_backups import WorkspaceBackupManifest, WorkspaceBackupManifestV2
 
 SCHEMAS: dict[str, type[BaseModel]] = {
+    "forgegate.evidence-replay.v1": EvidenceReplayManifest,
+    "forgegate.evidence-replay-verification.v1": EvidenceReplayVerification,
+    "forgegate.workspace-adoption-preflight.v1": WorkspaceAdoptionPreflight,
     "forgegate.recovery-rehearsal.v1": RecoveryRehearsalReceipt,
     "forgegate.recovery-rehearsal-review.v1": RecoveryRehearsalReview,
     "forgegate.workspace-recovery-readiness.v1": WorkspaceRecoveryReadiness,

@@ -1,5 +1,67 @@
 # Roadmap
 
+## Active priority — Phase 58 refreshed Windows delivery accepted
+
+Owner direction on 2026-09-08: Phase 53B human comparison is **DEFERRED**.
+Phase 53A inputs remain retained; human gains remain unmeasured. Continue with
+bounded engineering improvements to the core evidence-to-decision workflow.
+The [quick assessment workflow](QUICK_ASSESSMENT.md) reuses existing collectors,
+candidate writes and export with batch selection and one reviewed execution.
+Implementation and automated regression are complete. Actual Edge PASS/FAIL/
+REVIEW, directory selection, invalid-report safe stop and offline assurance
+verification passed. See
+[Phase 54 acceptance](../reports/PHASE_54_QUICK_ASSESSMENT_ACCEPTANCE.md).
+Phase 55 adds explicit compatible-policy reuse and reviewed original-file replay
+download from the same assessment, avoiding repeat selection. Actual Edge and
+independent replay acceptance are recorded in
+[Phase 55 acceptance](../reports/PHASE_55_QUICK_HANDOFF_ACCEPTANCE.md).
+Phase 56 completed that real AVS acceptance and filled its concrete metadata,
+warning-review and bounded XML-size gaps. The downloaded replay preserves all
+12 rule results and the original FAIL; see
+[Phase 56 acceptance](../reports/PHASE_56_AVS_QUICK_ACCEPTANCE.md).
+Phase 57 completed [retained evaluation comparison](DECISION_COMPARISON.md):
+explicit baseline, new failures, restored rules and missing evidence, with
+policy/profile comparability checks. Four actual Edge controls and 38 focused
+regressions pass; see [acceptance](../reports/PHASE_57_DECISION_COMPARISON_ACCEPTANCE.md).
+Phase 58 refreshed the Windows delivery and verified installed Quick Assessment,
+Evidence Replay, portable assurance and Evaluation Comparison together in actual
+Edge. The source store remained unchanged; see
+[acceptance](../reports/PHASE_58_WINDOWS_DELIVERY_ACCEPTANCE.md).
+Next proposed slice: consolidate Phase 46–58 into a reviewable local commit
+series, run the full gates from that state, then rebuild from a clean commit.
+GitHub synchronization remains a separate owner-authorized action. No collector
+or policy-registry expansion is needed; human timing remains deferred.
+
+## Phase 53 — retained operator value protocol
+
+The implemented core remains release evidence collection, policy decisions and
+reviewable handoff. The deferred protocol measures operator benefit rather than
+adding platform subsystems. See the [product brief](product/PRODUCT_BRIEF.md),
+[comparison protocol](product/EFFICIENCY_ACCEPTANCE.md) and
+[blank run sheet](product/EFFICIENCY_RUN_TEMPLATE.md).
+
+- [x] Freeze task boundaries, fair manual baseline, scoring, setup/repeat-use
+  timing, failure reporting and evidence limits in a reviewable protocol.
+- [x] Prepare hashed matched A/B packs, neutral participant filenames, frozen
+  run order and an implementation-independent oracle cross-checked by ForgeGate.
+- [ ] Complete independent human review of the sealed answer key before trials.
+- [ ] Record actual human/current-tool trials; distinguish owner familiarity
+  and self-rehearsal from independent first-use/recipient acceptance.
+- [ ] Select at most two observed task bottlenecks and implement bounded fixes.
+- [ ] Remeasure, retain unsuccessful attempts, and decide observed improvement,
+  no improvement or inconclusive; no gains claimed before measurement.
+- [ ] Retain a reproducible operator demo and reviewed presentation evidence.
+
+**Phase 53B is deferred by the owner.** Protocol readiness and development tests do not count
+as human acceptance. Existing recovery/plugin/device functions stay supported;
+new live-workspace switching, generalized plugins and team/cloud features wait
+for a concrete core-task need. Native assistive-technology acceptance remains a
+separate open quality commitment. GitHub synchronization remains paused.
+
+The phase sections below preserve engineering history. Their numbering counts
+implementation slices, not customer value or completion of the original broad
+Phase 0-6 plan. Earlier "next" notes are historical; this priority takes precedence.
+
 ## Phase 0 — contract baseline
 
 - [x] Product and independence boundary
@@ -771,7 +833,136 @@ switch is implied. Assistive acceptance remains separate; GitHub stays paused.
 - [x] Regenerate the strict Schema, Dashboard OpenAPI and packaged assets; pass
   the full branch-aware development gate.
 
-Next bounded engineering slice: design an owner-reviewed live-workspace adoption
-and rollback plan. Do not implement a switch until process ownership, quiescence,
-health verification and reversible failure handling are specified and tested.
+The adoption design gate is recorded in Phase 46 below. Runtime switch authority
+is not included in the receipt-review feature.
+
+## Phase 46 — live-workspace adoption and rollback design
+
+- [x] Trace actual startup, health, snapshot and rehearsal behavior to code.
+- [x] Specify source/target identities, complete recovery-point comparison,
+  private process authority, all-writer fencing and paired existing-only startup.
+- [x] Define probation checks, journal/descriptor ordering and pre-write-intent
+  rollback versus post-intent reconciliation without discarding target writes.
+- [x] Record 24 explicit fault-injection cases with required outcomes and NOT RUN
+  adoption status; separate design review from implemented runtime guarantees.
+- [x] Correct paired-store recovery instructions and current display metrics.
+- [ ] Owner approval and implementation acceptance of a real live switch.
+
+See [the design](WORKSPACE_ADOPTION_DESIGN.md) and
+[design review record](../reports/PHASE_46_WORKSPACE_ADOPTION_DESIGN_REVIEW.md).
+
+The read-only preflight slice is implemented in Phase 47 below. Managed lifecycle
+and the live fault-injection matrix remain separate requirements before apply.
+
+## Phase 47 — read-only adoption preflight
+
+- [x] Add a strict path-free report and CLI over explicit source/target archives,
+  exact rehearsal receipt bytes and the observed cold target directory.
+- [x] Bound schema objects, table rows, column bytes and JSON before current
+  domain readers; inspect all candidate histories, profile chains, retained
+  evaluations/attestations, audit subjects and idempotency response links.
+- [x] Compare all supported table rows with schema fingerprints, exact totals,
+  stable comparison identity and bounded SOURCE_ONLY/TARGET_ONLY/CHANGED pages.
+- [x] Recheck external archive payloads; refuse incomplete, changed, aliased,
+  oversized, unsupported-layout and sidecar-bearing inputs without repair.
+- [x] Fix new-rehearsal readback to inspect disposable copies of destination
+  bytes, retaining hashes/history checks without leaving target WAL/SHM files.
+- [x] Exercise independent CLI MATCH/DIFFERENT/refusal exits and cold-copy
+  preservation; retain synthetic evidence and add installed-wheel smoke coverage.
+
+See [operations](WORKSPACE_ADOPTION_PREFLIGHT.md) and
+[acceptance](../reports/PHASE_47_ADOPTION_PREFLIGHT_ACCEPTANCE.md).
+
+## Phase 48 — existing-only paired startup and public runtime correlation
+
+- [x] Add explicit CLI/PowerShell candidate v9 + job v3/v4 startup without
+  initialization or migration; reject missing/empty/schema-invalid/aliased inputs.
+- [x] Bind selected paths and filesystem file IDs privately, recheck at startup
+  and health observation, and refuse detected file replacement.
+- [x] Issue fresh path-free runtime/pair labels and opt-in exact HTTP comparison;
+  test wrong/stale labels and preserve ordinary authentication requirements.
+- [x] Use normal SQLite read transactions including WAL; do not treat live
+  stores as immutable or promote narrow schema checks into domain/lineage proof.
+- [x] Retain real independent-process startup/restart/refusal evidence and
+  clean-install smoke coverage without accessing a user service or hardware.
+- [ ] Authenticated owned-runtime identity remains deferred to the private
+  process channel. Public correlation alone does not complete that design gate.
+
+Private owned-child control, all-writer fencing, probation, live switching and
+rollback remain deferred. Public runtime IDs are not credentials. Do not expand
+this infrastructure until a concrete delivery need justifies it.
+
+## Phase 49 — standard CI evidence in the existing Dashboard workflow
+
+- [x] Extend the existing selection to four families: JUnit, Cobertura/LCOV,
+  SARIF 2.1.0 and ForgeGate benchmark JSON. Reuse parsers, not another plugin system.
+- [x] Preserve 1 MiB/file and 2 MiB/selection bounds, exact hashes, original
+  timestamps, declared trust, explicit warnings and all-or-nothing assembly.
+- [x] Support both reviewed direct binding and the existing durable task path;
+  extend request/result contracts together, without database migration.
+- [x] Add generic synthetic PASS/FAIL/REVIEW/rejection fixtures and test exact
+  policy outputs, tamper rejection, job readback and browser input validation.
+- [x] Verify actual Edge four-report preview/binding/evaluation and malformed
+  SARIF rejection; retain screenshots and explicit evidence boundaries.
+
+## Phase 50 — real software-project evidence and delivery acceptance
+
+- [x] Run an owner-visible, frozen AVS commit in an independent environment;
+  preserve original report bytes without editing its active dirty worktree.
+- [x] Add a file-only consumer pack and strict versioned host-quality mapper,
+  using the existing four collectors, candidate store and assurance contracts.
+- [x] Preserve real failure counts and static review candidates; verify 130
+  records and 12 rule outputs (10 PASS / 2 FAIL), not a manufactured clean result.
+- [x] Complete actual Edge binding, evaluation, attestation and download; verify
+  the downloaded bundle independently and retain screenshots/hash evidence.
+- [x] Add 14 regressions and complete full ForgeGate verification; provide a
+  bounded upstream handoff rather than modifying AVS or relaxing policy.
+
+See [Phase 50 acceptance](../reports/PHASE_50_AVS_HOST_ACCEPTANCE.md).
+Next: obtain an owner-approved producer revision/disposition and replay the same
+handoff as a new immutable candidate, or address a concrete operator-delivery
+blocker. Do not repeat infrastructure work or claim the producer release passed.
 Assistive acceptance remains separate; GitHub synchronization stays paused.
+
+## Phase 51 — private original-report export and offline replay
+
+- [x] Export exact original reports and collection-result files separately from
+  the existing three-file assurance contract; deterministic content-addressed ZIP.
+- [x] Reparse supported built-in software formats, compare all normalized records
+  and warnings, reconstruct the assembly and recompute the original policy.
+- [x] Add bounded, no-extraction verification with independently supplied commit,
+  strict member/hash/version checks, and a no-overwrite CLI export destination.
+- [x] Add operator-scoped Dashboard selection, hash review, privacy consent,
+  candidate identity checks and a verified download without candidate mutation.
+- [x] Complete actual Edge incomplete-selection rejection, reselection, consent
+  and download over the retained AVS reports; independently reproduce VALID/FAIL.
+- [x] Retain private originals outside Git and public-safe screenshot/hash evidence.
+
+See [operations](EVIDENCE_REPLAY.md) and
+[acceptance](../reports/PHASE_51_SOURCE_REPLAY_ACCEPTANCE.md).
+Next: operator delivery acceptance using the documented workflow, then a new
+immutable candidate when an owner-approved producer revision/disposition is
+available. Do not rerun the unchanged upstream baseline or expand infrastructure
+without a concrete delivery need. Native assistive acceptance remains separate.
+
+## Phase 52 — reviewed Windows installed-wheel delivery
+
+- [x] Add a no-overwrite builder that creates the wheel from a generated sdist
+  in a fresh tree and records exact wheel/sdist hashes plus source state.
+- [x] Reject stale, extra or hash-mismatched Dashboard assets in the retained wheel;
+  add regression coverage for exact, stale and corrupted packages.
+- [x] Install the retained wheel in a new Windows Python 3.12 environment and pass
+  dependency, package-origin, packaged-asset and exact HTTP/HTML checks.
+- [x] Start an isolated copy of the accepted candidate database with no MSP430
+  option; complete fresh operator activation in actual Edge.
+- [x] Review project, candidate, 130 evidence records, 12 rules and assurance;
+  download and independently verify the portable ZIP as VALID / decision FAIL.
+- [x] End the browser session, close its tab and stop only the isolated service;
+  retain portfolio-safe screenshots and path-free evidence.
+
+See [acceptance](../reports/PHASE_52_WINDOWS_DELIVERY_ACCEPTANCE.md).
+Next: Phase 53 owner-operated comparison under the protocol linked above, using
+the documented installed-wheel workflow and separately recorded setup cost.
+After Phase 46–52 is reviewed and committed, repeat the build from that clean
+commit before any release/publication decision. The evidence-page display may
+contain upstream-provided local paths and requires privacy review before capture.

@@ -78,12 +78,27 @@ For owner acceptance:
 2. Compare candidate IDs, revisions, history, evidence and attestation with the
    expected records using existing `candidate` and `jobs` read commands.
 3. Verify queued/completed/cancelled task counts and exact retained result values.
-4. If a Dashboard rehearsal is needed, stop the intended old service deliberately,
-   then use the [existing launcher](WINDOWS_DASHBOARD_OPERATIONS.md) with **both**
-   restored database paths, the appropriate external trust store and a fresh
-   browser activation. Select another port for an isolated side-by-side rehearsal.
+4. For an isolated Dashboard rehearsal, keep the original service untouched and
+   select a different unused loopback port. Verify that **both** restored files
+   exist and are nonempty, then use the explicit CLI below with an appropriate
+   external trust store and fresh browser activation. The current PowerShell
+   launcher does not accept a job-store parameter. This manual rehearsal does
+   not implement managed adoption or rollback.
 5. Explicitly review any queued execution. Do not run both copies as interchangeable
    live workspaces: they can diverge and reuse the same historical identities/keys.
+
+Example after completing those checks (replace the external trust-store path
+and confirm the port is unused):
+
+```powershell
+python -m forgegate dashboard --database work/recovered/candidates.db --job-store work/recovered/jobs.db --trust-store work/identity/trust-store.json --host 127.0.0.1 --port 8146
+```
+
+Do not omit either store argument or add `--msp430-port` for a recovery rehearsal.
+The ordinary CLI can initialize a missing candidate database; it is not the
+future existing-only managed startup described in the
+[adoption design](WORKSPACE_ADOPTION_DESIGN.md). No live switch is authorized by
+following this isolated-copy example.
 
 `WORKSPACE_RESTORE_INCOMPLETE` means a newly reserved directory can contain partial
 files. Do not launch from it or retry into it. Retain it for inspection and retry

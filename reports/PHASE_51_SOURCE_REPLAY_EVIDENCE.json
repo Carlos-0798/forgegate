@@ -1,0 +1,105 @@
+{
+  "format": "phase51-source-replay-acceptance.v1",
+  "date": "2026-09-08",
+  "scope": "RETAINED_SOFTWARE_REPORT_PARSING_AND_POLICY_ONLY",
+  "candidate_id": "cand-3a006df37a4f29d6cf66210b",
+  "candidate_revision": 4,
+  "verification": {
+    "schema_version": "forgegate.evidence-replay-verification.v1",
+    "status": "VALID",
+    "replay_id": "sha256:ac5d00baaf02ae5f132dcae5d15d95c356f4812789fd193bd28f6e6375ce212c",
+    "bundle_id": "sha256:0d18e39dcceccf5a99e2b29d08fc71d8982ad5711d26a62dcf7373b364577bd9",
+    "candidate_commit": "bf8c4c6f59ba9063524aea7db01df87d35170483",
+    "decision": "FAIL",
+    "collections_replayed": 4,
+    "evidence_records": 130,
+    "source_files": 8,
+    "producer_authentication": "NOT_PERFORMED",
+    "hardware_access": "NOT_PERFORMED"
+  },
+  "archive": {
+    "filename": "replay-ac5d00baaf02ae5f132dcae5d15d95c356f4812789fd193bd28f6e6375ce212c.zip",
+    "sha256": "aa99093ee96d2d1a4eb1390208ccac92c6ccd7d4c2b0217010343007d3225445",
+    "size_bytes": 1281988,
+    "member_count": 10,
+    "exact_browser_cli_byte_match": true,
+    "manifest_source_files": [
+      {
+        "sha256": "73d5e16fc90f6255452f58ca289a85ebd7429f2f6bd23256a31643ab8bb1aae7",
+        "size_bytes": 533011
+      },
+      {
+        "sha256": "745b0d0b382063f756eb24a33df9ce2467a796cec179a590c2553c4ff431fa66",
+        "size_bytes": 14339
+      },
+      {
+        "sha256": "7c4bb2428aa3524cf6ff87eda57a19292ef1023105d35187a4b9b841d79097da",
+        "size_bytes": 362527
+      },
+      {
+        "sha256": "83922aaacfc62d2228723c25bdda10585688ab263343ca875880e9a97f0fe910",
+        "size_bytes": 92184
+      },
+      {
+        "sha256": "a7eee4affb42424e79631df9642c02f878ffba5ef435ea18a1cd159269c698e3",
+        "size_bytes": 534
+      },
+      {
+        "sha256": "a842e2133859adb235750cd4b05acf9136a17c08491152c108d3209ae2a05df6",
+        "size_bytes": 1098
+      },
+      {
+        "sha256": "c9c40ad7a7940af9921ccb9ea14dedf2492810414d1f1364ee6e144f2858fc55",
+        "size_bytes": 6234
+      },
+      {
+        "sha256": "f4693fe174af9b48b302579fe44e9d4e89e8a866e3f9d889ad48645e4eddc19a",
+        "size_bytes": 25092
+      }
+    ]
+  },
+  "required_input_bytes": 1035019,
+  "offline_cli": {
+    "correct_commit_exit": 0,
+    "wrong_commit_exit": 3,
+    "wrong_commit_error": "REPLAY_COMMIT"
+  },
+  "browser": {
+    "application": "Microsoft Edge",
+    "observed_by": "agent UI interaction",
+    "incomplete_selection": "DASHBOARD_REPLAY_SELECTION_INVALID before request",
+    "reselection": "8 original files matched",
+    "missing_privacy_consent": "refused with acknowledgement prompt",
+    "download": "completed; independently verified on disk",
+    "session_ended": true,
+    "temporary_tab_closed": true
+  },
+  "candidate_bundle_unchanged": true,
+  "forgegate_verification": {
+    "python_passed": 1420,
+    "python_skipped": 3,
+    "branch_aware_coverage_percent": 95.8,
+    "frontend_passed": 168,
+    "frontend_failed": 0,
+    "development_gate": "PASS",
+    "clean_install_release_smoke": "PASS"
+  },
+  "screenshots": [
+    {
+      "path": "phase51-browser/missing-originals.png",
+      "sha256": "39472bfabb70f616c30ac7aa165d218dea994280cb1e281f22ad2ad116454a1e",
+      "size_bytes": 109481
+    },
+    {
+      "path": "phase51-browser/source-replay-download.png",
+      "sha256": "88bd9ead53dad980477c7bba60e12feecf7f129efcf5d26af2125222d50187af",
+      "size_bytes": 98403
+    }
+  ],
+  "upstream_tests_rerun": false,
+  "upstream_active_worktree_modified": false,
+  "hardware_access": "NOT_PERFORMED",
+  "producer_authentication": "NOT_PERFORMED",
+  "github_sync": "NOT_PERFORMED",
+  "raw_sources_location": "PRIVATE_OUTSIDE_REPOSITORY"
+}

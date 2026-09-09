@@ -11,7 +11,7 @@ import struct
 import tempfile
 import time
 import zipfile
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import closing, contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
@@ -521,7 +521,11 @@ def _extract(source: Path, root: Path, deadline: float) -> BackupManifest:
 
 @contextmanager
 def _verified(
-    backup: Path, expected_sha256: str | None, deadline: float
+    backup: Path,
+    expected_sha256: str | None,
+    deadline: float,
+    *,
+    pre_inspect: Callable[[Path, float], None] | None = None,
 ) -> Iterator[tuple[Path, BackupManifest, SnapshotMember, dict[str, Any]]]:
     _require(
         expected_sha256 is None or re.fullmatch(r"[0-9a-f]{64}", expected_sha256) is not None,
@@ -548,6 +552,8 @@ def _verified(
             expected_sha256 is None or digest.sha256 == expected_sha256, "WORKSPACE_HASH_MISMATCH"
         )
         manifest = _extract(local, root, deadline)
+        if pre_inspect is not None:
+            pre_inspect(root, deadline)
         details = _inspect_pair(root, deadline)
         _require(details["job_store_version"] == manifest.job_store_version)
         yield root, manifest, digest, details

@@ -1,0 +1,62 @@
+{
+  "phase": 54,
+  "date": "2026-09-08",
+  "scope": "local-working-tree-synthetic-browser-acceptance",
+  "browser_acceptance": "PASS_WINDOWS_EDGE",
+  "hardware_access": "NOT_PERFORMED",
+  "human_efficiency_measurement": "DEFERRED_BY_OWNER",
+  "frontend_tests": {"passed": 193, "new_quick_assessment_tests": 25},
+  "development_verification": "PASS",
+  "release_smoke": "PASS",
+  "python_tests": {"passed": 1425, "skipped_environment": 3},
+  "smoke_wheel_sha256": "ba524ea75891da2a3ffcd21c4d04b8f6b0b659d0cb659aef74707bd619069670",
+  "smoke_sdist_sha256": "d0e33eada02741a47aee334e19fdebb0c05726a8496ba0053e32413f571309f6",
+  "branch_aware_coverage_percent": 95.80,
+  "pass": {
+    "candidate_id": "cand-69eefb88b1ee359a4750e690",
+    "revision": 4,
+    "decision": "PASS",
+    "passing_rules": 6,
+    "evaluation_id": "sha256:6a1c1d341bbef63d485d1cfcb1a082892698b1f35272e3c0bbdd1feab0e0d477",
+    "assurance_bundle_id": "sha256:e1325b786d363faf12a0814785e6c88f52297463b55f18a1982c2f57d57dfef4",
+    "download_bytes": 38834,
+    "download_sha256": "23637d1bf0ef1d5c7ddd304f1891f710953f410902b432ee407ff9949ec55830",
+    "offline_verification": "VALID"
+  },
+  "fail": {
+    "candidate_id": "cand-23efd988202f3a2108a21831",
+    "revision": 4,
+    "decision": "FAIL",
+    "passing_rules": 5,
+    "failing_rules": 1,
+    "failing_rule": "security-clean",
+    "actual": 1,
+    "expected": 0,
+    "evaluation_id": "sha256:dc6de22b6695a5e93b3130df33fe3238ac3f295b707ec8f3b2b18912740abdf4",
+    "screenshot": "phase54-browser/quick-fail.png",
+    "screenshot_sha256": "4611d9c04e500aadc79527d75621c61240e2e25887b95a99c43494f96550696e"
+  },
+  "review": {
+    "candidate_id": "cand-151de8d9119c4851f9008514",
+    "revision": 4,
+    "decision": "REVIEW",
+    "reviewing_rule": "latency-bound",
+    "actual": null,
+    "expected": 50,
+    "reason": "required benchmark evidence absent"
+  },
+  "rejected": {
+    "candidate_id": "cand-7224f378a05638e8b364c51e",
+    "status": "COLLECTING",
+    "revision": 1,
+    "evaluation": "NOT_PERFORMED",
+    "collector_code": "SARIF_RUNS_INVALID",
+    "ui_code": "DASHBOARD_QUICK_REPORT_REVIEW_REQUIRED",
+    "screenshot": "phase54-browser/quick-rejected-final.png",
+    "screenshot_sha256": "7a6bbde6c1b5019827e0d1165e47c5b5b14aef5f768741d82e83b24f0d2e5a28"
+  },
+  "folder_import": "PASS_WINDOWS_EDGE",
+  "browser_console_errors_or_warnings": 0,
+  "open_browser_checks": [],
+  "github_sync": "NOT_PERFORMED"
+}

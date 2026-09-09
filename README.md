@@ -6,6 +6,15 @@ ForgeGate is a local-first Python release-assurance platform that normalizes
 engineering evidence, evaluates versioned policies, and produces deterministic,
 reviewable release decisions.
 
+The intended benefit is less manual work reconciling reports and handing off a
+version for review. **Human efficiency and accuracy improvement are not yet
+measured.** Formal [Phase 53B](docs/product/EFFICIENCY_ACCEPTANCE.md) comparison is
+deferred by the owner. [Quick assessment](docs/QUICK_ASSESSMENT.md) automates batch
+identification and the reviewed evidence-to-decision sequence.
+[Evaluation comparison](docs/DECISION_COMPARISON.md) highlights rule changes and
+missing evidence across explicitly selected candidates, and blocks like-for-like
+conclusions when their policy/profile authority differs.
+
 [![CI](https://github.com/Carlos-0798/forgegate/actions/workflows/ci.yml/badge.svg)](https://github.com/Carlos-0798/forgegate/actions/workflows/ci.yml)
 
 ## Current status
@@ -18,13 +27,47 @@ reviewable release decisions.
 
 The current checkpoint demonstrates:
 
+- [refreshed Windows installed-wheel acceptance](reports/PHASE_58_WINDOWS_DELIVERY_ACCEPTANCE.md):
+  isolated Python 3.12 install, synthetic four-report quick assessment, private
+  replay and assurance verification, and comparable/incompatible evaluation
+  controls all pass in actual Edge; the dirty working-tree build is not a public
+  release candidate;
+- [real AVS quick assessment](reports/PHASE_56_AVS_QUICK_ACCEPTANCE.md):
+  distinct report metadata, reviewed warning retention and bounded larger XML;
+  actual Edge handoff independently reproduces all 12 historical rule results
+  and VALID / FAIL with 130 records, without rerunning upstream tests;
+- [repeat-use quick handoff](reports/PHASE_55_QUICK_HANDOFF_ACCEPTANCE.md):
+  explicitly choose a compatible saved policy and save the original report/receipt
+  replay ZIP from the completed assessment, without selecting the files again;
+  actual Edge download independently replays four collections to VALID / PASS;
+- [quick assessment](reports/PHASE_54_QUICK_ASSESSMENT_ACCEPTANCE.md):
+  content-detected report batches and one reviewed evidence-to-attestation
+  sequence; real Edge PASS/FAIL/REVIEW, directory import, invalid-report safe
+  stop and independently verified PASS download. Human gains remain unmeasured;
+- [reviewed Windows installed-wheel delivery](reports/PHASE_52_WINDOWS_DELIVERY_ACCEPTANCE.md):
+  a fresh-sdist build prevents stale Dashboard assets, installs in an isolated
+  Python 3.12 environment, starts the real loopback UI, preserves the AVS
+  candidate and independently verifies its downloaded VALID/FAIL assurance ZIP;
+- [private original-report export and offline replay](docs/EVIDENCE_REPLAY.md):
+  exact collection inputs, parser results and retained policy are checked in a
+  bounded, database-independent ZIP; actual Edge download reproduces the AVS
+  FAIL decision without rerunning upstream tests or authenticating their origin;
+- [real AVS host-report integration](reports/PHASE_50_AVS_HOST_ACCEPTANCE.md):
+  four collector receipts and 130 records through reviewed Dashboard binding,
+  policy evaluation and independently verified assurance download; the frozen
+  producer baseline correctly remains FAIL (one test failure, 15 untriaged
+  static review candidates), not a hardware or producer-authentication claim;
 - fail-closed collection of JUnit, coverage, SARIF, benchmark, and optional
   Analog Validation Studio artifacts;
-- bounded operator-only JUnit and combined JUnit + Cobertura/LCOV browser
-  previews with exact-byte hashing, explicit warning retention and separately
+- bounded operator-only JUnit and standard CI browser collection (JUnit +
+  Cobertura/LCOV, optional SARIF and benchmark JSON), with exact-byte hashing,
+  reviewed durable tasks, explicit warning retention and separately
   confirmed immutable binding; [collection boundaries](docs/DASHBOARD_COLLECTION_CONTRACT.md);
 - loopback HTTP/HTML diagnostics and an explicit Windows foreground launcher
   with [startup and recovery guidance](docs/WINDOWS_DASHBOARD_OPERATIONS.md);
+- opt-in existing-only candidate/job paired startup, with no silent initialization
+  or migration and fresh public runtime correlation; not a managed owner channel,
+  probation mode, writer fence or live workspace switch;
 - consistent candidate-store snapshots and offline backup validation with
   [no-overwrite and private-data boundaries](docs/STORE_BACKUP_OPERATIONS.md);
 - [coordinated candidate/job backup and recovery](docs/WORKSPACE_RECOVERY.md),
@@ -49,6 +92,10 @@ The current checkpoint demonstrates:
 - the operator-only [rehearsal receipt review](docs/DASHBOARD_RECOVERY_REHEARSAL_REVIEW.md)
   validates and displays that exact completion receipt without accepting a path,
   running recovery, rehydrating results or switching the live workspace;
+- [read-only adoption preflight](docs/WORKSPACE_ADOPTION_PREFLIGHT.md) compares
+  exact source snapshots and cold rehearsal copies across all supported tables,
+  with current domain readback, archive dependencies and bounded difference pages;
+  MATCH does not prove live freshness or authorize a workspace switch;
 - [durable local report jobs](docs/COLLECTION_JOBS.md) with idempotent submission,
   explicit execution/cancellation, expired-lease recovery and bounded pending
   input retention; v2 records expose non-credential execution ownership and
@@ -115,11 +162,17 @@ never converted into candidate evidence.
 
 ## Verified results
 
+Aggregate regression figures below use the Phase 52 recorded checkpoint.
+Named earlier-phase rows describe their historical scope, not additional totals.
+
 | Gate | Current result | Evidence boundary |
 |---|---|---|
-| Full Python suite | 1295 passed, 3 skipped | Local host test; skips require unavailable Windows symlink creation |
-| Branch-aware coverage | 95.77% across 12,536 statements and 3,246 branches | Local host test |
-| Static quality | Ruff, formatting, and strict mypy passed across 110 source/tool files | Local host test |
+| Full Python suite | 1,423 passed, 3 skipped; 95.80% branch-aware coverage | Local host test; skips require unavailable Windows symlink creation |
+| Branch-aware coverage | 95.80% at the Phase 52 checkpoint | Local host test; historical statement/branch totals are not mixed into this checkpoint |
+| Static quality | Ruff, formatting, and strict mypy passed across 120 source/tool files | Phase 52 local host test |
+| Standard CI Dashboard workflow | Four report families; 35 focused Python and 10 new frontend cases; actual Edge preview, binding, six-rule PASS and malformed-SARIF rejection | Synthetic acceptance only, not measured production performance; [Phase 49 evidence](reports/PHASE_49_STANDARD_CI_ACCEPTANCE.md) |
+| Existing-only paired startup | 36 new cases, 98 focused regressions and independent CLI startup/restart/refusal checks | Selected file identities and public runtime correlation, not authenticated process ownership or live adoption; [Phase 48 evidence](reports/PHASE_48_EXISTING_PAIR_ACCEPTANCE.md) |
+| Adoption preflight | 49 new tests and independent-process MATCH/DIFFERENT/refusal checks | Offline local snapshot comparison and cold-copy preservation; not runtime adoption, live freshness or authenticated lineage; [Phase 47 evidence](reports/PHASE_47_ADOPTION_PREFLIGHT_ACCEPTANCE.md) |
 | Rehearsal receipt review | 93 focused Python cases, 148 production-TypeScript cases and actual isolated Edge import/reselection passed | Local synthetic test; 27 tasks/43 events plus exact restored-copy identities displayed; no restore execution, live switch, continuing-availability or hardware claim; [Phase 45 evidence](reports/PHASE_45_RECOVERY_REHEARSAL_REVIEW_ACCEPTANCE.md) |
 | Recovery rehearsal | 38 new tests; 160 combined recovery/archive cases; actual CLI with the earlier Edge handoff and independent readback | Local synthetic test; 27 tasks/43 events restored, 4-test/1-failure archived result preserved; no live replacement or payload rehydration |
 | Recovery handoff | 40 focused Python cases, 9 production-TypeScript cases and native Edge READY/BLOCKED imports plus independently hashed downloads passed | Local synthetic test; exact-byte trailing-newline and sequential-reselection regressions fixed; no restore, payload upload, live availability, producer authentication, hardware or publication |
@@ -128,10 +181,10 @@ never converted into candidate evidence.
 | Coordinated workspace recovery | 48 focused cases; backup/CLI modules 100% branch-aware coverage; paired snapshots, restored-copy execution and retention planning | Local synthetic test; no live replacement, automatic purge, encryption or power-loss certification |
 | Durable local report jobs | 99 focused Python cases plus actual synthetic browser execution; CLI lifecycle, v1/v2-to-v3 store migration, cooperative cancellation/renewal, exact browser export and reviewed binding | Local synthetic test; no automatic worker, mid-parser preemption, candidate transition, policy decision or hardware |
 | Candidate-store backup | 27 focused cases; backup module 100% branch-aware coverage; installed CLI round trip passes | Local host test; no automatic restore, encryption or blanket domain validation |
-| Contracts | 55 document and 3 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI (29 paths, 31 operations) passed drift checks | Local host test |
+| Contracts | 58 document and 3 artifact JSON Schemas plus direct-API and Dashboard-BFF OpenAPI (30 paths, 32 operations) | Current local contract inventory; drift checks are part of development verification |
 | Packaging | sdist/wheel build and clean-environment install smoke passed | Local host test |
 | User interaction smoke | 33/33 expected CLI and authenticated REST outcomes matched | Local host test; ephemeral key/database, no hardware |
-| Dashboard automation | 148 TypeScript host interaction tests passed, including recovery READY/BLOCKED and completed-rehearsal import/reselection/error isolation plus earlier job-management/submission/handoff/archive cases | Local host test; [Phase 45 actual Edge checks](reports/PHASE_45_RECOVERY_REHEARSAL_REVIEW_ACCEPTANCE.md) verify exact receipt presentation; not exhaustive browser/OS certification |
+| Dashboard automation | 168 TypeScript host interaction tests passed at Phase 52, including source replay and earlier standard-CI/recovery/job cases | Local host test; [Phase 49 actual Edge checks](reports/PHASE_49_STANDARD_CI_ACCEPTANCE.md) verify the four-report direct workflow; not exhaustive browser/OS certification |
 | Dashboard browser interaction | Full reviewed Edge workflow, Edge/Chrome keyboard/focus, 129-record pagination, 390 px responsive, 409/413/422/429/500 recovery, exact Edge 100–200% zoom, and clean-console paths passed | Windows local browser test; uncommon errors use a zero-write presentation harness; Narrator is bounded PASS, while spoken output, high contrast, and real Remote Desktop remain open |
 | MSP430 report collector | 34 focused tests plus clean-wheel CLI collection passed; one LaunchPad HIL migration fixture produced 17 normalized records with retained warnings | Local artifact test; the fixture is a historical upstream result, not a new run or physical-measurement claim |
 | MSP430 live status | COM4 opened input-only at 115200 8-N-1; authenticated Devices page showed `CONNECTED`, heartbeat `NORMAL`, device `FAULT`, flags `0015`; sequence advanced 58007→58017 over 10 seconds with 10 accepted frames and no sequence gap | Owner-authorized Windows physical-device observation; one earlier invalid frame was rejected, no command or firmware/debug action, measurement validation, release evidence, or long-duration stability claim |
@@ -355,8 +408,8 @@ and reporting instructions are documented in [SECURITY.md](SECURITY.md).
 - The local Web Dashboard is a narrow Alpha surface. Evidence, decision, and
   assurance review plus explicit candidate transitions, evidence binding,
   policy evaluation, attestation generation, and candidate-bound portable ZIP
-  download are implemented. Automatic collection, server-side browsing,
-  source-artifact export, plugin, and administration
+  download and bounded private source-report replay export are implemented.
+  Automatic collection, server-side browsing, arbitrary-source export, plugin, and administration
   workflows are not. Foreground report parsing now records execution ownership,
   renews at bounded checkpoints, and observes explicit cancellation between
   stages; there is still no scheduler, background service, or arbitrary parser
@@ -387,13 +440,25 @@ These constraints are product boundaries, not implied future results. See the
 
 ## Roadmap
 
-The next maturity gates are:
+The real AVS artifact handoff and private source-report replay are accepted.
+The current product priority is [Phase 54 quick assessment](docs/QUICK_ASSESSMENT.md):
+batch selection, report identification and reviewed execution of the existing
+assurance workflow. Phase 53B human comparison is deferred by the owner;
+productivity gains remain NOT MEASURED. A new immutable upstream candidate follows only when an
+owner-approved producer revision/disposition is available.
+Do not rerun the unchanged failing baseline, replace real artifacts
+with the synthetic tutorial, or expand process-management infrastructure unless
+a measured delivery blocker requires it.
+
+Separate maturity gates (not prerequisites for that core workflow) are:
 
 1. complete Windows high-contrast, spoken Narrator-output, and real Remote
    Desktop evidence without claiming full accessibility certification;
-2. add an owner-reviewed live-workspace adoption plan and rollback proof before
-   considering any restore switch or automatic worker; the read-only completed-
-   rehearsal receipt review is implemented;
+2. build a private owned-process channel on existing-only paired startup, then prove
+   all-writer fencing and rollback against the
+   [adoption design](docs/WORKSPACE_ADOPTION_DESIGN.md) before any live switch;
+   snapshot preflight and public runtime correlation are implemented; owned-process
+   authentication, managed lifecycle and runtime adoption are not;
 3. align future MSP430 report revisions through the frozen artifact contract
    while keeping live UART status separate from evidence;
 4. establish publisher provenance and broader hostile-plugin compatibility;

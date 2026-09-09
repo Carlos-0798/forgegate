@@ -81,11 +81,18 @@ documents. Record v1 remains frozen for historical reads; new records are v2.
 The private lease token is never in CLI, Dashboard, review or event output.
 
 Reports reuse the existing [bounded collection contract](DASHBOARD_COLLECTION_CONTRACT.md):
-one or two reports; JUnit and/or one Cobertura/LCOV coverage family; no duplicate
-family or exact input bytes; at most 1 MiB per decoded report and 512 normalized
+one to four reports; JUnit, one Cobertura/LCOV coverage family, SARIF and benchmark
+JSON; no duplicate family or exact input bytes; at most 1 MiB per decoded report,
+2 MiB per complete selection and 512 normalized
 records per report; exact safe-integer counts. The request file is limited to
 4 MiB, 1,000 JSON nodes and depth 12; duplicate keys and non-finite JSON numbers
 are rejected. Warning retention requires an explicit `retain_warnings=true`.
+
+Phase 49 expands request/result v1 validation to four report families while
+retaining historical one/two-report documents. No SQLite migration is required.
+Older ForgeGate readers cannot consume new-format or four-report jobs/results;
+use a Phase 49-capable reader for these stores and their backups. This is not
+bidirectional compatibility with older releases.
 
 ## State, ownership and restart behavior
 

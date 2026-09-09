@@ -1,0 +1,92 @@
+{
+  "$defs": {
+    "ReplayFile": {
+      "additionalProperties": false,
+      "properties": {
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "size_bytes": {
+          "maximum": 1048576,
+          "minimum": 0,
+          "title": "Size Bytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "sha256",
+        "size_bytes"
+      ],
+      "title": "ReplayFile",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "assurance": {
+      "const": "unsigned_local",
+      "default": "unsigned_local",
+      "title": "Assurance",
+      "type": "string"
+    },
+    "bundle_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Bundle Id",
+      "type": "string"
+    },
+    "candidate_commit": {
+      "pattern": "^[0-9a-f]{40}$",
+      "title": "Candidate Commit",
+      "type": "string"
+    },
+    "files": {
+      "items": {
+        "$ref": "#/$defs/ReplayFile"
+      },
+      "maxItems": 32,
+      "minItems": 2,
+      "title": "Files",
+      "type": "array"
+    },
+    "forgegate_version": {
+      "maxLength": 120,
+      "minLength": 1,
+      "title": "Forgegate Version",
+      "type": "string"
+    },
+    "producer_authentication": {
+      "const": "NOT_PERFORMED",
+      "default": "NOT_PERFORMED",
+      "title": "Producer Authentication",
+      "type": "string"
+    },
+    "replay_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Replay Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "forgegate.evidence-replay.v1",
+      "default": "forgegate.evidence-replay.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "scope": {
+      "const": "report_parsing_and_retained_policy",
+      "default": "report_parsing_and_retained_policy",
+      "title": "Scope",
+      "type": "string"
+    }
+  },
+  "required": [
+    "replay_id",
+    "bundle_id",
+    "candidate_commit",
+    "forgegate_version",
+    "files"
+  ],
+  "title": "EvidenceReplayManifest",
+  "type": "object"
+}

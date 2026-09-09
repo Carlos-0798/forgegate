@@ -10,7 +10,7 @@ from typing import Any
 
 from pydantic import Field, field_validator
 
-from forgegate.artifacts import ArtifactError, ArtifactRegistry, RegisteredArtifact
+from forgegate.artifacts import ArtifactError, ArtifactSource, RegisteredArtifact
 from forgegate.bounded_parsing import StructureLimitError, enforce_json_structure_limits
 from forgegate.collectors.base import (
     CollectionIssue,
@@ -144,7 +144,7 @@ class BenchmarkMetric:
 class BenchmarkJsonCollector:
     def __init__(
         self,
-        registry: ArtifactRegistry,
+        registry: ArtifactSource,
         *,
         max_nodes: int = DEFAULT_MAX_JSON_NODES,
         max_depth: int = DEFAULT_MAX_JSON_DEPTH,

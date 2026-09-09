@@ -1,0 +1,374 @@
+{
+  "format": "phase50-avs-host-acceptance.v1",
+  "date": "2026-09-08",
+  "scope": "HOST_SOFTWARE_ONLY",
+  "producer_commit": "bf8c4c6f59ba9063524aea7db01df87d35170483",
+  "producer_source": "independent git archive; installed in a separate Python 3.12 environment",
+  "producer_working_tree_included": false,
+  "producer_test_result": {
+    "total": 2470,
+    "passed": 2469,
+    "failures": 1,
+    "errors": 0
+  },
+  "line_coverage": {
+    "covered": 13834,
+    "valid": 13834,
+    "percent": 100,
+    "branches_measured": false
+  },
+  "static_review_candidates": {
+    "S311": 2,
+    "S101": 12,
+    "S105": 1
+  },
+  "static_candidates_validated_as_vulnerabilities": false,
+  "quality_checks": {
+    "demo_manifest": true,
+    "demo_pass": true,
+    "demo_synthetic": true,
+    "demo_time": true,
+    "event_10k_time": true,
+    "event_cleanup": true,
+    "event_queue_bounded": true,
+    "event_terminal_state": true,
+    "live_10k_peak_memory": true,
+    "live_10k_time": true,
+    "live_eviction_accounted": true,
+    "live_ring_bounded": true,
+    "live_status_accounted": true,
+    "replay_10k_peak_memory": true,
+    "replay_10k_time": true
+  },
+  "host_measurements": {
+    "demo": {
+      "artifact_count": 12,
+      "elapsed_seconds": 0.034685,
+      "evidence_source": "SYNTHETIC",
+      "manifest_present": true,
+      "outcome": "PASS"
+    },
+    "event_volume": {
+      "cleanup_complete": true,
+      "dropped_events": 9747,
+      "elapsed_seconds": 0.037641,
+      "last_event_index": 10003,
+      "queue_limit": 256,
+      "requested_progress_events": 10000,
+      "retained_events": 256,
+      "worker_state": "SUCCEEDED"
+    },
+    "live_monitor": {
+      "elapsed_seconds": 0.208618,
+      "evicted_points": 7952,
+      "invalid_points": 0,
+      "peak_memory_mib": 1.355,
+      "requested_points": 10000,
+      "retained_limit": 2048,
+      "retained_points": 2048,
+      "suspect_points": 0,
+      "total_points": 10000,
+      "valid_points": 10000,
+      "visible_points": 1001
+    },
+    "replay": [
+      {
+        "elapsed_seconds": 0.005895,
+        "input_bytes": 12207,
+        "peak_memory_mib": 0.147,
+        "records": 100
+      },
+      {
+        "elapsed_seconds": 0.059743,
+        "input_bytes": 122110,
+        "peak_memory_mib": 1.314,
+        "records": 1000
+      },
+      {
+        "elapsed_seconds": 0.597524,
+        "input_bytes": 1236689,
+        "peak_memory_mib": 13.102,
+        "records": 10000
+      }
+    ]
+  },
+  "handoff": {
+    "format": "avs-host-handoff.v1",
+    "candidate_id": "cand-3a006df37a4f29d6cf66210b",
+    "reported_commit": "bf8c4c6f59ba9063524aea7db01df87d35170483",
+    "project_id": "analog-validation-studio",
+    "candidate_status": "COLLECTING",
+    "bound": false,
+    "warnings": [
+      "COVERAGE_BRANCH_SUMMARY_ONLY"
+    ],
+    "source_quality_sha256": "26a42b4a0e26e8dd873d9d07f5bd9af55bfbeb228f4dc8e2103c9c0d32ad61ea",
+    "benchmark_sha256": "a7eee4affb42424e79631df9642c02f878ffba5ef435ea18a1cd159269c698e3",
+    "source_files": {
+      "junit.xml": {
+        "sha256": "7c4bb2428aa3524cf6ff87eda57a19292ef1023105d35187a4b9b841d79097da",
+        "size_bytes": 362527,
+        "declared_collected_at": "2026-09-08T16:22:46.047401+00:00"
+      },
+      "coverage.xml": {
+        "sha256": "73d5e16fc90f6255452f58ca289a85ebd7429f2f6bd23256a31643ab8bb1aae7",
+        "size_bytes": 533011,
+        "declared_collected_at": "2026-09-08T16:22:44.286612+00:00"
+      },
+      "security.sarif": {
+        "sha256": "745b0d0b382063f756eb24a33df9ce2467a796cec179a590c2553c4ff431fa66",
+        "size_bytes": 14339,
+        "declared_collected_at": "2026-09-08T16:22:22.625242+00:00"
+      }
+    },
+    "time_basis": "observed producer output file modification times; unauthenticated",
+    "assembly_id": "sha256:d2aee8db7f9fec50dfaf0d608d15fd2e351d968c93575fad4bcb4352d25cceea",
+    "evidence_records": 130,
+    "hardware_access": "NOT_PERFORMED",
+    "producer_authentication": "NOT_PERFORMED",
+    "notes": [
+      "Private originals may contain local paths.",
+      "Performance values describe host execution of synthetic workloads.",
+      "Ruff S-rule findings require review; they are not confirmed vulnerabilities."
+    ]
+  },
+  "engineering_decision": "FAIL",
+  "rules": [
+    {
+      "rule_id": "tests-no-failures",
+      "claim": "host.tests-no-failures",
+      "decision": "FAIL",
+      "mandatory": true,
+      "evidence_kind": "test.summary",
+      "aggregation": "value",
+      "operator": "equals",
+      "expected": 0,
+      "actual": 1,
+      "evidence_ids": [
+        "test-summary-7c4bb2428aa3524c"
+      ],
+      "reason_code": "RULE_NOT_SATISFIED",
+      "explanation": "Eligible evidence does not satisfy the policy expression.",
+      "remediation_hint": "Provide evidence that satisfies equals."
+    },
+    {
+      "rule_id": "tests-no-errors",
+      "claim": "host.tests-no-errors",
+      "decision": "PASS",
+      "mandatory": true,
+      "evidence_kind": "test.summary",
+      "aggregation": "value",
+      "operator": "equals",
+      "expected": 0,
+      "actual": 0,
+      "evidence_ids": [
+        "test-summary-7c4bb2428aa3524c"
+      ],
+      "reason_code": "RULE_SATISFIED",
+      "explanation": "Eligible evidence satisfies the policy expression.",
+      "remediation_hint": null
+    },
+    {
+      "rule_id": "tests-nonempty",
+      "claim": "host.tests-nonempty",
+      "decision": "PASS",
+      "mandatory": true,
+      "evidence_kind": "test.summary",
+      "aggregation": "value",
+      "operator": "greater_than",
+      "expected": 0,
+      "actual": 2470,
+      "evidence_ids": [
+        "test-summary-7c4bb2428aa3524c"
+      ],
+      "reason_code": "RULE_SATISFIED",
+      "explanation": "Eligible evidence satisfies the policy expression.",
+      "remediation_hint": null
+    },
+    {
+      "rule_id": "line-coverage",
+      "claim": "host.line-coverage",
+      "decision": "PASS",
+      "mandatory": true,
+      "evidence_kind": "coverage.line",
+      "aggregation": "value",
+      "operator": "greater_than_or_equal",
+      "expected": 100,
+      "actual": 100.0,
+      "evidence_ids": [
+        "coverage-line-73d5e16fc90f-e2885f2bbe"
+      ],
+      "reason_code": "RULE_SATISFIED",
+      "explanation": "Eligible evidence satisfies the policy expression.",
+      "remediation_hint": null
+    },
+    {
+      "rule_id": "static-review",
+      "claim": "host.static-review",
+      "decision": "FAIL",
+      "mandatory": true,
+      "evidence_kind": "static_analysis.summary",
+      "aggregation": "value",
+      "operator": "equals",
+      "expected": 0,
+      "actual": 15,
+      "evidence_ids": [
+        "static-analysis-summary-745b0d0b382063f7"
+      ],
+      "reason_code": "RULE_NOT_SATISFIED",
+      "explanation": "Eligible evidence does not satisfy the policy expression.",
+      "remediation_hint": "Provide evidence that satisfies equals."
+    },
+    {
+      "rule_id": "quality-checks",
+      "claim": "host.quality-checks",
+      "decision": "PASS",
+      "mandatory": true,
+      "evidence_kind": "benchmark.metric",
+      "aggregation": "value",
+      "operator": "equals",
+      "expected": 0,
+      "actual": 0,
+      "evidence_ids": [
+        "benchmark-metric-a7eee4affb42-873582256f9e"
+      ],
+      "reason_code": "RULE_SATISFIED",
+      "explanation": "Eligible evidence satisfies the policy expression.",
+      "remediation_hint": null
+    },
+    {
+      "rule_id": "replay.10000-time",
+      "claim": "host.replay.10000-time",
+      "decision": "PASS",
+      "mandatory": true,
+      "evidence_kind": "benchmark.metric",
+      "aggregation": "value",
+      "operator": "less_than_or_equal",
+      "expected": 5,
+      "actual": 0.597524,
+      "evidence_ids": [
+        "benchmark-metric-a7eee4affb42-c62b99528df7"
+      ],
+      "reason_code": "RULE_SATISFIED",
+      "explanation": "Eligible evidence satisfies the policy expression.",
+      "remediation_hint": null
+    },
+    {
+      "rule_id": "events.10000-time",
+      "claim": "host.events.10000-time",
+      "decision": "PASS",
+      "mandatory": true,
+      "evidence_kind": "benchmark.metric",
+      "aggregation": "value",
+      "operator": "less_than_or_equal",
+      "expected": 5,
+      "actual": 0.037641,
+      "evidence_ids": [
+        "benchmark-metric-a7eee4affb42-5774c7949d8c"
+      ],
+      "reason_code": "RULE_SATISFIED",
+      "explanation": "Eligible evidence satisfies the policy expression.",
+      "remediation_hint": null
+    },
+    {
+      "rule_id": "live.10000-time",
+      "claim": "host.live.10000-time",
+      "decision": "PASS",
+      "mandatory": true,
+      "evidence_kind": "benchmark.metric",
+      "aggregation": "value",
+      "operator": "less_than_or_equal",
+      "expected": 5,
+      "actual": 0.208618,
+      "evidence_ids": [
+        "benchmark-metric-a7eee4affb42-8f8d87158f30"
+      ],
+      "reason_code": "RULE_SATISFIED",
+      "explanation": "Eligible evidence satisfies the policy expression.",
+      "remediation_hint": null
+    },
+    {
+      "rule_id": "demo-time",
+      "claim": "host.demo-time",
+      "decision": "PASS",
+      "mandatory": true,
+      "evidence_kind": "benchmark.metric",
+      "aggregation": "value",
+      "operator": "less_than_or_equal",
+      "expected": 5,
+      "actual": 0.034685,
+      "evidence_ids": [
+        "benchmark-metric-a7eee4affb42-29a999b6e286"
+      ],
+      "reason_code": "RULE_SATISFIED",
+      "explanation": "Eligible evidence satisfies the policy expression.",
+      "remediation_hint": null
+    },
+    {
+      "rule_id": "replay-memory",
+      "claim": "host.replay-memory",
+      "decision": "PASS",
+      "mandatory": true,
+      "evidence_kind": "benchmark.metric",
+      "aggregation": "value",
+      "operator": "less_than_or_equal",
+      "expected": 128,
+      "actual": 13.102,
+      "evidence_ids": [
+        "benchmark-metric-a7eee4affb42-8d2da0c7933d"
+      ],
+      "reason_code": "RULE_SATISFIED",
+      "explanation": "Eligible evidence satisfies the policy expression.",
+      "remediation_hint": null
+    },
+    {
+      "rule_id": "live-memory",
+      "claim": "host.live-memory",
+      "decision": "PASS",
+      "mandatory": true,
+      "evidence_kind": "benchmark.metric",
+      "aggregation": "value",
+      "operator": "less_than_or_equal",
+      "expected": 64,
+      "actual": 1.355,
+      "evidence_ids": [
+        "benchmark-metric-a7eee4affb42-8254eb2e2921"
+      ],
+      "reason_code": "RULE_SATISFIED",
+      "explanation": "Eligible evidence satisfies the policy expression.",
+      "remediation_hint": null
+    }
+  ],
+  "evaluation_id": "sha256:45fe90ff208467e16d56b0f1e4366fcc5680ddf453d71d2ecdc589dc19d05147",
+  "attestation_id": "sha256:b54d23ba43ff6a76ed2b94c0f4dc5f16f1e61d869da5ea847155f5d66ca90168",
+  "bundle_id": "sha256:0d18e39dcceccf5a99e2b29d08fc71d8982ad5711d26a62dcf7373b364577bd9",
+  "assurance_download": {
+    "bytes": 245775,
+    "sha256": "9cd5d14725a02b9847706a056cc7bf8936775b26954b603e9f47de1fbd9dcc47",
+    "exact_match_to_retained_bundle_archive": true,
+    "independent_verify_exit": 0,
+    "status": "VALID",
+    "decision": "FAIL",
+    "wrong_extraction_directory_rejected": "ASSURANCE_BUNDLE_DIRECTORY_MISMATCH",
+    "browser_download_event_wait": "TIMED_OUT; completed file independently located and verified"
+  },
+  "browser": {
+    "name": "Microsoft Edge",
+    "workflow": "import assembly, bind, READY, EVALUATING, policy import, FAIL, attest, download",
+    "console_errors": 0,
+    "console_warnings": 0,
+    "screenshots": {
+      "avs-assurance-download.png": "19f36b45c514a08432cb7aa47a59f175159f9e113ae8c97a53b20ee0f707e610",
+      "avs-host-decision.png": "606ee97a9f57b1f21df8125ac3222340c847aaf3c761f41c625a7244b1cba195"
+    }
+  },
+  "boundaries": {
+    "assurance": "unsigned_local",
+    "verification_level": "declared",
+    "producer_authentication": "NOT_PERFORMED",
+    "hardware_access": "NOT_PERFORMED",
+    "source_artifact_bytes": "not_embedded",
+    "deployment": "NOT_PERFORMED",
+    "github_sync": "PAUSED"
+  }
+}

@@ -4,6 +4,48 @@ Phase 31 adds a diagnostic command and an explicit foreground launcher. This
 is local Alpha operation support, not a Windows service, startup task, watchdog,
 database repair tool, or uptime guarantee. Existing authentication is unchanged.
 
+## Build a reviewed local delivery
+
+The latest retained installed-wheel regression is
+[Phase 58](../reports/PHASE_58_WINDOWS_DELIVERY_ACCEPTANCE.md): Quick Assessment,
+Evidence Replay, portable assurance and Evaluation Comparison passed in actual
+Edge from an isolated install and copied synthetic store. It remains a dirty-tree
+local artifact, not a public release candidate.
+
+For a retained Windows test build, use the no-overwrite delivery builder from a
+Python 3.12 development environment:
+
+```powershell
+python tools\build_windows_delivery.py C:\private\forgegate-delivery
+```
+
+The destination must not exist. The tool creates a source distribution, extracts
+it into a fresh temporary tree, builds the wheel from that tree, checks that the
+packaged Dashboard files exactly match their inventory, and writes the wheel,
+source distribution and `build-receipt.json` into the destination. This prevents
+obsolete hashed frontend assets in a long-lived ignored `build/` directory from
+leaking into the wheel. Direct `python -m build --wheel` from a reused source
+directory is not an accepted delivery procedure.
+
+The receipt records exact artifact hashes and whether Git reported a clean commit
+or a working tree with changes. A `WORKING_TREE_WITH_CHANGES` build is suitable
+for isolated local acceptance but cannot be reconstructed from `source_commit`
+alone and is not a public release candidate. Build again from the accepted clean
+commit before publication. The tool does not sign, upload or publish artifacts.
+
+Install and check the retained wheel in a new environment (paths are examples):
+
+```powershell
+py -3.12 -m venv C:\private\forgegate-runtime
+C:\private\forgegate-runtime\Scripts\python.exe -m pip install `
+  C:\private\forgegate-delivery\forgegate-0.1.0a1-py3-none-any.whl
+C:\private\forgegate-runtime\Scripts\python.exe -m pip check
+```
+
+Continue with `dashboard-check`, fresh browser activation and the project/candidate
+review below. Never place private keys, databases, original evidence or downloaded
+source-replay archives in a delivery directory intended for review.
+
 ## Check before starting or restarting
 
 From the repository's activated Python 3.12 environment:
@@ -84,6 +126,84 @@ input-only monitor. Do not start a second monitor against the same board.
 is inferred from another running instance.
 
 ## Controlled recovery
+
+### Phase 48: explicit existing-pair startup
+
+For an owner-selected, already initialized candidate v9 and job v3/v4 pair,
+use the new opt-in mode (paths are placeholders):
+
+```powershell
+python -m forgegate dashboard --existing-pair `
+  --database 'work/my workspace/forgegate.db' `
+  --job-store 'work/my workspace/jobs.db' `
+  --trust-store 'work/my workspace/trust-store.json' --port 8131
+
+# Equivalent source-distribution launcher:
+powershell.exe -NoProfile -File tools/start_dashboard.ps1 `
+  -Database 'work/my workspace/forgegate.db' `
+  -JobStore 'work/my workspace/jobs.db' `
+  -TrustStore 'work/my workspace/trust-store.json' -ExistingPair -Port 8131
+```
+
+Both paths are required. This mode refuses hardware options, missing/empty/
+foreign/incompatible stores, same-file or SQLite-sidecar namespace overlap,
+hard links and detected symlink/junction aliases (including existing sidecars).
+It validates both before constructing the service and again in its startup
+lifespan, without invoking candidate initialization or a migration. Existing-only
+candidate operation opens now also use SQLite `mode=rw`, preventing accidental
+file creation if an input disappears between the existence check and open.
+The original CLI behavior remains unchanged unless `--existing-pair` is supplied.
+
+Validation observes current application/schema IDs, required schema objects and
+columns, metadata, SQLite `quick_check` and foreign keys. A five-second progress
+deadline and one-second SQLite lock timeout bound normal checks, not stalled OS
+filesystem calls. This is **not** complete record/domain readback, exact trigger
+SQL validation, pair lineage proof or a simultaneous consistent backup. Phase 47
+snapshot/domain preflight remains a separate prerequisite for future adoption.
+Committed WAL is read normally, never ignored via SQLite `immutable=1`. SQLite
+may create/manage WAL/SHM sidecars: startup is not a cold-copy-preservation tool.
+Do not start a rehearsal directory that must remain cold; use a separately
+approved operational copy. No sidecar is manually removed or repaired.
+
+After successful lifespan validation the terminal prints `ForgeGate runtime:`
+followed by a path-free JSON record. Its random `runtime_id` and `store_pair_id`
+are fresh for each start. The latter is an opaque process-lifetime label for the
+private binding to the two selected paths and filesystem file IDs; it is **not**
+a database-content hash, persistent workspace/generation ID or credential.
+
+Copy both actual IDs into the diagnostic command in another terminal:
+
+```powershell
+python -m forgegate dashboard-check --port 8131 `
+  --expected-runtime-id '<32 lowercase hex characters from this startup>' `
+  --expected-store-pair-id '<32 lowercase hex characters from this startup>'
+```
+
+The same `/healthz` response supplies `X-ForgeGate-Runtime-Id` and
+`X-ForgeGate-Store-Pair-Id` headers. The endpoint rechecks file identities and
+returns 503 without identity headers on detected removal/replacement/aliasing.
+The body contract stays unchanged. Matching IDs plus accepted HTTP/HTML yields
+exit 0 with `runtime_correlation=MATCH_NOT_AUTHENTICATED`; wrong, old or absent
+IDs yield `RUNTIME_IDENTITY_MISMATCH`, exit 3. Partial/invalid expected IDs yield
+exit 2 before connecting. Omitting both retains the original reachability probe.
+
+These public identifiers can be copied by a forged service. They do not
+authenticate the responder, authorize stopping a process, or prove continued
+database integrity. A startup message precedes socket readiness; run the probe
+and then complete fresh browser activation. This mode is **normal authenticated
+operation, not read-only probation**: existing reviewed writes remain enabled.
+File checks are observations with check/open races, not handle-pinned isolation
+or an all-writer fence. No service manager, private ownership channel, stop
+command, live switch, rollback, automatic execution or migration was added.
+Use only on an owner-controlled local filesystem; network/sync/shared-host
+operation and hostile same-user races are not supported.
+
+Reproduce the independent-process check with `python tools/dashboard_pair_smoke.py`.
+It starts and stops only its own temporary CLI children, verifies restart and
+wrong-pair refusal, and uses no hardware or browser automation. See the
+[Phase 48 acceptance report](../reports/PHASE_48_EXISTING_PAIR_ACCEPTANCE.md).
+
+### Owner-controlled recovery procedure
 
 1. Check the exact URL/port and diagnostic output. If a listener exists,
    inspect it locally (`Get-NetTCPConnection -State Listen -LocalPort 8131`).

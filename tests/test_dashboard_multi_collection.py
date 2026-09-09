@@ -175,7 +175,7 @@ def test_bounded_contract_rejects_ambiguous_or_invalid_selection(change):
     elif change == "duplicate_bytes":
         reports[1]["content_base64"] = reports[0]["content_base64"]
     elif change == "format":
-        reports[1]["format"] = "sarif"
+        reports[1]["format"] = "unsupported-format"
     elif change == "base64":
         reports[1]["content_base64"] = "YR=="
     elif change == "size":

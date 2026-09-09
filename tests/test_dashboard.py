@@ -200,7 +200,9 @@ def _producer_trust_store():
     )
 
 
-def _activate(client: TestClient, *, role: str = "operator") -> dict[str, Any]:
+def _activate(
+    client: TestClient, *, role: str = "operator", project_ids: list[str] | None = None
+) -> dict[str, Any]:
     started = client.post("/app/api/activations", headers=ORIGIN_HEADER, json={})
     assert started.status_code == 201, started.text
     code = started.json()["activation_code"]
@@ -209,7 +211,7 @@ def _activate(client: TestClient, *, role: str = "operator") -> dict[str, Any]:
         json={
             "identity_id": TEST_IDENTITY.identity_id,
             "role": role,
-            "project_ids": ["sample-api"],
+            "project_ids": project_ids if project_ids is not None else ["sample-api"],
         },
     )
     assert challenge_response.status_code == 201, challenge_response.text
@@ -516,7 +518,9 @@ def test_dashboard_openapi_export_is_deterministic_and_complete(tmp_path: Path) 
         "/app/api/candidates",
         "/app/api/candidates/{candidate_id}",
         "/app/api/candidates/{candidate_id}/assurance-export",
+        "/app/api/candidates/{candidate_id}/evidence-replay-export",
         "/app/api/candidates/{candidate_id}/assurance-review",
+        "/app/api/candidates/{candidate_id}/policy-choices",
         "/app/api/candidates/{candidate_id}/attestation",
         "/app/api/candidates/{candidate_id}/evaluate",
         "/app/api/candidates/{candidate_id}/evidence",

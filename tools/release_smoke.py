@@ -12,11 +12,17 @@ import tempfile
 import venv
 from pathlib import Path
 
+from build_windows_delivery import build_windows_delivery
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_SDIST_PATHS = (
+    "tools/build_windows_delivery.py",
+    "tests/test_windows_delivery_build.py",
+    "schemas/forgegate.workspace-adoption-preflight.v1.schema.json",
+    "tests/test_adoption_preflight.py",
+    "tools/adoption_preflight_smoke.py",
     "docs/DASHBOARD_RECOVERY_REHEARSAL_REVIEW.md",
     "reports/PHASE_45_RECOVERY_REHEARSAL_REVIEW_ACCEPTANCE.md",
     "reports/PHASE_45_RECOVERY_REHEARSAL_REVIEW_EVIDENCE.json",
@@ -102,6 +108,8 @@ REQUIRED_SDIST_PATHS = (
     "tests/test_store_backups.py",
     "tools/start_dashboard.ps1",
     "tools/dashboard_runtime_smoke.py",
+    "tools/dashboard_pair_smoke.py",
+    "tests/test_dashboard_startup.py",
     "tests/test_dashboard_runtime.py",
     "docs/WINDOWS_DASHBOARD_OPERATIONS.md",
     "AGENTS.md",
@@ -433,7 +441,7 @@ def main(
     with tempfile.TemporaryDirectory(prefix="forgegate-release-") as temporary:
         root = Path(temporary)
         dist = root / "dist"
-        run([sys.executable, "-m", "build", "--outdir", str(dist)])
+        build_windows_delivery(dist)
 
         plugin_dist = root / "plugin-dist"
         plugin_source = root / "sample-collector-plugin"
@@ -1283,6 +1291,35 @@ def main(
             cwd=root,
         )
         github_output = root / "github-output.txt"
+        replay_destination = root / "source-replay"
+        replay_export = [
+            str(python),
+            "-m",
+            "forgegate",
+            "evidence-replay",
+            "export",
+            str(candidate_store),
+            candidate_id,
+            "--source-root",
+            str(assembly_root),
+            "--destination",
+            str(replay_destination),
+        ]
+        run(replay_export, cwd=root)
+        run(replay_export, cwd=root, expected_returncode=3)
+        replay_archives = list(replay_destination.glob("replay-*.zip"))
+        if len(replay_archives) != 1:
+            raise SystemExit("installed wheel did not publish exactly one source replay ZIP")
+        replay_verify = [
+            str(python),
+            "-m",
+            "forgegate",
+            "evidence-replay",
+            "verify",
+            str(replay_archives[0]),
+        ]
+        run([*replay_verify, "--expected-commit", "a" * 40], cwd=root)
+        run([*replay_verify, "--expected-commit", "b" * 40], cwd=root, expected_returncode=3)
         github_summary = root / "github-summary.md"
         github_report = root / "github-action-report.json"
         github_gate = [
@@ -1568,8 +1605,10 @@ def main(
             cwd=root,
         )
         run([str(python), str(REPOSITORY_ROOT / "tools/dashboard_runtime_smoke.py")], cwd=root)
+        run([str(python), str(REPOSITORY_ROOT / "tools/dashboard_pair_smoke.py")], cwd=root)
         run([str(python), str(REPOSITORY_ROOT / "tools/collection_jobs_smoke.py")], cwd=root)
         run([str(python), str(REPOSITORY_ROOT / "tools/workspace_backups_smoke.py")], cwd=root)
+        run([str(python), str(REPOSITORY_ROOT / "tools/adoption_preflight_smoke.py")], cwd=root)
         run([str(python), "-m", "forgegate", "doctor"], cwd=root)
         run(
             [

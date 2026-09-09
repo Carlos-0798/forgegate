@@ -1,0 +1,93 @@
+{
+  "browser_interaction": "NOT_TESTED",
+  "cases": [
+    {
+      "browser_interaction": "NOT_TESTED",
+      "case": "start_1",
+      "dashboard_http_status": 200,
+      "database_integrity": "NOT_CHECKED",
+      "exit_code": 0,
+      "hardware_access": "NOT_PERFORMED",
+      "health_http_status": 200,
+      "instance_ownership": "NOT_VERIFIED",
+      "next_step": "Open /app/ and approve a fresh CLI activation; HTTP reachability does not prove login, data or hardware health.",
+      "origin": "http://127.0.0.1:63026",
+      "ready": true,
+      "runtime_correlation": "MATCH_NOT_AUTHENTICATED",
+      "scope": "unauthenticated_http_and_exact_installed_html_only",
+      "status": "DASHBOARD_REACHABLE"
+    },
+    {
+      "browser_interaction": "NOT_TESTED",
+      "case": "wrong_pair_1",
+      "dashboard_http_status": null,
+      "database_integrity": "NOT_CHECKED",
+      "exit_code": 3,
+      "hardware_access": "NOT_PERFORMED",
+      "health_http_status": 200,
+      "instance_ownership": "NOT_VERIFIED",
+      "next_step": "Check the exact startup receipt and port; do not stop or take over the listener.",
+      "origin": "http://127.0.0.1:63026",
+      "ready": false,
+      "runtime_correlation": "MISMATCH",
+      "scope": "unauthenticated_http_and_exact_installed_html_only",
+      "status": "RUNTIME_IDENTITY_MISMATCH"
+    },
+    {
+      "browser_interaction": "NOT_TESTED",
+      "case": "start_2",
+      "dashboard_http_status": 200,
+      "database_integrity": "NOT_CHECKED",
+      "exit_code": 0,
+      "hardware_access": "NOT_PERFORMED",
+      "health_http_status": 200,
+      "instance_ownership": "NOT_VERIFIED",
+      "next_step": "Open /app/ and approve a fresh CLI activation; HTTP reachability does not prove login, data or hardware health.",
+      "origin": "http://127.0.0.1:63033",
+      "ready": true,
+      "runtime_correlation": "MATCH_NOT_AUTHENTICATED",
+      "scope": "unauthenticated_http_and_exact_installed_html_only",
+      "status": "DASHBOARD_REACHABLE"
+    },
+    {
+      "browser_interaction": "NOT_TESTED",
+      "case": "wrong_pair_2",
+      "dashboard_http_status": null,
+      "database_integrity": "NOT_CHECKED",
+      "exit_code": 3,
+      "hardware_access": "NOT_PERFORMED",
+      "health_http_status": 200,
+      "instance_ownership": "NOT_VERIFIED",
+      "next_step": "Check the exact startup receipt and port; do not stop or take over the listener.",
+      "origin": "http://127.0.0.1:63033",
+      "ready": false,
+      "runtime_correlation": "MISMATCH",
+      "scope": "unauthenticated_http_and_exact_installed_html_only",
+      "status": "RUNTIME_IDENTITY_MISMATCH"
+    },
+    {
+      "browser_interaction": "NOT_TESTED",
+      "case": "prior_start_refused",
+      "dashboard_http_status": null,
+      "database_integrity": "NOT_CHECKED",
+      "exit_code": 3,
+      "hardware_access": "NOT_PERFORMED",
+      "health_http_status": 200,
+      "instance_ownership": "NOT_VERIFIED",
+      "next_step": "Check the exact startup receipt and port; do not stop or take over the listener.",
+      "origin": "http://127.0.0.1:63033",
+      "ready": false,
+      "runtime_correlation": "MISMATCH",
+      "scope": "unauthenticated_http_and_exact_installed_html_only",
+      "status": "RUNTIME_IDENTITY_MISMATCH"
+    },
+    {
+      "case": "missing_candidate_refused",
+      "created": false,
+      "exit_code": 3
+    }
+  ],
+  "evidence": "LOCAL_HOST_TEST",
+  "hardware_access": "NOT_PERFORMED",
+  "managed_process_ownership": "NOT_IMPLEMENTED"
+}

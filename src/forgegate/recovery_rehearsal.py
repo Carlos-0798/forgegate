@@ -4,6 +4,7 @@ import hashlib
 import json
 import os
 import re
+import tempfile
 from contextlib import suppress
 from datetime import UTC, datetime
 from pathlib import Path
@@ -218,7 +219,24 @@ def rehearse_recovery(
                     )
                     writer.flush()
                     os.fsync(writer.fileno())
-            post = _inspect_pair(destination, deadline)
+            # SQLite read-only WAL inspection can create -wal/-shm sidecars.
+            # Read back the actual destination bytes into disposable copies so
+            # the newly published rehearsal remains standalone, without deleting
+            # sidecars or touching any older owner directory.
+            with tempfile.TemporaryDirectory(prefix="forgegate-rehearsal-readback-") as temp:
+                readback = Path(temp)
+                for name, expected in zip(
+                    MEMBERS[:2], (manifest.candidate_store, manifest.job_store), strict=True
+                ):
+                    with (
+                        (destination / name).open("rb") as reader,
+                        (readback / name).open("xb") as writer,
+                    ):
+                        _require(
+                            _stream(reader, writer, deadline, expected.size_bytes) == expected,
+                            "REHEARSAL_COPY_MISMATCH",
+                        )
+                post = _inspect_pair(readback, deadline)
             _require(post == details, "REHEARSAL_READBACK_MISMATCH")
             _require(
                 _hash(destination / MEMBERS[0], deadline) == manifest.candidate_store

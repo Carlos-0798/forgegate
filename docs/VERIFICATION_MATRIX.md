@@ -1,7 +1,27 @@
 # Verification matrix
 
+Historical phase results retain their original scope. Current development
+regression counts do not establish human efficiency or independent operator
+acceptance. Phase 53B human measurement is deferred by owner; the
+[protocol](product/EFFICIENCY_ACCEPTANCE.md) remains available.
+
 | Capability | Planned evidence | Current status |
 |---|---|---|
+| Refreshed Windows installed workflow | Fresh-sdist wheel, isolated install/store backup, actual Edge quick assessment, replay, assurance and comparison | LOCAL PASS; 114-member wheel with 5 exact assets, installed dependencies/HTTP PASS, six-rule synthetic PASS, replay and assurance independently VALID / PASS, restored-rule and changed-policy controls correct, console issues 0. Dirty working-tree build, not public release. See Phase 58 acceptance |
+| Retained evaluation comparison | Like-for-like policy/profile checks, explicit baseline, new failures/restored rules/missing evidence, late-response guards and actual Edge controls | LOCAL PASS; 38 new / 248 total frontend tests; real browser new failure, restored rule, missing benchmark and changed-policy rejection. Full gate 1,433 Python passes / 3 skips and release smoke PASS. Synthetic retained results, not defect-fix or human-gain proof. See Phase 57 acceptance |
+| Real AVS quick assessment | Per-report metadata, explicit warning review, exact bounded XML tests, actual Edge download and independent old/new comparison | LOCAL PASS / RETAINED PRODUCER FAIL; all 12 rule results and 130 records match, excluding only artifact reference paths. 210 frontend cases and 1,433 Python passes / 3 skips; no new producer run. See Phase 56 acceptance |
+| Saved-policy reuse and prepared original-file replay | Exact frozen-profile/project/track lookup, canonical receipt checks, authorization/session negatives, actual Edge selection and independent ZIP replay | LOCAL PASS; 5 new Python cases and 7 new frontend cases. Actual Edge saved policy selected without upload; 8 files prepared without reselection; downloaded ZIP VALID / PASS, 4 collections and 9 records. See Phase 55 acceptance |
+| Quick assessment batch workflow | Production-TypeScript orchestration tests, real browser input/preview/decision/download and offline verifier | LOCAL PASS; 25 focused / 193 total frontend tests pass. Actual Edge PASS/FAIL/REVIEW, directory import and invalid-SARIF safe stop retained; PASS package independently VALID. Human gains unmeasured. See Phase 54 acceptance |
+| Operator efficiency against manual baseline | Matched tasks, elapsed/active time, setup cost and unsuccessful attempts | DEFERRED BY OWNER — materials retained; no measured speedup claim |
+| Comparative decision accuracy | Independently reviewed key, normal/negative controls, wrong-PASS and false-block counts | NOT RUN — existing fixture tests establish bounded software correctness only, not improved human accuracy |
+| Independent operator/recipient acceptance | Unassisted task output and independently reproduced handoff | NOT RUN — installed-wheel browser automation and owner preparation are separate evidence |
+| Reviewed Windows installed-wheel delivery | Fresh-sdist construction, exact packaged asset check, isolated Python 3.12 install, dependency/HTTP diagnostics, actual Edge operator review and offline download verification | LOCAL PASS — five inventoried UI assets only; project and revision-4 AVS candidate read correctly; 130 records / 12 rules; downloaded assurance VALID with retained FAIL. Working tree had changes, so not a clean-commit/public release candidate. See Phase 52 acceptance |
+| Private original-report export and offline replay | Exact source/receipt checks, parser and policy replay, CLI/API/frontend negative cases, actual Edge download and independent verifier | LOCAL INTEGRATION PASS — 8 original files, 4 collections, 130 records; deterministic browser/CLI ZIP agreement, VALID with retained FAIL decision. Not upstream test re-execution, producer authentication or hardware verification. See Phase 51 acceptance |
+| Real AVS host-report integration | 14 new handoff tests, isolated frozen producer run, actual Edge import/bind/evaluate/attest/download and independent ZIP readback | INTEGRATION PASS / PRODUCER FAIL — 130 records, 12 rules (10 PASS / 2 FAIL), VALID unsigned-local FAIL bundle. ForgeGate 1,406 passed / 3 skipped; no upstream dirty work, hardware or producer-authentication claim. See Phase 50 acceptance |
+| Standard CI Dashboard collection | 35 focused Python cases, 10 new frontend cases, actual Edge four-file preview/binding/evaluation and malformed SARIF | LOCAL PASS — 4 receipts, 9 normalized records and 6 passing synthetic rules; rejection exposes no partial binding. Full host suite 1,392 passed / 3 skipped and 158 frontend cases; not real scanner/performance/hardware proof. See Phase 49 acceptance |
+| Existing-only paired startup and runtime correlation | 36 new cases, 98 focused regressions and real independent-process restart/mismatch checks | LOCAL PASS — no initialization/migration; selected file identities and public per-start labels only; not owned-process authentication, a writer fence, probation, switch or browser acceptance; see Phase 48 acceptance |
+| Read-only adoption preflight | 49 new tests; current-schema/domain readback, exact 20-table comparison, cold-copy preservation, paged differences and independent CLI exits | LOCAL PASS — snapshot MATCH/DIFFERENT only; no live-source freshness, original-request reconstruction, authenticated lineage, process control or adoption authority; see Phase 47 acceptance |
+| Live-workspace adoption and rollback | Source-traced design, state transitions and 24 fault-injection requirements | DESIGN RECORDED — offline preflight implemented separately in Phase 47; managed lifecycle, switch and rollback NOT IMPLEMENTED; all live adoption fault cases NOT RUN |
 | Dashboard rehearsal receipt review | 93 focused Python cases, 148 production-TypeScript cases, strict Schema/OpenAPI/assets and actual isolated Edge import/reselection | LOCAL PASS — exact receipt/review identities and 27-task/43-event restored-copy summary displayed; screenshot retained; no path input, restore execution, live switch, continuing-availability or hardware claim |
 | Reviewed recovery rehearsal | 38 new cases, 160 combined regressions and actual CLI over an Edge-downloaded handoff | LOCAL PASS — exact recheck/new-directory copy, cold history and member hashes; 27 tasks/43 events plus exact 4-test/1-failure archived readback; no live replacement, payload rehydration, hardware or new browser test |
 | Reviewed recovery handoff | 40 focused Python cases, 9 production-TypeScript cases, strict Schema/OpenAPI/assets and native Edge READY/BLOCKED workflow | LOCAL PASS — exact CLI trailing newline preserved; sequential reselection works; both downloaded handoffs independently hash and validate; interactive screenshots captured but not repository-retained due browser policy |
@@ -30,7 +50,7 @@
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — 55 document plus three artifact schemas |
+| JSON Schemas export | CLI + JSON parse | PASS — 58 document plus three artifact schemas; current local inventory |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Analog Validation result Schema mirror | committed upstream-consumer contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |
@@ -96,7 +116,7 @@
 | Request correlation and error sanitization | generated/supplied/invalid IDs + injected exception | PASS — local host |
 | Loopback-only API bind | IPv4/IPv6/localhost allowlist + external-address rejection | PASS — local host |
 | OpenAPI 3.1 contract | committed byte comparison + installed-wheel export | PASS — drift-checked |
-| Dashboard BFF OpenAPI contract | separate build-time export + committed byte and installed-wheel comparison | PASS — 28 paths / 30 `/app/api/` operations with explicit operation IDs; not served as interactive docs |
+| Dashboard BFF OpenAPI contract | separate build-time export + committed byte and installed-wheel comparison | PASS — 30 paths / 32 `/app/api/` operations with explicit operation IDs; not served as interactive docs |
 | Authenticated local API | Ed25519 challenge, Bearer session, trust recheck | PASS — local host, loopback only |
 | User interaction acceptance | deterministic CLI plus authenticated REST smoke | PASS — 33/33 expected outputs; ephemeral identity/database; Swagger/ReDoc deliberately return 404 |
 | Local Web Dashboard design | architecture, UX requirements, threat model, acceptance matrix | DESIGN PASS — Phase 23 frozen; Phase 24 implementation preserves the defined same-origin boundary |
@@ -194,7 +214,7 @@
 | Structured-input pre-materialization bounds | JSON token, XML event, and YAML event adversarial tests | PASS — byte plus node/element/depth limits; duplicate YAML keys rejected |
 | Plugin output pre-materialization bounds | trusted in-container exporter plus bounded host archive inspection | PASS — clean-wheel live dual snapshots; no archive extraction |
 | Development dependency advisory audit | constrained pip/pytest bootstrap plus `pip-audit` | PASS — no known advisory in resolved registry dependencies; editable local project excluded |
-| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.76% exceeds exact 95.00% threshold |
+| Coverage gate precision | two-decimal branch-aware threshold and full suite | PASS — actual 95.88% exceeds exact 95.00% threshold |
 
 See `reports/INTERACTION_ACCEPTANCE_REPORT_2026-09-04.md` for the latest
 expected-versus-actual CLI/API check and

@@ -1,0 +1,109 @@
+{
+  "format": "phase58-windows-delivery-acceptance.v1",
+  "date": "2026-09-08",
+  "scope": "LOCAL_WINDOWS_INSTALLED_WHEEL_QUICK_REPLAY_COMPARISON",
+  "source_commit": "81710fb0cf954bee886a9cb9f551d175ad08cf4e",
+  "source_state": "WORKING_TREE_WITH_CHANGES",
+  "build": {
+    "construction": "wheel_built_from_generated_sdist_in_fresh_directory",
+    "wheel_sha256": "022dcec00edf934aee0d7b18a5369e4c9d61fa7450d677c043d3d5023394afda",
+    "wheel_size_bytes": 352978,
+    "wheel_members": 114,
+    "dashboard_assets": 5,
+    "javascript_sha256": "0730d97bd4fb4812706cd77e47025f9027cbb1ce2b4b97e07cf7d243fec0471f",
+    "sdist_sha256": "e95cf014ad1389f2a0ee9c55630cf451a6ce605723cc6f65133ad117d7ed036b",
+    "sdist_size_bytes": 6633367,
+    "existing_destination_exit": 3
+  },
+  "runtime": {
+    "windows": "Windows 11 10.0.26200",
+    "python": "3.12.10",
+    "package_version": "0.1.0a1",
+    "package_origin": "ISOLATED_SITE_PACKAGES",
+    "dependency_check": "PASS",
+    "database_source": "VERIFIED_SQLITE_BACKUP_COPY",
+    "source_candidate_count_before_and_after": 6,
+    "isolated_candidate_count_after": 7,
+    "prestart_diagnostic": "CONNECTION_REFUSED",
+    "installed_diagnostic": "DASHBOARD_REACHABLE",
+    "health_http_status": 200,
+    "dashboard_http_status": 200,
+    "msp430_option_enabled": false
+  },
+  "browser": {
+    "application": "Microsoft Edge",
+    "activation": "AUTHENTICATED",
+    "role": "operator",
+    "project_scope": "sample-api",
+    "candidate_id": "cand-05fd61017e9a4e92ae0f0491",
+    "candidate_revision": 4,
+    "evaluation_id": "sha256:13caa1f4aba6e152c4ee228e4cc24eb8b4a7e7e1b695fc3a8df74756137a1475",
+    "attestation_id": "sha256:0684c692066fe376eedbedb7e8ff46a12a2cdba398779e46634429908b20eaf9",
+    "bundle_id": "sha256:95ce5365ee58026ac1ca757725bc5442026fa82e6e6addd32f4f513fbb681fe8",
+    "quick_assessment": {
+      "reports": 4,
+      "collections": 4,
+      "evidence_records": 9,
+      "rules": 6,
+      "rules_passed": 6,
+      "decision": "PASS",
+      "saved_policy_selected_explicitly": true
+    },
+    "comparison": {
+      "fail_to_pass": "COMPARABLE_1_RULE_RESTORED_TO_PASS",
+      "security_clean_expected": 0,
+      "security_clean_actual_before": 1,
+      "security_clean_actual_after": 0,
+      "changed_policy_control": "NOT_COMPARABLE"
+    },
+    "console_errors_or_warnings": 0,
+    "tab_retained_for_owner_review": true
+  },
+  "replay_download": {
+    "replay_id": "sha256:3ce9d95713cdcd05bb304d192e4fa350dfdf82f9b8ca6868d55a1ceaabf268c1",
+    "archive_sha256": "84bfb19b9347cef2261c55e009c44d1defa1b1c63c873a8a9f6406095adde3d6",
+    "size_bytes": 50049,
+    "offline_status": "VALID",
+    "decision": "PASS",
+    "collections_replayed": 4,
+    "evidence_records": 9,
+    "source_files": 8
+  },
+  "assurance_download": {
+    "archive_sha256": "59cc762d35d215f14884ad5253e6249096248cf426f343ff197a94a9ea4d14b9",
+    "size_bytes": 38800,
+    "offline_status": "VALID",
+    "decision": "PASS",
+    "assurance": "unsigned_local",
+    "source_artifact_bytes": "not_embedded",
+    "initial_wrong_directory_check": "EXPECTED_REFUSAL_ASSURANCE_BUNDLE_DIRECTORY_MISMATCH"
+  },
+  "verification": {
+    "typescript": "PASS",
+    "frontend_passed": 248,
+    "python_passed": 1433,
+    "python_skipped_environment": 3,
+    "branch_aware_coverage_percent": 95.80,
+    "development_gate": "PASS",
+    "clean_install_release_smoke": "PASS"
+  },
+  "screenshots": [
+    {"path": "phase58-browser/installed-assurance-download.png", "sha256": "a8d8deb9a89ec8783c43a9db7179dcdc175503e0be4e3fe2de40e63094b4e5bc", "size_bytes": 88040},
+    {"path": "phase58-browser/installed-comparison-not-comparable.png", "sha256": "b5f753ebb4dfd84d5726bc3d26206e1eb0491cebadd37e698113ef453791a611", "size_bytes": 155591},
+    {"path": "phase58-browser/installed-comparison-restored.png", "sha256": "f6b2215167571f5b6cff6e96a2fa739ef876643c24dde67e7b719f2f5c6ffcaa", "size_bytes": 164680},
+    {"path": "phase58-browser/installed-quick-pass.png", "sha256": "0ad168d13a221d0ad94b66fe0a5153f9beba95061ab36712e645ad7e9cd0fa9e", "size_bytes": 154576},
+    {"path": "phase58-browser/installed-quick-preview.png", "sha256": "7b1a90246a5ba0eeafdd05c7d274e0ac73c0c92ab6057079f14a5ea37528badf", "size_bytes": 148448},
+    {"path": "phase58-browser/installed-replay-download.png", "sha256": "6f1cd509e65d5942590fd8d32f9400a410de8a1806b17bef308ff585cf16bccf", "size_bytes": 75197}
+  ],
+  "boundaries": {
+    "fixture": "SYNTHETIC_STANDARD_CI",
+    "source_database_modified": false,
+    "installed_runtime_database": "ISOLATED_PRIVATE_COPY",
+    "hardware_access": "NOT_PERFORMED",
+    "producer_authentication": "NOT_ESTABLISHED",
+    "human_efficiency": "NOT_MEASURED",
+    "github_sync": "NOT_PERFORMED",
+    "publication": "NOT_PERFORMED",
+    "public_release_candidate": false
+  }
+}

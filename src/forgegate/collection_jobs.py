@@ -155,7 +155,7 @@ class CollectionJobResult(StrictModel):
         "forgegate.collection-job-result.v1"
     )
     job_id: str = Field(pattern=r"^job-[0-9a-f]{32}$")
-    collections: list[CollectionResult] = Field(min_length=1, max_length=2)
+    collections: list[CollectionResult] = Field(min_length=1, max_length=4)
     assembly: EvidenceBundleAssembly | None
     candidate_write: Literal["NOT_PERFORMED"] = "NOT_PERFORMED"
     producer_authentication: Literal["NOT_PERFORMED"] = "NOT_PERFORMED"

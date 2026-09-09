@@ -4,6 +4,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { createContext, runInContext } from "node:vm";
 import { webcrypto } from "node:crypto";
+import { File } from "node:buffer";
 import { stripTypeScriptTypes } from "node:module";
 
 const source = readFileSync(new URL("../src/main.ts", import.meta.url), "utf8");
@@ -55,7 +56,7 @@ export async function harness(origin = "http://127.0.0.1:8131") {
   let timerId = 0;
   const context = createContext({
     exports: {}, require: () => ({}), Headers, URL, URLSearchParams, crypto: webcrypto,
-    Blob, TextDecoder, TextEncoder, btoa,
+    Blob, File, TextDecoder, TextEncoder, btoa,
     document: {
       querySelector: () => root, createElement: (tag) => new Element(tag),
       body: root,

@@ -68,6 +68,7 @@ from forgegate.collectors import (
 from forgegate.config import ConfigLoadError, load_config
 from forgegate.domain.enums import CandidateStatus, Decision, EvidenceTrust, VerificationLevel
 from forgegate.domain.models import EvidenceBundle, ExecutionContext, PolicyConfig, ProjectConfig
+from forgegate.evidence_replay_cli import replay_app
 from forgegate.github_actions import (
     GitHubActionGateError,
     append_github_file,
@@ -134,6 +135,7 @@ app.add_typer(audit_app, name="audit")
 app.add_typer(identity_app, name="identity")
 app.add_typer(plugins_app, name="plugins")
 app.add_typer(jobs_app, name="jobs")
+app.add_typer(replay_app, name="evidence-replay")
 
 
 @app.command()
@@ -634,12 +636,20 @@ def dashboard_check(
     host: Annotated[str, typer.Option("--host")] = "127.0.0.1",
     port: Annotated[int, typer.Option("--port", min=1, max=65535)] = 8131,
     timeout_seconds: Annotated[float, typer.Option("--timeout-seconds", min=0.1, max=10)] = 3.0,
+    expected_runtime_id: Annotated[str | None, typer.Option("--expected-runtime-id")] = None,
+    expected_store_pair_id: Annotated[str | None, typer.Option("--expected-store-pair-id")] = None,
 ) -> None:
     """Check loopback health and exact installed Dashboard HTML without logging in."""
     from forgegate.dashboard.runtime import check_dashboard
 
     try:
-        report = check_dashboard(host, port, timeout_seconds=timeout_seconds).to_dict()
+        report = check_dashboard(
+            host,
+            port,
+            timeout_seconds=timeout_seconds,
+            expected_runtime_id=expected_runtime_id,
+            expected_store_pair_id=expected_store_pair_id,
+        ).to_dict()
     except ValueError as exc:
         typer.echo(f"ERROR: {exc}", err=True)
         raise typer.Exit(code=2) from exc
@@ -669,6 +679,12 @@ def dashboard(
             ),
         ),
     ] = None,
+    existing_pair: Annotated[
+        bool,
+        typer.Option(
+            "--existing-pair", help="Require both existing stores; no initialization or hardware."
+        ),
+    ] = False,
     session_ttl_seconds: Annotated[
         int,
         typer.Option("--session-ttl-seconds", min=60, max=3600),
@@ -689,6 +705,7 @@ def dashboard(
     import uvicorn
 
     from forgegate.api import ApiAuthenticator, create_api_app
+    from forgegate.collection_jobs import JobError
     from forgegate.compatibility.msp430_live import Msp430SerialMonitor
 
     try:
@@ -708,7 +725,10 @@ def dashboard(
             trust_store_loader=load_runtime_trust_store,
         )
         application = CandidateApplication.for_database(database)
-        application.initialize()
+        if not existing_pair:
+            application.initialize()
+        elif job_store is None or msp430_port is not None:
+            raise ValueError("DASHBOARD_EXISTING_PAIR_REQUIRES_JOBS_AND_NO_HARDWARE")
         local_url = f"http://{bind_host}:{port}/app/"
         monitor = (
             None
@@ -725,8 +745,9 @@ def dashboard(
             dashboard=True,
             dashboard_live_status_provider=monitor,
             dashboard_job_store_path=job_store,
+            dashboard_existing_pair=existing_pair,
         )
-    except (CandidateStoreError, IdentityError, ValueError) as exc:
+    except (CandidateStoreError, IdentityError, ValueError, JobError) as exc:
         typer.echo(f"ERROR: {exc}", err=True)
         raise typer.Exit(code=3) from exc
     typer.echo(f"ForgeGate Dashboard: {local_url}")
