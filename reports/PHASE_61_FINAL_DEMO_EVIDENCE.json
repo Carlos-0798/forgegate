@@ -1,0 +1,117 @@
+{
+  "format": "forgegate.phase61-final-windows-demo.v1",
+  "date": "2026-09-09",
+  "status": "LOCAL_FINAL_DEMO_PASS",
+  "frozen_package": {
+    "version": "0.1.0a1",
+    "source_commit": "e424292c04e3e44c41ea41048e0b227aa5960699",
+    "wheel_sha256": "2262755565c0defb8be477a6f61c8f16da1a60df9c1111f97067d7efa395ff5d"
+  },
+  "reviewer_delivery": {
+    "filename": "forgegate-windows-alpha-demo-0.1.0a1.zip",
+    "sha256": "f199c0047725b3d0a56474431aeb1b48de2e00bcb928900e1173863189a69ee4",
+    "size_bytes": 1038035,
+    "members": 15,
+    "manifest_verified": true,
+    "contains_private_key": false,
+    "contains_database": false,
+    "dependency_mirror_included": false
+  },
+  "fresh_recipient_check": {
+    "archive_extracted": true,
+    "python": "3.12",
+    "new_virtual_environment": true,
+    "wheel_installed": true,
+    "package_origin": "ISOLATED_SITE_PACKAGES",
+    "project_validation_exit": 0,
+    "positive_decision": "PASS",
+    "positive_exit": 0,
+    "negative_decision": "FAIL",
+    "negative_exit": 1,
+    "negative_failed_rules": [
+      "tests-pass"
+    ]
+  },
+  "actual_browser": {
+    "browser": "Codex in-app browser",
+    "origin": "http://127.0.0.1:8161",
+    "activation": "AUTHENTICATED",
+    "role": "operator",
+    "project_scope": "sample-api",
+    "overview": {
+      "service": "Healthy",
+      "version": "0.1.0a1",
+      "api": "v1",
+      "database_schema": "v9"
+    },
+    "positive_candidate": {
+      "version": "phase58-installed-quick",
+      "state": "PASS",
+      "revision": 4,
+      "collections": 4,
+      "evidence_records": 9,
+      "policy_rules": 6,
+      "failed_rules": 0,
+      "assurance": "UNSIGNED_LOCAL",
+      "source_bytes": "not_embedded"
+    },
+    "negative_candidate": {
+      "version": "junit-fail-fixture",
+      "state": "FAIL",
+      "revision": 4,
+      "failed_rule": "security-clean",
+      "expected": 0,
+      "actual": 1,
+      "reason": "RULE_NOT_SATISFIED"
+    },
+    "devices": "NO_LIVE_MONITOR_CONFIGURED",
+    "console_warning_or_error_count": 0,
+    "horizontal_overflow_px": 0,
+    "document_language": "en",
+    "main_landmarks": 1,
+    "h1_count": 1,
+    "aria_live_regions": 1
+  },
+  "read_only_domain_counts": {
+    "before_and_after_match": true,
+    "candidates": 7,
+    "candidate_snapshots": 32,
+    "candidate_transitions": 25,
+    "candidate_evidence_bindings": 6,
+    "candidate_evaluations": 6,
+    "attestations": 5,
+    "audit_events": 50
+  },
+  "screenshots": {
+    "strategy": "REUSED_PHASE58_EXACT_RUNTIME_BROWSER_EVIDENCE",
+    "runtime_package_members_equal": 109,
+    "gallery_images_in_delivery": 6,
+    "fresh_duplicate_capture": "NOT_PERFORMED"
+  },
+  "real_project_references": {
+    "avs": "PHASE_60_VALID_RETAINED_FAIL",
+    "msp430": "PHASE_60_COMPLETE_SYSTEM_OBSERVED"
+  },
+  "repository_verification": {
+    "result": "PASS",
+    "python_passed": 1433,
+    "environment_skipped": 3,
+    "branch_aware_coverage_percent": 95.80,
+    "interaction_smoke_passed": 33,
+    "frontend_type_check": "PASS",
+    "frontend_passed": 248,
+    "dashboard_asset_inventory": "PASS",
+    "schemas_and_openapi": "PASS"
+  },
+  "boundaries": {
+    "hardware_access": "NOT_PERFORMED",
+    "serial_port": "NOT_OPENED",
+    "new_upstream_execution": "NOT_PERFORMED",
+    "producer_authentication": "NOT_ESTABLISHED",
+    "github_sync": "NOT_PERFORMED",
+    "independent_first_use_operator": "NOT_ESTABLISHED",
+    "human_efficiency": "NOT_MEASURED",
+    "offline_dependency_install": "NOT_PROVIDED",
+    "production_ready": false
+  }
+}

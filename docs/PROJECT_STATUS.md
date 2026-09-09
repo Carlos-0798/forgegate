@@ -2,17 +2,21 @@
 
 - Date: 2026-09-09
 - Version: 0.1.0a1
-- Active checkpoint: Phase 60 frozen-package real-project acceptance PASS.
-  Remaining acceptance is bounded by the [Alpha completion plan](ALPHA_COMPLETION_PLAN.md).
+- Active checkpoint: Phase 61 final Windows demonstration PASS. The finite
+  [Alpha completion plan](ALPHA_COMPLETION_PLAN.md) is complete.
   Existing real AVS acceptance is retained, not reset to NOT RUN. Percentage
-  maturity estimates are replaced by explicit exit criteria. GitHub remains paused.
+  maturity estimates are replaced by explicit exit criteria.
+  The exact final reviewer ZIP installs in a fresh Python 3.12 environment;
+  generic PASS/0 and FAIL/1 controls behave correctly. A new authenticated
+  browser session reviewed the accepted PASS and explained FAIL candidates,
+  evidence, rules, assurance and hardware-disabled state with zero console issues.
+  See [Phase 61](../reports/PHASE_61_FINAL_DEMO_ACCEPTANCE.md). No next product
+  milestone is implied; future work begins only from observed defects or a new
+  owner-selected objective. GitHub remains paused.
+- Previous checkpoint: Phase 60 frozen-package real-project acceptance PASS.
   The exact Phase 59 installed wheel reproduces retained AVS `VALID / FAIL`
-  with four collections, 130 records and all 12 rule results, and collects the
-  retained MSP430 artifact as `COMPLETE` with 17 `system_observed` records and
-  both limitation warnings. Wrong-commit controls fail closed. No upstream run,
-  serial access, browser rerun or GitHub action occurred. See
+  and MSP430 artifact-only `COMPLETE` with fail-closed commit controls. See
   [Phase 60](../reports/PHASE_60_REAL_PROJECT_ACCEPTANCE.md).
-  Next and final frozen milestone: Phase 61 reproducible Windows demonstration.
 - Previous checkpoint: Phase 59 feature freeze and local code closeout PASS.
   Clean source `e424292c04e3e44c41ea41048e0b227aa5960699`: 1,433 tests pass,
   three symlink skips, 95.80% coverage; 248 frontend tests and release smoke pass.

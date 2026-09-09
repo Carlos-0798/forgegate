@@ -19,9 +19,9 @@ conclusions when their policy/profile authority differs.
 
 ## Current status
 
-**Feature freeze effective 2026-09-09.** Code closeout and frozen-package
-real-project acceptance are complete; the only remaining milestone is a
-reproducible Windows demonstration.
+**Windows Alpha completion accepted 2026-09-09.** Code closeout,
+frozen-package real-project acceptance and the reproducible final demonstration
+are complete.
 See the [finite completion gates](docs/ALPHA_COMPLETION_PLAN.md); new platform
 features are deferred unless required to resolve an observed acceptance blocker.
 The [Phase 59 closeout record](reports/PHASE_59_CODE_CLOSEOUT_ACCEPTANCE.md)
@@ -29,6 +29,9 @@ binds the local delivery to its exact clean source commit and records limitation
 The [Phase 60 acceptance](reports/PHASE_60_REAL_PROJECT_ACCEPTANCE.md) uses that
 exact installed wheel to reproduce the retained AVS `VALID / FAIL` decision and
 the MSP430 artifact-only `COMPLETE` result without new upstream or hardware work.
+The [Phase 61 final demo](reports/PHASE_61_FINAL_DEMO_ACCEPTANCE.md) adds a
+fresh-recipient PASS/FAIL run, actual authenticated browser walkthrough and a
+manifest-verified non-secret reviewer package.
 
 > **Testable Windows Alpha `0.1.0a1`** — the end-to-end local CLI assurance
 > workflow, reviewed local Dashboard actions, optional read-only MSP430 live
@@ -38,6 +41,9 @@ the MSP430 artifact-only `COMPLETE` result without new upstream or hardware work
 
 The current checkpoint demonstrates:
 
+- [final Windows demonstration](reports/PHASE_61_FINAL_DEMO_ACCEPTANCE.md):
+  exact frozen wheel installation, generic positive/negative exits, actual
+  authenticated Dashboard review, reusable screenshots and explicit limits;
 - [refreshed Windows installed-wheel acceptance](reports/PHASE_58_WINDOWS_DELIVERY_ACCEPTANCE.md):
   isolated Python 3.12 install, synthetic four-report quick assessment, private
   replay and assurance verification, and comparable/incompatible evaluation

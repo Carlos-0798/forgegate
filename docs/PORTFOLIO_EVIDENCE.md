@@ -9,6 +9,11 @@ measurement, or production environment.
 
 ## Evidence boundary
 
+The [Phase 61 final demo](../reports/PHASE_61_FINAL_DEMO_ACCEPTANCE.md) reuses six
+Phase 58 installed-wheel captures because Phase 59 proved all 109 runtime members
+byte-equal. It also records a fresh authenticated browser walkthrough; no duplicate
+image is represented as newly captured evidence.
+
 The [Phase 56 real AVS quick assessment](../reports/PHASE_56_AVS_QUICK_ACCEPTANCE.md)
 adds actual Edge screenshots and independent downloaded-replay comparison with
 the retained real host baseline. All 12 rules preserve the engineering FAIL.

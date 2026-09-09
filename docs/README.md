@@ -8,16 +8,18 @@ analysis, compatibility contracts, and historical acceptance evidence.
 1. [Project status](PROJECT_STATUS.md) — current maturity and accepted baseline
 2. [Verification matrix](VERIFICATION_MATRIX.md) — evidence level for each capability
 3. [Roadmap](ROADMAP.md) — completed and remaining acceptance gates
-4. [Reproducible interaction walkthrough](DEMO.md) — generic CLI/API examples with expected output
-5. [Portfolio evidence gallery](PORTFOLIO_EVIDENCE.md) — retained screenshots, exact fixture data, hashes, and claim boundaries
-6. [Security policy](../SECURITY.md) — supported scope and responsible reporting
+4. [Final Windows demonstration](FINAL_WINDOWS_DEMO.md) — frozen package, exact positive/negative outcomes and Dashboard reviewer path
+5. [Reproducible interaction walkthrough](DEMO.md) — deeper generic CLI/API examples with expected output
+6. [Portfolio evidence gallery](PORTFOLIO_EVIDENCE.md) — retained screenshots, exact fixture data, hashes, and claim boundaries
+7. [Security policy](../SECURITY.md) — supported scope and responsible reporting
 
 Current milestone: [feature freeze and Alpha completion](ALPHA_COMPLETION_PLAN.md).
-Phases 59 and 60 close the local source/build baseline and frozen-package
-real-project acceptance; only the finite Phase 61 demonstration remains.
+Phases 59-61 close the local source/build baseline, frozen-package real-project
+acceptance and final demonstration. The scoped Windows Alpha milestone is complete.
 See the [Phase 59 closeout](../reports/PHASE_59_CODE_CLOSEOUT_ACCEPTANCE.md) and
 [Phase 60 acceptance](../reports/PHASE_60_REAL_PROJECT_ACCEPTANCE.md) for the
-accepted identities, outcomes and verification boundaries.
+accepted identities, outcomes and verification boundaries, followed by the
+[Phase 61 final demo](../reports/PHASE_61_FINAL_DEMO_ACCEPTANCE.md).
 
 Previous engineering slice: [Phase 58 Windows installed-wheel acceptance](../reports/PHASE_58_WINDOWS_DELIVERY_ACCEPTANCE.md),
 covering installed Quick Assessment, Evidence Replay, assurance and comparison.

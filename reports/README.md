@@ -6,6 +6,9 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
+- [Phase 61 final Windows demonstration](PHASE_61_FINAL_DEMO_ACCEPTANCE.md) —
+  verified non-secret reviewer ZIP, fresh-recipient PASS/FAIL controls and actual
+  authenticated browser review; [machine evidence](PHASE_61_FINAL_DEMO_EVIDENCE.json).
 - [Phase 60 frozen-package real-project acceptance](PHASE_60_REAL_PROJECT_ACCEPTANCE.md) —
   exact isolated Phase 59 wheel reproduces retained AVS `VALID / FAIL` and MSP430
   artifact-only `COMPLETE`, including wrong-commit controls and explicit non-claims;

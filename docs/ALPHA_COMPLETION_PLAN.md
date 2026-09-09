@@ -34,9 +34,9 @@ and are not project acceptance evidence.
 | Phase 60: real-project acceptance | Use the frozen ForgeGate package to independently check one retained real AVS handoff and one real MSP430 artifact against known expected outcomes; record producer commits, hashes, warnings and evidence levels; exercise relevant Dashboard outputs only where fresh acceptance is needed | AVS Phases 50/51/56 already passed with a correctly retained producer FAIL; MSP430 collector and input-only status have earlier bounded acceptance |
 | Phase 61: final demonstration | Provide one documented Windows launch path, generic positive/negative examples, real-project evidence references, expected results and screenshot gallery; execute the documented demo from the frozen package; retain reproducible handoff and limitations | Phase 58 screenshots and prior walkthroughs are reusable; capture again only if the delivered behavior or data changes |
 
-Status: Phase 59 **PASS**; Phase 60 **PASS**; Phase 61 is the sole remaining
-checkpoint. Phase 60 evidence is retained in the
-[acceptance report](../reports/PHASE_60_REAL_PROJECT_ACCEPTANCE.md).
+Status: Phase 59 **PASS**; Phase 60 **PASS**; Phase 61 **PASS**. This finite
+Windows Alpha milestone is complete. See the [Phase 60 real-project report](../reports/PHASE_60_REAL_PROJECT_ACCEPTANCE.md)
+and [Phase 61 final demo](../reports/PHASE_61_FINAL_DEMO_ACCEPTANCE.md).
 
 Each checkpoint records PASS, FAIL, BLOCKED or DEFERRED against its actual scope.
 After Phase 61, close this Alpha milestone. Add work only for observed defects or

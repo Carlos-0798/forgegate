@@ -1,6 +1,6 @@
 # Roadmap
 
-## Active priority — feature freeze and finite Alpha completion
+## Completed priority — feature freeze and finite Alpha completion
 
 Owner direction on 2026-09-09 freezes feature scope. Execute Phase 59 code
 closeout, Phase 60 real-project acceptance and Phase 61 final demonstration,
@@ -8,13 +8,14 @@ using the [completion plan](ALPHA_COMPLETION_PLAN.md) and its explicit exit gate
 Only reproduced acceptance blockers justify implementation changes during this
 milestone. Preserve earlier real AVS acceptance and all open quality limitations.
 
-Phases 59 and 60 are locally accepted: the clean source/delivery relationship is
-fixed, and that exact installed wheel independently reproduces retained AVS
-`VALID / FAIL` and MSP430 artifact-only `COMPLETE` outcomes with fail-closed
-commit controls. [Phase 59](../reports/PHASE_59_CODE_CLOSEOUT_ACCEPTANCE.md) and
-[Phase 60](../reports/PHASE_60_REAL_PROJECT_ACCEPTANCE.md) record the boundaries.
-Next and final checkpoint: Phase 61 packages and executes the reproducible Windows
-demonstration without expanding frozen product scope.
+Phases 59-61 are locally accepted. The clean source/delivery relationship is
+fixed; retained AVS and MSP430 results reproduce through the exact installed
+wheel; and the final ZIP, fresh-recipient CLI controls and authenticated browser
+walkthrough pass. [Phase 59](../reports/PHASE_59_CODE_CLOSEOUT_ACCEPTANCE.md),
+[Phase 60](../reports/PHASE_60_REAL_PROJECT_ACCEPTANCE.md) and
+[Phase 61](../reports/PHASE_61_FINAL_DEMO_ACCEPTANCE.md) record the boundaries.
+The scoped Windows Alpha milestone is closed. Further implementation requires
+an observed defect or a separately selected product milestone.
 
 ## Previous engineering checkpoint — Phase 58 Windows delivery
 
@@ -43,8 +44,8 @@ Phase 58 refreshed the Windows delivery and verified installed Quick Assessment,
 Evidence Replay, portable assurance and Evaluation Comparison together in actual
 Edge. The source store remained unchanged; see
 [acceptance](../reports/PHASE_58_WINDOWS_DELIVERY_ACCEPTANCE.md).
-Next proposed slice: consolidate Phase 46–58 into a reviewable local commit
-series, run the full gates from that state, then rebuild from a clean commit.
+The formerly proposed Phase 46-58 consolidation and clean rebuild is now
+complete through Phase 61.
 GitHub synchronization remains a separate owner-authorized action. No collector
 or policy-registry expansion is needed; human timing remains deferred.
 
@@ -66,7 +67,7 @@ adding platform subsystems. See the [product brief](product/PRODUCT_BRIEF.md),
 - [ ] Select at most two observed task bottlenecks and implement bounded fixes.
 - [ ] Remeasure, retain unsuccessful attempts, and decide observed improvement,
   no improvement or inconclusive; no gains claimed before measurement.
-- [ ] Retain a reproducible operator demo and reviewed presentation evidence.
+- [x] Retain a reproducible operator demo and reviewed presentation evidence.
 
 **Phase 53B is deferred by the owner.** Protocol readiness and development tests do not count
 as human acceptance. Existing recovery/plugin/device functions stay supported;

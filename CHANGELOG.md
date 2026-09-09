@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Completed the frozen Windows Alpha milestone with a fresh-recipient final demo:
+  verified non-secret reviewer ZIP, exact-wheel install, generic PASS/FAIL exits,
+  authenticated Dashboard review, retained exact-runtime screenshots and explicit
+  real-project/non-production boundaries.
 - Accepted the frozen Phase 59 wheel against retained real AVS and MSP430
   project evidence. AVS remains correctly `VALID / FAIL`; MSP430 artifact
   collection is `COMPLETE` with `system_observed` evidence and retained scope/
