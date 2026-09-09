@@ -2,15 +2,18 @@
 
 - Date: 2026-09-09
 - Version: 0.1.0a1
-- Active checkpoint: Phase 62 independent first use and workbench LOCAL PASS.
-  Installed workspace initialization, task-oriented Overview, candidate filters,
-  correct mixed-suite JUnit accounting and stronger default test rules accepted.
-  Full gate: 1,466 passes / 3 symlink skips, 95.82% coverage; frontend 264 passes;
-  clean-wheel smoke PASS. Actual browser PASS/FAIL downloads independently VALID;
-  retained AVS 130 records / 12 rules unchanged. See
-  [acceptance](../reports/PHASE_62_WORKBENCH_ACCEPTANCE.md) and
+- Active checkpoint: Phase 63 final user-path closeout LOCAL ENGINEERING PASS.
+  A clean-commit Windows delivery was installed outside the checkout; workspace
+  initialization, browser activation, durable candidate creation and the retained
+  complete PASS/FAIL handoff are accepted. Full gate: 1,466 passes / 3 symlink
+  skips, 95.82% coverage; frontend 265 passes; release smoke PASS. Retained AVS
+  130 records / 12 rules remain unchanged. Independent novice use and human
+  efficiency remain unmeasured. See
+  [acceptance](../reports/PHASE_63_FINAL_USER_PATH_ACCEPTANCE.md) and
   [quickstart](LOCAL_WORKSPACE_QUICKSTART.md). GitHub remains paused.
   Prior workspaces and the Phase 61 wheel were not overwritten.
+- Previous checkpoint: Phase 62 independent first use and workbench LOCAL PASS.
+  See [Phase 62](../reports/PHASE_62_WORKBENCH_ACCEPTANCE.md).
 - Previous checkpoint: Phase 61 final Windows demonstration PASS. The finite
   [Alpha completion plan](ALPHA_COMPLETION_PLAN.md) is complete.
   Existing real AVS acceptance is retained, not reset to NOT RUN. Percentage

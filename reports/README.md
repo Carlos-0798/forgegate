@@ -6,6 +6,13 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
+- [Phase 63 final user-path closeout](PHASE_63_FINAL_USER_PATH_ACCEPTANCE.md) —
+  clean-commit installed delivery, recipient-style cold start, actual browser
+  activation/write checks, retained full PASS/FAIL handoff and explicit remaining
+  novice/human/assistive/hardware boundaries.
+- [Phase 62 independent first use and workbench](PHASE_62_WORKBENCH_ACCEPTANCE.md) —
+  independent workspace creation, task-oriented UI, actual browser synthetic
+  PASS/FAIL and unchanged retained AVS compatibility.
 - [Phase 61 final Windows demonstration](PHASE_61_FINAL_DEMO_ACCEPTANCE.md) —
   verified non-secret reviewer ZIP, fresh-recipient PASS/FAIL controls and actual
   authenticated browser review; [machine evidence](PHASE_61_FINAL_DEMO_EVIDENCE.json).

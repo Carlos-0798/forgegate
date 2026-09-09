@@ -1,6 +1,19 @@
 # Roadmap
 
-## Current priority — independent first use and task completion
+## Current status — Windows Local Alpha closed
+
+Phase 63 completed the final recipient-style installation and user-path closeout.
+The accepted core is candidate creation, supported-report import, normalized
+evidence review, authorized policy evaluation and verifiable handoff. Further
+Alpha feature expansion is frozen unless a reproduced blocker appears; future
+work should be a separately selected validation or production milestone. See
+[Phase 63](../reports/PHASE_63_FINAL_USER_PATH_ACCEPTANCE.md).
+
+Independent novice acceptance and the Phase 53B human efficiency/accuracy study
+remain unrun. They must precede quantitative usability or productivity claims.
+GitHub synchronization remains deferred.
+
+## Completed priority — independent first use and task completion
 
 The owner reopened feature scope on 2026-09-09 for a runtime, interaction and
 feature reassessment. The selected slice closes three observed gaps: independent
