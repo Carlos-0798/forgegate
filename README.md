@@ -23,6 +23,8 @@ conclusions when their policy/profile authority differs.
 closeout, real-project acceptance and a reproducible Windows demonstration.
 See the [finite completion gates](docs/ALPHA_COMPLETION_PLAN.md); new platform
 features are deferred unless required to resolve an observed acceptance blocker.
+The [Phase 59 closeout record](reports/PHASE_59_CODE_CLOSEOUT_ACCEPTANCE.md)
+binds the local delivery to its exact clean source commit and records limitations.
 
 > **Testable Windows Alpha `0.1.0a1`** — the end-to-end local CLI assurance
 > workflow, reviewed local Dashboard actions, optional read-only MSP430 live

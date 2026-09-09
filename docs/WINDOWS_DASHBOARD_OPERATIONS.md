@@ -6,11 +6,14 @@ database repair tool, or uptime guarantee. Existing authentication is unchanged.
 
 ## Build a reviewed local delivery
 
-The latest retained installed-wheel regression is
+The clean-source delivery baseline is [Phase 59](../reports/PHASE_59_CODE_CLOSEOUT_ACCEPTANCE.md),
+with isolated installation/HTTP verification and exact runtime-byte equality to
+the browser-accepted wheel. The latest retained installed-browser regression is
 [Phase 58](../reports/PHASE_58_WINDOWS_DELIVERY_ACCEPTANCE.md): Quick Assessment,
 Evidence Replay, portable assurance and Evaluation Comparison passed in actual
-Edge from an isolated install and copied synthetic store. It remains a dirty-tree
-local artifact, not a public release candidate.
+Edge from an isolated install and copied synthetic store. That historical package
+was a dirty-tree artifact; Phase 59 binds its unchanged runtime to a clean commit.
+Both are local Alpha acceptance artifacts, not public releases.
 
 For a retained Windows test build, use the no-overwrite delivery builder from a
 Python 3.12 development environment:
@@ -45,6 +48,33 @@ C:\private\forgegate-runtime\Scripts\python.exe -m pip check
 Continue with `dashboard-check`, fresh browser activation and the project/candidate
 review below. Never place private keys, databases, original evidence or downloaded
 source-replay archives in a delivery directory intended for review.
+
+### Build workspace constraints
+
+Use a short local checkout path when building an sdist on Windows. Phase 59
+observed failure when a nested checkout produced a 262-character staging file
+path; the same frozen commit built successfully from a shorter checkout.
+Changing only the output directory does not shorten setuptools' source-side
+staging paths. This is a known build-environment limitation, not a failed
+installed-runtime check.
+
+Run delivery builds and release smoke sequentially in each checkout. Both
+construct an sdist and share setuptools staging state; concurrent builds in
+the same checkout are unsupported. Independent test and build checkouts are
+appropriate when parallel verification is needed.
+
+When rebuilding frontend assets, complete both build and inventory generation
+before checking the tree or running acceptance:
+
+```powershell
+pnpm run build:dashboard
+python tools/dashboard_assets.py --write
+python tools/dashboard_assets.py --check
+git diff --exit-code -- src/forgegate/dashboard/static
+```
+
+Vite clears its output directory during a build; the separate inventory step
+restores the exact asset manifest used by ForgeGate verification.
 
 ## Check before starting or restarting
 

@@ -15,6 +15,8 @@ analysis, compatibility contracts, and historical acceptance evidence.
 Current milestone: [feature freeze and Alpha completion](ALPHA_COMPLETION_PLAN.md).
 Phase 59 closes the local source/build baseline; Phases 60 and 61 have finite
 real-project and demonstration exit criteria.
+See the [Phase 59 closeout evidence](../reports/PHASE_59_CODE_CLOSEOUT_ACCEPTANCE.md)
+for the accepted source identity, retained artifact and verification scope.
 
 Previous engineering slice: [Phase 58 Windows installed-wheel acceptance](../reports/PHASE_58_WINDOWS_DELIVERY_ACCEPTANCE.md),
 covering installed Quick Assessment, Evidence Replay, assurance and comparison.

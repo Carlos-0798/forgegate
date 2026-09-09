@@ -6,6 +6,10 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
+- [Phase 59 feature freeze and code closeout](PHASE_59_CODE_CLOSEOUT_ACCEPTANCE.md) —
+  coherent local commit baseline, finite completion gates, clean-source delivery
+  and exact installed-artifact checks; [machine evidence](PHASE_59_CODE_CLOSEOUT_EVIDENCE.json).
+
 - [Phase 58 refreshed Windows delivery](PHASE_58_WINDOWS_DELIVERY_ACCEPTANCE.md) —
   isolated installed wheel completes actual Edge synthetic quick assessment,
   replay, assurance and comparison; dirty-tree local artifact, not public release.

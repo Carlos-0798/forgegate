@@ -8,6 +8,11 @@ using the [completion plan](ALPHA_COMPLETION_PLAN.md) and its explicit exit gate
 Only reproduced acceptance blockers justify implementation changes during this
 milestone. Preserve earlier real AVS acceptance and all open quality limitations.
 
+Phase 59 is locally accepted: integrated implementation and freeze plan committed,
+clean-checkout regression and fresh-sdist delivery pass; retained wheel runtime
+bytes match Phase 58. [Acceptance record](../reports/PHASE_59_CODE_CLOSEOUT_ACCEPTANCE.md).
+Next: Phase 60 checks retained real-project artifacts with the frozen package.
+
 ## Previous engineering checkpoint — Phase 58 Windows delivery
 
 Owner direction on 2026-09-08: Phase 53B human comparison is **DEFERRED**.
