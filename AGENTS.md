@@ -8,14 +8,15 @@ Before changing implementation or claims, read `README.md`,
 `docs/PROJECT_STATUS.md`, `docs/ROADMAP.md`, and
 `docs/VERIFICATION_MATRIX.md`.
 
-## Active feature freeze
+## Current product scope
 
-The owner froze the Windows Alpha feature scope on 2026-09-09. Read
-`docs/ALPHA_COMPLETION_PLAN.md` before selecting further work. Prioritize the
-finite code-closeout, real-project acceptance and final-demonstration gates.
-Preserve existing accepted evidence; repeat checks only for a changed artifact,
-a failure or a specifically unresolved acceptance condition. Add implementation
-only to resolve an observed blocker or after a new owner-selected product scope.
+After completing the finite Alpha gates, the owner authorized an independent
+runtime, interaction and feature reassessment on 2026-09-09. The earlier feature
+freeze is lifted. Prioritize complete user tasks and demonstrated correctness
+or usability gaps, rather than adding disconnected platform subsystems.
+Preserve existing accepted evidence; repeat checks for changed artifacts,
+failures or specifically unresolved acceptance conditions. External publication,
+privacy and hardware boundaries below remain in effect.
 
 ## Product and evidence boundaries
 

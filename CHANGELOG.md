@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+- Added independent `workspace-init` with fresh scoped identity, initialized
+  stores, no-overwrite behavior and optional honest synthetic positive/negative
+  examples. First-policy and Windows interpreter instructions work without a
+  source checkout.
+- Replaced the authority-only Overview with an actionable project workbench;
+  added bounded candidate search/state filters and stale-response protection.
+- Fixed mixed detailed/summary-only JUnit accounting and nested mismatch audit;
+  default policies reject errors, zero-test and all-skipped inputs. Existing
+  frozen policies/evidence are not rewritten.
+- Extended clean-wheel smoke to recipient workspace setup and fixed unexpected
+  successful negative-control commands incorrectly passing the release gate.
 - Completed the frozen Windows Alpha milestone with a fresh-recipient final demo:
   verified non-secret reviewer ZIP, exact-wheel install, generic PASS/FAIL exits,
   authenticated Dashboard review, retained exact-runtime screenshots and explicit

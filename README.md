@@ -19,11 +19,25 @@ conclusions when their policy/profile authority differs.
 
 ## Current status
 
+**Independent first use and task workbench.** The owner reopened the Alpha
+scope after Phase 61 to improve runtime correctness, interactions and delivery.
+Start with the [local workspace quickstart](docs/LOCAL_WORKSPACE_QUICKSTART.md):
+the installed package prepares its own private identity, stores and optional
+synthetic PASS/FAIL examples, without a development checkout.
+
+```powershell
+python -m forgegate workspace-init ./my-workspace --demo
+```
+
+Overview now prioritizes starting an assessment and reviewing candidate outcomes.
+Candidate search and state filters apply to the explicitly loaded page, not an
+unstated global total. The default test policy requires successful executed tests;
+JUnit aggregation retains failures from mixed detailed and summary-only suites.
+
 **Windows Alpha completion accepted 2026-09-09.** Code closeout,
 frozen-package real-project acceptance and the reproducible final demonstration
 are complete.
-See the [finite completion gates](docs/ALPHA_COMPLETION_PLAN.md); new platform
-features are deferred unless required to resolve an observed acceptance blocker.
+See the historical [finite completion gates](docs/ALPHA_COMPLETION_PLAN.md).
 The [Phase 59 closeout record](reports/PHASE_59_CODE_CLOSEOUT_ACCEPTANCE.md)
 binds the local delivery to its exact clean source commit and records limitations.
 The [Phase 60 acceptance](reports/PHASE_60_REAL_PROJECT_ACCEPTANCE.md) uses that

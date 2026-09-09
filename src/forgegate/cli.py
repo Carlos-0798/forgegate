@@ -175,6 +175,31 @@ def init_project(
     typer.echo(report.model_dump_json(indent=2))
 
 
+@app.command("workspace-init")
+def workspace_init(
+    target: Annotated[Path, typer.Argument(file_okay=False)],
+    project_id: Annotated[str, typer.Option("--project-id")] = "sample-project",
+    project_name: Annotated[str, typer.Option("--project-name")] = "Sample Project",
+    demo: Annotated[
+        bool, typer.Option("--demo", help="Add clearly synthetic PASS/FAIL examples.")
+    ] = False,
+) -> None:
+    """Create a NEW private workspace, local identity and stores for the installed Dashboard."""
+    from forgegate.workspace_init import WorkspaceInitializationError, initialize_workspace
+
+    try:
+        report = initialize_workspace(
+            target,
+            project_id=project_id,
+            project_name=project_name,
+            demo=demo,
+        )
+    except (WorkspaceInitializationError, ValidationError, ValueError) as exc:
+        typer.echo(f"ERROR: {exc}", err=True)
+        raise typer.Exit(code=3) from exc
+    typer.echo(report.model_dump_json(indent=2))
+
+
 @app.command("validate-config")
 def validate_config(
     path: Annotated[Path, typer.Argument(exists=True, dir_okay=False, readable=True)],

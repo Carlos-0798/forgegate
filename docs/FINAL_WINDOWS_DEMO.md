@@ -1,5 +1,12 @@
 # Final Windows Alpha demonstration
 
+For the current independently runnable Dashboard, use
+[Local workspace quickstart](LOCAL_WORKSPACE_QUICKSTART.md). The instructions
+below preserve the Phase 61 frozen-wheel demonstration. Its Dashboard section
+requires the owner's existing private development workspace; it was **not** a
+fresh-recipient GUI startup path. Phase 61's fresh-recipient check covered CLI
+fixtures only. Do not apply the new workspace command to the older frozen wheel.
+
 This is the frozen `0.1.0a1` reviewer path. It uses committed generic fixtures
 and the exact Phase 59 wheel. It does not run a producer project, authenticate
 report origin, access hardware, publish a release or approve deployment.

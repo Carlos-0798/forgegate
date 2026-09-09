@@ -20,6 +20,9 @@ REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_SDIST_PATHS = (
     "tools/build_windows_delivery.py",
     "tests/test_windows_delivery_build.py",
+    "tests/test_release_smoke.py",
+    "tests/test_workspace_init.py",
+    "schemas/forgegate.workspace-initialization.v1.schema.json",
     "schemas/forgegate.workspace-adoption-preflight.v1.schema.json",
     "tests/test_adoption_preflight.py",
     "tools/adoption_preflight_smoke.py",
@@ -379,7 +382,7 @@ def run(
     print(f"\n> {' '.join(command)}", flush=True)
     completed = subprocess.run(command, cwd=cwd, check=False)
     if completed.returncode != expected_returncode:
-        raise SystemExit(completed.returncode)
+        raise SystemExit(f"command returned {completed.returncode}; expected {expected_returncode}")
 
 
 def run_capture(command: list[str], output: Path, *, cwd: Path) -> None:
@@ -406,6 +409,120 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: artifact.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def smoke_workspace_initialization(python: Path, root: Path) -> None:
+    """Exercise first use from the installed wheel without repository fixtures."""
+    workspace = root / "first-use-workspace"
+    receipt_path = root / "workspace-initialization.json"
+    command = [
+        str(python),
+        "-m",
+        "forgegate",
+        "workspace-init",
+        str(workspace),
+        "--project-id",
+        "release-demo",
+        "--demo",
+    ]
+    run_capture(command, receipt_path, cwd=root)
+    receipt_text = receipt_path.read_text(encoding="utf-8")
+    receipt = json.loads(receipt_text)
+    if (
+        receipt["schema_version"] != "forgegate.workspace-initialization.v1"
+        or receipt["project_id"] != "release-demo"
+        or receipt["status"] != "INITIALIZED"
+        or receipt["service"] != "NOT_STARTED"
+        or receipt["browser_session"] != "NOT_ACTIVATED"
+        or receipt["hardware_access"] != "NOT_PERFORMED"
+        or receipt["private_key"] != "operator-key.pem"
+        or {case["decision"] for case in receipt["demo_cases"]} != {"PASS", "FAIL"}
+        or len(receipt["demo_cases"]) != 2
+        or any(
+            case["evidence_origin"] != "SYNTHETIC" or case["verification_level"] != "declared"
+            for case in receipt["demo_cases"]
+        )
+    ):
+        raise SystemExit("installed workspace initialization returned an unexpected receipt")
+    machine_paths = (str(root), root.as_posix(), json.dumps(str(root))[1:-1])
+    if "PRIVATE KEY" in receipt_text or any(path in receipt_text for path in machine_paths):
+        raise SystemExit("workspace receipt exposed private key bytes or a machine path")
+    for relative in (
+        "operator-key.pem",
+        "identity.json",
+        "trust-store.json",
+        "forgegate.db",
+        "jobs.db",
+        "START_HERE.md",
+        "artifacts/synthetic-demo-pass.xml",
+        "artifacts/synthetic-demo-fail.xml",
+        "artifacts/synthetic-demo-pass-collection.json",
+        "artifacts/synthetic-demo-fail-collection.json",
+    ):
+        if not (workspace / relative).is_file() or (workspace / relative).stat().st_size == 0:
+            raise SystemExit(f"installed workspace is missing a generated file: {relative}")
+    if json.loads((workspace / "workspace.json").read_text(encoding="utf-8")) != receipt:
+        raise SystemExit("workspace completion marker differs from the CLI receipt")
+    for relative in (
+        "workspace.json",
+        "forgegate.yaml",
+        "policies/pull-request.yaml",
+        "identity.json",
+        "trust-store.json",
+    ):
+        run(
+            [str(python), "-m", "forgegate", "validate-config", str(workspace / relative)],
+            cwd=root,
+        )
+    run(
+        [
+            str(python),
+            "-c",
+            (
+                "import sys; from pathlib import Path; "
+                "from forgegate.identity import load_identity_document, "
+                "load_ed25519_private_key, derive_signing_identity; "
+                "root=Path(sys.argv[1]); "
+                "key=load_ed25519_private_key(root/'operator-key.pem'); "
+                "identity=load_identity_document(root/'identity.json'); "
+                "trust=load_identity_document(root/'trust-store.json'); "
+                "assert derive_signing_identity(key, display_name=identity.display_name) "
+                "== identity; "
+                "assert len(trust.identities)==1 and trust.identities[0].identity==identity; "
+                "assert [r.value for r in trust.identities[0].roles]==['operator']; "
+                "assert trust.identities[0].project_ids==('release-demo',)"
+            ),
+            str(workspace),
+        ],
+        cwd=root,
+    )
+    retained_hashes = {
+        path.relative_to(workspace).as_posix(): sha256(path)
+        for path in workspace.rglob("*")
+        if path.is_file()
+    }
+    run(command, cwd=root, expected_returncode=3)
+    if retained_hashes != {
+        path.relative_to(workspace).as_posix(): sha256(path)
+        for path in workspace.rglob("*")
+        if path.is_file()
+    }:
+        raise SystemExit("duplicate workspace initialization changed retained files")
+    second_workspace = root / "second-first-use-workspace"
+    second_receipt = root / "second-workspace-initialization.json"
+    run_capture(
+        [str(python), "-m", "forgegate", "workspace-init", str(second_workspace)],
+        second_receipt,
+        cwd=root,
+    )
+    second = json.loads(second_receipt.read_text(encoding="utf-8"))
+    if (
+        second["demo_cases"]
+        or second["operator_identity_id"] == receipt["operator_identity_id"]
+        or sha256(second_workspace / "operator-key.pem") == sha256(workspace / "operator-key.pem")
+    ):
+        raise SystemExit("fresh workspace reused signing identity or seeded unsolicited evidence")
+    print("\nInstalled first-use workspace: PASS", flush=True)
 
 
 def verify_sdist(sdist: Path) -> None:
@@ -667,6 +784,7 @@ def main(
             cwd=root,
             expected_returncode=3,
         )
+        smoke_workspace_initialization(python, root)
         assembly_root = root / "assembly-inputs"
         artifact_directory = assembly_root / "artifacts"
         artifact_directory.mkdir(parents=True)

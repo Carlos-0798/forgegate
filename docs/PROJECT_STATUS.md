@@ -2,6 +2,12 @@
 
 - Date: 2026-09-09
 - Version: 0.1.0a1
+- Current work: owner-authorized runtime/interaction/product reassessment after
+  the completed Alpha gates. Independent workspace initialization, task-oriented
+  Overview, bounded candidate filters, mixed-suite JUnit correctness and stronger
+  default test rules are implemented. Full regression and fresh-wheel browser
+  acceptance are the current exit gates; see [quickstart](LOCAL_WORKSPACE_QUICKSTART.md).
+  The Phase 61 final wheel remains historical and has not been replaced in place.
 - Active checkpoint: Phase 61 final Windows demonstration PASS. The finite
   [Alpha completion plan](ALPHA_COMPLETION_PLAN.md) is complete.
   Existing real AVS acceptance is retained, not reset to NOT RUN. Percentage

@@ -451,6 +451,11 @@ let lastLiveAnnouncement = "";
 let auditViewGeneration = 0;
 let jobsViewGeneration = 0;
 let recoveryViewGeneration = 0;
+let overviewViewGeneration = 0;
+let candidatesViewGeneration = 0;
+let projectListTruncated = false;
+let candidateSearch = "";
+let candidateStatusFilter = "ALL";
 
 const MAX_DASHBOARD_IMPORT_BYTES = 3_900_000;
 const MAX_RECOVERY_REPORT_BYTES = 262_144;
@@ -821,34 +826,24 @@ function shell(content: HTMLElement): void {
   const nav = el("nav", "side-nav");
   nav.setAttribute("aria-label", "Primary");
   const reviewCandidateId = candidateIdFromHash();
-  for (const [route, label, detail] of [
-    ["overview", "Overview", "Service and authority"],
-    ["devices", "Devices", "Live read-only status"],
-    ["projects", "Projects", "Immutable profiles"],
-    ["candidates", "Candidates", "Release work and audit"],
-    ["jobs", "Jobs", "Collection lifecycle"],
-    ["recovery", "Recovery", "Offline readiness handoff"],
-    ["evidence", "Evidence", "Bound records and sources"],
-    ["decision", "Decision", "Rules and explanations"],
-    ["assurance", "Assurance", "Attestation and limits"],
-    ["audit", "Audit", "Project history and actors"]
+  for (const [group, routes] of [
+    ["WORKSPACE", [["overview", "Overview", "Start and continue work"], ["candidates", "Candidates", "Assess reports and review releases"], ["projects", "Projects", "Profiles and policy authority"]]],
+    ["REVIEW", [["evidence", "Evidence", "Bound records and sources"], ["decision", "Decision", "Rules and explanations"], ["assurance", "Assurance", "Verify and hand off"]]],
+    ["OPERATIONS", [["jobs", "Jobs", "Collection lifecycle"], ["devices", "Devices", "Live read-only status"], ["audit", "Audit", "Project history and actors"], ["recovery", "Recovery", "Offline readiness handoff"]]]
   ] as const) {
-    const link = el("a", currentRoute === route ? "nav-link active" : "nav-link");
-    link.href = reviewCandidateId !== null && ["evidence", "decision", "assurance"].includes(route)
-      ? candidateReviewHash(route as "evidence" | "decision" | "assurance", reviewCandidateId)
-      : `#/${route}`;
-    if (currentRoute === route) link.setAttribute("aria-current", "page");
-    link.append(el("strong", undefined, label), el("span", undefined, detail));
-    nav.append(link);
+    const section = el("section", "nav-group");
+    section.append(el("p", "nav-group-label", group));
+    for (const [route, label, detail] of routes) {
+      const link = el("a", currentRoute === route ? "nav-link active" : "nav-link");
+      link.href = reviewCandidateId !== null && ["evidence", "decision", "assurance"].includes(route)
+        ? candidateReviewHash(route as "evidence" | "decision" | "assurance", reviewCandidateId)
+        : `#/${route}`;
+      if (currentRoute === route) link.setAttribute("aria-current", "page");
+      link.append(el("strong", undefined, label), el("span", undefined, detail));
+      section.append(link);
+    }
+    nav.append(section);
   }
-  const planned = el("section", "planned-nav");
-  planned.append(el("p", "eyebrow", "LATER GATES"));
-  for (const label of ["Plugins", "Security"]) {
-    const row = el("div", "planned-row");
-    row.append(el("span", undefined, label), el("span", "badge neutral", "Planned"));
-    planned.append(row);
-  }
-  nav.append(planned);
 
   content.id = "workspace";
   content.tabIndex = -1;
@@ -901,6 +896,8 @@ async function loadSession(): Promise<void> {
 }
 
 function renderActivation(notice?: string): void {
+  overviewViewGeneration += 1;
+  candidatesViewGeneration += 1;
   jobsViewGeneration += 1;
   auditViewGeneration += 1;
   recoveryViewGeneration += 1;
@@ -909,7 +906,10 @@ function renderActivation(notice?: string): void {
   clearLiveStatusTimer();
   session = null;
   projects = [];
+  projectListTruncated = false;
   selectedProjectId = null;
+  candidateSearch = "";
+  candidateStatusFilter = "ALL";
   resetCandidatePagination();
   const main = el("main", "activation-shell");
   main.id = "workspace";
@@ -1059,6 +1059,8 @@ async function logoutSession(): Promise<void> {
 }
 
 async function renderRoute(): Promise<void> {
+  overviewViewGeneration += 1;
+  candidatesViewGeneration += 1;
   jobsViewGeneration += 1;
   auditViewGeneration += 1;
   recoveryViewGeneration += 1;
@@ -1254,52 +1256,145 @@ function formatDuration(milliseconds: number): string {
 }
 
 async function renderOverview(): Promise<void> {
+  const owner = session;
+  const hash = window.location.hash;
+  const generation = ++overviewViewGeneration;
+  const current = (): boolean => owner !== null && session === owner && window.location.hash === hash && generation === overviewViewGeneration;
   loadingPage("Overview");
-  const main = page("Assurance overview", "CURRENT AUTHORITY", "Service health, authenticated scope, and evidence limitations remain visible together.");
+  const main = page("Your release workbench", "EVIDENCE → DECISION → HANDOFF", "Assess a report batch, investigate a result, or continue a release review.");
+  const refresh = button("Refresh workspace", "button quiet");
+  refresh.addEventListener("click", () => { if (current()) { projects = []; void renderOverview(); } });
+  main.append(refresh);
   try {
     const overview = await api<Overview>("/app/api/overview");
-    const metrics = el("section", "metric-grid");
-    for (const [label, value, tone] of [
-      ["Service", "Healthy", "positive"],
-      ["Version", overview.forgegate_version, "neutral"],
-      ["API", overview.api_version, "neutral"],
-      ["Database", `schema v${overview.database_schema_version}`, "neutral"]
-    ]) {
-      const card = el("article", "metric-card");
-      card.append(el("span", undefined, label), el("strong", undefined, value), el("i", `metric-dot ${tone}`));
-      metrics.append(card);
-    }
-
-    const columns = el("div", "content-columns");
-    const authority = el("section", "panel");
-    authority.append(el("p", "eyebrow", "AUTHENTICATED PRINCIPAL"), el("h2", undefined, overview.principal.display_name));
+    if (!current()) return;
+    const visible = await ensureProjects();
+    if (!current()) return;
+    const operational = el("details", "panel workspace-details");
+    operational.append(el("summary", undefined, `Local service connected · v${overview.forgegate_version} · Session and evidence boundaries`));
     const list = el("dl", "definition-list");
     list.append(
+      definition("Service", `${overview.deployment} · API ${overview.api_version} · database schema v${overview.database_schema_version}`),
       definition("Role", overview.principal.role),
       definition("Project scopes", overview.principal.project_ids.join(", ")),
       definition("Identity", overview.principal.identity_id, true),
       definition("Trust store", overview.principal.trust_store_id, true),
-      definition("Session expires", formatDate(overview.principal.expires_at))
+      definition("Session expires", formatDate(overview.principal.expires_at)),
+      definition("Hardware access", overview.hardware_access)
     );
-    authority.append(list);
-
-    const boundaries = el("section", "panel warning-panel");
-    boundaries.append(el("p", "eyebrow", "CURRENT LIMITATIONS"), el("h2", undefined, "This is not a release decision"));
     const items = el("ul", "limitation-list");
     for (const limitation of overview.limitations) items.append(el("li", undefined, limitation));
-    boundaries.append(items, statusBadge(`Hardware ${overview.hardware_access}`));
-    columns.append(authority, boundaries);
-    main.append(metrics, columns);
+    operational.append(list, items);
+    if (visible.length === 0) {
+      main.append(emptyState("No registered projects in this session", "Register a project with the CLI, then refresh this workspace. Your activation must include its project scope."), operational);
+      shell(main);
+      return;
+    }
+    const project = visible.find(item => item.project_id === selectedProjectId) ?? visible[0]!;
+    selectedProjectId = project.project_id;
+    const toolbar = el("section", "toolbar workbench-toolbar");
+    const label = el("label", "field compact-field");
+    label.append(el("span", undefined, "Working project"));
+    const selector = el("select");
+    for (const item of visible) {
+      const option = el("option", undefined, `${item.config.project.name} · ${item.project_id}`);
+      option.value = item.project_id;
+      option.selected = item.project_id === project.project_id;
+      selector.append(option);
+    }
+    selector.addEventListener("change", () => {
+      if (!current()) return;
+      selectedProjectId = selector.value;
+      resetCandidatePagination();
+      void renderOverview();
+    });
+    label.append(selector);
+    toolbar.append(label);
+    main.append(toolbar);
+    if (projectListTruncated) main.append(el("p", "muted", "Showing the first 100 authorized projects. Narrow your activation scope to reach an unlisted project."));
+    const start = el("section", "workbench-start");
+    const introduction = el("div");
+    introduction.append(el("p", "eyebrow", "START AN ASSESSMENT"), el("h2", undefined, "Turn existing reports into a reviewable decision"), el("p", "muted", "Choose a version and commit, select your test and quality reports, then review the policy and confirm. Save the assurance bundle and original-report replay for your handoff."));
+    const actions = el("div", "workbench-actions");
+    if (owner!.principal.role === "operator") {
+      const quick = button("Quick assessment", "button primary");
+      quick.addEventListener("click", () => { if (current()) openCandidateDialog(main, quick, undefined, true); });
+      actions.append(quick);
+    } else {
+      actions.append(el("p", "muted", "Read-only session. An operator can create and assess a candidate."));
+    }
+    const browse = el("a", "button secondary", "Browse candidates");
+    browse.href = "#/candidates";
+    browse.addEventListener("click", () => { resetCandidatePagination(); candidateSearch = ""; candidateStatusFilter = "ALL"; });
+    actions.append(browse);
+    start.append(introduction, actions);
+    main.append(start);
+    const work = el("section", "workbench-work");
+    work.append(el("h2", undefined, "Continue a review"));
+    main.append(work, operational);
+    // Render useful navigation before the optional candidate read completes.
+    shell(main);
+    try {
+      const result = await api<CandidatePage>(`/app/api/projects/${encodeURIComponent(project.project_id)}/candidates?limit=25`);
+      if (!current()) return;
+      work.append(el("p", "muted", `${result.candidates.length} candidates loaded for ${project.project_id}${result.has_more ? "; more are available in Candidates" : ""}. Counts apply to this loaded page, in candidate-ID order; they are not project-wide totals or recency rankings.`));
+      const metrics = el("section", "metric-grid workbench-metrics");
+      for (const [title, statuses] of [
+        ["Loaded candidates", ["DRAFT", "COLLECTING", "READY", "EVALUATING", "PASS", "FAIL", "REVIEW", "ERROR"]],
+        ["Needs investigation", ["FAIL", "REVIEW", "ERROR"]],
+        ["In progress", ["DRAFT", "COLLECTING", "READY", "EVALUATING"]],
+        ["Policy passed", ["PASS"]]
+      ] as const) {
+        const count = result.candidates.filter(item => (statuses as readonly string[]).includes(item.status)).length;
+        const metric = el("article", "metric-card");
+        metric.append(el("span", undefined, title), el("strong", undefined, String(count)));
+        metrics.append(metric);
+      }
+      work.append(metrics);
+      if (result.candidates.length === 0) {
+        work.append(emptyState("Ready for the first assessment", owner!.principal.role === "operator"
+          ? "Start Quick assessment above to create a candidate and review existing reports."
+          : "An operator can create the first candidate and assess existing reports for this project."));
+      } else {
+        const cards = el("div", "workbench-candidates");
+        if (result.candidates.length > 6) work.append(el("p", "muted", "Showing the first 6 candidates from this loaded page. Browse candidates for the complete list and filters."));
+        for (const candidate of result.candidates.slice(0, 6)) {
+          const card = el("article", "workbench-candidate");
+          const heading = el("div", "card-heading");
+          heading.append(el("h3", undefined, candidate.version), statusBadge(candidate.status));
+          const next = candidateNextAction(candidate);
+          const link = el("a", "button quiet", next.label);
+          link.href = candidateReviewHash(next.route, candidate.candidate_id);
+          card.append(heading, el("p", "muted", `${candidate.release_track} · updated ${formatDate(candidate.updated_at)}`), el("p", "mono", `${candidate.candidate_id} · ${shortHash(candidate.commit_sha)}`), el("p", undefined, next.description), link);
+          cards.append(card);
+        }
+        work.append(cards);
+      }
+    } catch (error) {
+      if (!current()) return;
+      if (handleProtectedProblem(work, error, "Refresh the workspace to retry the selected project's candidates.")) return;
+    }
   } catch (error) {
+    if (!current()) return;
     if (handleProtectedProblem(main, error, "Reload the Overview page.")) return;
+    main.append(refresh);
+    shell(main);
   }
-  shell(main);
+}
+
+function candidateNextAction(candidate: Candidate): { route: "evidence" | "decision" | "assurance"; label: string; description: string } {
+  if (["FAIL", "REVIEW", "ERROR"].includes(candidate.status)) return {route: "decision", label: "Investigate decision", description: "Inspect rule outcomes and the evidence behind this result."};
+  if (candidate.status === "PASS") return {route: "assurance", label: "Review handoff", description: "Review attestation availability and verify the portable assurance bundle."};
+  return {route: "evidence", label: "Continue review", description: "Check retained evidence and the next available reviewed action."};
 }
 
 async function ensureProjects(): Promise<RegisteredProject[]> {
   if (projects.length === 0) {
+    const owner = session;
     const pageResult = await api<ProjectPage>("/app/api/projects?limit=100");
+    if (owner === null || session !== owner) return [];
     projects = pageResult.projects;
+    projectListTruncated = pageResult.has_more;
     if (selectedProjectId === null && projects[0] !== undefined) selectedProjectId = projects[0].project_id;
   }
   return projects;
@@ -2271,6 +2366,10 @@ function emptyState(title: string, description: string): HTMLElement {
 }
 
 async function renderCandidates(): Promise<void> {
+  const owner = session;
+  const hash = window.location.hash;
+  const generation = ++candidatesViewGeneration;
+  const current = (): boolean => owner !== null && session === owner && window.location.hash === hash && generation === candidatesViewGeneration;
   loadingPage("Candidates");
   const main = page(
     "Release candidates",
@@ -2279,11 +2378,13 @@ async function renderCandidates(): Promise<void> {
   );
   try {
     const visible = await ensureProjects();
+    if (!current()) return;
     if (visible.length === 0) {
       main.append(emptyState("No project available", "Register a project through the established CLI/API before creating a candidate."));
       shell(main);
       return;
     }
+    if (!visible.some(project => project.project_id === selectedProjectId)) selectedProjectId = visible[0]!.project_id;
     const toolbar = el("section", "toolbar");
     const selectorWrap = el("label", "field compact-field");
     selectorWrap.append(el("span", undefined, "Project"));
@@ -2295,24 +2396,31 @@ async function renderCandidates(): Promise<void> {
       selector.append(option);
     }
     selector.addEventListener("change", () => {
+      if (!current()) return;
       selectedProjectId = selector.value;
+      candidateSearch = "";
+      candidateStatusFilter = "ALL";
       resetCandidatePagination();
       void renderCandidates();
     });
     selectorWrap.append(selector);
     toolbar.append(selectorWrap);
     if (session?.principal.role === "operator") {
-      const create = button("Create candidate", "button primary");
+      const create = button("Create candidate", "button secondary");
       create.addEventListener("click", () => openCandidateDialog(main, create));
       toolbar.append(create);
-      const quick = button("Quick assessment", "button secondary");
+      const quick = button("Quick assessment", "button primary");
       quick.addEventListener("click", () => openCandidateDialog(main, quick, undefined, true));
       toolbar.append(quick);
     } else {
       const readOnly = el("p", "muted", "Producer sessions are read-only.");
       toolbar.append(readOnly);
     }
+    const refresh = button("Refresh candidates", "button quiet");
+    refresh.addEventListener("click", () => { if (current()) void renderCandidates(); });
+    toolbar.append(refresh);
     main.append(toolbar);
+    if (projectListTruncated) main.append(el("p", "muted", "Showing the first 100 authorized projects. Narrow your activation scope to reach an unlisted project."));
 
     const projectId = selectedProjectId ?? visible[0]?.project_id;
     if (projectId === undefined) return;
@@ -2322,6 +2430,7 @@ async function renderCandidates(): Promise<void> {
     const result = await api<CandidatePage>(
       `/app/api/projects/${encodeURIComponent(projectId)}/candidates?${query.toString()}`
     );
+    if (!current()) return;
     if (result.candidates.length === 0) {
       main.append(
         emptyState(
@@ -2332,13 +2441,64 @@ async function renderCandidates(): Promise<void> {
         )
       );
     } else {
-      main.append(candidateTable(result.candidates, main));
+      main.append(candidateFilters(result.candidates, main));
     }
+    main.append(el("p", "muted", "Browse by candidate ID, 25 at a time. Search and status filters apply only to the loaded page; use Next page to check further candidates."));
     main.append(candidatePager(result));
   } catch (error) {
+    if (!current()) return;
     if (handleProtectedProblem(main, error, "Reload the candidate list and confirm the selected project scope.")) return;
+    const retry = button("Refresh candidates", "button secondary");
+    retry.addEventListener("click", () => { if (current()) void renderCandidates(); });
+    main.append(retry);
   }
   shell(main);
+}
+
+function candidateFilters(candidates: Candidate[], main: HTMLElement): HTMLElement {
+  const panel = el("section", "candidate-browser");
+  const controls = el("div", "toolbar candidate-filters");
+  const searchLabel = el("label", "field");
+  searchLabel.append(el("span", undefined, "Search this page"));
+  const search = el("input");
+  search.type = "search";
+  search.placeholder = "Version, commit, branch, track or candidate ID";
+  search.maxLength = 255;
+  search.value = candidateSearch;
+  searchLabel.append(search);
+  const statusLabel = el("label", "field compact-field");
+  statusLabel.append(el("span", undefined, "State on this page"));
+  const status = el("select");
+  for (const name of ["ALL", ...Array.from(new Set(candidates.map(item => item.status))).sort()]) {
+    const option = el("option", undefined, name === "ALL" ? "All states" : name);
+    option.value = name;
+    status.append(option);
+  }
+  if (candidateStatusFilter !== "ALL" && !candidates.some(item => item.status === candidateStatusFilter)) candidateStatusFilter = "ALL";
+  status.value = candidateStatusFilter;
+  statusLabel.append(status);
+  const clear = button("Clear filters", "button quiet");
+  controls.append(searchLabel, statusLabel, clear);
+  const count = el("p", "muted");
+  count.setAttribute("role", "status");
+  const table = el("div");
+  const apply = (): void => {
+    candidateSearch = search.value;
+    candidateStatusFilter = status.value;
+    const term = candidateSearch.trim().toLowerCase();
+    const found = candidates.filter(candidate => (candidateStatusFilter === "ALL" || candidate.status === candidateStatusFilter) &&
+      [candidate.version, candidate.commit_sha, candidate.candidate_id, candidate.source_branch, candidate.release_track].some(value => value.toLowerCase().includes(term)));
+    count.textContent = `${found.length} of ${candidates.length} loaded candidates match.`;
+    table.replaceChildren(found.length === 0
+      ? emptyState("No matches on this page", "Clear filters or move to another page. No project-wide search was performed.")
+      : candidateTable(found, main));
+  };
+  search.addEventListener("input", apply);
+  status.addEventListener("change", apply);
+  clear.addEventListener("click", () => { search.value = ""; status.value = "ALL"; apply(); search.focus(); });
+  panel.append(controls, count, table);
+  apply();
+  return panel;
 }
 
 function candidatePager(result: CandidatePage): HTMLElement {
@@ -2420,6 +2580,8 @@ function openCandidateDialog(
   const heading = el("h2", undefined, "Create release candidate");
   heading.id = "candidate-dialog-title";
   form.append(el("p", "eyebrow", "DRAFT REQUEST"), heading, el("p", "muted", "Client checks guide this draft. ForgeGate remains authoritative."));
+  const selectedProject = projects.find(project => project.project_id === selectedProjectId);
+  if (selectedProject !== undefined) form.append(el("p", "muted", `Project: ${selectedProject.config.project.name} · ${selectedProject.project_id}`));
   if (initialValues !== undefined) {
     form.append(el("p", "muted", "Draft values restored for review; no request has been submitted."));
   }
@@ -2430,8 +2592,9 @@ function openCandidateDialog(
   const track = field("Release track", "track", "pull-request", "text", true);
   version.input.value = initialValues?.version ?? "";
   commit.input.value = initialValues?.commit_sha ?? "";
-  branch.input.value = initialValues?.source_branch ?? branch.input.value;
-  track.input.value = initialValues?.release_track ?? track.input.value;
+  branch.input.value = initialValues?.source_branch ?? selectedProject?.config.project.default_branch ?? branch.input.value;
+  const tracks = Object.keys(selectedProject?.config.release_tracks ?? {});
+  track.input.value = initialValues?.release_track ?? (tracks.includes("pull-request") ? "pull-request" : tracks[0]) ?? track.input.value;
   form.append(version.wrapper, commit.wrapper, branch.wrapper, track.wrapper);
   const controls = el("div", "dialog-actions");
   const cancel = button("Cancel", "button quiet");

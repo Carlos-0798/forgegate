@@ -1,5 +1,16 @@
 # Roadmap
 
+## Current priority — independent first use and task completion
+
+The owner reopened feature scope on 2026-09-09 for a runtime, interaction and
+feature reassessment. The selected slice closes three observed gaps: independent
+installed-package workspace setup; a task-oriented, project-scoped workbench;
+and correct mixed-suite JUnit aggregation/default test-policy decisions.
+Acceptance requires the full regression gate and a fresh-wheel browser task,
+including positive/negative results and independently verified export.
+Earlier gates remain historical evidence, not restrictions on this owner-selected
+work. GitHub synchronization and human comparative timing remain deferred.
+
 ## Completed priority — feature freeze and finite Alpha completion
 
 Owner direction on 2026-09-09 freezes feature scope. Execute Phase 59 code

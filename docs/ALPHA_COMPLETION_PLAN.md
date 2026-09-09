@@ -3,6 +3,11 @@
 Effective: 2026-09-09. Owner-approved direction: feature freeze, code closeout,
 real-project acceptance, then a final reproducible demonstration.
 
+Historical plan: after these gates completed, the owner reopened scope for an
+independent product reassessment. The current work is described at the top of
+[Roadmap](ROADMAP.md). The freeze below documents the Phase 59-61 decision; it
+does not override that newer authorization.
+
 ## Product objective and frozen scope
 
 ForgeGate helps a Windows engineering user turn existing test, coverage, static

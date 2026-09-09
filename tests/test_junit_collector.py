@@ -141,6 +141,96 @@ def test_summary_only_testsuites_aggregate_direct_suites(tmp_path: Path) -> None
     }
 
 
+def test_mixed_suites_retain_summary_only_failures(tmp_path: Path) -> None:
+    result = collect(
+        tmp_path,
+        '<testsuites><testsuite><testcase time="0.1" /></testsuite>'
+        '<testsuite tests="1" failures="1" time="0.2" /></testsuites>',
+    )
+    assert result.status is CollectionStatus.COMPLETE
+    assert result.evidence[0].value == {
+        "total": 2,
+        "passed": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "duration_seconds": 0.3,
+    }
+    assert result.evidence[0].status == "failed"
+    assert result.warnings == []
+
+
+def test_nested_suite_mismatch_is_not_hidden_by_unannotated_root(tmp_path: Path) -> None:
+    result = collect(
+        tmp_path,
+        '<testsuites><testsuite tests="9" failures="2">'
+        '<testcase time="0.1" /></testsuite></testsuites>',
+    )
+    assert result.evidence[0].value["total"] == 1
+    assert [(item.code, item.location) for item in result.warnings] == [
+        ("JUNIT_DECLARED_COUNT_MISMATCH", "/0@tests"),
+        ("JUNIT_DECLARED_COUNT_MISMATCH", "/0@failures"),
+    ]
+
+
+def test_deep_allowed_suite_mismatch_has_bounded_location(tmp_path: Path) -> None:
+    result = collect(
+        tmp_path,
+        "<testsuites>" * 48
+        + '<testsuite tests="9"><testcase time="0.1" /></testsuite>'
+        + "</testsuites>" * 48,
+    )
+    assert result.status is CollectionStatus.COMPLETE
+    assert len(result.warnings) == 1
+    assert result.warnings[0].location == "/0" * 48 + "@tests"
+
+
+def test_nested_aggregate_parents_do_not_double_count(tmp_path: Path) -> None:
+    result = collect(
+        tmp_path,
+        '<testsuites tests="3" failures="1"><testsuite tests="3" failures="1">'
+        '<testcase time="0.1" /><testsuite tests="2" failures="1" time="0.2" />'
+        "</testsuite></testsuites>",
+    )
+    assert result.evidence[0].value["total"] == 3
+    assert result.evidence[0].value["passed"] == 2
+    assert result.evidence[0].value["failures"] == 1
+    assert result.warnings == []
+
+
+@pytest.mark.parametrize("attributes", ['tests="1" errors="1"', 'tests="1" skipped="1"'])
+def test_summary_only_child_outcomes_are_retained(tmp_path: Path, attributes: str) -> None:
+    result = collect(
+        tmp_path,
+        '<testsuites><testsuite><testcase time="0.1" /></testsuite>'
+        f"<testsuite {attributes} /></testsuites>",
+    )
+    assert result.evidence[0].value["total"] == 2
+    assert result.evidence[0].value["passed"] == 1
+    assert result.evidence[0].value["duration_seconds"] is None
+    assert result.warnings[0].code == "JUNIT_DURATION_INCOMPLETE"
+
+
+@pytest.mark.parametrize(
+    ("xml", "code"),
+    [
+        ("<testsuite><group><testcase /></group></testsuite>", "JUNIT_STRUCTURE_UNSUPPORTED"),
+        ('<testsuites><testsuite tests="1"/><testsuite /></testsuites>', "JUNIT_SUMMARY_MISSING"),
+        (
+            '<testsuite tests="1" time="1e308"><testcase time="1e308" />'
+            '<testcase time="1e308" /></testsuite>',
+            "JUNIT_DURATION_INVALID",
+        ),
+    ],
+)
+def test_ambiguous_or_incomplete_suite_structures_fail_closed(
+    tmp_path: Path, xml: str, code: str
+) -> None:
+    result = collect(tmp_path, xml)
+    assert result.status is CollectionStatus.REJECTED
+    assert result.rejected_records[0].code == code
+
+
 def test_declared_count_mismatch_is_audited_but_observation_wins(tmp_path: Path) -> None:
     result = collect(
         tmp_path,

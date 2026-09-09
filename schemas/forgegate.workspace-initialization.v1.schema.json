@@ -1,0 +1,120 @@
+{
+  "$defs": {
+    "WorkspaceDemoCase": {
+      "additionalProperties": false,
+      "properties": {
+        "candidate_id": {
+          "pattern": "^cand-[0-9a-f]{24}$",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "decision": {
+          "enum": [
+            "PASS",
+            "FAIL"
+          ],
+          "title": "Decision",
+          "type": "string"
+        },
+        "evidence_origin": {
+          "const": "SYNTHETIC",
+          "default": "SYNTHETIC",
+          "title": "Evidence Origin",
+          "type": "string"
+        },
+        "verification_level": {
+          "const": "declared",
+          "default": "declared",
+          "title": "Verification Level",
+          "type": "string"
+        },
+        "version": {
+          "enum": [
+            "synthetic-demo-pass",
+            "synthetic-demo-fail"
+          ],
+          "title": "Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "candidate_id",
+        "version",
+        "decision"
+      ],
+      "title": "WorkspaceDemoCase",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "description": "Path-free setup receipt. Private key material is deliberately absent.",
+  "properties": {
+    "browser_session": {
+      "const": "NOT_ACTIVATED",
+      "default": "NOT_ACTIVATED",
+      "title": "Browser Session",
+      "type": "string"
+    },
+    "demo_cases": {
+      "default": [],
+      "items": {
+        "$ref": "#/$defs/WorkspaceDemoCase"
+      },
+      "maxItems": 2,
+      "title": "Demo Cases",
+      "type": "array"
+    },
+    "hardware_access": {
+      "const": "NOT_PERFORMED",
+      "default": "NOT_PERFORMED",
+      "title": "Hardware Access",
+      "type": "string"
+    },
+    "instructions": {
+      "const": "START_HERE.md",
+      "default": "START_HERE.md",
+      "title": "Instructions",
+      "type": "string"
+    },
+    "operator_identity_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Operator Identity Id",
+      "type": "string"
+    },
+    "private_key": {
+      "const": "operator-key.pem",
+      "default": "operator-key.pem",
+      "title": "Private Key",
+      "type": "string"
+    },
+    "project_id": {
+      "pattern": "^[a-z][a-z0-9-]{1,62}$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "forgegate.workspace-initialization.v1",
+      "default": "forgegate.workspace-initialization.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "service": {
+      "const": "NOT_STARTED",
+      "default": "NOT_STARTED",
+      "title": "Service",
+      "type": "string"
+    },
+    "status": {
+      "const": "INITIALIZED",
+      "default": "INITIALIZED",
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_id",
+    "operator_identity_id"
+  ],
+  "title": "WorkspaceInitializationReport",
+  "type": "object"
+}

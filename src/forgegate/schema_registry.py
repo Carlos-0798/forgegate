@@ -55,8 +55,10 @@ from forgegate.recovery_models import RecoveryReadinessHandoff, WorkspaceRecover
 from forgegate.recovery_rehearsal import RecoveryRehearsalReceipt, RecoveryRehearsalReview
 from forgegate.security_events import ApiSecurityEvent, ApiSecurityEventPage
 from forgegate.workspace_backups import WorkspaceBackupManifest, WorkspaceBackupManifestV2
+from forgegate.workspace_init_models import WorkspaceInitializationReport
 
 SCHEMAS: dict[str, type[BaseModel]] = {
+    "forgegate.workspace-initialization.v1": WorkspaceInitializationReport,
     "forgegate.evidence-replay.v1": EvidenceReplayManifest,
     "forgegate.evidence-replay-verification.v1": EvidenceReplayVerification,
     "forgegate.workspace-adoption-preflight.v1": WorkspaceAdoptionPreflight,

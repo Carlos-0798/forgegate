@@ -56,6 +56,7 @@ button:focus-visible,
 a:focus-visible,
 input:focus-visible,
 select:focus-visible,
+summary:focus-visible,
 dialog:focus-visible,
 .problem-panel:focus-visible {
   outline: 3px solid var(--focus);
@@ -399,20 +400,111 @@ code {
   box-shadow: inset 3px 0 var(--accent);
 }
 
-.planned-nav {
-  margin-top: 2rem;
-  padding: 1rem;
-  border-top: 1px solid var(--line);
+.nav-group + .nav-group {
+  margin-top: 1.25rem;
 }
 
-.planned-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0.45rem 0;
+.nav-group-label {
+  padding: 0 1rem;
+  margin-bottom: 0.5rem;
   color: var(--muted);
-  font-size: 0.76rem;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+}
+
+.workbench-toolbar {
+  margin-top: 1.25rem;
+}
+
+.workbench-start {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1.5rem;
+  margin: 1rem 0 2rem;
+  padding: clamp(1.2rem, 3vw, 2rem);
+  border: 1px solid var(--accent-strong);
+  border-radius: 1rem;
+  background: linear-gradient(120deg, rgb(89 229 178 / 10%), var(--surface));
+}
+
+.workbench-start p:last-child {
+  max-width: 70ch;
+  margin-bottom: 0;
+  line-height: 1.65;
+}
+
+.workbench-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.workbench-actions a,
+.workbench-candidate a {
+  text-decoration: none;
+  text-align: center;
+}
+
+.workbench-candidates {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.workbench-candidate {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 1.25rem;
+  border: 1px solid var(--line);
+  border-radius: 0.9rem;
+  background: var(--surface);
+  overflow-wrap: anywhere;
+}
+
+.workbench-candidate .card-heading {
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.workbench-candidate h3 {
+  margin: 0;
+}
+
+.workbench-candidate .mono {
+  font-size: 0.8rem;
+}
+
+.workbench-candidate a {
+  align-self: flex-start;
+  margin-top: auto;
+}
+
+.workspace-details {
+  margin-top: 1.5rem;
+}
+
+.workspace-details summary {
+  cursor: pointer;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.workspace-details[open] summary {
+  margin-bottom: 1.5rem;
+  color: var(--text);
+}
+
+.candidate-filters > .field:first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.candidate-filters input {
+  width: 100%;
 }
 
 .workspace {
@@ -1076,8 +1168,16 @@ td {
     margin: 0 0.25rem 0 0;
   }
 
-  .planned-nav {
+  .nav-group {
+    display: contents;
+  }
+
+  .nav-group-label {
     display: none;
+  }
+
+  .workbench-start {
+    grid-template-columns: 1fr;
   }
 
   .metric-grid {
@@ -1099,6 +1199,10 @@ td {
   .boundary-grid,
   .metric-grid,
   .detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workbench-candidates {
     grid-template-columns: 1fr;
   }
 
@@ -1133,6 +1237,8 @@ td {
   .detail-panel,
   .problem-panel,
   .workflow-panel,
+  .workbench-start,
+  .workbench-candidate,
   .command-boundary,
   .live-source-panel,
   .device-state-card,
@@ -1165,6 +1271,7 @@ td {
   a:focus-visible,
   input:focus-visible,
   select:focus-visible,
+  summary:focus-visible,
   dialog:focus-visible,
   .problem-panel:focus-visible {
     outline-color: Highlight;

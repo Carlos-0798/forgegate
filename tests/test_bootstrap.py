@@ -1,4 +1,5 @@
 import json
+from datetime import UTC, datetime
 from pathlib import Path
 
 import pytest
@@ -6,12 +7,61 @@ from pydantic import ValidationError
 from typer.testing import CliRunner
 
 import forgegate.bootstrap as bootstrap
+from forgegate.artifacts import ArtifactRegistry
 from forgegate.bootstrap import InitializationError, InitializationReport, initialize_project
 from forgegate.cli import app
+from forgegate.collectors import JUnitCollectionRequest, JUnitCollector
 from forgegate.config import load_config
-from forgegate.domain.models import PolicyConfig, ProjectConfig
+from forgegate.domain.models import EvidenceBundle, ExecutionContext, PolicyConfig, ProjectConfig
+from forgegate.policy import evaluate_policy
 
 runner = CliRunner()
+
+
+@pytest.mark.parametrize(
+    ("xml", "decision"),
+    [
+        ('<testsuite tests="0" />', "FAIL"),
+        ('<testsuite tests="1" skipped="1" />', "FAIL"),
+        ("<testsuite><testcase><error /></testcase></testsuite>", "FAIL"),
+        ('<testsuite tests="2" errors="1" />', "FAIL"),
+        ('<testsuite tests="2" failures="1" />', "FAIL"),
+        ('<testsuite tests="1" />', "PASS"),
+        (
+            '<testsuites><testsuite><testcase time="0.1" /></testsuite>'
+            '<testsuite tests="1" failures="1" /></testsuites>',
+            "FAIL",
+        ),
+    ],
+)
+def test_generated_policy_requires_successful_executed_tests(
+    tmp_path: Path, xml: str, decision: str
+) -> None:
+    initialize_project(tmp_path)
+    policy = load_config(tmp_path / "policies/pull-request.yaml")
+    assert isinstance(policy, PolicyConfig)
+    (tmp_path / "artifacts/junit.xml").write_text(xml, encoding="utf-8")
+    now = datetime(2026, 9, 9, tzinfo=UTC)
+    collection = JUnitCollector(ArtifactRegistry(tmp_path)).collect(
+        JUnitCollectionRequest(
+            source_path="artifacts/junit.xml",
+            source_tool="synthetic-fixture",
+            source_version="1",
+            execution_context=ExecutionContext(commit_sha="a" * 40),
+            collected_at=now,
+            trust="unsigned_local",
+            verification_level="declared",
+        )
+    )
+    bundle = EvidenceBundle(
+        schema_version="forgegate.evidence-bundle.v1",
+        producer="synthetic-fixture",
+        producer_version="1",
+        candidate_commit="a" * 40,
+        generated_at=now,
+        evidence=collection.evidence,
+    )
+    assert evaluate_policy(policy, bundle, evaluated_at=now).decision.value == decision
 
 
 def test_init_creates_valid_generic_template_without_path_disclosure(tmp_path: Path) -> None:

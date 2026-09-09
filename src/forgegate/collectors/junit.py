@@ -173,20 +173,62 @@ class JUnitCollector:
             )
         self._enforce_tree_limits(root)
 
-        cases = [element for element in root.iter() if _local_name(element.tag) == "testcase"]
-        if cases:
-            summary = self._summary_from_cases(cases)
-            warnings = self._declared_mismatch_warnings(root, summary)
-            if summary.duration_seconds is None:
-                warnings.append(
-                    _warning(
-                        "JUNIT_DURATION_INCOMPLETE",
-                        "one or more test cases omitted duration; "
-                        "aggregate duration is unavailable",
-                    )
+        summary, warnings = self._summary_from_suite(root)
+        if summary.duration_seconds is None and any(
+            _local_name(element.tag) == "testcase" for element in root.iter()
+        ):
+            warnings.append(
+                _warning(
+                    "JUNIT_DURATION_INCOMPLETE",
+                    "one or more test cases or suites omitted duration; "
+                    "aggregate duration is unavailable",
                 )
-            return summary, warnings
-        return self._summary_from_attributes(root), []
+            )
+        return summary, warnings
+
+    def _summary_from_suite(
+        self, root: ET.Element, *, location: str = ""
+    ) -> tuple[JUnitSummary, list[CollectionIssue]]:
+        # Count each child exactly once. Parent attributes are cross-checks,
+        # never extra tests; a sibling without cases still contributes its summary.
+        cases = [child for child in root if _local_name(child.tag) == "testcase"]
+        suites = [child for child in root if _local_name(child.tag) in {"testsuite", "testsuites"}]
+        for child in root:
+            if _local_name(child.tag) not in {"testcase", "testsuite", "testsuites"} and any(
+                _local_name(element.tag) in {"testcase", "testsuite", "testsuites"}
+                for element in child.iter()
+            ):
+                raise JUnitParseError(
+                    "JUNIT_STRUCTURE_UNSUPPORTED",
+                    "test cases and suites must be direct children of a suite",
+                    location=location or None,
+                )
+        if not cases and not suites:
+            return self._summary_from_attributes(root), []
+        parts = [self._summary_from_cases(cases)] if cases else []
+        warnings: list[CollectionIssue] = []
+        for index, suite in enumerate(suites):
+            # Suite-child ordinal segments stay below CollectionIssue's 512-byte
+            # location bound even at the maximum accepted XML depth/element count.
+            path = f"{location}/{index}"
+            summary, child_warnings = self._summary_from_suite(suite, location=path)
+            parts.append(summary)
+            warnings.extend(child_warnings)
+        duration = None
+        if all(part.duration_seconds is not None for part in parts):
+            duration = float(sum(Decimal(str(part.duration_seconds)) for part in parts))
+            if not math.isfinite(duration):
+                raise JUnitParseError("JUNIT_DURATION_INVALID", "aggregate duration is not finite")
+        summary = JUnitSummary(
+            total=sum(part.total for part in parts),
+            passed=sum(part.passed for part in parts),
+            failures=sum(part.failures for part in parts),
+            errors=sum(part.errors for part in parts),
+            skipped=sum(part.skipped for part in parts),
+            duration_seconds=duration,
+        )
+        warnings.extend(self._declared_mismatch_warnings(root, summary, location=location))
+        return summary, warnings
 
     def _enforce_tree_limits(self, root: ET.Element) -> None:
         observed = 0
@@ -286,7 +328,7 @@ class JUnitCollector:
         return JUnitSummary(total, passed, failures, errors, skipped, duration)
 
     def _declared_mismatch_warnings(
-        self, root: ET.Element, summary: JUnitSummary
+        self, root: ET.Element, summary: JUnitSummary, *, location: str = ""
     ) -> list[CollectionIssue]:
         if root.get("tests") is None:
             return []
@@ -306,7 +348,7 @@ class JUnitCollector:
             _warning(
                 "JUNIT_DECLARED_COUNT_MISMATCH",
                 f"declared {name}={declared[name]} but observed {actual[name]}",
-                location=f"@{name}",
+                location=f"{location}@{name}",
             )
             for name in ("tests", "failures", "errors", "skipped")
             if declared[name] != actual[name]
