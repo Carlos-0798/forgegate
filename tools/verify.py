@@ -76,7 +76,14 @@ def main() -> int:
         [python, "-m", "ruff", "check", "."],
         [python, "-m", "ruff", "format", "--check", "."],
         [python, "-m", "mypy", "src", "tools"],
-        [python, "-m", "pytest", "--cov=forgegate", "--cov-branch"],
+        [
+            python,
+            "-m",
+            "pytest",
+            "--cov=forgegate",
+            "--cov-branch",
+            f"--cov-config={REPOSITORY_ROOT / 'pyproject.toml'}",
+        ],
         [python, "tools/dashboard_assets.py", "--check"],
         [python, "tools/interaction_smoke.py"],
         [
