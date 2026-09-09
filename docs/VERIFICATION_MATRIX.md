@@ -7,6 +7,7 @@ acceptance. Phase 53B human measurement is deferred by owner; the
 
 | Capability | Planned evidence | Current status |
 |---|---|---|
+| Independent first use and task workbench | Fresh installed package outside checkout, new scoped identity/store, real browser positive/negative inputs and independently verified downloads | LOCAL PASS — 1,466 Python passes / 3 symlink skips, 95.82%; 264 frontend passes; clean-wheel smoke; actual VALID/PASS and VALID/FAIL handoff; retained AVS 130 records/12 rules unchanged. Native assistive/hardware/human timing not claimed. See Phase 62 acceptance |
 | Final Windows reviewer demonstration | Manifested non-secret ZIP, fresh environment install, positive/negative exits, authenticated browser review and retained exact-runtime screenshots | LOCAL PASS — 15-member verified delivery; fresh PASS/0 and FAIL/1; Overview/Candidates/Evidence/Decision/Assurance/Devices reviewed with zero console issues and zero horizontal overflow. No hardware/upstream/GitHub action; not independent first-use or offline dependency installation. See Phase 61 acceptance |
 | Frozen-package real-project acceptance | Exact installed wheel, retained AVS original hashes/replay, retained MSP430 private-source chain, expected decisions and wrong-commit controls | LOCAL PASS — AVS `VALID / FAIL`, 4 collections, 130 records and 12 exact rules; MSP430 `COMPLETE`, 17 `system_observed` records and 2 retained warnings. No upstream rerun, serial access, current hardware claim, producer authentication or browser rerun. See Phase 60 acceptance |
 | Frozen Windows source and delivery baseline | Clean-checkout full gates, fresh-sdist wheel, exact installed-artifact probe and runtime-byte comparison | LOCAL PASS — source e424292; 1,433 Python passes / 3 symlink skips, 95.80% coverage; 248 frontend passes, release smoke PASS; all 109 runtime members equal Phase 58. No fresh browser/hardware claim; Phase 59 records failed orchestration attempts and Windows build-path limit |
@@ -53,7 +54,7 @@ acceptance. Phase 53B human measurement is deferred by owner; the
 | Parent/absolute paths are rejected | pytest | PASS |
 | Missing evidence cannot be configured to PASS | pytest | PASS |
 | Evidence commit mismatch is rejected | pytest | PASS |
-| JSON Schemas export | CLI + JSON parse | PASS — 58 document plus three artifact schemas; current local inventory |
+| JSON Schemas export | CLI + JSON parse | PASS — 59 document plus three artifact schemas; current local inventory |
 | Benchmark artifact Schema | committed contract + drift check | PASS — local host |
 | Analog Validation result Schema mirror | committed upstream-consumer contract + drift check | PASS — local host |
 | Committed Schema drift | model-derived byte comparison | PASS |

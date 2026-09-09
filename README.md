@@ -33,6 +33,11 @@ Overview now prioritizes starting an assessment and reviewing candidate outcomes
 Candidate search and state filters apply to the explicitly loaded page, not an
 unstated global total. The default test policy requires successful executed tests;
 JUnit aggregation retains failures from mixed detailed and summary-only suites.
+The [current acceptance record](reports/PHASE_62_WORKBENCH_ACCEPTANCE.md) includes
+1,466 Python passes, 264 frontend passes, fresh-install browser PASS/FAIL handoff
+and unchanged retained AVS results.
+
+![ForgeGate release workbench with synthetic PASS and FAIL examples](docs/assets/phase62/workbench.jpg)
 
 **Windows Alpha completion accepted 2026-09-09.** Code closeout,
 frozen-package real-project acceptance and the reproducible final demonstration

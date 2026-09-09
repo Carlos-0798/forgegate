@@ -6,8 +6,9 @@ The owner reopened feature scope on 2026-09-09 for a runtime, interaction and
 feature reassessment. The selected slice closes three observed gaps: independent
 installed-package workspace setup; a task-oriented, project-scoped workbench;
 and correct mixed-suite JUnit aggregation/default test-policy decisions.
-Acceptance requires the full regression gate and a fresh-wheel browser task,
-including positive/negative results and independently verified export.
+Accepted locally: full regression and fresh-wheel browser positive/negative
+tasks with independently verified export; see
+[Phase 62](../reports/PHASE_62_WORKBENCH_ACCEPTANCE.md).
 Earlier gates remain historical evidence, not restrictions on this owner-selected
 work. GitHub synchronization and human comparative timing remain deferred.
 

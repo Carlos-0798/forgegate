@@ -9,6 +9,17 @@ measurement, or production environment.
 
 ## Evidence boundary
 
+The [Phase 62 workbench acceptance](../reports/PHASE_62_WORKBENCH_ACCEPTANCE.md)
+adds six actual in-app-browser captures from a new installed-wheel workspace.
+Two candidates were seeded explicitly as synthetic and two were created and
+assessed through the UI. Downloaded positive/negative assurance independently
+verifies VALID/PASS and VALID/FAIL. These captures supersede the earlier Overview
+appearance, without invalidating historical workflow evidence.
+
+![Independent release workbench](assets/phase62/workbench.jpg)
+
+![Exact failed rule in a synthetic browser assessment](assets/phase62/decision-fail.jpg)
+
 The [Phase 61 final demo](../reports/PHASE_61_FINAL_DEMO_ACCEPTANCE.md) reuses six
 Phase 58 installed-wheel captures because Phase 59 proved all 109 runtime members
 byte-equal. It also records a fresh authenticated browser walkthrough; no duplicate

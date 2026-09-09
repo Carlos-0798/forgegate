@@ -1,0 +1,11 @@
+{
+  "status": "PASS",
+  "archive": "forgegate-workbench-windows-alpha-reviewer.zip",
+  "members": 11,
+  "bytes": 877459,
+  "sha256": "b2f932f9f6af171246b9b36e14370c86beccbaf30edae0693b27be99269b843b",
+  "wheel_sha256": "85954723e44979c439618c0c48dee8f65ff96616bea36b3842575c72fc29aada",
+  "member_bytes_verified": true,
+  "private_key_and_databases_included": false,
+  "publication": "NOT_PERFORMED"
+}
