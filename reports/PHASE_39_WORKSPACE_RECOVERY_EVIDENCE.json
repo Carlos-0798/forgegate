@@ -1,0 +1,66 @@
+{
+  "phase": 39,
+  "date": "2026-09-07",
+  "verification": "HOST_TEST_SYNTHETIC",
+  "full_verification": {
+    "status": "PASS",
+    "passed": 1149,
+    "skipped": 3,
+    "coverage_percent": 95.57,
+    "statements": 11794,
+    "branches": 3112,
+    "focused_workspace_cases": 48,
+    "focused_workspace_coverage_percent": 100.0,
+    "frontend_host_cases": 127,
+    "cli_rest_smoke_cases": 33,
+    "document_schemas": 46,
+    "artifact_schemas": 3
+  },
+  "working_tree_cli_smoke": {
+    "status": "PASS",
+    "backup_sha256": "68435f8aa3de9d649b46833541b3ef1211ad247d91996f9b4fd17d8d6ba61507",
+    "backup_size_bytes": 263048,
+    "manifest_fingerprint": "sha256:1565a1f814497506efe3794d51ce855746a50a05fd9a7988f209aa1e979413e6",
+    "source_sha256": "c841ced91447cdecc82ce8e942f86f7307d391342a85ed78a514d82f60488b5d",
+    "job_states": {"SUCCEEDED": 1, "QUEUED": 1, "CANCELLED": 1},
+    "job_event_count": 8,
+    "all_table_rows_preserved": true,
+    "restored_job_revision": 4,
+    "expected_test_summary": {
+      "total": 4,
+      "passed": 3,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "duration_seconds": 0.5
+    },
+    "evidence_status": "failed",
+    "retention_actions": {"RETAIN": 1, "REVIEW_ARCHIVAL": 2},
+    "deletion_performed": false,
+    "capacity_reclaimed": 0,
+    "original_workspace_unchanged": true,
+    "temporary_cleanup": "PASS"
+  },
+  "clean_wheel_smoke": {
+    "status": "PASS",
+    "release_smoke_exit_code": 0,
+    "sdist_and_wheel_build": "PASS",
+    "required_source_manifest": "PASS",
+    "backup_sha256": "da7ea7ba7c631a4da11b60552eac74152f476bb1a31bc1a2fb390bf8325ac10c",
+    "backup_size_bytes": 263048,
+    "manifest_fingerprint": "sha256:2fe1b75ddb6d8e458e393b6e6a1ef50fe507a28ad33572e4b13b1577432da937",
+    "same_expected_summary_and_preserved_originals": true,
+    "isolated_runtime_http_smoke": "PASS",
+    "real_device_open": "NOT_PERFORMED"
+  },
+  "boundaries": {
+    "real_user_workspace_backup": "NOT_PERFORMED",
+    "live_service_restart": "NOT_PERFORMED",
+    "browser_manual_test": "NOT_PERFORMED",
+    "hardware_access": "NOT_PERFORMED",
+    "github_sync": "NOT_PERFORMED",
+    "automatic_purge": "NOT_IMPLEMENTED",
+    "background_worker": "NOT_IMPLEMENTED",
+    "production_recovery": "NOT_PERFORMED"
+  }
+}

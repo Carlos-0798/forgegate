@@ -8,6 +8,7 @@
   "scripts": {
     "build:dashboard": "vite build --config frontend/vite.config.ts",
     "check:dashboard": "tsc --project frontend/tsconfig.json --noEmit",
+    "test:dashboard": "node --test frontend/tests/*.test.mjs",
     "inventory:dashboard": "python tools/dashboard_assets.py --write",
     "verify:dashboard-assets": "python tools/dashboard_assets.py --check"
   },

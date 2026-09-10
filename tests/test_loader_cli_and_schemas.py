@@ -7,7 +7,12 @@ from typer.testing import CliRunner
 from forgegate.cli import app
 from forgegate.config import ConfigLoadError, load_config, loaders
 from forgegate.config.loaders import MAX_CONFIG_BYTES
-from forgegate.schema_registry import ARTIFACT_SCHEMAS, SCHEMAS, schema_filename
+from forgegate.schema_registry import (
+    ARTIFACT_SCHEMAS,
+    LOCAL_CONFIGURATION_SCHEMAS,
+    SCHEMAS,
+    schema_filename,
+)
 
 runner = CliRunner()
 
@@ -117,6 +122,7 @@ def test_doctor_reports_phase() -> None:
     assert report["phase"] == "phase22-windows-alpha"
     assert report["supported_schemas"] == sorted(SCHEMAS)
     assert report["supported_artifact_schemas"] == sorted(ARTIFACT_SCHEMAS)
+    assert report["supported_local_configuration_schemas"] == sorted(LOCAL_CONFIGURATION_SCHEMAS)
 
 
 def test_validate_config_cli(repository_root: Path) -> None:
@@ -685,7 +691,7 @@ def test_schema_export_cli(tmp_path: Path) -> None:
     output = tmp_path / "schemas"
     result = runner.invoke(app, ["export-schemas", str(output)])
     assert result.exit_code == 0
-    for schema_version in SCHEMAS:
+    for schema_version in {**SCHEMAS, **LOCAL_CONFIGURATION_SCHEMAS}:
         path = output / schema_filename(schema_version)
         assert path.is_file()
         assert b"\r\n" not in path.read_bytes()
@@ -698,7 +704,7 @@ def test_schema_export_cli(tmp_path: Path) -> None:
 
 
 def test_committed_schemas_match_models(repository_root: Path) -> None:
-    for schema_version, model in SCHEMAS.items():
+    for schema_version, model in {**SCHEMAS, **LOCAL_CONFIGURATION_SCHEMAS}.items():
         expected = json.dumps(model.model_json_schema(), indent=2, sort_keys=True) + "\n"
         path = repository_root / "schemas" / schema_filename(schema_version)
         assert path.read_text(encoding="utf-8") == expected

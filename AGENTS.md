@@ -8,6 +8,16 @@ Before changing implementation or claims, read `README.md`,
 `docs/PROJECT_STATUS.md`, `docs/ROADMAP.md`, and
 `docs/VERIFICATION_MATRIX.md`.
 
+## Current product scope
+
+After completing the finite Alpha gates, the owner authorized an independent
+runtime, interaction and feature reassessment on 2026-09-09. The earlier feature
+freeze is lifted. Prioritize complete user tasks and demonstrated correctness
+or usability gaps, rather than adding disconnected platform subsystems.
+Preserve existing accepted evidence; repeat checks for changed artifacts,
+failures or specifically unresolved acceptance conditions. External publication,
+privacy and hardware boundaries below remain in effect.
+
 ## Product and evidence boundaries
 
 - Keep ForgeGate Core domain-neutral. Do not import code from Analog Validation

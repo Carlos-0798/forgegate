@@ -6,6 +6,106 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
+- [Private GitHub synchronization](GITHUB_SYNC_2026-09-09.md) — preserved source
+  checkpoint, fresh local gates, presentation/privacy review and hosted CI limits;
+  [engineering resumption plan](../docs/PROJECT_RESUME_CHECKPOINT_2026-09-09.md).
+- [Phase 64 monitor presets](PHASE_64_MONITOR_PRESETS_ACCEPTANCE.md) — versioned
+  configuration, safe start/stop and labeled simulation; latest engineering
+  baseline with [machine evidence](PHASE_64_MONITOR_PRESETS_EVIDENCE.json).
+- [Phase 63 final user-path closeout](PHASE_63_FINAL_USER_PATH_ACCEPTANCE.md) —
+  clean-commit installed delivery, recipient-style cold start, actual browser
+  activation/write checks, retained full PASS/FAIL handoff and explicit remaining
+  novice/human/assistive/hardware boundaries.
+- [Phase 62 independent first use and workbench](PHASE_62_WORKBENCH_ACCEPTANCE.md) —
+  independent workspace creation, task-oriented UI, actual browser synthetic
+  PASS/FAIL and unchanged retained AVS compatibility.
+- [Phase 61 final Windows demonstration](PHASE_61_FINAL_DEMO_ACCEPTANCE.md) —
+  verified non-secret reviewer ZIP, fresh-recipient PASS/FAIL controls and actual
+  authenticated browser review; [machine evidence](PHASE_61_FINAL_DEMO_EVIDENCE.json).
+- [Phase 60 frozen-package real-project acceptance](PHASE_60_REAL_PROJECT_ACCEPTANCE.md) —
+  exact isolated Phase 59 wheel reproduces retained AVS `VALID / FAIL` and MSP430
+  artifact-only `COMPLETE`, including wrong-commit controls and explicit non-claims;
+  [machine evidence](PHASE_60_REAL_PROJECT_ACCEPTANCE_EVIDENCE.json).
+- [Phase 59 feature freeze and code closeout](PHASE_59_CODE_CLOSEOUT_ACCEPTANCE.md) —
+  coherent local commit baseline, finite completion gates, clean-source delivery
+  and exact installed-artifact checks; [machine evidence](PHASE_59_CODE_CLOSEOUT_EVIDENCE.json).
+
+- [Phase 58 refreshed Windows delivery](PHASE_58_WINDOWS_DELIVERY_ACCEPTANCE.md) —
+  isolated installed wheel completes actual Edge synthetic quick assessment,
+  replay, assurance and comparison; dirty-tree local artifact, not public release.
+- [Phase 57 evaluation comparison](PHASE_57_DECISION_COMPARISON_ACCEPTANCE.md) —
+  four actual Edge controls, including changed-policy rejection; 38 new / 248
+  total frontend tests. Rule-level retained comparison, not defect-fix proof.
+- [Phase 56 real AVS quick assessment](PHASE_56_AVS_QUICK_ACCEPTANCE.md) —
+  real archived report metadata and warnings preserved through the shorter UI;
+  actual downloaded replay VALID / FAIL, 12 matching rules and 130 matching
+  records except artifact reference paths. No producer rerun.
+- [Phase 55 repeated-use quick handoff](PHASE_55_QUICK_HANDOFF_ACCEPTANCE.md) —
+  exact compatible saved-policy choices and reviewed original-file replay download
+  without repeat file selection; actual Edge ZIP independently VALID / PASS.
+- [Phase 54 quick assessment](PHASE_54_QUICK_ASSESSMENT_ACCEPTANCE.md) —
+  content-detected batch, explicit preview/confirmation, existing sequenced
+  binding/evaluation/attestation; actual Edge PASS/FAIL/REVIEW, directory import,
+  invalid-report safe stop and offline VALID download; no measured human-efficiency claim
+- [Phase 53A matched efficiency fixtures](PHASE_53A_EFFICIENCY_FIXTURE_ACCEPTANCE.md) —
+  sealed participant/assessor split, independently hashed A/B inputs, non-leaking
+  run order and 12 real ForgeGate cross-checks; human review and timed trials are
+  still NOT PERFORMED, so no efficiency or accuracy improvement is claimed
+- [Phase 52 reviewed Windows delivery](PHASE_52_WINDOWS_DELIVERY_ACCEPTANCE.md) —
+  fresh-sdist wheel construction, exact packaged assets, isolated install/start,
+  actual Edge operator workflow and independently verified assurance download;
+  local working-tree acceptance, not a clean-commit or public release
+- [Phase 51 private source replay](PHASE_51_SOURCE_REPLAY_ACCEPTANCE.md) —
+  original collector inputs, deterministic ZIP, actual Edge rejection/reselection/
+  download and database-independent policy replay; [machine evidence](PHASE_51_SOURCE_REPLAY_EVIDENCE.json).
+  VALID archive, retained AVS decision FAIL; no new producer test execution
+- [Phase 50 real AVS host-report integration](PHASE_50_AVS_HOST_ACCEPTANCE.md) —
+  actual producer reports, 130 records, browser-reviewed FAIL decision and verified
+  assurance download; [machine evidence](PHASE_50_AVS_HOST_EVIDENCE.json) and
+  [upstream handoff](PHASE_50_AVS_UPSTREAM_HANDOFF.md). Integration accepted, not
+  producer release approval, hardware validation or authenticated report origin
+- [Phase 49 standard CI Dashboard collection](PHASE_49_STANDARD_CI_ACCEPTANCE.md) —
+  four-family evidence-to-decision workflow, synthetic expected outputs,
+  actual Edge acceptance and screenshots; no measured production or hardware claim
+- [Phase 48 existing-only paired startup](PHASE_48_EXISTING_PAIR_ACCEPTANCE.md) —
+  no-init/no-migration checks and public runtime correlation, with
+  [independent-process evidence](PHASE_48_EXISTING_PAIR_EVIDENCE.json);
+  not authenticated ownership, probation, a writer fence or live adoption
+- [Phase 47 read-only adoption preflight](PHASE_47_ADOPTION_PREFLIGHT_ACCEPTANCE.md) —
+  bounded complete supported-table comparison, cold-copy validation and independent
+  CLI expected outputs; [synthetic evidence](PHASE_47_ADOPTION_PREFLIGHT_EVIDENCE.json);
+  no live-source freshness, process control, adoption or hardware claim
+- [Phase 46 workspace adoption design review](PHASE_46_WORKSPACE_ADOPTION_DESIGN_REVIEW.md) —
+  source-traced design and explicit fault matrix; no runtime adoption, rollback,
+  browser or hardware acceptance claimed; GitHub synchronization paused
+- [Phase 45 Dashboard rehearsal receipt review](PHASE_45_RECOVERY_REHEARSAL_REVIEW_ACCEPTANCE.md) —
+  strict read-only receipt validation plus actual isolated Edge import,
+  reselection and [repository-retained screenshot](../docs/assets/phase45-recovery-rehearsal-review.png);
+  no restore execution, live switch, continuing-availability or hardware claim
+- [Phase 44 reviewed recovery rehearsal](PHASE_44_RECOVERY_REHEARSAL_ACCEPTANCE.md) —
+  exact handoff rechecks, new-directory copy, cold history/member verification and
+  [actual synthetic CLI evidence](PHASE_44_RECOVERY_REHEARSAL_EVIDENCE.json);
+  external archived results remain external, no live workspace switch
+- [Phase 43 reviewed recovery handoff](PHASE_43_RECOVERY_HANDOFF_ACCEPTANCE.md) —
+  strict exact-byte report import and content-addressed handoff pass automation
+  and native Edge READY/BLOCKED selection, sequential reselection and independently
+  hashed downloads; no restore or live-availability claim
+- [Phase 42 offline recovery readiness](PHASE_42_RECOVERY_READINESS_ACCEPTANCE.md) — explicit original backups, exact archived-job association and READY/INCOMPLETE report; retained [synthetic CLI values](PHASE_42_RECOVERY_READINESS_ACCEPTANCE.json), no live availability or hardware claim
+- [Phase 41 capacity and archive visibility](PHASE_41_JOB_CAPACITY_ACCEPTANCE.md) — owner-only global logical quotas, privacy-preserving project usage, complete bounded archive filtering and explicit unverified dependency availability; no write, backup probe, hardware or GitHub action
+- [Phase 40 reviewed job archival](PHASE_40_JOB_ARCHIVAL_ACCEPTANCE.md) — exact verified-backup review, immutable receipt, logical quota release, external result readback and actual isolated Edge detail; no secure erasure, automatic purge or hardware
+- [Phase 39 workspace backup and recovery](PHASE_39_WORKSPACE_RECOVERY_ACCEPTANCE.md) — coordinated snapshots, strict archive verification, new-directory restore, retention planning and exact synthetic readback; no live replacement, purge or hardware
+- [Phase 38 durable foreground execution lifecycle](PHASE_38_JOB_EXECUTION_LIFECYCLE_ACCEPTANCE.md) — v2 owner/renewal records, cooperative cancellation checkpoints, v1/v2-to-v3 migration and actual in-app-browser execution; synthetic only, no worker, GitHub or hardware
+- [Phase 37 job-result evidence handoff](PHASE_37_JOB_RESULT_HANDOFF_ACCEPTANCE.md) — actual Edge canonical download and separately confirmed immutable binding with exact identity/readback evidence; synthetic only, no state promotion or hardware
+- [Phase 36 Dashboard submission and parsing](PHASE_36_DASHBOARD_JOB_SUBMISSION_ACCEPTANCE.md) — reviewed frozen report input, separate execution, warning consent and exact real Edge results; no worker, binding or hardware
+- [Phase 35 Dashboard job management](PHASE_35_DASHBOARD_JOBS_ACCEPTANCE.md) — actual Edge synthetic inspection/cancel/recovery/conflict evidence and explicit store migration; no automatic worker
+- [Phase 34 durable local report jobs](PHASE_34_COLLECTION_JOBS_ACCEPTANCE.md) — persistent local CLI lifecycle, bounded input, explicit cancellation/recovery, cross-process evidence and Windows handle correction; no new Dashboard task UI at that checkpoint
+- [Phase 34 synthetic job receipt](PHASE_34_COLLECTION_JOB_SMOKE.json) — exact four-test/one-failure output, source hash, non-mutation and cleanup checks; not a policy PASS or hardware claim
+- [Phase 33 actual-browser follow-up](PHASE_33_BROWSER_ACCEPTANCE_FOLLOWUP.md) — LCOV PASS, low-coverage FAIL, 13 scoped cases, local error provenance and Windows asset ordering corrections
+- [Phase 33 combined report collection](PHASE_33_MULTI_REPORT_ACCEPTANCE.md) — bounded JUnit + Cobertura/LCOV, exact JSON binding, real Edge synthetic combined policy PASS, and remaining manual boundaries
+- [Phase 32 candidate-store backup](PHASE_32_STORE_BACKUP_ACCEPTANCE.md) — consistent snapshots, no-overwrite validation and local data-protection boundaries
+- [Phase 30 JUnit collection](PHASE_30_JUNIT_COLLECTION_ACCEPTANCE.md) — bounded raw-report preview, reviewed binding and real Edge PASS/FAIL/warning/rejection acceptance; shared-policy defect corrected with explicit schema v9 migration
+- [Phase 29 project Audit acceptance](PHASE_29_PROJECT_AUDIT_ACCEPTANCE.md) — complete paginated project/candidate history, recorded actor boundaries, isolated browser fixture and retained captures
+- [Activation recovery follow-up](DASHBOARD_ACTIVATION_RECOVERY_2026-09-06.md) — exact server/port, manual retries, expiry/race regressions, real in-app-browser captures, and the separate GitHub billing blocker
 - [Phase 28 Dashboard assurance-export acceptance](PHASE_28_DASHBOARD_ASSURANCE_EXPORT_ACCEPTANCE_REPORT.md) — operator-reviewed candidate-bound ZIP download, deterministic replay, Edge file creation, and offline verification
 - [Phase 28 Dashboard assurance-export evidence](DASHBOARD_PHASE28_ASSURANCE_EXPORT_EVIDENCE_2026-09-05.json) — exact archive/member identities, negative authorization and stale-state results, screenshot hashes, and explicit non-claims
 - [Phase 27 Dashboard write and MSP430 collector acceptance](PHASE_27_DASHBOARD_WRITE_AND_MSP430_COLLECTOR_ACCEPTANCE_REPORT.md) — complete reviewed candidate workflow, strict artifact-only MSP430 validation collector, exact Edge zoom, bounded Narrator result, and explicit remaining environment gates

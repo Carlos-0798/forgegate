@@ -1,0 +1,83 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "bundle_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Bundle Id",
+      "type": "string"
+    },
+    "candidate_commit": {
+      "pattern": "^[0-9a-f]{40}$",
+      "title": "Candidate Commit",
+      "type": "string"
+    },
+    "collections_replayed": {
+      "maximum": 16,
+      "minimum": 1,
+      "title": "Collections Replayed",
+      "type": "integer"
+    },
+    "decision": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "REVIEW",
+        "ERROR"
+      ],
+      "title": "Decision",
+      "type": "string"
+    },
+    "evidence_records": {
+      "maximum": 4096,
+      "minimum": 1,
+      "title": "Evidence Records",
+      "type": "integer"
+    },
+    "hardware_access": {
+      "const": "NOT_PERFORMED",
+      "default": "NOT_PERFORMED",
+      "title": "Hardware Access",
+      "type": "string"
+    },
+    "producer_authentication": {
+      "const": "NOT_PERFORMED",
+      "default": "NOT_PERFORMED",
+      "title": "Producer Authentication",
+      "type": "string"
+    },
+    "replay_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Replay Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "forgegate.evidence-replay-verification.v1",
+      "default": "forgegate.evidence-replay-verification.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_files": {
+      "maximum": 32,
+      "minimum": 2,
+      "title": "Source Files",
+      "type": "integer"
+    },
+    "status": {
+      "const": "VALID",
+      "default": "VALID",
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "replay_id",
+    "bundle_id",
+    "candidate_commit",
+    "decision",
+    "collections_replayed",
+    "evidence_records",
+    "source_files"
+  ],
+  "title": "EvidenceReplayVerification",
+  "type": "object"
+}

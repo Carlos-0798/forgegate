@@ -1,0 +1,111 @@
+{
+  "$defs": {
+    "DashboardCollectionPreviewRequest": {
+      "additionalProperties": false,
+      "properties": {
+        "expected_revision": {
+          "minimum": 0,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "reported_commit": {
+          "pattern": "^[0-9a-fA-F]{7,64}$",
+          "title": "Reported Commit",
+          "type": "string"
+        },
+        "reports": {
+          "items": {
+            "$ref": "#/$defs/DashboardReportUpload"
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "title": "Reports",
+          "type": "array"
+        },
+        "retain_warnings": {
+          "default": false,
+          "title": "Retain Warnings",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "expected_revision",
+        "reported_commit",
+        "reports"
+      ],
+      "title": "DashboardCollectionPreviewRequest",
+      "type": "object"
+    },
+    "DashboardReportUpload": {
+      "additionalProperties": false,
+      "properties": {
+        "collected_at": {
+          "format": "date-time",
+          "title": "Collected At",
+          "type": "string"
+        },
+        "content_base64": {
+          "maxLength": 1398104,
+          "minLength": 4,
+          "title": "Content Base64",
+          "type": "string"
+        },
+        "format": {
+          "enum": [
+            "junit",
+            "coverage_xml",
+            "lcov",
+            "sarif",
+            "benchmark_json"
+          ],
+          "title": "Format",
+          "type": "string"
+        },
+        "source_tool": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Source Tool",
+          "type": "string"
+        },
+        "source_version": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Source Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "format",
+        "content_base64",
+        "source_tool",
+        "source_version",
+        "collected_at"
+      ],
+      "title": "DashboardReportUpload",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "candidate_id": {
+      "pattern": "^cand-[0-9a-f]{24}$",
+      "title": "Candidate Id",
+      "type": "string"
+    },
+    "collection": {
+      "$ref": "#/$defs/DashboardCollectionPreviewRequest"
+    },
+    "schema_version": {
+      "const": "forgegate.collection-job-request.v1",
+      "default": "forgegate.collection-job-request.v1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "candidate_id",
+    "collection"
+  ],
+  "title": "CollectionJobRequest",
+  "type": "object"
+}

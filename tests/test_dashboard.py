@@ -5,6 +5,8 @@ import hashlib
 import json
 import re
 import shutil
+import subprocess
+import sys
 import zipfile
 from datetime import UTC, datetime, timedelta
 from io import BytesIO
@@ -59,6 +61,34 @@ from tools.manual_dashboard_fault_server import (
 ORIGIN = "http://127.0.0.1"
 ORIGIN_HEADER = {"Origin": ORIGIN}
 runner = CliRunner()
+
+
+def test_recovery_rehearsal_can_import_before_lazy_dashboard_route_exports() -> None:
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "from forgegate.recovery_rehearsal import RecoveryRehearsalReview; "
+            "import forgegate.dashboard as dashboard; "
+            "assert dashboard.DASHBOARD_CSRF_HEADER == 'X-ForgeGate-CSRF'; "
+            "assert callable(dashboard.install_dashboard_routes); "
+            "assert RecoveryRehearsalReview.__name__ == 'RecoveryRehearsalReview'",
+        ],
+        check=False,
+        capture_output=True,
+        text=True,
+    )
+    assert result.returncode == 0, result.stderr
+
+
+def test_dashboard_help_describes_current_job_store_boundary() -> None:
+    result = runner.invoke(app, ["dashboard", "--help"])
+    assert result.exit_code == 0
+    assert "Use an existing v3/v4" in result.output
+    assert "job store; no" in result.output
+    assert "automatic migration," in result.output
+    assert "scheduling, or" in result.output
+    assert "v2 job store" not in result.output
 
 
 def _application_with_project(tmp_path: Path, repository_root: Path) -> CandidateApplication:
@@ -170,7 +200,9 @@ def _producer_trust_store():
     )
 
 
-def _activate(client: TestClient, *, role: str = "operator") -> dict[str, Any]:
+def _activate(
+    client: TestClient, *, role: str = "operator", project_ids: list[str] | None = None
+) -> dict[str, Any]:
     started = client.post("/app/api/activations", headers=ORIGIN_HEADER, json={})
     assert started.status_code == 201, started.text
     code = started.json()["activation_code"]
@@ -179,7 +211,7 @@ def _activate(client: TestClient, *, role: str = "operator") -> dict[str, Any]:
         json={
             "identity_id": TEST_IDENTITY.identity_id,
             "role": role,
-            "project_ids": ["sample-api"],
+            "project_ids": project_ids if project_ids is not None else ["sample-api"],
         },
     )
     assert challenge_response.status_code == 201, challenge_response.text
@@ -486,15 +518,31 @@ def test_dashboard_openapi_export_is_deterministic_and_complete(tmp_path: Path) 
         "/app/api/candidates",
         "/app/api/candidates/{candidate_id}",
         "/app/api/candidates/{candidate_id}/assurance-export",
+        "/app/api/candidates/{candidate_id}/evidence-replay-export",
         "/app/api/candidates/{candidate_id}/assurance-review",
+        "/app/api/candidates/{candidate_id}/policy-choices",
         "/app/api/candidates/{candidate_id}/attestation",
         "/app/api/candidates/{candidate_id}/evaluate",
         "/app/api/candidates/{candidate_id}/evidence",
+        "/app/api/candidates/{candidate_id}/junit-preview",
+        "/app/api/candidates/{candidate_id}/collection-preview",
         "/app/api/candidates/{candidate_id}/transitions",
         "/app/api/live-status",
+        "/app/api/monitor-presets",
+        "/app/api/monitor-session/start",
+        "/app/api/monitor-session/stop",
+        "/app/api/jobs",
+        "/app/api/jobs/{job_id}",
+        "/app/api/jobs/{job_id}/assembly-export",
+        "/app/api/jobs/{job_id}/bind-evidence",
+        "/app/api/jobs/{job_id}/cancel",
+        "/app/api/jobs/{job_id}/recover",
+        "/app/api/jobs/{job_id}/run",
         "/app/api/overview",
         "/app/api/projects",
         "/app/api/projects/{project_id}/candidates",
+        "/app/api/recovery-review",
+        "/app/api/recovery-rehearsal-review",
         "/app/api/session",
     }
     assert first["paths"]["/app/api/candidates"]["post"]["operationId"] == (
@@ -520,6 +568,12 @@ def test_dashboard_openapi_export_is_deterministic_and_complete(tmp_path: Path) 
     assert first["paths"]["/app/api/live-status"]["get"]["operationId"] == (
         "getDashboardLiveStatus"
     )
+    assert first["paths"]["/app/api/recovery-review"]["post"]["operationId"] == (
+        "reviewDashboardRecoveryReadiness"
+    )
+    assert first["paths"]["/app/api/recovery-rehearsal-review"]["post"]["operationId"] == (
+        "reviewDashboardRecoveryRehearsal"
+    )
     assert (
         first["paths"]["/app/api/candidates/{candidate_id}/assurance-review"]["get"]["operationId"]
         == "getDashboardCandidateAssuranceReview"
@@ -527,6 +581,16 @@ def test_dashboard_openapi_export_is_deterministic_and_complete(tmp_path: Path) 
     export_operation = first["paths"]["/app/api/candidates/{candidate_id}/assurance-export"]["post"]
     assert export_operation["operationId"] == "exportDashboardCandidateAssurance"
     assert "application/zip" in export_operation["responses"]["200"]["content"]
+    assembly_export = first["paths"]["/app/api/jobs/{job_id}/assembly-export"]["post"]
+    assert assembly_export["operationId"] == "exportDashboardJobAssembly"
+    assert (
+        "application/vnd.forgegate.evidence-bundle-assembly+json"
+        in assembly_export["responses"]["200"]["content"]
+    )
+    assert (
+        first["paths"]["/app/api/jobs/{job_id}/bind-evidence"]["post"]["operationId"]
+        == "bindDashboardJobEvidence"
+    )
     assert "HTTPBearer" not in first.get("components", {}).get("securitySchemes", {})
 
     rejected = runner.invoke(
@@ -581,7 +645,7 @@ def test_dashboard_activation_session_overview_and_logout(
     assert session.status_code == overview.status_code == 200
     assert session.json()["principal"]["role"] == "operator"
     assert session.json()["csrf_token"] == activated["csrf_token"]
-    assert overview.json()["database_schema_version"] == 8
+    assert overview.json()["database_schema_version"] == 9
     assert overview.json()["hardware_access"] == "NOT_PERFORMED"
     assert len(overview.json()["limitations"]) == 4
     assert wrong_csrf.status_code == 403
@@ -1331,6 +1395,24 @@ def test_dashboard_asset_inventory_detects_tampering(
         validate_dashboard_assets(copied)
     write_dashboard_asset_inventory(copied)
     assert validate_dashboard_assets(copied).assets
+
+
+def test_dashboard_asset_inventory_uses_portable_case_sensitive_order(tmp_path: Path) -> None:
+    root = tmp_path / "static"
+    (root / "assets").mkdir(parents=True)
+    (root / ".vite").mkdir()
+    paths = (
+        "assets/index-Dr2KMm71.css",
+        "index.html",
+        "assets/index-DWJhUQ6a.js",
+        ".vite/manifest.json",
+    )
+    for relative in paths:
+        (root / relative).write_bytes(b"fixture")
+    inventory = build_dashboard_asset_inventory(root)
+    assert tuple(asset.path for asset in inventory.assets) == tuple(sorted(paths))
+    write_dashboard_asset_inventory(root)
+    assert validate_dashboard_assets(root) == inventory
 
 
 def test_dashboard_asset_inventory_rejects_invalid_document(tmp_path: Path) -> None:

@@ -1,16 +1,41 @@
 from __future__ import annotations
 
+import base64
+import binascii
+import hashlib
 from datetime import datetime
 from typing import Literal, Self
 
-from pydantic import Field
+from pydantic import ConfigDict, Field, computed_field, model_validator
 
 from forgegate.api.auth import ApiPrincipal
 from forgegate.attestations import ReleaseAttestation
 from forgegate.candidates import CandidateDocument, CandidateEvidenceBinding
 from forgegate.candidates.models import CandidateTransition
+from forgegate.canonical import canonical_json
 from forgegate.domain.models import SLUG_PATTERN, StrictModel
 from forgegate.policy import PolicyEvaluationDocument, PolicyMaterial
+
+MAX_DASHBOARD_RECOVERY_REPORT_BYTES = 256 * 1024
+MAX_DASHBOARD_RECOVERY_RECEIPT_BYTES = 1024 * 1024
+
+
+class DashboardPolicyChoice(StrictModel):
+    material: PolicyMaterial
+
+    @computed_field  # type: ignore[prop-decorator]
+    @property
+    def material_json(self) -> str:
+        return canonical_json(self.material.model_dump(mode="json"))
+
+
+class DashboardPolicyChoices(StrictModel):
+    schema_version: Literal["forgegate.dashboard-policy-choices.v1"] = (
+        "forgegate.dashboard-policy-choices.v1"
+    )
+    candidate_id: str
+    choices: list[DashboardPolicyChoice] = Field(max_length=10)
+    truncated: bool
 
 
 class DashboardPrincipal(StrictModel):
@@ -117,6 +142,51 @@ class DashboardAssuranceExportRequest(StrictModel):
     expected_bundle_id: str = Field(pattern=r"^sha256:[0-9a-f]{64}$")
 
 
+class DashboardReplayFile(StrictModel):
+    sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+    content_base64: str = Field(min_length=0, max_length=1398104)
+
+
+class DashboardReplayExportRequest(DashboardAssuranceExportRequest):
+    files: list[DashboardReplayFile] = Field(min_length=2, max_length=32)
+    acknowledge_private_sources: Literal[True]
+
+    @model_validator(mode="after")
+    def validate_files(self) -> Self:
+        seen: set[str] = set()
+        total = 0
+        for item in self.files:
+            try:
+                raw = base64.b64decode(item.content_base64, validate=True)
+            except binascii.Error as exc:
+                raise ValueError("Invalid source base64") from exc
+            if len(raw) > 1048576 or item.sha256 in seen:
+                raise ValueError("Duplicate or oversized source file")
+            if hashlib.sha256(raw).hexdigest() != item.sha256:
+                raise ValueError("Source digest mismatch")
+            total += len(raw)
+            seen.add(item.sha256)
+        if total > 2097152:
+            raise ValueError("Source selection exceeds 2 MiB")
+        return self
+
+
+class DashboardRecoveryReviewRequest(StrictModel):
+    # The source hash covers the imported UTF-8 bytes. Preserve surrounding
+    # whitespace so validation sees exactly what the browser hashed.
+    model_config = ConfigDict(str_strip_whitespace=False)
+
+    document: str = Field(min_length=1, max_length=MAX_DASHBOARD_RECOVERY_REPORT_BYTES)
+    expected_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
+class DashboardRecoveryRehearsalReviewRequest(StrictModel):
+    model_config = ConfigDict(str_strip_whitespace=False)
+
+    document: str = Field(min_length=1, max_length=MAX_DASHBOARD_RECOVERY_RECEIPT_BYTES)
+    expected_sha256: str = Field(pattern=r"^[0-9a-f]{64}$")
+
+
 __all__ = [
     "DashboardActivationCompleted",
     "DashboardActivationStart",
@@ -127,5 +197,7 @@ __all__ = [
     "DashboardLogoutResponse",
     "DashboardOverview",
     "DashboardPrincipal",
+    "DashboardRecoveryRehearsalReviewRequest",
+    "DashboardRecoveryReviewRequest",
     "DashboardSessionResponse",
 ]

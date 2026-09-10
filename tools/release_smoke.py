@@ -12,11 +12,109 @@ import tempfile
 import venv
 from pathlib import Path
 
+from build_windows_delivery import build_windows_delivery
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 REQUIRED_SDIST_PATHS = (
+    "tools/build_windows_delivery.py",
+    "tests/test_windows_delivery_build.py",
+    "tests/test_release_smoke.py",
+    "tests/test_workspace_init.py",
+    "schemas/forgegate.workspace-initialization.v1.schema.json",
+    "schemas/forgegate.workspace-adoption-preflight.v1.schema.json",
+    "tests/test_adoption_preflight.py",
+    "tools/adoption_preflight_smoke.py",
+    "docs/DASHBOARD_RECOVERY_REHEARSAL_REVIEW.md",
+    "reports/PHASE_45_RECOVERY_REHEARSAL_REVIEW_ACCEPTANCE.md",
+    "reports/PHASE_45_RECOVERY_REHEARSAL_REVIEW_EVIDENCE.json",
+    "schemas/forgegate.recovery-rehearsal-review.v1.schema.json",
+    "docs/DASHBOARD_RECOVERY_HANDOFF.md",
+    "reports/PHASE_43_RECOVERY_HANDOFF_ACCEPTANCE.md",
+    "reports/PHASE_43_RECOVERY_HANDOFF_ACCEPTANCE.json",
+    "schemas/forgegate.recovery-rehearsal.v1.schema.json",
+    "tests/test_recovery_rehearsal.py",
+    "docs/RECOVERY_REHEARSAL.md",
+    "schemas/forgegate.recovery-readiness-handoff.v1.schema.json",
+    "tests/test_dashboard_recovery.py",
+    "frontend/tests/recovery.test.mjs",
+    "tests/test_job_capacity.py",
+    "docs/JOB_CAPACITY.md",
+    "schemas/forgegate.workspace-recovery-readiness.v1.schema.json",
+    "tests/test_recovery_readiness.py",
+    "docs/RECOVERY_READINESS.md",
+    "reports/PHASE_42_RECOVERY_READINESS_ACCEPTANCE.md",
+    "schemas/forgegate.job-capacity.v1.schema.json",
+    "schemas/forgegate.job-project-usage.v1.schema.json",
+    "reports/PHASE_41_JOB_CAPACITY_ACCEPTANCE.md",
+    "reports/PHASE_41_JOB_CAPACITY_ACCEPTANCE.json",
+    "tools/workspace_backups_smoke.py",
+    "tests/test_workspace_backups.py",
+    "tests/test_job_archival.py",
+    "docs/JOB_ARCHIVAL.md",
+    "schemas/forgegate.job-archive-plan.v1.schema.json",
+    "schemas/forgegate.job-archive-receipt.v1.schema.json",
+    "schemas/forgegate.workspace-backup.v2.schema.json",
+    "docs/WORKSPACE_RECOVERY.md",
+    "schemas/forgegate.workspace-backup.v1.schema.json",
+    "reports/PHASE_37_JOB_RESULT_HANDOFF_ACCEPTANCE.md",
+    "reports/PHASE_37_JOB_RESULT_HANDOFF_EVIDENCE.json",
+    "tests/test_dashboard_job_result_handoff.py",
+    "frontend/tests/job-result-handoff.test.mjs",
+    "docs/assets/phase37-job-result-actions.jpg",
+    "docs/assets/phase37-assembly-download-review.jpg",
+    "docs/assets/phase37-evidence-binding-result.jpg",
+    "docs/assets/phase37-bound-evidence.jpg",
+    "reports/PHASE_36_DASHBOARD_JOB_SUBMISSION_ACCEPTANCE.md",
+    "reports/PHASE_36_DASHBOARD_JOB_SUBMISSION_EVIDENCE.json",
+    "tests/test_dashboard_job_submission.py",
+    "frontend/tests/job-submission.test.mjs",
+    "docs/assets/phase36-submit-review.png",
+    "docs/assets/phase36-task-result.png",
+    "docs/assets/phase36-combined-result.png",
+    "docs/assets/phase36-retained-warnings.png",
+    "reports/PHASE_35_DASHBOARD_JOBS_ACCEPTANCE.md",
+    "reports/PHASE_35_DASHBOARD_JOBS_EVIDENCE.json",
+    "docs/DASHBOARD_JOBS.md",
+    "docs/assets/phase35-job-result.png",
+    "docs/assets/phase35-job-cancelled.png",
+    "docs/assets/phase35-job-recovered.png",
+    "docs/assets/phase35-job-conflict.png",
+    "tools/manual_dashboard_jobs.py",
+    "tests/test_dashboard_jobs.py",
+    "frontend/tests/jobs.test.mjs",
+    "reports/PHASE_34_COLLECTION_JOBS_ACCEPTANCE.md",
+    "reports/PHASE_34_COLLECTION_JOB_SMOKE.json",
+    "docs/COLLECTION_JOBS.md",
+    "tools/collection_jobs_smoke.py",
+    "tests/test_collection_jobs.py",
+    "schemas/forgegate.collection-job-request.v1.schema.json",
+    "schemas/forgegate.collection-job.v1.schema.json",
+    "schemas/forgegate.collection-job.v2.schema.json",
+    "schemas/forgegate.collection-job-result.v1.schema.json",
+    "reports/PHASE_38_JOB_EXECUTION_LIFECYCLE_ACCEPTANCE.md",
+    "reports/PHASE_38_JOB_EXECUTION_LIFECYCLE_EVIDENCE.json",
+    "reports/PHASE_33_MULTI_REPORT_ACCEPTANCE.md",
+    "docs/assets/forgegate-dashboard-multi-report-bound.jpg",
+    "docs/assets/forgegate-dashboard-multi-report-decision.jpg",
+    "docs/assets/forgegate-dashboard-multi-report-rules.jpg",
+    "frontend/tests/multi-collection.test.mjs",
+    "tests/test_dashboard_multi_collection.py",
+    "examples/dashboard-multi-report/forgegate.yaml",
+    "examples/dashboard-multi-report/policies/pull-request.yaml",
+    "examples/dashboard-multi-report/tests.xml",
+    "examples/dashboard-multi-report/coverage.xml",
+    "examples/dashboard-multi-report/coverage-low.xml",
+    "examples/dashboard-multi-report/coverage.info",
+    "docs/STORE_BACKUP_OPERATIONS.md",
+    "tests/test_store_backups.py",
+    "tools/start_dashboard.ps1",
+    "tools/dashboard_runtime_smoke.py",
+    "tools/dashboard_pair_smoke.py",
+    "tests/test_dashboard_startup.py",
+    "tests/test_dashboard_runtime.py",
+    "docs/WINDOWS_DASHBOARD_OPERATIONS.md",
     "AGENTS.md",
     "CHANGELOG.md",
     "CONTRIBUTING.md",
@@ -36,6 +134,16 @@ REQUIRED_SDIST_PATHS = (
     "docs/VERIFICATION_MATRIX.md",
     "docs/DASHBOARD_ACCEPTANCE_MATRIX.md",
     "docs/PORTFOLIO_EVIDENCE.md",
+    "docs/DASHBOARD_COLLECTION_CONTRACT.md",
+    "docs/assets/forgegate-dashboard-junit-import-form.jpg",
+    "examples/dashboard-junit/forgegate.yaml",
+    "examples/dashboard-junit/policies/pull-request.yaml",
+    "examples/dashboard-junit/pass.xml",
+    "examples/dashboard-junit/fail.xml",
+    "examples/dashboard-junit/warning.xml",
+    "examples/dashboard-junit/rejected.xml",
+    "frontend/tests/collection.test.mjs",
+    "tools/manual_dashboard_collection.py",
     "docs/assets/forgegate-cli-demo.svg",
     "docs/assets/forgegate-dashboard-alpha.jpg",
     "docs/assets/forgegate-dashboard-candidate-detail.jpg",
@@ -76,6 +184,12 @@ REQUIRED_SDIST_PATHS = (
     "docs/architecture/PROJECT_AUTHORITY_AND_DISCOVERY.md",
     "docs/architecture/PROJECT_PROFILE_REVISIONS.md",
     "docs/architecture/POLICY_MATERIALIZATION.md",
+    "tests/test_policy_material_reuse_migration.py",
+    "docs/assets/forgegate-dashboard-junit-fail-decision.jpg",
+    "docs/assets/forgegate-dashboard-junit-pass-decision.jpg",
+    "docs/assets/forgegate-dashboard-junit-warning-consent.jpg",
+    "docs/assets/forgegate-dashboard-junit-rejected.jpg",
+    "docs/assets/forgegate-dashboard-shared-policy-error.jpg",
     "docs/architecture/PORTABLE_ASSURANCE_BUNDLES.md",
     "docs/architecture/AUTHENTICATED_ASSURANCE_IDENTITY.md",
     "docs/architecture/AUTHENTICATED_LOCAL_API.md",
@@ -268,7 +382,7 @@ def run(
     print(f"\n> {' '.join(command)}", flush=True)
     completed = subprocess.run(command, cwd=cwd, check=False)
     if completed.returncode != expected_returncode:
-        raise SystemExit(completed.returncode)
+        raise SystemExit(f"command returned {completed.returncode}; expected {expected_returncode}")
 
 
 def run_capture(command: list[str], output: Path, *, cwd: Path) -> None:
@@ -295,6 +409,120 @@ def sha256(path: Path) -> str:
         for chunk in iter(lambda: artifact.read(1024 * 1024), b""):
             digest.update(chunk)
     return digest.hexdigest()
+
+
+def smoke_workspace_initialization(python: Path, root: Path) -> None:
+    """Exercise first use from the installed wheel without repository fixtures."""
+    workspace = root / "first-use-workspace"
+    receipt_path = root / "workspace-initialization.json"
+    command = [
+        str(python),
+        "-m",
+        "forgegate",
+        "workspace-init",
+        str(workspace),
+        "--project-id",
+        "release-demo",
+        "--demo",
+    ]
+    run_capture(command, receipt_path, cwd=root)
+    receipt_text = receipt_path.read_text(encoding="utf-8")
+    receipt = json.loads(receipt_text)
+    if (
+        receipt["schema_version"] != "forgegate.workspace-initialization.v1"
+        or receipt["project_id"] != "release-demo"
+        or receipt["status"] != "INITIALIZED"
+        or receipt["service"] != "NOT_STARTED"
+        or receipt["browser_session"] != "NOT_ACTIVATED"
+        or receipt["hardware_access"] != "NOT_PERFORMED"
+        or receipt["private_key"] != "operator-key.pem"
+        or {case["decision"] for case in receipt["demo_cases"]} != {"PASS", "FAIL"}
+        or len(receipt["demo_cases"]) != 2
+        or any(
+            case["evidence_origin"] != "SYNTHETIC" or case["verification_level"] != "declared"
+            for case in receipt["demo_cases"]
+        )
+    ):
+        raise SystemExit("installed workspace initialization returned an unexpected receipt")
+    machine_paths = (str(root), root.as_posix(), json.dumps(str(root))[1:-1])
+    if "PRIVATE KEY" in receipt_text or any(path in receipt_text for path in machine_paths):
+        raise SystemExit("workspace receipt exposed private key bytes or a machine path")
+    for relative in (
+        "operator-key.pem",
+        "identity.json",
+        "trust-store.json",
+        "forgegate.db",
+        "jobs.db",
+        "START_HERE.md",
+        "artifacts/synthetic-demo-pass.xml",
+        "artifacts/synthetic-demo-fail.xml",
+        "artifacts/synthetic-demo-pass-collection.json",
+        "artifacts/synthetic-demo-fail-collection.json",
+    ):
+        if not (workspace / relative).is_file() or (workspace / relative).stat().st_size == 0:
+            raise SystemExit(f"installed workspace is missing a generated file: {relative}")
+    if json.loads((workspace / "workspace.json").read_text(encoding="utf-8")) != receipt:
+        raise SystemExit("workspace completion marker differs from the CLI receipt")
+    for relative in (
+        "workspace.json",
+        "forgegate.yaml",
+        "policies/pull-request.yaml",
+        "identity.json",
+        "trust-store.json",
+    ):
+        run(
+            [str(python), "-m", "forgegate", "validate-config", str(workspace / relative)],
+            cwd=root,
+        )
+    run(
+        [
+            str(python),
+            "-c",
+            (
+                "import sys; from pathlib import Path; "
+                "from forgegate.identity import load_identity_document, "
+                "load_ed25519_private_key, derive_signing_identity; "
+                "root=Path(sys.argv[1]); "
+                "key=load_ed25519_private_key(root/'operator-key.pem'); "
+                "identity=load_identity_document(root/'identity.json'); "
+                "trust=load_identity_document(root/'trust-store.json'); "
+                "assert derive_signing_identity(key, display_name=identity.display_name) "
+                "== identity; "
+                "assert len(trust.identities)==1 and trust.identities[0].identity==identity; "
+                "assert [r.value for r in trust.identities[0].roles]==['operator']; "
+                "assert trust.identities[0].project_ids==('release-demo',)"
+            ),
+            str(workspace),
+        ],
+        cwd=root,
+    )
+    retained_hashes = {
+        path.relative_to(workspace).as_posix(): sha256(path)
+        for path in workspace.rglob("*")
+        if path.is_file()
+    }
+    run(command, cwd=root, expected_returncode=3)
+    if retained_hashes != {
+        path.relative_to(workspace).as_posix(): sha256(path)
+        for path in workspace.rglob("*")
+        if path.is_file()
+    }:
+        raise SystemExit("duplicate workspace initialization changed retained files")
+    second_workspace = root / "second-first-use-workspace"
+    second_receipt = root / "second-workspace-initialization.json"
+    run_capture(
+        [str(python), "-m", "forgegate", "workspace-init", str(second_workspace)],
+        second_receipt,
+        cwd=root,
+    )
+    second = json.loads(second_receipt.read_text(encoding="utf-8"))
+    if (
+        second["demo_cases"]
+        or second["operator_identity_id"] == receipt["operator_identity_id"]
+        or sha256(second_workspace / "operator-key.pem") == sha256(workspace / "operator-key.pem")
+    ):
+        raise SystemExit("fresh workspace reused signing identity or seeded unsolicited evidence")
+    print("\nInstalled first-use workspace: PASS", flush=True)
 
 
 def verify_sdist(sdist: Path) -> None:
@@ -330,7 +558,7 @@ def main(
     with tempfile.TemporaryDirectory(prefix="forgegate-release-") as temporary:
         root = Path(temporary)
         dist = root / "dist"
-        run([sys.executable, "-m", "build", "--outdir", str(dist)])
+        build_windows_delivery(dist)
 
         plugin_dist = root / "plugin-dist"
         plugin_source = root / "sample-collector-plugin"
@@ -556,6 +784,7 @@ def main(
             cwd=root,
             expected_returncode=3,
         )
+        smoke_workspace_initialization(python, root)
         assembly_root = root / "assembly-inputs"
         artifact_directory = assembly_root / "artifacts"
         artifact_directory.mkdir(parents=True)
@@ -695,6 +924,22 @@ def main(
             )
         dashboard_openapi = json.loads(exported_dashboard_openapi.read_text(encoding="utf-8"))
         dashboard_operations = {
+            (
+                "/app/api/recovery-rehearsal-review",
+                "post",
+            ): "reviewDashboardRecoveryRehearsal",
+            (
+                "/app/api/recovery-review",
+                "post",
+            ): "reviewDashboardRecoveryReadiness",
+            (
+                "/app/api/candidates/{candidate_id}/junit-preview",
+                "post",
+            ): "previewDashboardCandidateJUnit",
+            (
+                "/app/api/candidates/{candidate_id}/collection-preview",
+                "post",
+            ): "previewDashboardCandidateCollection",
             ("/app/api/candidates", "post"): "createDashboardCandidate",
             (
                 "/app/api/candidates/{candidate_id}/transitions",
@@ -718,6 +963,25 @@ def main(
                 raise SystemExit(
                     f"installed wheel is missing Dashboard BFF operation: {operation_id}"
                 )
+        run(
+            [
+                str(python),
+                "-c",
+                "import base64; from datetime import datetime, timezone; "
+                "from forgegate.dashboard.collection import "
+                "DashboardJUnitPreviewRequest, preview_junit; "
+                "r=preview_junit('fixture', DashboardJUnitPreviewRequest("
+                "expected_revision=1, reported_commit='a'*40, "
+                "content_base64=base64.b64encode(b'<testsuite tests=\"2\"/>').decode(), "
+                "source_tool='installed-fixture', source_version='1', "
+                "collected_at=datetime(2026,1,1,tzinfo=timezone.utc))); "
+                "assert r.assembly is not None; "
+                "assert r.collection.evidence[0].value['passed']==2; "
+                "assert r.collection.evidence[0].verification_level=='declared'; "
+                "assert r.persistence=='NOT_RETAINED'; print('installed JUnit preview: PASS')",
+            ],
+            cwd=root,
+        )
         if (
             dashboard_openapi["paths"]["/app/api/live-status"]["get"]["operationId"]
             != "getDashboardLiveStatus"
@@ -1145,6 +1409,35 @@ def main(
             cwd=root,
         )
         github_output = root / "github-output.txt"
+        replay_destination = root / "source-replay"
+        replay_export = [
+            str(python),
+            "-m",
+            "forgegate",
+            "evidence-replay",
+            "export",
+            str(candidate_store),
+            candidate_id,
+            "--source-root",
+            str(assembly_root),
+            "--destination",
+            str(replay_destination),
+        ]
+        run(replay_export, cwd=root)
+        run(replay_export, cwd=root, expected_returncode=3)
+        replay_archives = list(replay_destination.glob("replay-*.zip"))
+        if len(replay_archives) != 1:
+            raise SystemExit("installed wheel did not publish exactly one source replay ZIP")
+        replay_verify = [
+            str(python),
+            "-m",
+            "forgegate",
+            "evidence-replay",
+            "verify",
+            str(replay_archives[0]),
+        ]
+        run([*replay_verify, "--expected-commit", "a" * 40], cwd=root)
+        run([*replay_verify, "--expected-commit", "b" * 40], cwd=root, expected_returncode=3)
         github_summary = root / "github-summary.md"
         github_report = root / "github-action-report.json"
         github_gate = [
@@ -1429,6 +1722,11 @@ def main(
             ],
             cwd=root,
         )
+        run([str(python), str(REPOSITORY_ROOT / "tools/dashboard_runtime_smoke.py")], cwd=root)
+        run([str(python), str(REPOSITORY_ROOT / "tools/dashboard_pair_smoke.py")], cwd=root)
+        run([str(python), str(REPOSITORY_ROOT / "tools/collection_jobs_smoke.py")], cwd=root)
+        run([str(python), str(REPOSITORY_ROOT / "tools/workspace_backups_smoke.py")], cwd=root)
+        run([str(python), str(REPOSITORY_ROOT / "tools/adoption_preflight_smoke.py")], cwd=root)
         run([str(python), "-m", "forgegate", "doctor"], cwd=root)
         run(
             [
@@ -1549,6 +1847,50 @@ def main(
             cwd=root,
         )
 
+        snapshot = root / "candidate-backup.db"
+        backup_receipt = root / "candidate-backup-receipt.json"
+        run_capture(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "candidate",
+                "backup-store",
+                str(candidate_store),
+                str(snapshot),
+            ],
+            backup_receipt,
+            cwd=root,
+        )
+        backup_document = json.loads(backup_receipt.read_text(encoding="utf-8"))
+        if backup_document["status"] != "BACKUP_CREATED" or backup_document["size_bytes"] <= 0:
+            raise SystemExit("installed backup did not produce a verified snapshot")
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "candidate",
+                "verify-backup",
+                str(snapshot),
+                "--sha256",
+                backup_document["sha256"],
+            ],
+            cwd=root,
+        )
+        run(
+            [
+                str(python),
+                "-m",
+                "forgegate",
+                "candidate",
+                "backup-store",
+                str(candidate_store),
+                str(snapshot),
+            ],
+            cwd=root,
+            expected_returncode=3,
+        )
         run(
             [str(python), "-m", "pip", "uninstall", "--yes", "forgegate"],
             cwd=root,

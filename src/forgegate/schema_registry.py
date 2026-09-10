@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 
+from forgegate.adoption_models import WorkspaceAdoptionPreflight
 from forgegate.assembly import EvidenceBundleAssembly
 from forgegate.assurance import AssuranceBundle, AssuranceBundleManifest
 from forgegate.attestations import ReleaseAttestation
@@ -13,12 +14,23 @@ from forgegate.candidates.models import (
     ReleaseCandidate,
     ReleaseCandidatePage,
 )
+from forgegate.collection_jobs import (
+    CollectionJobRecord,
+    CollectionJobRequest,
+    CollectionJobResult,
+    JobCapacity,
+    JobProjectUsage,
+    LegacyCollectionJobRecord,
+)
 from forgegate.collectors.analog_validation import AFE_RESULT_JSON_SCHEMA
 from forgegate.collectors.benchmark import BENCHMARK_JSON_SCHEMA
 from forgegate.collectors.msp430_validation import MSP430_REPORT_JSON_SCHEMA
 from forgegate.domain.models import EvidenceBundle, PolicyConfig, ProjectConfig
+from forgegate.evidence_replay import EvidenceReplayManifest, EvidenceReplayVerification
 from forgegate.github_actions import GitHubActionReport
 from forgegate.identity import AssuranceSignature, SigningIdentity, TrustStore
+from forgegate.job_archive_models import JobArchivePlan, JobArchiveReceipt
+from forgegate.monitor_presets import MonitorPresetCatalog
 from forgegate.plugins import (
     PluginDiscoveryReport,
     PluginManifest,
@@ -40,9 +52,31 @@ from forgegate.projects import (
     RegisteredProject,
     RegisteredProjectPage,
 )
+from forgegate.recovery_models import RecoveryReadinessHandoff, WorkspaceRecoveryReadiness
+from forgegate.recovery_rehearsal import RecoveryRehearsalReceipt, RecoveryRehearsalReview
 from forgegate.security_events import ApiSecurityEvent, ApiSecurityEventPage
+from forgegate.workspace_backups import WorkspaceBackupManifest, WorkspaceBackupManifestV2
+from forgegate.workspace_init_models import WorkspaceInitializationReport
 
 SCHEMAS: dict[str, type[BaseModel]] = {
+    "forgegate.workspace-initialization.v1": WorkspaceInitializationReport,
+    "forgegate.evidence-replay.v1": EvidenceReplayManifest,
+    "forgegate.evidence-replay-verification.v1": EvidenceReplayVerification,
+    "forgegate.workspace-adoption-preflight.v1": WorkspaceAdoptionPreflight,
+    "forgegate.recovery-rehearsal.v1": RecoveryRehearsalReceipt,
+    "forgegate.recovery-rehearsal-review.v1": RecoveryRehearsalReview,
+    "forgegate.workspace-recovery-readiness.v1": WorkspaceRecoveryReadiness,
+    "forgegate.recovery-readiness-handoff.v1": RecoveryReadinessHandoff,
+    "forgegate.job-archive-plan.v1": JobArchivePlan,
+    "forgegate.job-archive-receipt.v1": JobArchiveReceipt,
+    "forgegate.workspace-backup.v2": WorkspaceBackupManifestV2,
+    "forgegate.workspace-backup.v1": WorkspaceBackupManifest,
+    "forgegate.collection-job-request.v1": CollectionJobRequest,
+    "forgegate.collection-job.v1": LegacyCollectionJobRecord,
+    "forgegate.collection-job.v2": CollectionJobRecord,
+    "forgegate.collection-job-result.v1": CollectionJobResult,
+    "forgegate.job-capacity.v1": JobCapacity,
+    "forgegate.job-project-usage.v1": JobProjectUsage,
     "forgegate.assurance-bundle.v1": AssuranceBundle,
     "forgegate.assurance-bundle-manifest.v1": AssuranceBundleManifest,
     "forgegate.assurance-signature.v1": AssuranceSignature,
@@ -84,6 +118,11 @@ SCHEMAS: dict[str, type[BaseModel]] = {
     "forgegate.plugin-run-result.v1": PluginRunResult,
     "forgegate.plugin-run-receipt.v1": PluginRunReceipt,
     "forgegate.windows-plugin-sandbox-capability.v1": WindowsSandboxCapabilityReport,
+}
+
+# Local adapter selection is configuration, not a domain-neutral evidence contract.
+LOCAL_CONFIGURATION_SCHEMAS: dict[str, type[BaseModel]] = {
+    "forgegate.monitor-presets.v1": MonitorPresetCatalog,
 }
 
 ARTIFACT_SCHEMAS: dict[str, dict[str, object]] = {

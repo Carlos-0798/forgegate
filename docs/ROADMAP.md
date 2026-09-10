@@ -1,5 +1,140 @@
 # Roadmap
 
+## Current priority — preserve the checkpoint and synchronize the portfolio
+
+New feature work is paused during the owner's job preparation. The completed
+Windows Local Alpha and Phase 64 monitor presets are retained, not reopened as
+unfinished work. Synchronization into the existing Private GitHub repository is
+authorized on 2026-09-09; public visibility, License and Release remain separate.
+See the [resumption checkpoint](PROJECT_RESUME_CHECKPOINT_2026-09-09.md) and
+[synchronization record](../reports/GITHUB_SYNC_2026-09-09.md).
+
+After job preparation, the proposed next engineering slice is an adapter
+conformance/example kit using the existing protocol and preset boundaries.
+Then validate a real supported device when one and explicit permission are
+available. Capture/export is a separate task, not silently added release evidence.
+Do not start a broad driver marketplace, managed service or cloud rewrite.
+
+Earlier phase priorities and GitHub-paused notes below are historical records.
+This section and the linked checkpoint take precedence for resumption.
+
+## Completed priority — reusable monitoring after Alpha closeout
+
+The owner selected a bounded Phase 64 extension: saved project-scoped monitor
+presets, explicit browser start/stop, a hardware-free simulated adapter and safe
+MSP430 reader lifecycle reuse. See [monitor presets](MONITOR_PRESETS.md) and the
+[acceptance record](../reports/PHASE_64_MONITOR_PRESETS_ACCEPTANCE.md). No new
+hardware protocol, device control or generic plugin loader is implied.
+
+The next useful extension is a protocol-specific adapter conformance example,
+then actual acceptance when another device or producer is available. Avoid
+building a broad device marketplace or claiming hardware support from simulation.
+
+## Accepted baseline — Windows Local Alpha closed
+
+Phase 63 completed the final recipient-style installation and user-path closeout.
+The accepted core is candidate creation, supported-report import, normalized
+evidence review, authorized policy evaluation and verifiable handoff. Further
+Alpha feature expansion was frozen at that checkpoint; Phase 64 is a separately
+owner-selected milestone and does not invalidate its accepted results. See
+[Phase 63](../reports/PHASE_63_FINAL_USER_PATH_ACCEPTANCE.md).
+
+Independent novice acceptance and the Phase 53B human efficiency/accuracy study
+remain unrun. They must precede quantitative usability or productivity claims.
+GitHub synchronization was deferred at that acceptance checkpoint and is now
+separately authorized as described above.
+
+## Completed priority — independent first use and task completion
+
+The owner reopened feature scope on 2026-09-09 for a runtime, interaction and
+feature reassessment. The selected slice closes three observed gaps: independent
+installed-package workspace setup; a task-oriented, project-scoped workbench;
+and correct mixed-suite JUnit aggregation/default test-policy decisions.
+Accepted locally: full regression and fresh-wheel browser positive/negative
+tasks with independently verified export; see
+[Phase 62](../reports/PHASE_62_WORKBENCH_ACCEPTANCE.md).
+Earlier gates remain historical evidence, not restrictions on this owner-selected
+work. GitHub synchronization and human comparative timing remain deferred.
+
+## Completed priority — feature freeze and finite Alpha completion
+
+Owner direction on 2026-09-09 freezes feature scope. Execute Phase 59 code
+closeout, Phase 60 real-project acceptance and Phase 61 final demonstration,
+using the [completion plan](ALPHA_COMPLETION_PLAN.md) and its explicit exit gates.
+Only reproduced acceptance blockers justify implementation changes during this
+milestone. Preserve earlier real AVS acceptance and all open quality limitations.
+
+Phases 59-61 are locally accepted. The clean source/delivery relationship is
+fixed; retained AVS and MSP430 results reproduce through the exact installed
+wheel; and the final ZIP, fresh-recipient CLI controls and authenticated browser
+walkthrough pass. [Phase 59](../reports/PHASE_59_CODE_CLOSEOUT_ACCEPTANCE.md),
+[Phase 60](../reports/PHASE_60_REAL_PROJECT_ACCEPTANCE.md) and
+[Phase 61](../reports/PHASE_61_FINAL_DEMO_ACCEPTANCE.md) record the boundaries.
+The scoped Windows Alpha milestone is closed. Further implementation requires
+an observed defect or a separately selected product milestone.
+
+## Previous engineering checkpoint — Phase 58 Windows delivery
+
+Owner direction on 2026-09-08: Phase 53B human comparison is **DEFERRED**.
+Phase 53A inputs remain retained; human gains remain unmeasured. Continue with
+bounded engineering improvements to the core evidence-to-decision workflow.
+The [quick assessment workflow](QUICK_ASSESSMENT.md) reuses existing collectors,
+candidate writes and export with batch selection and one reviewed execution.
+Implementation and automated regression are complete. Actual Edge PASS/FAIL/
+REVIEW, directory selection, invalid-report safe stop and offline assurance
+verification passed. See
+[Phase 54 acceptance](../reports/PHASE_54_QUICK_ASSESSMENT_ACCEPTANCE.md).
+Phase 55 adds explicit compatible-policy reuse and reviewed original-file replay
+download from the same assessment, avoiding repeat selection. Actual Edge and
+independent replay acceptance are recorded in
+[Phase 55 acceptance](../reports/PHASE_55_QUICK_HANDOFF_ACCEPTANCE.md).
+Phase 56 completed that real AVS acceptance and filled its concrete metadata,
+warning-review and bounded XML-size gaps. The downloaded replay preserves all
+12 rule results and the original FAIL; see
+[Phase 56 acceptance](../reports/PHASE_56_AVS_QUICK_ACCEPTANCE.md).
+Phase 57 completed [retained evaluation comparison](DECISION_COMPARISON.md):
+explicit baseline, new failures, restored rules and missing evidence, with
+policy/profile comparability checks. Four actual Edge controls and 38 focused
+regressions pass; see [acceptance](../reports/PHASE_57_DECISION_COMPARISON_ACCEPTANCE.md).
+Phase 58 refreshed the Windows delivery and verified installed Quick Assessment,
+Evidence Replay, portable assurance and Evaluation Comparison together in actual
+Edge. The source store remained unchanged; see
+[acceptance](../reports/PHASE_58_WINDOWS_DELIVERY_ACCEPTANCE.md).
+The formerly proposed Phase 46-58 consolidation and clean rebuild is now
+complete through Phase 61.
+GitHub synchronization remains a separate owner-authorized action. No collector
+or policy-registry expansion is needed; human timing remains deferred.
+
+## Phase 53 — retained operator value protocol
+
+The implemented core remains release evidence collection, policy decisions and
+reviewable handoff. The deferred protocol measures operator benefit rather than
+adding platform subsystems. See the [product brief](product/PRODUCT_BRIEF.md),
+[comparison protocol](product/EFFICIENCY_ACCEPTANCE.md) and
+[blank run sheet](product/EFFICIENCY_RUN_TEMPLATE.md).
+
+- [x] Freeze task boundaries, fair manual baseline, scoring, setup/repeat-use
+  timing, failure reporting and evidence limits in a reviewable protocol.
+- [x] Prepare hashed matched A/B packs, neutral participant filenames, frozen
+  run order and an implementation-independent oracle cross-checked by ForgeGate.
+- [ ] Complete independent human review of the sealed answer key before trials.
+- [ ] Record actual human/current-tool trials; distinguish owner familiarity
+  and self-rehearsal from independent first-use/recipient acceptance.
+- [ ] Select at most two observed task bottlenecks and implement bounded fixes.
+- [ ] Remeasure, retain unsuccessful attempts, and decide observed improvement,
+  no improvement or inconclusive; no gains claimed before measurement.
+- [x] Retain a reproducible operator demo and reviewed presentation evidence.
+
+**Phase 53B is deferred by the owner.** Protocol readiness and development tests do not count
+as human acceptance. Existing recovery/plugin/device functions stay supported;
+new live-workspace switching, generalized plugins and team/cloud features wait
+for a concrete core-task need. Native assistive-technology acceptance remains a
+separate open quality commitment. GitHub synchronization remains paused.
+
+The phase sections below preserve engineering history. Their numbering counts
+implementation slices, not customer value or completion of the original broad
+Phase 0-6 plan. Earlier "next" notes are historical; this priority takes precedence.
+
 ## Phase 0 — contract baseline
 
 - [x] Product and independence boundary
@@ -475,3 +610,432 @@ producer authentication, MSP430 control, or physical measurement validation.
 Phase 28 delivers local artifact download only. It does not add automatic
 collection, source-artifact payload export, producer authentication, trusted
 time, remote publication, deployment approval, or hardware validation.
+
+### Phase 28 follow-up — activation reliability
+
+- [x] Preserve the exact current loopback origin/port in the CLI command.
+- [x] Provide manual recovery for creation/poll failures and code expiry;
+  respect Retry-After without sending another request automatically.
+- [x] Ignore delayed creation/poll responses after the activation screen changes.
+- [x] Run 13 production-TypeScript host regressions and real local-browser
+  activation on port 8131, with screenshot evidence kept separately.
+- [ ] Restore a complete post-merge GitHub CI run after the owner resolves the
+  reported billing/spending restriction; never bypass required checks.
+
+## Phase 29 — project Audit workspace
+
+- [x] Add a dedicated operator-only, project-scoped workspace over the existing
+  audit service, without introducing a new data store or write operation.
+- [x] Retain project/candidate/cursor in local deep links; present 25-event
+  pages, first/next navigation and manual refresh without fabricated totals.
+- [x] Display exact subject/event identities and recorded actor metadata;
+  never infer an actor for historical CLI or migration records.
+- [x] Link candidate audit previews to full history and disclose truncation.
+- [x] Reject malformed filter parameters with 422 before model construction;
+  preserve project/role/Origin/session authorization and no-store responses.
+- [x] Verify 12 frontend and 5 BFF cases, 887 full Python tests, real-browser
+  28-event traversal/filter/recovery, and retain portfolio-safe screenshots.
+
+This is release-operation history, not a complete security-event workspace,
+tamper-proof logging, telemetry history, or physical measurement evidence.
+Automatic collection, plugin/admin workflows and remaining assistive checks
+remain later gates.
+
+## Phase 30 — bounded raw JUnit Dashboard collection
+
+- [x] Freeze the file, authorization, declared source/time, warning consent,
+  in-memory processing, cancellation and recovery boundaries before execution.
+- [x] Reuse the JUnit collector and assembler through an exact-byte source
+  interface; add no new report parser, policy engine, database or dependency.
+- [x] Add one candidate-scoped preview endpoint with a 1 MiB decoded cap,
+  explicit revision/commit, original report time, and fixed low-trust labels.
+- [x] Add a browser form, counts/issues preview, explicit warning retention and
+  separate reviewed binding; reject stale responses after leaving the preview.
+- [x] Add generic positive/negative examples and test the API chain through
+  binding, policy PASS/FAIL/REVIEW, attestation and archive generation.
+- [x] Check the actual Edge form, missing-file validation, Escape and focus
+  restoration; retain an unedited screenshot with no uploaded-result claim.
+- [x] Complete real Edge file selection, warning review, binding and policy
+  PASS/FAIL workflows with synthetic inputs and retained actual screenshots.
+- [x] Correct shared policy-content reuse across candidates; preserve immutable
+  candidate bindings through an explicit, rollback-tested v8-to-v9 migration.
+
+Do not call this a durable task center, multi-report upload, raw-artifact store,
+source authentication, test execution or hardware validation. Do not start the
+next collector until this slice's real-browser acceptance is complete.
+
+## Phase 31 — Windows startup and diagnostic recovery
+
+- [x] Add loopback-only, unauthenticated CLI diagnostics with bounded response
+  bodies, explicit HTTP/HTML outcomes, exit codes and non-ownership labels.
+- [x] Provide an existing-workspace PowerShell launcher with literal paths,
+  missing/empty-file and advisory port checks; retain foreground shutdown and
+  process exit behavior without automatic migration or credential changes.
+- [x] Exercise actual local Dashboard/API-only/stopped cases and the installed
+  command in clean-wheel smoke; preserve a path-free JSON receipt.
+- [x] Test native Windows PowerShell error/argument behavior, spaced paths,
+  startup, Ctrl+C shutdown and restarting the same isolated database.
+- [x] Document recovery, consistent-backup boundaries, fresh session activation,
+  private logs and the distinction between reachability and successful use.
+
+This is not background supervision, reboot persistence, service installation,
+automatic crash recovery, database repair, browser acceptance or device testing.
+Those operating modes require a separate lifecycle/ownership design. Durable
+collection jobs and artifact retention remain later engineering slices, not
+implied by the current synchronous preview or runtime diagnostic.
+
+## Phase 32 — candidate-store data protection
+
+- [x] Snapshot a current-schema store using SQLite's backup API and a pinned
+  read transaction, including committed WAL content without uncommitted data.
+- [x] Reject existing targets and sidecars; validate before exclusive hard-link
+  publication, without overwrite fallback, initialization or migration.
+- [x] Verify an offline copy's hash, SQLite integrity, foreign keys, schema and
+  17 table counts without opening or changing the input through SQLite.
+- [x] Test exact retained-row equality and cold candidate/evidence/attestation
+  readback on a terminal synthetic candidate, plus races, corruption and limits.
+- [x] Add installed-wheel backup/verify/no-overwrite checks and local operations
+  documentation; retain only synthetic results, never a database in the gallery.
+
+No automatic restore, encryption, retention service, browser backup button,
+producer authentication or blanket domain-history validation is implied.
+GitHub synchronization is paused by owner instruction; development remains local.
+
+## Phase 33 — combined browser test and coverage collection
+
+- [x] Accept bounded JUnit + Cobertura/LCOV with separate source metadata and
+  original collection times; reject duplicates, excessive output and unsafe counts.
+- [x] Require all reports to succeed and explicit warning retention before one
+  immutable combined binding; no silent partial success or trust promotion.
+- [x] Add frontend count/hash/identity/recovery/cancellation tests and API chains
+  through shared-policy PASS/FAIL, attestation and portable archive creation.
+- [x] Correct browser JSON number reserialization without changing historical
+  fingerprints or weakening validation; retain original assembly JSON on writes.
+- [x] Verify actual Edge Cobertura selection, preview, independent binding,
+  READY/EVALUATING transitions, policy PASS and exact rule values; save screenshots.
+- [x] Keep CLI-only larger collections, generic examples and source evidence labels.
+
+Phase 34 adds the local job engine separately; Phase 33 is not a durable
+task center. The scoped real-browser LCOV/negative matrix now passes in
+the Phase 33 follow-up (13 cases). Browser error provenance and Windows
+mixed-case asset ordering were corrected. Remaining OS assistive checks stay
+separate gates; host regressions do not replace actual OS acceptance.
+
+## Phase 34 — durable local report jobs
+
+- [x] Versioned request/record/result contracts and a separate explicit v1 store;
+  no candidate-store migration, automatic binding or producer authentication.
+- [x] Idempotent submission, exclusive claim, revision checks and bounded
+  pending report bytes; exact-result retention with assembly consistency checks.
+- [x] Explicit cancellation that prevents late publication; expired-only manual
+  recovery to INTERRUPTED; queued work survives process restart, no silent retry.
+- [x] CLI create/submit/show/list/run/cancel/recover/result commands, strict
+  bounded JSON loading and path-free operational errors.
+- [x] Host race/fault/recovery tests, independent-process expected-value checks
+  and clean installed-wheel execution. No real-device or new browser claims.
+- [x] Document quotas, local-file authority, logical deletion, source replay
+  limitations and the absence of coordinated job backup/retention management.
+
+## Phase 35 — authenticated Dashboard job management
+
+- [x] Opt-in existing-store configuration, operator/project authorization and
+  scoped list/detail/result views; no automatic initialization or migration.
+- [x] Same-origin/CSRF and reviewed-revision cancellation and expired recovery;
+  atomically retain the authenticated actor without inferring historical actors.
+- [x] Explicit transactional v1-to-v2 job-store upgrade and rollback tests.
+- [x] Pagination/filter/error/late-response frontend regressions and isolated
+  real Edge expected-value, confirmation, recovery and 409 conflict checks.
+- [x] Package assets, schemas, operation guidance and synthetic screenshot evidence.
+
+## Phase 36 — reviewed browser submission and foreground parsing
+
+- [x] Freeze exact selected bytes, declared metadata, candidate revision and
+  warning consent before separately confirmed durable submission.
+- [x] Scope idempotency by identity/project; preserve CLI creation authority and
+  atomically attribute new browser submit/claim/completion events.
+- [x] Separately confirm foreground parsing with revision checks, nonblocking
+  per-app busy rejection, cancellation-safe publication and no automatic retry.
+- [x] Verify host authorization/concurrency/error cases and real Edge single,
+  combined, warning-consent and forbidden-XML workflows; retain screenshots.
+- [x] Keep parsing completion separate from test success, policy PASS and binding.
+
+## Phase 37 — reviewed job-result evidence handoff
+
+- [x] Add operator-only canonical assembly export with frozen job revision,
+  result fingerprint and assembly identity checks; return exact no-store bytes.
+- [x] Verify response media, identities, size and SHA-256 in the browser before
+  offering the local download; original report bytes remain excluded.
+- [x] Re-read the authoritative candidate and require exact project, commit,
+  revision, fingerprint, `COLLECTING` state and absent binding before confirmation.
+- [x] Reuse the immutable candidate-evidence binding service with namespaced
+  idempotency and actor attribution; leave job, candidate revision and policy unchanged.
+- [x] Cover authorization, stale/conflict/non-bindable/unknown-outcome behavior
+  in host tests and complete an isolated actual-Edge download/binding/readback run.
+- [x] Retain screenshot and machine-readable acceptance evidence with explicit
+  synthetic/no-hardware/no-production boundaries.
+
+## Phase 38 — durable foreground execution lifecycle
+
+- [x] Freeze `forgegate.collection-job.v2` with a visible, random execution owner
+  that is explicitly not a credential, host identity or authentication proof.
+- [x] Upgrade the separate store to v3 only through an explicit, transactional
+  v1/v2 migration that preserves historical record bytes and infers no actor/owner.
+- [x] Renew the private five-minute lease before each report and before assembly,
+  retaining bounded append-only renewal events and current revision.
+- [x] Make durable cancellation cooperatively stop later stages at those same
+  checkpoints while retaining late-publication rejection and no mid-parser claim.
+- [x] Give one Dashboard process a stable lifetime owner ID; after restart, a new
+  owner cannot adopt, renew or finish the old lease, which remains manual recovery.
+- [x] Display owner/renewal fields in job detail and expand reviewed command
+  revisions without exposing the private token or adding automatic retry.
+- [x] Verify new/legacy records, renewal/token guards, cancellation ordering,
+  migration rollback, CLI cross-process smoke, frontend behavior and schemas.
+
+Phase 38 is still explicit foreground parsing. It adds no scheduler, daemon,
+automatic worker, arbitrary parser termination, candidate transition, policy
+decision, GitHub operation or hardware access.
+
+## Phase 39 — coordinated workspace recovery
+
+- [x] Reserve both database writers and snapshot candidate v9/job v3 as one
+  validated archive; reject running jobs and preserve queued input/history.
+- [x] Freeze a bounded manifest with member hashes and explicit data boundaries;
+  verify offline copies and exact historical job/candidate associations.
+- [x] Restore to a new directory with required expected hash, exact copied bytes
+  and a final readiness marker; preserve existing workspaces and launch settings.
+- [x] Generate cutoff-based retention plans that protect active, bound and recent
+  jobs, retain audit/replay records and perform no deletion or quota reclamation.
+- [x] Test locking, committed WAL, corruption, incomplete recovery, cold domain
+  reads and independent CLI execution from a restored synthetic workspace.
+
+## Phase 40 — reviewed job archival and logical capacity
+
+- [x] Explicitly migrate job v3 to v4 without changing historical records/events.
+- [x] Generate a bounded one-job plan tied to a verified backup, exact job/event
+  bytes, revision, result identity, cutoff and current candidate fingerprint.
+- [x] Recheck live candidate/binding state while reserving both writers; atomically
+  archive result bytes and insert an immutable receipt with exact replay behavior.
+- [x] Preserve task identity, audit and request-key protection; release one logical
+  slot and result quota within bounded 100-live/1,000-archived storage limits.
+- [x] Read original results through an explicit backup/hash, and support v4
+  backups/restores with clear external dependency disclosure; keep v1 frozen.
+- [x] Display archive metadata/history in Dashboard detail, reject stale result
+  actions, and retain actual isolated Edge acceptance with synthetic screenshots.
+- [x] Test corruption/staleness, binding protection, lock contention, transaction
+  rollback, quota reuse, replay, exact readback and clean-wheel CLI recovery.
+
+## Phase 41 — capacity, dependency and archive visibility
+
+- [x] Add an owner-only, store-wide logical capacity document and CLI command.
+- [x] Distinguish v3 archive capability from the quota available after v4 migration.
+- [x] Report external backup hashes with availability explicitly not checked and
+  physical database size explicitly not reported.
+- [x] Add project-scoped Dashboard usage without leaking store-wide remaining
+  capacity or other-project counts.
+- [x] Filter All / Current / Archived tasks while scanning the complete bounded
+  identity set, including archive records beyond the first 100 IDs.
+- [x] Preserve filters through browser pagination/detail navigation and label
+  current versus archived records.
+- [x] Generate strict schemas/OpenAPI/assets and cover privacy, quotas, malformed
+  filters, model coherence, CLI and frontend behavior.
+
+## Phase 42 — offline dependency verification and recovery readiness
+
+- [x] Require an exact root backup hash and explicit original backup mappings.
+- [x] Verify ZIP structure, manifest identity and original task/event/result bytes.
+- [x] Distinguish verified, absent mappings and failed dependencies in a strict,
+  path-free report; reject duplicate/unused mappings and enforce a shared deadline.
+- [x] Verify shared and multi-generation dependencies, no-result tasks, corruption
+  and mismatch refusal, source preservation and independent CLI/restore chains.
+- [x] Retain local acceptance artifacts and installed-wheel execution evidence.
+
+Next engineering slice: operator recovery rehearsal and artifact handoff UX,
+using the explicit snapshot identities without presenting old offline reports
+as live availability. Native assistive technology remains a separate acceptance
+gate. GitHub synchronization is paused.
+
+## Phase 43 — reviewed recovery handoff
+
+- [x] Add new-only CLI report output for both READY and INCOMPLETE results.
+- [x] Add an operator-only same-origin Dashboard import with browser and server
+  byte/hash/schema bounds; no server path or backup-payload input.
+- [x] Derive a strict content-addressed handoff with dependency totals and
+  explicit `NOT_CHECKED`, `NOT_INCLUDED` and `NOT_PERFORMED` boundaries.
+- [x] Cover READY/BLOCKED, authorization, malformed input, response consistency,
+  409/413/429/500 presentation and stale responses in Python/TypeScript tests.
+- [x] Regenerate the document Schema, Dashboard OpenAPI and packaged assets.
+- [x] Complete native Edge READY/BLOCKED file selection, sequential reselection,
+  download hashing and strict downloaded-document validation. Interactive
+  screenshots were captured but cannot be repository-retained through the
+  browser's blocked `file://` transfer path.
+
+The planned new-directory recovery rehearsal is implemented in Phase 44 below.
+GitHub synchronization remains paused.
+
+## Phase 44 — reviewed new-directory recovery rehearsal
+
+- [x] Require a bounded, exact-hash READY handoff and explicit original backups.
+- [x] Recheck all reviewed identities using one shared operation deadline; never
+  promote an old report into live file availability or producer authentication.
+- [x] Exclusively create a new directory, copy verified database members, recheck
+  SQLite/history details and exact post-copy member hashes.
+- [x] Publish a strict content-addressed completion receipt only after readback;
+  retain partial directories without adoption, overwrite or recursive deletion.
+- [x] Cover blocked/tampered/missing/deep/oversize inputs, v3/v4 snapshots,
+  cancelled tasks, mismatches, partial failures and no-overwrite outcomes.
+- [x] Exercise the actual Phase 43 Edge-downloaded handoff through the new CLI,
+  independently read its archived result and retain exact machine evidence.
+
+Next bounded slice: add a read-only Dashboard review/import of the completed
+rehearsal receipt, clearly distinguishing the earlier readiness observation from
+the restored-copy verification. No browser filesystem restore or live workspace
+switch is implied. Assistive acceptance remains separate; GitHub stays paused.
+
+## Phase 45 — Dashboard rehearsal receipt review
+
+- [x] Add an operator-only, same-origin exact-byte import for the completed
+  `forgegate.recovery-rehearsal.v1` receipt.
+- [x] Derive and return a strict content-addressed review without accepting a
+  path, backup, database, key, destination or recovery command.
+- [x] Display restored task/event and external-dependency totals, database hashes,
+  inspection identity and explicit non-action boundaries.
+- [x] Cover authentication, role, CSRF, malformed/coherence/size limits,
+  409/413/429/500 presentation, response forgery and stale-result isolation.
+- [x] Complete actual isolated Edge file selection and different-name reselection;
+  retain a repository screenshot and confirm an empty warning/error console.
+- [x] Regenerate the strict Schema, Dashboard OpenAPI and packaged assets; pass
+  the full branch-aware development gate.
+
+The adoption design gate is recorded in Phase 46 below. Runtime switch authority
+is not included in the receipt-review feature.
+
+## Phase 46 — live-workspace adoption and rollback design
+
+- [x] Trace actual startup, health, snapshot and rehearsal behavior to code.
+- [x] Specify source/target identities, complete recovery-point comparison,
+  private process authority, all-writer fencing and paired existing-only startup.
+- [x] Define probation checks, journal/descriptor ordering and pre-write-intent
+  rollback versus post-intent reconciliation without discarding target writes.
+- [x] Record 24 explicit fault-injection cases with required outcomes and NOT RUN
+  adoption status; separate design review from implemented runtime guarantees.
+- [x] Correct paired-store recovery instructions and current display metrics.
+- [ ] Owner approval and implementation acceptance of a real live switch.
+
+See [the design](WORKSPACE_ADOPTION_DESIGN.md) and
+[design review record](../reports/PHASE_46_WORKSPACE_ADOPTION_DESIGN_REVIEW.md).
+
+The read-only preflight slice is implemented in Phase 47 below. Managed lifecycle
+and the live fault-injection matrix remain separate requirements before apply.
+
+## Phase 47 — read-only adoption preflight
+
+- [x] Add a strict path-free report and CLI over explicit source/target archives,
+  exact rehearsal receipt bytes and the observed cold target directory.
+- [x] Bound schema objects, table rows, column bytes and JSON before current
+  domain readers; inspect all candidate histories, profile chains, retained
+  evaluations/attestations, audit subjects and idempotency response links.
+- [x] Compare all supported table rows with schema fingerprints, exact totals,
+  stable comparison identity and bounded SOURCE_ONLY/TARGET_ONLY/CHANGED pages.
+- [x] Recheck external archive payloads; refuse incomplete, changed, aliased,
+  oversized, unsupported-layout and sidecar-bearing inputs without repair.
+- [x] Fix new-rehearsal readback to inspect disposable copies of destination
+  bytes, retaining hashes/history checks without leaving target WAL/SHM files.
+- [x] Exercise independent CLI MATCH/DIFFERENT/refusal exits and cold-copy
+  preservation; retain synthetic evidence and add installed-wheel smoke coverage.
+
+See [operations](WORKSPACE_ADOPTION_PREFLIGHT.md) and
+[acceptance](../reports/PHASE_47_ADOPTION_PREFLIGHT_ACCEPTANCE.md).
+
+## Phase 48 — existing-only paired startup and public runtime correlation
+
+- [x] Add explicit CLI/PowerShell candidate v9 + job v3/v4 startup without
+  initialization or migration; reject missing/empty/schema-invalid/aliased inputs.
+- [x] Bind selected paths and filesystem file IDs privately, recheck at startup
+  and health observation, and refuse detected file replacement.
+- [x] Issue fresh path-free runtime/pair labels and opt-in exact HTTP comparison;
+  test wrong/stale labels and preserve ordinary authentication requirements.
+- [x] Use normal SQLite read transactions including WAL; do not treat live
+  stores as immutable or promote narrow schema checks into domain/lineage proof.
+- [x] Retain real independent-process startup/restart/refusal evidence and
+  clean-install smoke coverage without accessing a user service or hardware.
+- [ ] Authenticated owned-runtime identity remains deferred to the private
+  process channel. Public correlation alone does not complete that design gate.
+
+Private owned-child control, all-writer fencing, probation, live switching and
+rollback remain deferred. Public runtime IDs are not credentials. Do not expand
+this infrastructure until a concrete delivery need justifies it.
+
+## Phase 49 — standard CI evidence in the existing Dashboard workflow
+
+- [x] Extend the existing selection to four families: JUnit, Cobertura/LCOV,
+  SARIF 2.1.0 and ForgeGate benchmark JSON. Reuse parsers, not another plugin system.
+- [x] Preserve 1 MiB/file and 2 MiB/selection bounds, exact hashes, original
+  timestamps, declared trust, explicit warnings and all-or-nothing assembly.
+- [x] Support both reviewed direct binding and the existing durable task path;
+  extend request/result contracts together, without database migration.
+- [x] Add generic synthetic PASS/FAIL/REVIEW/rejection fixtures and test exact
+  policy outputs, tamper rejection, job readback and browser input validation.
+- [x] Verify actual Edge four-report preview/binding/evaluation and malformed
+  SARIF rejection; retain screenshots and explicit evidence boundaries.
+
+## Phase 50 — real software-project evidence and delivery acceptance
+
+- [x] Run an owner-visible, frozen AVS commit in an independent environment;
+  preserve original report bytes without editing its active dirty worktree.
+- [x] Add a file-only consumer pack and strict versioned host-quality mapper,
+  using the existing four collectors, candidate store and assurance contracts.
+- [x] Preserve real failure counts and static review candidates; verify 130
+  records and 12 rule outputs (10 PASS / 2 FAIL), not a manufactured clean result.
+- [x] Complete actual Edge binding, evaluation, attestation and download; verify
+  the downloaded bundle independently and retain screenshots/hash evidence.
+- [x] Add 14 regressions and complete full ForgeGate verification; provide a
+  bounded upstream handoff rather than modifying AVS or relaxing policy.
+
+See [Phase 50 acceptance](../reports/PHASE_50_AVS_HOST_ACCEPTANCE.md).
+Next: obtain an owner-approved producer revision/disposition and replay the same
+handoff as a new immutable candidate, or address a concrete operator-delivery
+blocker. Do not repeat infrastructure work or claim the producer release passed.
+Assistive acceptance remains separate; GitHub synchronization stays paused.
+
+## Phase 51 — private original-report export and offline replay
+
+- [x] Export exact original reports and collection-result files separately from
+  the existing three-file assurance contract; deterministic content-addressed ZIP.
+- [x] Reparse supported built-in software formats, compare all normalized records
+  and warnings, reconstruct the assembly and recompute the original policy.
+- [x] Add bounded, no-extraction verification with independently supplied commit,
+  strict member/hash/version checks, and a no-overwrite CLI export destination.
+- [x] Add operator-scoped Dashboard selection, hash review, privacy consent,
+  candidate identity checks and a verified download without candidate mutation.
+- [x] Complete actual Edge incomplete-selection rejection, reselection, consent
+  and download over the retained AVS reports; independently reproduce VALID/FAIL.
+- [x] Retain private originals outside Git and public-safe screenshot/hash evidence.
+
+See [operations](EVIDENCE_REPLAY.md) and
+[acceptance](../reports/PHASE_51_SOURCE_REPLAY_ACCEPTANCE.md).
+Next: operator delivery acceptance using the documented workflow, then a new
+immutable candidate when an owner-approved producer revision/disposition is
+available. Do not rerun the unchanged upstream baseline or expand infrastructure
+without a concrete delivery need. Native assistive acceptance remains separate.
+
+## Phase 52 — reviewed Windows installed-wheel delivery
+
+- [x] Add a no-overwrite builder that creates the wheel from a generated sdist
+  in a fresh tree and records exact wheel/sdist hashes plus source state.
+- [x] Reject stale, extra or hash-mismatched Dashboard assets in the retained wheel;
+  add regression coverage for exact, stale and corrupted packages.
+- [x] Install the retained wheel in a new Windows Python 3.12 environment and pass
+  dependency, package-origin, packaged-asset and exact HTTP/HTML checks.
+- [x] Start an isolated copy of the accepted candidate database with no MSP430
+  option; complete fresh operator activation in actual Edge.
+- [x] Review project, candidate, 130 evidence records, 12 rules and assurance;
+  download and independently verify the portable ZIP as VALID / decision FAIL.
+- [x] End the browser session, close its tab and stop only the isolated service;
+  retain portfolio-safe screenshots and path-free evidence.
+
+See [acceptance](../reports/PHASE_52_WINDOWS_DELIVERY_ACCEPTANCE.md).
+Next: Phase 53 owner-operated comparison under the protocol linked above, using
+the documented installed-wheel workflow and separately recorded setup cost.
+After Phase 46–52 is reviewed and committed, repeat the build from that clean
+commit before any release/publication decision. The evidence-page display may
+contain upstream-provided local paths and requires privacy review before capture.

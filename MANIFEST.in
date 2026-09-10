@@ -7,7 +7,7 @@ include SECURITY.md
 recursive-include docs *.md *.svg *.jpg *.png
 include package.json
 include pnpm-lock.yaml
-recursive-include frontend *.html *.css *.ts *.json
+recursive-include frontend *.html *.css *.ts *.json *.mjs
 recursive-include src/forgegate/dashboard/static *
 recursive-include examples *.yaml *.xml *.info *.sarif *.json *.md
 recursive-include examples/plugin-sdk *.toml *.py

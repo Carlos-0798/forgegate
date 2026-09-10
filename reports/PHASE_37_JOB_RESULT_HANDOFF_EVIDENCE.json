@@ -1,0 +1,115 @@
+{
+  "receipt_type": "phase37-local-browser-acceptance",
+  "date_local": "2026-09-06",
+  "timezone": "America/New_York",
+  "source": "actual Edge against isolated local BFF plus independent CLI and store readback",
+  "service_origin": "http://127.0.0.1:8136",
+  "synthetic_only": true,
+  "hardware_access": "NOT_PERFORMED",
+  "github_access": "NOT_PERFORMED",
+  "candidate_after": {
+    "candidate_id": "cand-677d77873c2147166255d3ac",
+    "candidate_fingerprint": "sha256:013ba486b9ee3f9befc5761d25cc2d146d1bdb9a263bf0520774d07844b73af9",
+    "state": "COLLECTING",
+    "revision": 1,
+    "evaluation_id": null,
+    "policy_decision": "NOT_PERFORMED"
+  },
+  "job": {
+    "job_id": "job-c071a532eb7a151669a3c66fdc30bfe1",
+    "state": "SUCCEEDED",
+    "revision": 2,
+    "creation_authority": "LOCAL_CLI_NOT_AUTHENTICATED",
+    "result_fingerprint": "sha256:da84a68966f5106778d366dbaf4ee4feb3afad4fa24961f94190686da0874364",
+    "candidate_write": "NOT_PERFORMED",
+    "source_artifact_bytes": "not_embedded",
+    "expected_and_observed_test_summary": {
+      "total": 4,
+      "passed": 3,
+      "failures": 1,
+      "errors": 0,
+      "skipped": 0,
+      "duration_seconds": 0.5,
+      "status": "failed",
+      "trust": "unsigned_local",
+      "verification_level": "declared"
+    }
+  },
+  "assembly": {
+    "assembly_id": "sha256:47775ee9749ff535e68434707d6d4ae023344f8f85a4c0dad02c03a95295e25a",
+    "assembly_fingerprint": "sha256:30d2a4520483c12222773a97e7acb90b02dc32cca7f9e6665637d90fb48a6aea",
+    "evidence_records": 1,
+    "collector_receipts": 1,
+    "warning_disposition": "none"
+  },
+  "download": {
+    "filename": "evidence-assembly-47775ee9749ff535e68434707d6d4ae023344f8f85a4c0dad02c03a95295e25a.json",
+    "bytes": 2010,
+    "sha256": "30d2a4520483c12222773a97e7acb90b02dc32cca7f9e6665637d90fb48a6aea",
+    "strict_model_validation": "PASS",
+    "server_state_change": "NOT_PERFORMED"
+  },
+  "binding": {
+    "binding_id": "sha256:a798a6ff21c04778e1b6a9849473a62ab385aae79dc39971c62cca4f0f87254f",
+    "assembly_fingerprint": "sha256:30d2a4520483c12222773a97e7acb90b02dc32cca7f9e6665637d90fb48a6aea",
+    "audit_sequence": 4,
+    "audit_actor_display_name": "Synthetic job operator",
+    "audit_actor_role": "operator",
+    "candidate_transition": "NOT_PERFORMED",
+    "policy_decision": "NOT_PERFORMED"
+  },
+  "browser": {
+    "name": "Microsoft Edge",
+    "warn_error_log": [],
+    "success_dialog_width": {
+      "client": 671,
+      "scroll": 671
+    },
+    "document_width": {
+      "client": 1255,
+      "scroll": 1255
+    }
+  },
+  "verification": {
+    "python": {
+      "passed": 1093,
+      "skipped": 3,
+      "coverage_percent": 95.51,
+      "statements": 11401,
+      "branches": 3052
+    },
+    "frontend": {
+      "passed": 127,
+      "result_handoff_cases": 23
+    },
+    "dashboard_bff_openapi": {
+      "paths": 27,
+      "operations": 29
+    },
+    "release_smoke_before_final_documentation_edits": {
+      "result": "PASS",
+      "wheel_sha256": "d60ea6689da60c2e349b00054efe9bebbc545b3a701f270ee6cc6742f804cbda",
+      "sdist_sha256": "7dd1c688f9a9d8a3f352ef7b5f2fd2acd4eb31a6085f44bb0203ac43fe21731a"
+    }
+  },
+  "screenshots": {
+    "dimensions": {
+      "width": 1255,
+      "height": 1244
+    },
+    "sha256": {
+      "docs/assets/phase37-assembly-download-review.jpg": "ac9545eb2dce440e9264bddba55e6c92c22a81c2dba29fd45c6f2362654d3048",
+      "docs/assets/phase37-bound-evidence.jpg": "532293642d761c055caa5621179b18b269c767057eb3330e4f38b854d832366e",
+      "docs/assets/phase37-evidence-binding-result.jpg": "7c3fc31ccebfc1d54651d0cc515f04ae21b09d445532b926483bd50e228279c0",
+      "docs/assets/phase37-job-result-actions.jpg": "180ee1df284e131a9874af70177c613fb8024a8f739c8dd6bc2d9de4ab73acd4"
+    }
+  },
+  "limits": [
+    "not policy PASS",
+    "not producer authentication",
+    "not hardware evidence",
+    "not native assistive-technology certification",
+    "not production readiness",
+    "screenshots are viewport captures"
+  ]
+}

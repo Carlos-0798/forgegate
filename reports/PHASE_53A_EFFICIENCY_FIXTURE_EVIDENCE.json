@@ -1,0 +1,41 @@
+{
+  "format": "forgegate.phase53a-public-evidence.v1",
+  "recorded_at": "2026-09-08T16:33:03-04:00",
+  "status": "FIXTURES_PREPARED_HUMAN_REVIEW_AND_TRIALS_NOT_RUN",
+  "generator_sha256": "78a8d9883f4be9871ec52bf2bb9b2bf4890d08242c85a9ad21c0561d008321e2",
+  "policy_sha256": "1246aaee7b693b478bf1d2b7af8d4846afafe9bd9e4988c86d105ce027af819b",
+  "input_manifest_sha256": "cd6e4a613dd95e69f49aec4e5d0a41d24d7a72bbe394dc71808e390cf703155d",
+  "answer_key_sha256": "221e2c01edd2fa31f5d7870b3321775cc99bdedd1b7de67f9776c0954b75c275",
+  "packs": 2,
+  "cases_per_pack": 6,
+  "participant_file_count": 50,
+  "participant_bytes": 23251,
+  "forgegate_cross_checks": {
+    "total": 12,
+    "pass": 2,
+    "fail": 4,
+    "review": 4,
+    "input_rejected": 2
+  },
+  "matching": {
+    "required_minimum_smaller_to_larger_ratio": 0.8,
+    "observed_minimum_smaller_to_larger_ratio": 0.9984,
+    "observed_maximum_smaller_to_larger_ratio": 1.0,
+    "paired_file_counts_match": true
+  },
+  "blinding": {
+    "participant_answer_key_present": false,
+    "participant_order_exposes_semantic_case_id": false,
+    "pack_run_number_mappings_differ": true
+  },
+  "human_independent_review": "NOT_PERFORMED",
+  "human_trials": "NOT_RUN",
+  "claims_excluded": [
+    "efficiency improvement",
+    "accuracy improvement",
+    "independent first-use acceptance",
+    "production behavior",
+    "hardware validation",
+    "real scanner or benchmark execution"
+  ]
+}

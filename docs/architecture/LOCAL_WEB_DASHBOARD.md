@@ -162,6 +162,17 @@ labeled as planned. The implemented local JSON imports are reviewed document
 transfers, not arbitrary server-path access or remote acquisition. Empty
 controls or mock success paths are prohibited.
 
+Phase 29 adds a dedicated operator Audit workspace over the existing
+`/app/api/audit-events` query. The project/candidate/after-sequence selection is
+stored only in the local URL fragment and is checked against the active scope.
+The BFF also enforces role/project/Origin authorization and strict filter
+patterns. Rendering is bounded to 25 events and uses text-only native details
+elements; stale responses cannot replace a newer Audit view or logged-out page.
+First/next cursor links and browser Back do not imply snapshot isolation or a
+global total. Recorded actor identities are shown, but session IDs are omitted
+from the UI and absent actors remain unknown. No new endpoint, store, export,
+mutation, or complete security-log capability is introduced.
+
 ## Packaging and lifecycle
 
 - Development may use a separate frontend dev server only with an explicit
@@ -200,3 +211,13 @@ contrast, spoken screen-reader output, and Remote Desktop retain their exact
 recorded status; complete accessibility certification is not claimed. Passing
 UI tests will not change hardware, producer-authenticity, trusted-time,
 non-loopback, or production claims.
+
+## Phase 30 bounded JUnit preview
+
+`POST /app/api/candidates/{candidate_id}/junit-preview` accepts bounded exact
+report bytes, not a server path. It reuses the existing JUnit parser and
+assembler through an `ArtifactSource` protocol with a single in-memory artifact.
+The existing filesystem registry remains unchanged. No upload is published or
+retained; the existing reviewed binding command remains the only persistence
+step. See [the collection contract](../DASHBOARD_COLLECTION_CONTRACT.md).
+Real-browser upload acceptance is still open; host tests do not close that gate.

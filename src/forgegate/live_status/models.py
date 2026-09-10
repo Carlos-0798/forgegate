@@ -18,6 +18,7 @@ class LiveSourceStatus(StrictModel):
     source_id: str = Field(pattern=r"^[a-z0-9][a-z0-9-]{0,63}$")
     source_type: str = Field(pattern=r"^[a-z0-9][a-z0-9.-]{0,63}$")
     display_name: str = Field(min_length=1, max_length=120)
+    data_origin: Literal["LIVE_TELEMETRY", "SIMULATED"] = "LIVE_TELEMETRY"
     access_mode: Literal["READ_ONLY"] = "READ_ONLY"
     connection: Literal["CONNECTING", "CONNECTED", "DISCONNECTED", "ERROR"]
     heartbeat: Literal["NOT_OBSERVED", "NORMAL", "STALE", "INVALID"]

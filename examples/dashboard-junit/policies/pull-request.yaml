@@ -1,0 +1,43 @@
+# Synthetic workflow fixture only, not the default project release policy.
+schema_version: forgegate.policy.v1
+name: pull-request
+rules:
+  - id: no-failures
+    claim: tests.no-failures
+    evidence_kind: test.summary
+    aggregation: value
+    operator: equals
+    expected: 0
+    where:
+      field: failures
+    mandatory: true
+    require_presence: true
+    on_missing: REVIEW
+    minimum_trust: unsigned_local
+    minimum_verification: declared
+  - id: no-errors
+    claim: tests.no-errors
+    evidence_kind: test.summary
+    aggregation: value
+    operator: equals
+    expected: 0
+    where:
+      field: errors
+    mandatory: true
+    require_presence: true
+    on_missing: REVIEW
+    minimum_trust: unsigned_local
+    minimum_verification: declared
+  - id: nonempty
+    claim: tests.nonempty
+    evidence_kind: test.summary
+    aggregation: value
+    operator: greater_than
+    expected: 0
+    where:
+      field: total
+    mandatory: true
+    require_presence: true
+    on_missing: REVIEW
+    minimum_trust: unsigned_local
+    minimum_verification: declared

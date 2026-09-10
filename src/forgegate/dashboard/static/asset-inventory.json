@@ -2,22 +2,22 @@
   "assets": [
     {
       "path": ".vite/manifest.json",
-      "sha256": "0ce9089cd6407f6a4890a0f979959a53173d34869707b97cc99067fb787055fd",
+      "sha256": "d02f3ef24876c8cf3273d373fb657dc08bacfee2fe22ae3c07ea9fad7b3eb760",
       "size_bytes": 185
     },
     {
-      "path": "assets/index-B6lsiWYy.css",
-      "sha256": "a3583786282b6e4f9326fd0a386f37f422b868a7ae17a9eca2bab8b463d55aad",
-      "size_bytes": 15803
+      "path": "assets/index-C2C4oEWp.js",
+      "sha256": "a3208dbc106056abed919a768310c6ba45a4808790d5d81db302a4737fc2db31",
+      "size_bytes": 149074
     },
     {
-      "path": "assets/index-Lgok7LtN.js",
-      "sha256": "584e7a5e7c77df02da36f3a55db274195c49239936de6186539ec3db85229a14",
-      "size_bytes": 52371
+      "path": "assets/index-DfxcKs20.css",
+      "sha256": "58b7bc28e068b2411e384373afe401b3b520175832c4be0b9cc7f2b7935da007",
+      "size_bytes": 18100
     },
     {
       "path": "index.html",
-      "sha256": "e5602c31a95b5008dc143831a78d011280830fd6d288d4f5f411a8ac957c2180",
+      "sha256": "32beb09ed79bc72f1784c82a7606e1e9eee8760544522c407beadb66ce7f9cd7",
       "size_bytes": 1025
     },
     {

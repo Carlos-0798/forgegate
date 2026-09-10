@@ -11,7 +11,7 @@ from typing import Any, ClassVar
 
 from pydantic import Field, field_validator
 
-from forgegate.artifacts import ArtifactError, ArtifactRegistry, RegisteredArtifact
+from forgegate.artifacts import ArtifactError, ArtifactSource, RegisteredArtifact
 from forgegate.bounded_parsing import StructureLimitError, enforce_xml_structure_limits
 from forgegate.collectors.base import (
     CollectionIssue,
@@ -93,7 +93,7 @@ class _CoverageCollectorBase:
     collector_version: ClassVar[str]
     media_type: ClassVar[str]
 
-    def __init__(self, registry: ArtifactRegistry) -> None:
+    def __init__(self, registry: ArtifactSource) -> None:
         self._registry = registry
 
     def _register(self, request: CoverageCollectionRequest) -> RegisteredArtifact:
@@ -199,7 +199,7 @@ class CoverageXmlCollector(_CoverageCollectorBase):
 
     def __init__(
         self,
-        registry: ArtifactRegistry,
+        registry: ArtifactSource,
         *,
         max_elements: int = DEFAULT_MAX_XML_ELEMENTS,
         max_depth: int = DEFAULT_MAX_XML_DEPTH,
@@ -447,7 +447,7 @@ class LcovCollector(_CoverageCollectorBase):
 
     def __init__(
         self,
-        registry: ArtifactRegistry,
+        registry: ArtifactSource,
         *,
         max_lines: int = DEFAULT_MAX_LCOV_LINES,
     ) -> None:

@@ -56,7 +56,7 @@ class DashboardAssetInventory(StrictModel):
 def build_dashboard_asset_inventory(static_root: Path) -> DashboardAssetInventory:
     root = static_root.resolve(strict=True)
     assets: list[DashboardAsset] = []
-    for path in sorted(root.rglob("*")):
+    for path in root.rglob("*"):
         if not path.is_file() or path.name == ASSET_INVENTORY_FILENAME:
             continue
         relative = path.relative_to(root).as_posix()
@@ -68,7 +68,8 @@ def build_dashboard_asset_inventory(static_root: Path) -> DashboardAssetInventor
                 size_bytes=len(payload),
             )
         )
-    return DashboardAssetInventory(assets=tuple(assets))
+    # WindowsPath ordering is case-insensitive; the portable contract is not.
+    return DashboardAssetInventory(assets=tuple(sorted(assets, key=lambda asset: asset.path)))
 
 
 def write_dashboard_asset_inventory(static_root: Path) -> Path:

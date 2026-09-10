@@ -1,0 +1,196 @@
+{
+  "$defs": {
+    "JobArchivePlan": {
+      "additionalProperties": false,
+      "properties": {
+        "assembly_id": {
+          "anyOf": [
+            {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Assembly Id"
+        },
+        "authority": {
+          "const": "LOCAL_CLI_NOT_AUTHENTICATED",
+          "default": "LOCAL_CLI_NOT_AUTHENTICATED",
+          "title": "Authority",
+          "type": "string"
+        },
+        "backup_manifest_fingerprint": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Backup Manifest Fingerprint",
+          "type": "string"
+        },
+        "backup_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Backup Sha256",
+          "type": "string"
+        },
+        "candidate_id": {
+          "pattern": "^cand-[0-9a-f]{24}$",
+          "title": "Candidate Id",
+          "type": "string"
+        },
+        "events_fingerprint": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Events Fingerprint",
+          "type": "string"
+        },
+        "expected_candidate_fingerprint": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Expected Candidate Fingerprint",
+          "type": "string"
+        },
+        "expected_revision": {
+          "maximum": 64,
+          "minimum": 1,
+          "title": "Expected Revision",
+          "type": "integer"
+        },
+        "job_id": {
+          "pattern": "^job-[0-9a-f]{32}$",
+          "title": "Job Id",
+          "type": "string"
+        },
+        "planned_at": {
+          "format": "date-time",
+          "title": "Planned At",
+          "type": "string"
+        },
+        "project_id": {
+          "pattern": "^[a-z][a-z0-9-]{1,62}$",
+          "title": "Project Id",
+          "type": "string"
+        },
+        "record_fingerprint": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Record Fingerprint",
+          "type": "string"
+        },
+        "result_fingerprint": {
+          "anyOf": [
+            {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Result Fingerprint"
+        },
+        "result_size_bytes": {
+          "maximum": 4194304,
+          "minimum": 0,
+          "title": "Result Size Bytes",
+          "type": "integer"
+        },
+        "retained_row_fingerprint": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Retained Row Fingerprint",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "forgegate.job-archive-plan.v1",
+          "default": "forgegate.job-archive-plan.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_row_fingerprint": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Source Row Fingerprint",
+          "type": "string"
+        },
+        "terminal_before": {
+          "format": "date-time",
+          "title": "Terminal Before",
+          "type": "string"
+        }
+      },
+      "required": [
+        "job_id",
+        "candidate_id",
+        "project_id",
+        "expected_revision",
+        "record_fingerprint",
+        "events_fingerprint",
+        "source_row_fingerprint",
+        "retained_row_fingerprint",
+        "result_fingerprint",
+        "assembly_id",
+        "result_size_bytes",
+        "backup_sha256",
+        "backup_manifest_fingerprint",
+        "expected_candidate_fingerprint",
+        "terminal_before",
+        "planned_at"
+      ],
+      "title": "JobArchivePlan",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "archived_at": {
+      "format": "date-time",
+      "title": "Archived At",
+      "type": "string"
+    },
+    "audit_and_idempotency_records": {
+      "const": "retained",
+      "default": "retained",
+      "title": "Audit And Idempotency Records",
+      "type": "string"
+    },
+    "logical_job_slots_reclaimed": {
+      "const": 1,
+      "default": 1,
+      "title": "Logical Job Slots Reclaimed",
+      "type": "integer"
+    },
+    "physical_file_shrink": {
+      "const": "NOT_PERFORMED",
+      "default": "NOT_PERFORMED",
+      "title": "Physical File Shrink",
+      "type": "string"
+    },
+    "plan": {
+      "$ref": "#/$defs/JobArchivePlan"
+    },
+    "plan_fingerprint": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Plan Fingerprint",
+      "type": "string"
+    },
+    "result_storage": {
+      "const": "external_workspace_backup",
+      "default": "external_workspace_backup",
+      "title": "Result Storage",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "forgegate.job-archive-receipt.v1",
+      "default": "forgegate.job-archive-receipt.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "secure_erasure": {
+      "const": "NOT_PERFORMED",
+      "default": "NOT_PERFORMED",
+      "title": "Secure Erasure",
+      "type": "string"
+    }
+  },
+  "required": [
+    "plan",
+    "plan_fingerprint",
+    "archived_at"
+  ],
+  "title": "JobArchiveReceipt",
+  "type": "object"
+}

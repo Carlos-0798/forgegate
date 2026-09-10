@@ -1,0 +1,21 @@
+schema_version: forgegate.project.v1
+project:
+  id: sample-api
+  name: Synthetic Standard CI Acceptance
+  repository: https://example.invalid/standard-ci-fixture
+  default_branch: main
+release_tracks:
+  pull_request:
+    policy: policies/pull-request.yaml
+collectors:
+  - type: junit
+    path: tests.xml
+  - type: coverage_xml
+    path: coverage.xml
+  - type: sarif
+    path: clean.sarif
+  - type: benchmark_json
+    path: benchmark.json
+outputs:
+  json: build/attestation.json
+  markdown: build/summary.md

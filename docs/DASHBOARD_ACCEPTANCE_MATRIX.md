@@ -2,6 +2,12 @@
 
 ## Status
 
+Phase 33 adds bounded combined test + coverage preview. Actual Edge Cobertura
+selection, independent binding, lifecycle transitions and four-rule policy PASS
+are retained in [the acceptance report](../reports/PHASE_33_MULTI_REPORT_ACCEPTANCE.md).
+The fresh LCOV/negative browser matrix remains open; its automated host tests
+do not replace manual browser or assistive-technology evidence.
+
 This matrix defines the gate for the implemented local Web Dashboard. The Phase
 24 authenticated slice, Phase 25 optional live monitor, Phase 26 assurance
 review, Phase 27 reviewed candidate workflow, and Phase 28 assurance export are

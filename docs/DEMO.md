@@ -143,14 +143,28 @@ approve its short code from a second terminal:
 
 ```powershell
 .\.venv\Scripts\forgegate.exe dashboard-activate FG-ABCDE-FGHJK `
+  --server http://127.0.0.1:8000 `
   --identity work\operator-identity.json `
   --private-key work\operator-private-key.pem `
   --role operator `
   --project sample-api
 ```
 
-The page then exposes only the implemented Overview, Projects, and Candidates
-slice. Stop the first terminal process explicitly when finished. The current
+Use the exact origin printed on the page, including any non-default port such
+as 8131. Run from the environment containing ForgeGate and replace all local
+identity/key/role/project placeholders. The displayed one-time code expires;
+generate a fresh code if the page reports expiry. Failed requests have an
+explicit manual retry; a returned Retry-After delay never auto-submits.
+
+The page exposes Overview, Devices (when explicitly configured), Projects,
+Candidates, Evidence, Decision, and Assurance. Operators can review and confirm
+the implemented candidate workflow, bounded JUnit + coverage collection and
+portable ZIP download. Larger collections, plugins and administration remain
+separate CLI/API work or planned gates.
+Keep the service process running while using the page. A browser bookmark does
+not start ForgeGate; `ERR_CONNECTION_REFUSED` means the local service must be
+checked and started, not that internet access or private-key entry is needed.
+Stop the first terminal process explicitly when finished. The current
 manual test boundary is retained in the
 [Dashboard acceptance matrix](DASHBOARD_ACCEPTANCE_MATRIX.md).
 

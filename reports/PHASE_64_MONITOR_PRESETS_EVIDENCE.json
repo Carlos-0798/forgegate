@@ -1,0 +1,71 @@
+{
+  "record_type": "forgegate.phase64-local-acceptance",
+  "local_date": "2026-09-09",
+  "status": "LOCAL_ENGINEERING_PASS",
+  "source_base_commit": "9b9230ebc4db9e3c4c3bdf7a0acf34634f0d1d0d",
+  "source_state": "WORKING_TREE_WITH_CHANGES",
+  "development_verification": {
+    "command": "python tools/verify.py",
+    "exit_code": 0,
+    "python_passed": 1568,
+    "python_skipped": 3,
+    "skip_scope": "host symlink creation unavailable",
+    "branch_aware_coverage_percent": 95.90,
+    "interaction_smoke_passed": 33,
+    "schemas_openapi_assets": "PASS"
+  },
+  "frontend": {
+    "type_check": "PASS",
+    "production_build": "PASS",
+    "passed": 296,
+    "new_monitor_cases": 31
+  },
+  "release_smoke": {
+    "command": "python tools/release_smoke.py",
+    "exit_code": 0,
+    "status": "PASS",
+    "independently_built_wheel_sha256": "2f130c163d93cb95e13c640abbf0ca71ec3d70b519293747184f2a1acc62d1c3"
+  },
+  "installed_browser_wheel": {
+    "filename": "forgegate-0.1.0a1-py3-none-any.whl",
+    "sha256": "29b8a68ebbf979645282e5bdb9c626dc03a64f77d3cae2e27599cbb627e85f7c",
+    "size_bytes": 372650,
+    "members": 120,
+    "inventoried_dashboard_assets": 5,
+    "installed_outside_checkout": true,
+    "serial_module_available": false,
+    "http_health_and_exact_installed_html": "PASS"
+  },
+  "browser": {
+    "name": "Codex In-app Browser",
+    "viewport_css_pixels": [1280, 720],
+    "start_stop": "PASS",
+    "keyboard_tab_enter_start": "PASS",
+    "page_reload_preserves_current_session_without_duplicate_start": "PASS",
+    "service_restart_requires_activation_and_starts_stopped": "PASS",
+    "observed_simulation_states": ["NORMAL", "STALE", "INVALID", "DISCONNECTED", "FAULT", "RECOVERY"],
+    "exact_six_state_output_assertions": "AUTOMATED_HOST_TESTS",
+    "console_errors_or_warnings_observed": 0,
+    "horizontal_overflow_observed": false,
+    "final_monitor_state": "STOPPED"
+  },
+  "screenshots": [
+    {
+      "path": "docs/assets/phase64/simulated-monitor.png",
+      "sha256": "ed752d853eb20ce1d9e5ae55dc3ea994c966667753b549a901bfea5bc7bfb0a1"
+    },
+    {
+      "path": "docs/assets/phase64/simulated-status.png",
+      "sha256": "e48bbf0c5207830c473b831926acb6f149370903c04c9051cb56e3298b084c6b"
+    }
+  ],
+  "boundaries": {
+    "physical_serial_access": "NOT_PERFORMED",
+    "hardware_control": "NOT_PERFORMED",
+    "additional_board_compatibility": "NOT_VERIFIED",
+    "measurement_capture_export": "NOT_ADDED",
+    "native_assistive_technology_retest": "NOT_PERFORMED",
+    "human_efficiency_accuracy_gain": "NOT_MEASURED",
+    "github_publication": "NOT_PERFORMED"
+  }
+}

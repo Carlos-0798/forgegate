@@ -215,7 +215,29 @@ def _template_models(
                 mandatory=True,
                 require_presence=True,
                 on_missing=Decision.REVIEW,
-            )
+            ),
+            PolicyRule(
+                id="tests-no-errors",
+                claim="tests.no-errors",
+                evidence_kind="test.summary",
+                operator=Operator.EQUALS,
+                expected=0,
+                where={"field": "errors"},
+                mandatory=True,
+                require_presence=True,
+                on_missing=Decision.REVIEW,
+            ),
+            PolicyRule(
+                id="tests-executed",
+                claim="tests.at-least-one-passed",
+                evidence_kind="test.summary",
+                operator=Operator.GREATER_THAN,
+                expected=0,
+                where={"field": "passed"},
+                mandatory=True,
+                require_presence=True,
+                on_missing=Decision.REVIEW,
+            ),
         ],
     )
     return project, policy

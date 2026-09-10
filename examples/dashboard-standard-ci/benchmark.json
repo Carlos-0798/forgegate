@@ -1,0 +1,14 @@
+{
+  "schema_version": "forgegate.benchmark.v1",
+  "tool": {
+    "name": "synthetic-benchmark",
+    "version": "1.0"
+  },
+  "metrics": [
+    {
+      "name": "latency.p95",
+      "value": 42.75,
+      "unit": "ms"
+    }
+  ]
+}

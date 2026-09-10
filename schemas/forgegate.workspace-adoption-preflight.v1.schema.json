@@ -1,0 +1,320 @@
+{
+  "$defs": {
+    "AdoptionDifference": {
+      "additionalProperties": false,
+      "properties": {
+        "key_fingerprint": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Key Fingerprint",
+          "type": "string"
+        },
+        "kind": {
+          "enum": [
+            "CHANGED",
+            "SOURCE_ONLY",
+            "TARGET_ONLY"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "source_fingerprint": {
+          "anyOf": [
+            {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Source Fingerprint"
+        },
+        "table": {
+          "pattern": "^(candidates|jobs)\\.[a-z_]{1,64}$",
+          "title": "Table",
+          "type": "string"
+        },
+        "target_fingerprint": {
+          "anyOf": [
+            {
+              "pattern": "^sha256:[0-9a-f]{64}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "title": "Target Fingerprint"
+        }
+      },
+      "required": [
+        "table",
+        "key_fingerprint",
+        "kind",
+        "source_fingerprint",
+        "target_fingerprint"
+      ],
+      "title": "AdoptionDifference",
+      "type": "object"
+    },
+    "AdoptionTableComparison": {
+      "additionalProperties": false,
+      "properties": {
+        "changed": {
+          "maximum": 100000,
+          "minimum": 0,
+          "title": "Changed",
+          "type": "integer"
+        },
+        "source_only": {
+          "maximum": 100000,
+          "minimum": 0,
+          "title": "Source Only",
+          "type": "integer"
+        },
+        "source_rows": {
+          "maximum": 100000,
+          "minimum": 0,
+          "title": "Source Rows",
+          "type": "integer"
+        },
+        "table": {
+          "pattern": "^(candidates|jobs)\\.[a-z_]{1,64}$",
+          "title": "Table",
+          "type": "string"
+        },
+        "target_only": {
+          "maximum": 100000,
+          "minimum": 0,
+          "title": "Target Only",
+          "type": "integer"
+        },
+        "target_rows": {
+          "maximum": 100000,
+          "minimum": 0,
+          "title": "Target Rows",
+          "type": "integer"
+        },
+        "unchanged": {
+          "maximum": 100000,
+          "minimum": 0,
+          "title": "Unchanged",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "table",
+        "source_rows",
+        "target_rows",
+        "unchanged",
+        "changed",
+        "source_only",
+        "target_only"
+      ],
+      "title": "AdoptionTableComparison",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "adoption_authorized": {
+      "const": false,
+      "default": false,
+      "title": "Adoption Authorized",
+      "type": "boolean"
+    },
+    "archive_dependencies": {
+      "const": "RECHECKED_EXTERNAL_NOT_REHYDRATED",
+      "default": "RECHECKED_EXTERNAL_NOT_REHYDRATED",
+      "title": "Archive Dependencies",
+      "type": "string"
+    },
+    "checked_at": {
+      "format": "date-time",
+      "title": "Checked At",
+      "type": "string"
+    },
+    "comparison": {
+      "enum": [
+        "MATCH",
+        "DIFFERENT"
+      ],
+      "title": "Comparison",
+      "type": "string"
+    },
+    "comparison_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Comparison Id",
+      "type": "string"
+    },
+    "comparison_scope": {
+      "const": "ALL_SUPPORTED_TABLE_ROWS_EXACT_VALUES",
+      "default": "ALL_SUPPORTED_TABLE_ROWS_EXACT_VALUES",
+      "title": "Comparison Scope",
+      "type": "string"
+    },
+    "differences": {
+      "items": {
+        "$ref": "#/$defs/AdoptionDifference"
+      },
+      "maxItems": 200,
+      "title": "Differences",
+      "type": "array"
+    },
+    "differences_total": {
+      "maximum": 200000,
+      "minimum": 0,
+      "title": "Differences Total",
+      "type": "integer"
+    },
+    "domain_validation": {
+      "const": "CURRENT_READERS_AUDIT_SUBJECTS_REPLAY_LINKS",
+      "default": "CURRENT_READERS_AUDIT_SUBJECTS_REPLAY_LINKS",
+      "title": "Domain Validation",
+      "type": "string"
+    },
+    "hardware_access": {
+      "const": "NOT_PERFORMED",
+      "default": "NOT_PERFORMED",
+      "title": "Hardware Access",
+      "type": "string"
+    },
+    "limit": {
+      "maximum": 200,
+      "minimum": 1,
+      "title": "Limit",
+      "type": "integer"
+    },
+    "lineage_authenticity": {
+      "const": "NOT_ESTABLISHED",
+      "default": "NOT_ESTABLISHED",
+      "title": "Lineage Authenticity",
+      "type": "string"
+    },
+    "live_source_state": {
+      "const": "NOT_CHECKED",
+      "default": "NOT_CHECKED",
+      "title": "Live Source State",
+      "type": "string"
+    },
+    "live_workspace_changed": {
+      "const": false,
+      "default": false,
+      "title": "Live Workspace Changed",
+      "type": "boolean"
+    },
+    "next_offset": {
+      "anyOf": [
+        {
+          "maximum": 200000,
+          "minimum": 1,
+          "type": "integer"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "title": "Next Offset"
+    },
+    "offset": {
+      "maximum": 200000,
+      "minimum": 0,
+      "title": "Offset",
+      "type": "integer"
+    },
+    "original_request_reconstruction": {
+      "const": "NOT_PERFORMED",
+      "default": "NOT_PERFORMED",
+      "title": "Original Request Reconstruction",
+      "type": "string"
+    },
+    "report_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Report Id",
+      "type": "string"
+    },
+    "runtime_ownership": {
+      "const": "NOT_CHECKED",
+      "default": "NOT_CHECKED",
+      "title": "Runtime Ownership",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "forgegate.workspace-adoption-preflight.v1",
+      "default": "forgegate.workspace-adoption-preflight.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "source_backup_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Source Backup Sha256",
+      "type": "string"
+    },
+    "source_inventory_fingerprint": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Source Inventory Fingerprint",
+      "type": "string"
+    },
+    "source_schema_fingerprint": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Source Schema Fingerprint",
+      "type": "string"
+    },
+    "tables": {
+      "items": {
+        "$ref": "#/$defs/AdoptionTableComparison"
+      },
+      "maxItems": 20,
+      "minItems": 20,
+      "title": "Tables",
+      "type": "array"
+    },
+    "target_backup_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Target Backup Sha256",
+      "type": "string"
+    },
+    "target_inventory_fingerprint": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Target Inventory Fingerprint",
+      "type": "string"
+    },
+    "target_receipt_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Target Receipt Sha256",
+      "type": "string"
+    },
+    "target_rehearsal_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Target Rehearsal Id",
+      "type": "string"
+    },
+    "target_schema_fingerprint": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Target Schema Fingerprint",
+      "type": "string"
+    }
+  },
+  "required": [
+    "report_id",
+    "comparison_id",
+    "checked_at",
+    "source_backup_sha256",
+    "target_backup_sha256",
+    "target_receipt_sha256",
+    "target_rehearsal_id",
+    "source_inventory_fingerprint",
+    "target_inventory_fingerprint",
+    "source_schema_fingerprint",
+    "target_schema_fingerprint",
+    "comparison",
+    "tables",
+    "differences_total",
+    "offset",
+    "limit",
+    "differences",
+    "next_offset"
+  ],
+  "title": "WorkspaceAdoptionPreflight",
+  "type": "object"
+}

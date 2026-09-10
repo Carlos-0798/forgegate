@@ -89,8 +89,10 @@ PROFILE_STORE_SCHEMA_VERSION = 6
 PROFILE_STORE_SCHEMA_NAME = "forgegate.candidate-store.v6"
 POLICY_STORE_SCHEMA_VERSION = 7
 POLICY_STORE_SCHEMA_NAME = "forgegate.candidate-store.v7"
-STORE_SCHEMA_VERSION = 8
-STORE_SCHEMA_NAME = "forgegate.candidate-store.v8"
+SECURITY_STORE_SCHEMA_VERSION = 8
+SECURITY_STORE_SCHEMA_NAME = "forgegate.candidate-store.v8"
+STORE_SCHEMA_VERSION = 9
+STORE_SCHEMA_NAME = "forgegate.candidate-store.v9"
 IDEMPOTENCY_KEY_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{7,127}$")
 DEFAULT_SECURITY_EVENT_CAPACITY = 10_000
 
@@ -699,6 +701,26 @@ _SCHEMA_V8_STATEMENTS = (
     """,
 )
 
+# Material identity describes profile-authorized bytes, not a candidate.
+# Rebuild only the binding table, preserving every retained value and guard.
+_SCHEMA_V9_STATEMENTS = (
+    "DROP TRIGGER candidate_policy_materials_guard_update",
+    "DROP TRIGGER candidate_policy_materials_guard_delete",
+    "ALTER TABLE candidate_policy_materials RENAME TO candidate_policy_materials_v8",
+    _SCHEMA_V7_STATEMENTS[1].replace(
+        "material_id TEXT NOT NULL UNIQUE", "material_id TEXT NOT NULL"
+    ),
+    """
+    INSERT INTO candidate_policy_materials
+        (candidate_id, material_id, material_fingerprint, material_json, bound_at)
+    SELECT candidate_id, material_id, material_fingerprint, material_json, bound_at
+    FROM candidate_policy_materials_v8
+    """,
+    "DROP TABLE candidate_policy_materials_v8",
+    _SCHEMA_V7_STATEMENTS[3],
+    _SCHEMA_V7_STATEMENTS[4],
+)
+
 _REQUIRED_OBJECTS_V1 = frozenset(
     {
         ("table", "forgegate_metadata"),
@@ -828,7 +850,7 @@ class SQLiteCandidateRepository:
         self._failure_injector = _failure_injector
 
     def initialize(self) -> None:
-        """Create schema v8 or validate an existing current ForgeGate store."""
+        """Create schema v9 or validate an existing current ForgeGate store."""
         connection = self._open(require_exists=False)
         try:
             journal_mode = str(connection.execute("PRAGMA journal_mode = WAL").fetchone()[0])
@@ -859,6 +881,7 @@ class SQLiteCandidateRepository:
                     *_SCHEMA_V6_STATEMENTS,
                     *_SCHEMA_V7_STATEMENTS,
                     *_SCHEMA_V8_STATEMENTS,
+                    *_SCHEMA_V9_STATEMENTS,
                 ):
                     connection.execute(statement)
                 connection.executemany(
@@ -882,10 +905,11 @@ class SQLiteCandidateRepository:
                 DISCOVERY_STORE_SCHEMA_VERSION,
                 PROFILE_STORE_SCHEMA_VERSION,
                 POLICY_STORE_SCHEMA_VERSION,
+                SECURITY_STORE_SCHEMA_VERSION,
             }:
                 raise CandidateStoreError(
                     "STORE_MIGRATION_REQUIRED",
-                    f"candidate database schema v{user_version} requires explicit migration to v8",
+                    f"candidate database schema v{user_version} requires explicit migration to v9",
                 )
             self._validate_store(connection)
         except sqlite3.Error as exc:
@@ -895,7 +919,7 @@ class SQLiteCandidateRepository:
             connection.close()
 
     def migrate(self) -> None:
-        """Explicitly migrate a validated schema-v1 through v7 store to schema v8."""
+        """Explicitly migrate a validated schema-v1 through v8 store to schema v9."""
         connection = self._open(require_exists=True)
         try:
             user_version = int(connection.execute("PRAGMA user_version").fetchone()[0])
@@ -910,10 +934,11 @@ class SQLiteCandidateRepository:
                 DISCOVERY_STORE_SCHEMA_VERSION,
                 PROFILE_STORE_SCHEMA_VERSION,
                 POLICY_STORE_SCHEMA_VERSION,
+                SECURITY_STORE_SCHEMA_VERSION,
             }:
                 raise CandidateStoreError(
                     "STORE_SCHEMA_UNSUPPORTED",
-                    f"database schema version {user_version} cannot migrate to v8",
+                    f"database schema version {user_version} cannot migrate to v9",
                 )
             self._validate_store_version(connection, user_version)
             connection.execute("BEGIN IMMEDIATE")
@@ -955,8 +980,9 @@ class SQLiteCandidateRepository:
                 ),
                 PROFILE_STORE_SCHEMA_VERSION: (*_SCHEMA_V7_STATEMENTS, *_SCHEMA_V8_STATEMENTS),
                 POLICY_STORE_SCHEMA_VERSION: _SCHEMA_V8_STATEMENTS,
+                SECURITY_STORE_SCHEMA_VERSION: (),
             }[user_version]
-            for statement in migration_statements:
+            for statement in (*migration_statements, *_SCHEMA_V9_STATEMENTS):
                 connection.execute(statement)
             if user_version < AUDIT_STORE_SCHEMA_VERSION:
                 self._backfill_audit_events(connection)
@@ -1761,6 +1787,57 @@ class SQLiteCandidateRepository:
                 )
             return history.policy_material
 
+    def reusable_policy_materials(self, candidate_id: str) -> tuple[PolicyMaterial, ...]:
+        """Bounded, validated choices from the same frozen profile and track.
+
+        Return at most eleven entries so callers can expose ten plus truncation.
+        Historical storage is not an endorsement of a policy's engineering quality.
+        """
+        with self._transaction(write=False) as connection:
+            target = self._load_history(connection, candidate_id).candidate
+            if not isinstance(target, ProfileBoundReleaseCandidate):
+                return ()
+            rows = connection.execute(
+                """
+                SELECT MIN(m.candidate_id) AS candidate_id
+                FROM candidate_policy_materials m
+                JOIN candidates c ON c.candidate_id = m.candidate_id
+                JOIN candidate_profile_bindings p ON p.candidate_id = c.candidate_id
+                WHERE c.project_id = ? AND p.profile_id = ?
+                  AND p.profile_version = ? AND c.release_track = ?
+                GROUP BY m.material_id ORDER BY m.material_id LIMIT 11
+                """,
+                (
+                    target.project_id,
+                    target.project_profile_id,
+                    target.project_profile_version,
+                    target.release_track,
+                ),
+            ).fetchall()
+            materials = []
+            for row in rows:
+                source = self._load_history(connection, str(row["candidate_id"]))
+                material = source.policy_material
+                _require(material is not None, "reusable policy is missing")
+                assert material is not None
+                _require(
+                    (
+                        material.project_id,
+                        material.project_profile_id,
+                        material.project_profile_version,
+                        material.release_track,
+                    )
+                    == (
+                        target.project_id,
+                        target.project_profile_id,
+                        target.project_profile_version,
+                        target.release_track,
+                    ),
+                    "reusable policy differs from the target profile and track",
+                )
+                materials.append(material)
+            return tuple(materials)
+
     def record_evaluation(
         self, candidate_id: str, evaluation: PolicyEvaluation
     ) -> PolicyEvaluation:
@@ -2109,7 +2186,8 @@ class SQLiteCandidateRepository:
             )
         try:
             connection = sqlite3.connect(
-                path,
+                path.as_uri() + "?mode=rw" if require_exists else path,
+                uri=require_exists,
                 timeout=self.timeout_seconds,
                 isolation_level=None,
             )
@@ -2159,6 +2237,7 @@ class SQLiteCandidateRepository:
             DISCOVERY_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V5,
             PROFILE_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V6,
             POLICY_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V7,
+            SECURITY_STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V8,
             STORE_SCHEMA_VERSION: _REQUIRED_OBJECTS_V8,
         }.get(expected_version)
         if required_objects is None:
@@ -2182,6 +2261,7 @@ class SQLiteCandidateRepository:
                     DISCOVERY_STORE_SCHEMA_VERSION: DISCOVERY_STORE_SCHEMA_NAME,
                     PROFILE_STORE_SCHEMA_VERSION: PROFILE_STORE_SCHEMA_NAME,
                     POLICY_STORE_SCHEMA_VERSION: POLICY_STORE_SCHEMA_NAME,
+                    SECURITY_STORE_SCHEMA_VERSION: SECURITY_STORE_SCHEMA_NAME,
                     STORE_SCHEMA_VERSION: STORE_SCHEMA_NAME,
                 }[expected_version],
                 "schema_version": str(expected_version),

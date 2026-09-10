@@ -9,6 +9,41 @@ measurement, or production environment.
 
 ## Evidence boundary
 
+The [Phase 62 workbench acceptance](../reports/PHASE_62_WORKBENCH_ACCEPTANCE.md)
+adds six actual in-app-browser captures from a new installed-wheel workspace.
+Two candidates were seeded explicitly as synthetic and two were created and
+assessed through the UI. Downloaded positive/negative assurance independently
+verifies VALID/PASS and VALID/FAIL. These captures supersede the earlier Overview
+appearance, without invalidating historical workflow evidence.
+
+![Independent release workbench](assets/phase62/workbench.jpg)
+
+![Exact failed rule in a synthetic browser assessment](assets/phase62/decision-fail.jpg)
+
+The [Phase 61 final demo](../reports/PHASE_61_FINAL_DEMO_ACCEPTANCE.md) reuses six
+Phase 58 installed-wheel captures because Phase 59 proved all 109 runtime members
+byte-equal. It also records a fresh authenticated browser walkthrough; no duplicate
+image is represented as newly captured evidence.
+
+The [Phase 56 real AVS quick assessment](../reports/PHASE_56_AVS_QUICK_ACCEPTANCE.md)
+adds actual Edge screenshots and independent downloaded-replay comparison with
+the retained real host baseline. All 12 rules preserve the engineering FAIL.
+This is a new ForgeGate interaction test, not a new AVS test execution.
+
+The [Phase 55 quick-handoff acceptance](../reports/PHASE_55_QUICK_HANDOFF_ACCEPTANCE.md)
+retains current Windows Edge screenshots of a completed synthetic assessment and
+its reviewed original-file replay download, with hashes and independent VALID /
+PASS readback. It demonstrates saved-policy reuse and no repeat report selection,
+not a measured human speedup. Those captures use an isolated fixture workspace.
+
+The [Phase 29 project Audit report](../reports/PHASE_29_PROJECT_AUDIT_ACCEPTANCE.md)
+adds a separate generic 28-event fixture and exact screenshot hashes. Its
+operator page does not imply authenticated actors for historical CLI records.
+
+![ForgeGate project Audit workspace with the final three events of a 28-event fixture](assets/forgegate-dashboard-project-audit.png)
+
+![ForgeGate exact audit identities and explicit missing-actor boundary](assets/forgegate-dashboard-audit-detail.png)
+
 - Environment: Microsoft Edge, Google Chrome, and Codex in-app browser on
   Windows, loopback-only ForgeGate Dashboard
 - Evidence level: `LOCAL_BROWSER_TEST`
@@ -25,10 +60,39 @@ digests are retained in the
 the [Phase 26 assurance-review record](../reports/DASHBOARD_ASSURANCE_REVIEW_EVIDENCE_2026-09-05.json),
 the [Phase 27 interaction record](../reports/DASHBOARD_PHASE27_INTERACTION_EVIDENCE_2026-09-05.json),
 the [Phase 28 assurance-export record](../reports/DASHBOARD_PHASE28_ASSURANCE_EXPORT_EVIDENCE_2026-09-05.json),
+the [Phase 37 job-result handoff record](../reports/PHASE_37_JOB_RESULT_HANDOFF_EVIDENCE.json),
+the [Phase 45 recovery receipt review record](../reports/PHASE_45_RECOVERY_REHEARSAL_REVIEW_EVIDENCE.json),
 the [MSP430 live-status record](../reports/PHASE_25_MSP430_LIVE_STATUS_EVIDENCE_2026-09-05.json),
 and the [owner-assisted unplug/replug follow-up](../reports/MSP430_MANUAL_UNPLUG_REPLUG_EVIDENCE_2026-09-05.json).
 
+## Restored-copy receipt review
+
+![ForgeGate Recovery page showing the exact validated restored-copy receipt and explicit non-action boundary](assets/phase45-recovery-rehearsal-review.png)
+
+This isolated Edge capture uses the actual synthetic Phase 44 completion receipt.
+It shows 27 restored tasks, 43 events, one archived task and one verified external
+result, together with content-derived receipt/review identities and exact database
+hashes. It demonstrates read-only receipt presentation, not a restore execution,
+live-workspace switch, continuing-availability check, producer authentication,
+hardware operation or production acceptance.
+
 ## 1. Authority and limitations
+
+### Activation reliability follow-up
+
+![ForgeGate activation command including the current local server and port](assets/forgegate-dashboard-activation-server.png)
+
+![ForgeGate real one-time-code expiry with a fresh activation action](assets/forgegate-dashboard-activation-expired.png)
+
+![ForgeGate manual activation retry after a real local-service connection failure](assets/forgegate-dashboard-activation-retry.png)
+
+These unedited in-app-browser captures demonstrate origin-aware CLI approval
+and actual code-expiry recovery. The depicted code was consumed and the session
+ended; no private key, API token, or cookie is shown. Exact hashes, expected and
+actual behavior, host-test boundaries, and the GitHub CI account restriction
+are retained in the [activation follow-up report](../reports/DASHBOARD_ACTIVATION_RECOVERY_2026-09-06.md).
+
+### Authenticated overview
 
 ![ForgeGate Dashboard Overview showing service health, authenticated scope, and explicit evidence limitations](assets/forgegate-dashboard-overview.jpg)
 
@@ -168,6 +232,80 @@ verifier returned `VALID`. The browser action created no server file, candidate
 mutation, release-audit event, remote publication, or hardware access.
 
 ## What these artifacts support
+
+### Phase 30 bounded JUnit browser acceptance
+
+![Real Edge JUnit import form with explicit evidence limits, before file upload](assets/forgegate-dashboard-junit-import-form.jpg)
+
+This unedited Edge viewport shows the new form against a separate synthetic
+fixture database. Required-file validation, Escape and focus return were also
+checked. This original capture remains form-only evidence; the follow-up below
+completed actual file uploads and independent reviewed decisions.
+
+![Synthetic JUnit input correctly produces FAIL with expected zero failures and actual one](assets/forgegate-dashboard-junit-fail-decision.jpg)
+
+![A second candidate reuses the same policy and correctly produces PASS after the binding constraint fix](assets/forgegate-dashboard-junit-pass-decision.jpg)
+
+![Count mismatch and unavailable duration require explicit warning retention](assets/forgegate-dashboard-junit-warning-consent.jpg)
+
+![Forbidden XML declarations are rejected without offering evidence binding](assets/forgegate-dashboard-junit-rejected.jpg)
+
+These unedited Edge captures use only the committed synthetic examples, not
+upstream test results or physical measurements. The PASS is specific to the
+fixture policy, which intentionally accepts declared evidence; it is not a
+ForgeGate release approval. The [original shared-policy failure](assets/forgegate-dashboard-shared-policy-error.jpg)
+and its schema-v9 correction are retained with exact hashes and expected/actual
+results in the [Phase 30 report](../reports/PHASE_30_JUNIT_COLLECTION_ACCEPTANCE.md).
+
+### Phase 31 Windows runtime evidence
+
+This phase changes CLI/Windows operation support, not the browser UI. Retained
+evidence is an [actual HTTP JSON receipt](../reports/PHASE_31_RUNTIME_HTTP_RECEIPT.json)
+and [startup/recovery acceptance report](../reports/PHASE_31_WINDOWS_RUNTIME_ACCEPTANCE.md),
+not a reused screenshot presented as a new page. The receipt SHA-256 is
+`52fdf80f90374cc8f747a9f5458b12f04e0865fbf73cef58555016ae06c63715`
+(UTF-8/LF text, matching the committed bytes).
+It shows a temporary Dashboard returning 200/200, an API-only fixture returning
+200/404, and refused connections after owned fixtures stop. These are local
+software tests, not uptime, browser-interaction or hardware evidence.
+
+### Phase 32 local data-protection evidence
+
+[Backup acceptance](../reports/PHASE_32_STORE_BACKUP_ACCEPTANCE.md) records exact
+synthetic snapshot counts/hash, WAL transaction isolation and cold application
+readback. No database or raw project data belongs in this gallery. This checkpoint
+has no browser-layout change and no new screenshot claim. Synchronization is
+paused; these results are retained locally for later review.
+
+### Phase 33 combined-report evidence
+
+[Acceptance and failure correction](../reports/PHASE_33_MULTI_REPORT_ACCEPTANCE.md)
+records synthetic JUnit + Cobertura selection, immutable binding and policy PASS.
+Screenshots retain exact report hashes, seven records, two collector receipts,
+and a 50% expected/actual synthetic coverage rule. These are not repository
+coverage metrics, upstream AFE/MSP results, provenance authentication or hardware.
+The initial browser 422 was reproduced and fixed by exact JSON preservation.
+All evidence remains local while GitHub synchronization is paused.
+
+![Combined evidence retained](assets/forgegate-dashboard-multi-report-bound.jpg)
+
+![Combined policy expected and actual values](assets/forgegate-dashboard-multi-report-rules.jpg)
+
+### Phase 37 retained-result handoff
+
+![Succeeded task with separately reviewed exact-download and evidence-binding actions](assets/phase37-job-result-actions.jpg)
+
+![Binding completion that explicitly leaves candidate transition and policy decision unperformed](assets/phase37-evidence-binding-result.jpg)
+
+The isolated Edge fixture deliberately retained a four-test summary with one
+failure. The browser downloaded and independently hashed the 2,010-byte canonical
+assembly, then bound the same content through a separate confirmation. CLI/store
+readback matched the assembly and binding identities while the candidate remained
+`COLLECTING` revision 1. The images support local interaction, exact-byte and
+immutable-binding claims only; they do not authenticate the synthetic producer,
+turn the failed summary into PASS, access hardware or approve production use.
+
+### Previously accepted browser workflow boundaries
 
 They support the narrow claim that the authenticated, loopback-only Dashboard
 implements activation, Overview, Devices, Projects, candidate list/create/

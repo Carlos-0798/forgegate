@@ -1,0 +1,455 @@
+{
+  "actual_differences": 2,
+  "cold_copy_bytes_preserved": true,
+  "difference_report": {
+    "adoption_authorized": false,
+    "archive_dependencies": "RECHECKED_EXTERNAL_NOT_REHYDRATED",
+    "checked_at": "2026-09-08T04:12:57.590140Z",
+    "comparison": "DIFFERENT",
+    "comparison_id": "sha256:31dc3d2955ad178c0c15d162dec5f44d1f6914aec687c709b7a0d29c08e0981e",
+    "comparison_scope": "ALL_SUPPORTED_TABLE_ROWS_EXACT_VALUES",
+    "differences": [
+      {
+        "key_fingerprint": "sha256:8f773888b4ff696dabbfcb112d3a8cd968a3aecba762a2c4ef4534f8ae763329",
+        "kind": "SOURCE_ONLY",
+        "source_fingerprint": "sha256:0ec94437f6fd2d2ffde8b987cd893ca545217b16a7fc0c9540a6bbcc80139a23",
+        "table": "jobs.events",
+        "target_fingerprint": null
+      },
+      {
+        "key_fingerprint": "sha256:0ad289247288b138d75d06733f3f8f26ec66daa5380ac699f35ed0d5ff51d34c",
+        "kind": "SOURCE_ONLY",
+        "source_fingerprint": "sha256:0d36ea94978e64f433c1f4960773f48187a14a8dae42ab7fccaea12a48f925b2",
+        "table": "jobs.jobs",
+        "target_fingerprint": null
+      }
+    ],
+    "differences_total": 2,
+    "domain_validation": "CURRENT_READERS_AUDIT_SUBJECTS_REPLAY_LINKS",
+    "hardware_access": "NOT_PERFORMED",
+    "limit": 100,
+    "lineage_authenticity": "NOT_ESTABLISHED",
+    "live_source_state": "NOT_CHECKED",
+    "live_workspace_changed": false,
+    "next_offset": null,
+    "offset": 0,
+    "original_request_reconstruction": "NOT_PERFORMED",
+    "report_id": "sha256:2f918f412f060070fb6518c282df9c8ec7e60f524a7ce03def82ff929a550c28",
+    "runtime_ownership": "NOT_CHECKED",
+    "schema_version": "forgegate.workspace-adoption-preflight.v1",
+    "source_backup_sha256": "75385d75640dfaf6708938886ce4459b5072883781a008bd753c509146e77b65",
+    "source_inventory_fingerprint": "sha256:e83062c93104c11c9a6b2e12680131a982b7cfc05182e6d2ec47cb9e1708c646",
+    "source_schema_fingerprint": "sha256:50c56a3a84c3fa884ebc4968e3140beb528ba8887b3be1f2221cb20b99f35ccf",
+    "tables": [
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 0,
+        "table": "candidates.api_security_events",
+        "target_only": 0,
+        "target_rows": 0,
+        "unchanged": 0
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 0,
+        "table": "candidates.attestations",
+        "target_only": 0,
+        "target_rows": 0,
+        "unchanged": 0
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 3,
+        "table": "candidates.audit_events",
+        "target_only": 0,
+        "target_rows": 3,
+        "unchanged": 3
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 0,
+        "table": "candidates.candidate_evaluations",
+        "target_only": 0,
+        "target_rows": 0,
+        "unchanged": 0
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 0,
+        "table": "candidates.candidate_evidence_bindings",
+        "target_only": 0,
+        "target_rows": 0,
+        "unchanged": 0
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 0,
+        "table": "candidates.candidate_policy_materials",
+        "target_only": 0,
+        "target_rows": 0,
+        "unchanged": 0
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 1,
+        "table": "candidates.candidate_profile_bindings",
+        "target_only": 0,
+        "target_rows": 1,
+        "unchanged": 1
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 2,
+        "table": "candidates.candidate_snapshots",
+        "target_only": 0,
+        "target_rows": 2,
+        "unchanged": 2
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 1,
+        "table": "candidates.candidate_transitions",
+        "target_only": 0,
+        "target_rows": 1,
+        "unchanged": 1
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 1,
+        "table": "candidates.candidates",
+        "target_only": 0,
+        "target_rows": 1,
+        "unchanged": 1
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 2,
+        "table": "candidates.forgegate_metadata",
+        "target_only": 0,
+        "target_rows": 2,
+        "unchanged": 2
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 2,
+        "table": "candidates.idempotency_records",
+        "target_only": 0,
+        "target_rows": 2,
+        "unchanged": 2
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 1,
+        "table": "candidates.project_idempotency_records",
+        "target_only": 0,
+        "target_rows": 1,
+        "unchanged": 1
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 1,
+        "table": "candidates.project_profile_heads",
+        "target_only": 0,
+        "target_rows": 1,
+        "unchanged": 1
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 1,
+        "table": "candidates.project_profiles",
+        "target_only": 0,
+        "target_rows": 1,
+        "unchanged": 1
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 0,
+        "table": "candidates.project_revision_idempotency_records",
+        "target_only": 0,
+        "target_rows": 0,
+        "unchanged": 0
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 1,
+        "table": "candidates.projects",
+        "target_only": 0,
+        "target_rows": 1,
+        "unchanged": 1
+      },
+      {
+        "changed": 0,
+        "source_only": 1,
+        "source_rows": 1,
+        "table": "jobs.events",
+        "target_only": 0,
+        "target_rows": 0,
+        "unchanged": 0
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 0,
+        "table": "jobs.job_archives",
+        "target_only": 0,
+        "target_rows": 0,
+        "unchanged": 0
+      },
+      {
+        "changed": 0,
+        "source_only": 1,
+        "source_rows": 1,
+        "table": "jobs.jobs",
+        "target_only": 0,
+        "target_rows": 0,
+        "unchanged": 0
+      }
+    ],
+    "target_backup_sha256": "2296e79d78a18c6e9c58e51e4ef09459bbcfe4ff6d812551e44d159a11c4d329",
+    "target_inventory_fingerprint": "sha256:c31bfaf7e696f4be7562b065100de6d0d0af2eb14a8732e6ec469f9a917f170a",
+    "target_receipt_sha256": "a880069768df52ff6d411901675b2cb8323d9cceafcbad9f43e61fe2f53d8876",
+    "target_rehearsal_id": "sha256:dc51b08fac2efe4183c2eeaa7003b7bdfcb011cb948df2d42e0bf1a912db5035",
+    "target_schema_fingerprint": "sha256:50c56a3a84c3fa884ebc4968e3140beb528ba8887b3be1f2221cb20b99f35ccf"
+  },
+  "evidence_boundary": "LOCAL_HOST_TEST",
+  "expected_differences": 2,
+  "fixture": "SYNTHETIC",
+  "hardware_access": "NOT_PERFORMED",
+  "independent_cli_exits": {
+    "different": 2,
+    "match": 0,
+    "wrong_hash": 3
+  },
+  "live_workspace_changed": false,
+  "match_report": {
+    "adoption_authorized": false,
+    "archive_dependencies": "RECHECKED_EXTERNAL_NOT_REHYDRATED",
+    "checked_at": "2026-09-08T04:12:56.592862Z",
+    "comparison": "MATCH",
+    "comparison_id": "sha256:beb9333111e7c67278c715163f5828ca41e40d08d555c55ad275360ed69e19a1",
+    "comparison_scope": "ALL_SUPPORTED_TABLE_ROWS_EXACT_VALUES",
+    "differences": [],
+    "differences_total": 0,
+    "domain_validation": "CURRENT_READERS_AUDIT_SUBJECTS_REPLAY_LINKS",
+    "hardware_access": "NOT_PERFORMED",
+    "limit": 100,
+    "lineage_authenticity": "NOT_ESTABLISHED",
+    "live_source_state": "NOT_CHECKED",
+    "live_workspace_changed": false,
+    "next_offset": null,
+    "offset": 0,
+    "original_request_reconstruction": "NOT_PERFORMED",
+    "report_id": "sha256:ff557bf3fe6aa5b0ab6381acd7bc31f029814f49608ae07c1b74ff71879fc4fb",
+    "runtime_ownership": "NOT_CHECKED",
+    "schema_version": "forgegate.workspace-adoption-preflight.v1",
+    "source_backup_sha256": "2296e79d78a18c6e9c58e51e4ef09459bbcfe4ff6d812551e44d159a11c4d329",
+    "source_inventory_fingerprint": "sha256:c31bfaf7e696f4be7562b065100de6d0d0af2eb14a8732e6ec469f9a917f170a",
+    "source_schema_fingerprint": "sha256:50c56a3a84c3fa884ebc4968e3140beb528ba8887b3be1f2221cb20b99f35ccf",
+    "tables": [
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 0,
+        "table": "candidates.api_security_events",
+        "target_only": 0,
+        "target_rows": 0,
+        "unchanged": 0
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 0,
+        "table": "candidates.attestations",
+        "target_only": 0,
+        "target_rows": 0,
+        "unchanged": 0
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 3,
+        "table": "candidates.audit_events",
+        "target_only": 0,
+        "target_rows": 3,
+        "unchanged": 3
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 0,
+        "table": "candidates.candidate_evaluations",
+        "target_only": 0,
+        "target_rows": 0,
+        "unchanged": 0
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 0,
+        "table": "candidates.candidate_evidence_bindings",
+        "target_only": 0,
+        "target_rows": 0,
+        "unchanged": 0
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 0,
+        "table": "candidates.candidate_policy_materials",
+        "target_only": 0,
+        "target_rows": 0,
+        "unchanged": 0
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 1,
+        "table": "candidates.candidate_profile_bindings",
+        "target_only": 0,
+        "target_rows": 1,
+        "unchanged": 1
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 2,
+        "table": "candidates.candidate_snapshots",
+        "target_only": 0,
+        "target_rows": 2,
+        "unchanged": 2
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 1,
+        "table": "candidates.candidate_transitions",
+        "target_only": 0,
+        "target_rows": 1,
+        "unchanged": 1
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 1,
+        "table": "candidates.candidates",
+        "target_only": 0,
+        "target_rows": 1,
+        "unchanged": 1
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 2,
+        "table": "candidates.forgegate_metadata",
+        "target_only": 0,
+        "target_rows": 2,
+        "unchanged": 2
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 2,
+        "table": "candidates.idempotency_records",
+        "target_only": 0,
+        "target_rows": 2,
+        "unchanged": 2
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 1,
+        "table": "candidates.project_idempotency_records",
+        "target_only": 0,
+        "target_rows": 1,
+        "unchanged": 1
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 1,
+        "table": "candidates.project_profile_heads",
+        "target_only": 0,
+        "target_rows": 1,
+        "unchanged": 1
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 1,
+        "table": "candidates.project_profiles",
+        "target_only": 0,
+        "target_rows": 1,
+        "unchanged": 1
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 0,
+        "table": "candidates.project_revision_idempotency_records",
+        "target_only": 0,
+        "target_rows": 0,
+        "unchanged": 0
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 1,
+        "table": "candidates.projects",
+        "target_only": 0,
+        "target_rows": 1,
+        "unchanged": 1
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 0,
+        "table": "jobs.events",
+        "target_only": 0,
+        "target_rows": 0,
+        "unchanged": 0
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 0,
+        "table": "jobs.job_archives",
+        "target_only": 0,
+        "target_rows": 0,
+        "unchanged": 0
+      },
+      {
+        "changed": 0,
+        "source_only": 0,
+        "source_rows": 0,
+        "table": "jobs.jobs",
+        "target_only": 0,
+        "target_rows": 0,
+        "unchanged": 0
+      }
+    ],
+    "target_backup_sha256": "2296e79d78a18c6e9c58e51e4ef09459bbcfe4ff6d812551e44d159a11c4d329",
+    "target_inventory_fingerprint": "sha256:c31bfaf7e696f4be7562b065100de6d0d0af2eb14a8732e6ec469f9a917f170a",
+    "target_receipt_sha256": "a880069768df52ff6d411901675b2cb8323d9cceafcbad9f43e61fe2f53d8876",
+    "target_rehearsal_id": "sha256:dc51b08fac2efe4183c2eeaa7003b7bdfcb011cb948df2d42e0bf1a912db5035",
+    "target_schema_fingerprint": "sha256:50c56a3a84c3fa884ebc4968e3140beb528ba8887b3be1f2221cb20b99f35ccf"
+  },
+  "new_job_state": "QUEUED",
+  "result": "PASS"
+}

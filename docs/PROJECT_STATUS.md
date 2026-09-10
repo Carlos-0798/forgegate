@@ -1,10 +1,247 @@
 # Project status
 
-- Date: 2026-09-05
+- Current direction (2026-09-09): pause new engineering features for job
+  preparation; preserve the accepted Phase 64 baseline and synchronize the
+  existing Private GitHub repository. See the
+  [resumption checkpoint](PROJECT_RESUME_CHECKPOINT_2026-09-09.md) for the next
+  adapter-conformance slice and the
+  [synchronization record](../reports/GITHUB_SYNC_2026-09-09.md) for fresh gates
+  and the reviewed remote handoff. Earlier dated local-only / GitHub-paused
+  statements below describe their original checkpoints, not current authority.
+- Date: 2026-09-09
 - Version: 0.1.0a1
-- Stage: Phase 28 operator-reviewed, candidate-bound assurance ZIP export
-  implemented and Edge/offline tested after the Phase 27 workflow and MSP430
-  collector; Windows high contrast,
+- Active checkpoint: Phase 64 reusable monitor presets LOCAL ENGINEERING PASS.
+  Saved project-scoped catalogs, operator start/stop, explicit simulated origin
+  and safe serial-reader reuse are implemented. Full gate: 1,568 Python passes /
+  3 environment skips, 95.90% coverage; 296 frontend passes; clean-install release
+  smoke and installed-browser lifecycle acceptance pass. No new physical-board acceptance,
+  release-evidence capture, human productivity or GitHub claim. See
+  [preset workflow](MONITOR_PRESETS.md) and
+  [acceptance](../reports/PHASE_64_MONITOR_PRESETS_ACCEPTANCE.md).
+- Previous checkpoint: Phase 63 final user-path closeout LOCAL ENGINEERING PASS.
+  A clean-commit Windows delivery was installed outside the checkout; workspace
+  initialization, browser activation, durable candidate creation and the retained
+  complete PASS/FAIL handoff are accepted. Full gate: 1,466 passes / 3 symlink
+  skips, 95.82% coverage; frontend 265 passes; release smoke PASS. Retained AVS
+  130 records / 12 rules remain unchanged. Independent novice use and human
+  efficiency remain unmeasured. See
+  [acceptance](../reports/PHASE_63_FINAL_USER_PATH_ACCEPTANCE.md) and
+  [quickstart](LOCAL_WORKSPACE_QUICKSTART.md). GitHub remains paused.
+  Prior workspaces and the Phase 61 wheel were not overwritten.
+- Previous checkpoint: Phase 62 independent first use and workbench LOCAL PASS.
+  See [Phase 62](../reports/PHASE_62_WORKBENCH_ACCEPTANCE.md).
+- Previous checkpoint: Phase 61 final Windows demonstration PASS. The finite
+  [Alpha completion plan](ALPHA_COMPLETION_PLAN.md) is complete.
+  Existing real AVS acceptance is retained, not reset to NOT RUN. Percentage
+  maturity estimates are replaced by explicit exit criteria.
+  The exact final reviewer ZIP installs in a fresh Python 3.12 environment;
+  generic PASS/0 and FAIL/1 controls behave correctly. A new authenticated
+  browser session reviewed the accepted PASS and explained FAIL candidates,
+  evidence, rules, assurance and hardware-disabled state with zero console issues.
+  See [Phase 61](../reports/PHASE_61_FINAL_DEMO_ACCEPTANCE.md). No next product
+  milestone is implied; future work begins only from observed defects or a new
+  owner-selected objective. GitHub remains paused.
+- Previous checkpoint: Phase 60 frozen-package real-project acceptance PASS.
+  The exact Phase 59 installed wheel reproduces retained AVS `VALID / FAIL`
+  and MSP430 artifact-only `COMPLETE` with fail-closed commit controls. See
+  [Phase 60](../reports/PHASE_60_REAL_PROJECT_ACCEPTANCE.md).
+- Previous checkpoint: Phase 59 feature freeze and local code closeout PASS.
+  Clean source `e424292c04e3e44c41ea41048e0b227aa5960699`: 1,433 tests pass,
+  three symlink skips, 95.80% coverage; 248 frontend tests and release smoke pass.
+  The exact retained wheel installs independently; all 109 runtime members match
+  the Phase 58 browser-accepted wheel. See [Phase 59](../reports/PHASE_59_CODE_CLOSEOUT_ACCEPTANCE.md).
+- Previous checkpoint: Phase 58 refreshed Windows installed-wheel acceptance.
+  A fresh-sdist wheel installed into isolated Python 3.12 completed actual Edge
+  synthetic Quick Assessment, private Evidence Replay, portable assurance and
+  Evaluation Comparison. Both downloads independently verify VALID / PASS;
+  changed-policy comparison remains NOT COMPARABLE. Browser console issues: 0.
+  Source store unchanged; hardware/GitHub/upstream actions NOT PERFORMED. The
+  working-tree build is not a public release candidate. See
+  [Phase 58 acceptance](../reports/PHASE_58_WINDOWS_DELIVERY_ACCEPTANCE.md).
+- Previous checkpoint: Phase 57 retained evaluation comparison accepted locally.
+  Explicit project-scoped baseline selection, refreshed review pairs, new failures,
+  restored rules and missing evidence; incompatible policy/profile authority blocks
+  regression/recovery conclusions. Four actual Edge cases pass, including a
+  changed-policy negative control. 248 frontend tests (38 new); full development
+  verification: 1,433 passed / 3 skips, 95.80% coverage; clean-install smoke PASS.
+  No GitHub/hardware/upstream writes or installed Dashboard upgrade. See
+  [Phase 57 acceptance](../reports/PHASE_57_DECISION_COMPARISON_ACCEPTANCE.md).
+- Previous checkpoint: Phase 56 real AVS quick assessment accepted locally:
+  distinct per-report metadata, explicit warning repreview/retention and bounded
+  25,000-element coverage XML parsing. Actual Edge and independent replay retain
+  FAIL; all 12 historical rule results and 130 records match (only artifact paths
+  differ between file and browser handoff). No new producer run or hardware.
+  Full gate: 1,433 passed / 3 skips, 95.80% coverage; 210 frontend tests and
+  fresh-sdist clean-install smoke pass. See the
+  [Phase 56 report](../reports/PHASE_56_AVS_QUICK_ACCEPTANCE.md).
+- Previous Phase 55 [quick assessment handoff](QUICK_ASSESSMENT.md) implemented:
+  explicit compatible saved-policy selection, original reports and exact receipts
+  prepared once, and reviewed private replay download from the completed assessment.
+  Existing batch/folder input and bind/ready/evaluate/attest workflow are retained.
+  Phase 53A matched packs retained; Phase 53B human comparison DEFERRED by owner.
+  Human productivity and accuracy improvement: NOT MEASURED.
+  Full development verification: 1,430 passed / 3 environment skips; 200 frontend
+  tests pass; coverage is 95.80%; clean-install release smoke passes.
+  Actual Edge saved-policy reuse and no-reselection replay download pass;
+  independent replay is VALID / PASS with four collections, nine records and
+  eight files. Save before closing: originals are not persisted on the server.
+  See [Phase 55 report](../reports/PHASE_55_QUICK_HANDOFF_ACCEPTANCE.md).
+  Prior Edge PASS/FAIL/REVIEW, folder import and invalid-report acceptance remains
+  in the [Phase 54 report](../reports/PHASE_54_QUICK_ASSESSMENT_ACCEPTANCE.md).
+- Stage: Phase 52 reviewed Windows installed-wheel delivery accepted locally.
+  A wheel built from a fresh generated sdist contains exactly the five inventoried
+  Dashboard assets, installs in an isolated Python 3.12 environment, passes
+  dependency and HTTP/HTML checks, and serves the retained AVS candidate. Actual
+  Edge operator review confirmed project/candidate/evidence/decision/assurance
+  pages and downloaded a 245,775-byte bundle independently verified VALID / FAIL.
+  The source tree has uncommitted Phase 46–52 work, so this exact build is a local
+  acceptance artifact, not a clean-commit or public release candidate. See
+  [Phase 52 acceptance](../reports/PHASE_52_WINDOWS_DELIVERY_ACCEPTANCE.md).
+  Latest recorded Phase 52 full gate: 1,423 passed / 3 skipped, 95.80% branch-aware coverage;
+  168 frontend tests, 33 interaction checks and clean-install release smoke pass.
+  Phase 51 private original-report export and offline replay remains implemented.
+  Actual Edge selected eight exact original/collection-result files, refused an
+  incomplete selection and missing privacy consent, then downloaded a replay ZIP
+  byte-identical to CLI export. Offline verification reparsed four collections /
+  130 records and reproduced VALID / decision FAIL. No new upstream test run,
+  producer authentication, hardware action or GitHub synchronization occurred.
+  See [replay operations](EVIDENCE_REPLAY.md) and
+  [Phase 51 acceptance](../reports/PHASE_51_SOURCE_REPLAY_ACCEPTANCE.md).
+  Historical Phase 51 full gate: 1,420 passed / 3 skipped, 95.80% branch-aware coverage;
+  168 frontend tests and clean-install release smoke pass.
+  Phase 50 real AVS host-report integration remains accepted. An isolated frozen
+  producer commit supplied four reports / 130 evidence records; actual Edge
+  completed binding, evaluation, attestation and download. The consumer policy
+  correctly produced FAIL (10 passing rules / 2 failing), and the downloaded
+  bundle independently verified as VALID with decision FAIL. The upstream
+  baseline had 2,469 passing tests, one golden-manifest failure and 15 untriaged
+  static review candidates; its active dirty worktree was not included or edited.
+  ForgeGate full verification: 1,406 passed / 3 skipped, 95.89% coverage.
+  See [Phase 50 acceptance](../reports/PHASE_50_AVS_HOST_ACCEPTANCE.md) and
+  [file-only consumer pack](../examples/analog-validation-studio-host/README.md).
+  No hardware access, producer authentication, deployment or GitHub synchronization.
+  Phase 49 standard CI Dashboard collection remains implemented and accepted:
+  JUnit + Cobertura/LCOV with optional SARIF 2.1.0 and benchmark JSON share the
+  existing exact-byte preview, immutable binding and reviewed task lifecycle.
+  Synthetic expected-versus-actual cases distinguish PASS, FAIL, REVIEW and
+  malformed-report rejection. Real Edge completed the four-report binding and
+  six-rule PASS workflow and refused a malformed SARIF without partial binding.
+  Phase 49 verification: 1,392 passed / 3 skipped, 95.89% branch-aware coverage;
+  all 158 frontend host cases pass. See [Phase 49 acceptance](../reports/PHASE_49_STANDARD_CI_ACCEPTANCE.md).
+  Product priority is real software artifact integration and delivery acceptance.
+  Private process control/adoption remains deferred, not a prerequisite for this
+  workflow. No GitHub synchronization, user service restart or hardware access.
+  Phase 48 existing-only paired startup and public runtime correlation
+  implemented. Candidate v9 and job v3/v4 paths are checked before construction
+  and startup; neither missing stores nor old schemas are initialized/migrated.
+  Fresh runtime/pair labels can be compared against HTTP headers. Detected file
+  replacement refuses health correlation. These labels are not credentials or
+  managed ownership; ordinary authenticated writes remain enabled, with no
+  probation mode, writer fence, takeover or switch. See
+  [Windows operations](WINDOWS_DASHBOARD_OPERATIONS.md).
+  Phase 47 read-only adoption preflight implemented: exact source snapshot
+  and cold target association, bounded 20-table inventory comparison, current
+  reader/audit/replay validation and stable difference pages. New rehearsal
+  readback no longer creates cold-target WAL/SHM sidecars. No live-source check,
+  process authority or switch is implied. See [preflight](WORKSPACE_ADOPTION_PREFLIGHT.md).
+  Phase 46 live-workspace adoption/rollback design recorded for owner
+  review. Process ownership, all-writer fencing, recovery-point comparison,
+  probation health and a conservative write-enable rollback boundary are
+  specified with 24 NOT RUN live fault-injection cases. No apply command, managed
+  launcher, live switch or rollback implementation exists yet. See
+  [adoption design](WORKSPACE_ADOPTION_DESIGN.md).
+  Phase 45 read-only Dashboard rehearsal receipt review implemented and
+  accepted in isolated Microsoft Edge. Exact bytes, strict schema/coherence and
+  content-derived identities are revalidated before displaying 27 restored tasks,
+  43 events, one archived task and one verified external result. Different-name
+  reselection, no-retry error paths and clean-console presentation pass; a
+  screenshot is retained. The page accepts no path and performs no restore,
+  rehydration, live switch, continuing-availability check or hardware action.
+  See [Dashboard rehearsal receipt review](DASHBOARD_RECOVERY_REHEARSAL_REVIEW.md).
+  Phase 44 reviewed recovery rehearsal remains implemented locally: exact-hash
+  handoff loading, fresh root/original checks, new-directory-only copying,
+  cold SQLite/history readback and final content-addressed `REHEARSAL.json`.
+  The actual Phase 43 Edge download restored 27 tasks/43 events; the one archived
+  result still reports four tests with one failure. Original external payloads
+  remain external; no live workspace switch, hardware or GitHub operation.
+  See [recovery rehearsal](RECOVERY_REHEARSAL.md).
+  Phase 43 reviewed recovery handoff remains implemented locally: the CLI can
+  create a new-only path-free report, and an operator-only Dashboard page
+  validates its exact bytes and strict status into a downloadable content-
+  addressed handoff. Backup payloads are not uploaded; live availability,
+  producer identity and restore remain unverified/not performed. Automated
+  behavior and native Edge READY/BLOCKED selection, sequential reselection and
+  independently hashed downloads pass. See
+  [Dashboard recovery handoff](DASHBOARD_RECOVERY_HANDOFF.md).
+  Phase 42 offline recovery readiness remains implemented: explicit original
+  backup mappings, exact ZIP/manifest/job/event/result checks, path-free READY
+  or INCOMPLETE reports, and fail-closed root/deadline handling. This reports
+  snapshot-time payload readiness; restore and external identity files remain
+  separate. See [recovery readiness](RECOVERY_READINESS.md).
+  Phase 41 read-only job capacity and archive visibility implemented:
+  owner CLI reports store-wide logical quotas, while the authenticated Dashboard
+  reports only project-scoped usage and filters All / Current / Archived tasks
+  across the complete bounded identity set. External backup availability and
+  physical database size remain explicitly unverified; no capacity/archive write,
+  hardware or GitHub action was added. See [capacity operations](JOB_CAPACITY.md).
+  Phase 40 reviewed job archival remains implemented: explicit v3-to-v4 job-store
+  migration; one-job review/confirmation tied to an exact verified backup; live
+  revision, candidate and binding checks; atomic result/receipt mutation; preserved
+  audit/request keys and exact replay. Logical job/result quota is reclaimed, not
+  physical disk space. Dashboard details identify external archived results;
+  v4 backup/restore receipts expose earlier backup dependencies. See
+  [archival operations](JOB_ARCHIVAL.md).
+  Phase 39 coordinated workspace backup and recovery remains implemented:
+  candidate v9 and job v3 snapshots are taken under simultaneous SQLite write
+  reservations and published as one bounded, hash-checked archive. Offline
+  verification checks job histories and their exact historical candidate links.
+  Restore requires an earlier receipt hash and a new directory, with a final
+  readiness marker. Retention planning protects active/bound/recent jobs and
+  performs no deletion, automatic execution or live workspace replacement.
+  See [operations and recovery acceptance](WORKSPACE_RECOVERY.md).
+  Phase 38 durable foreground job execution lifecycle remains implemented:
+  `forgegate.collection-job.v2` records retain a non-credential execution owner
+  and bounded lease-renewal count; parsing renews/checks ownership before each
+  report and before assembly, so durable cancellation prevents later stages and
+  publication without claiming mid-parser termination. Explicit transactional
+  v1/v2-to-v3 store migration preserves historical record bytes and invents no
+  owner/actor. A restarted Dashboard gets a different owner and cannot adopt an
+  old lease; expired recovery remains manual. No scheduler, automatic worker,
+  candidate transition, policy decision, GitHub operation or hardware access.
+  Phase 37 reviewed Dashboard job-result handoff remains implemented: exact
+  canonical assembly download plus separately confirmed immutable candidate
+  evidence binding, guarded by current job/result/assembly/candidate identities.
+  Actual Edge download, binding, duplicate review and independent CLI/store
+  readback passed on an isolated synthetic fixture. Candidate state and revision
+  remain unchanged; no policy evaluation, raw-source export or hardware access.
+  Phase 36 reviewed Dashboard report submission and explicit foreground parsing
+  remains implemented, with immutable request selection, warning consent,
+  identity/project-namespaced idempotency, per-instance busy rejection and
+  atomic initiating-operator attribution. Real Edge single/combined/warning
+  workflows and forbidden-XML preview rejection verified on synthetic data.
+  No automatic worker, test-command execution or hardware access.
+  Phase 35 opt-in operator Dashboard job list/detail/results, reviewed
+  cancellation and expired-lease recovery implemented. Explicit job-store v2
+  migration adds event actors without rewriting historical records; no automatic
+  worker, evidence binding or automatic service restart.
+  Phase 34 durable local report job engine and CLI implemented, with
+  separate v1 storage, explicit execution/cancellation, expired-lease recovery,
+  bounded pending input retention and independent result export. Phase 34 itself
+  added no Dashboard UI, automatic workers, candidate mutation by jobs or
+  coordinated backup; later phases add only their separately described surfaces.
+  Phase 33 combined JUnit + Cobertura/LCOV browser preview, original-JSON
+  binding and generic policy workflow implemented locally. Real Edge combined
+  Cobertura/LCOV PASS, low-coverage FAIL and the scoped negative-input matrix
+  verified; browser error-origin and Windows asset-ordering defects corrected.
+  The browser preview itself still has no durable queue/raw retention.
+  Phase 32 consistent candidate-store backup and offline validation
+  implemented locally; no automatic restore, encryption or browser write added.
+  Phase 31 Windows startup, HTTP/HTML diagnostics and controlled recovery
+  support implemented; explicit foreground lifecycle, not an uptime watchdog.
+  Phase 30 bounded JUnit preview and separate binding implemented;
+  real Edge PASS/FAIL, warning-consent and rejection acceptance completed.
+  Shared-policy reuse corrected with explicit SQLite v8-to-v9 migration.
+  Phase 29 project Audit remains available; Windows high contrast,
   spoken Narrator output, and a real Remote Desktop run remain environment gates
 - Product maturity: testable Windows Alpha with generic initialization,
   local CLI/API release-assurance flow, software-peer collection, audited
@@ -18,13 +255,56 @@
 - Hardware evidence: owner-authorized input-only COM4 UART status observation;
   no command, firmware/debug action, physical measurement validation, release
   evidence, or production claim
-- Remote/publication status: private `Carlos-0798/forgegate`; repository changes
-  are synchronized through reviewed pull requests and required CI. The latest
-  previously accepted cross-platform run was 33999452478; no public release,
-  License, or LinkedIn publication is authorized
+- Remote/publication status: existing Private `Carlos-0798/forgegate`;
+  synchronization is owner-authorized on 2026-09-09 and tracked in the linked
+  synchronization record. The last fully accepted historical cross-platform
+  run remains 33999452478. Recent hosted jobs reported an account
+  payment/spending-limit restriction; local tests are not hosted CI. No Public
+  visibility, License, Release, LinkedIn publication or spending change is authorized.
+
+The Phase 28 post-merge run 34001577886 passed the Windows/Linux/macOS test and
+package jobs, but its final generic Action job did not start because GitHub
+reported an account payment/spending-limit restriction. The overall run is
+not green. Billing changes require owner action; local acceptance is separate.
+
+Historical local engineering closeout did not perform GitHub operations.
+The separately authorized 2026-09-09 synchronization does not change those
+original evidence boundaries or make previously unrun hosted jobs pass.
 
 ## Implemented
 
+- reviewed CLI archival with exact source backups, v4 job storage, immutable
+  receipts/history, retained idempotency, live candidate/binding protection,
+  logical capacity reclamation and explicit external result readback;
+- Dashboard archive disclosures and conflict rejection of stale result actions;
+  v4 workspace snapshots/restore preserve receipts and list external dependencies;
+- coordinated candidate/job snapshots, strict offline verification, restore to
+  a new directory and non-destructive job-retention planning; bounded current
+  schemas, historical association checks, no-overwrite and partial-failure handling;
+- durable foreground job execution control with per-process Dashboard owner ID,
+  private-token lease renewal at bounded parser checkpoints, cooperative durable
+  cancellation, append-only renewal history and fail-closed restart ownership;
+- `forgegate.collection-job.v2` plus separate job-store v3 and explicit
+  byte-preserving v1/v2 migration; old v1 public records remain readable;
+- opt-in operator-only Dashboard jobs with scope filtering, paged list/detail,
+  reviewed preview/submission/execution, exact result inspection,
+  reviewed cancellation/recovery and event attribution;
+- durable local CLI collection jobs in a separate v3 SQLite file, with bounded
+  pending input, idempotent replay, explicit execution/cancellation, manual
+  expired-lease recovery and result export; no automatic worker;
+- current-schema SQLite backup through a pinned read transaction and Online
+  Backup API, checked before atomic create-if-absent file publication; independent
+  offline verification on a disposable copy, optional expected-hash comparison,
+  path-free counts/receipt and explicit private-data/recovery limitations;
+- `dashboard-check` distinguishes health, HTML, refusal, timeout and protocol
+  failures without authentication, database reads or device access; an existing-
+  workspace Windows launcher rejects missing/empty input and busy ports;
+- bounded operator-only JUnit upload preview using the existing collector and
+  assembler, in-memory exact bytes, declared-only evidence, original report time,
+  explicit warning retention and separate reviewed binding; no browser job queue;
+- operator-only project Audit workspace with candidate filtering, stable
+  25-event cursor links, full record/actor inspection, no inferred actor,
+  explicit preview truncation, and candidate-to-audit navigation;
 - repository/package scaffold;
 - strict project, policy, and evidence-bundle contracts;
 - safe configuration loader;
@@ -68,7 +348,7 @@
   commit, decision, and timestamp;
 - stateless `candidate create` and `candidate transition` CLI previews with
   generic DRAFT/EVALUATING fixtures and structural/evaluation-bound Goldens;
-- SQLite candidate-store schema v8 with ForgeGate application identity, WAL,
+- SQLite candidate-store schema v9 with ForgeGate application identity, WAL,
   FULL synchronous durability, foreign keys, exact-version validation, and
   explicit read/write transactions;
 - append-only canonical candidate snapshots, content-addressed transitions,
@@ -360,7 +640,7 @@
   attestation/bundle identity, and explicit limitation/evidence labels;
 - content-hashed deterministic frontend assets, canonical SHA-256 inventory,
   source/wheel inclusion checks, locked build dependencies, and CI drift gates;
-- separate deterministic Dashboard BFF OpenAPI export with 18 explicit
+- separate deterministic Dashboard BFF OpenAPI export with 21 explicit
   operation IDs, committed-byte drift detection, and installed-wheel comparison;
 - optional `msp430` dependency and domain-neutral live-status provider boundary;
   an independently implemented MSP430 UART v1 parser validates ASCII framing,
@@ -390,7 +670,7 @@
 - operator-reviewed portable assurance download using a deterministic bounded
   three-file ZIP, exact candidate revision and bundle identity, same-origin/
   CSRF/project-role controls, no accepted path, and no server-side file write;
-- 48 focused Dashboard tests plus real Microsoft Edge and Chrome keyboard/focus
+- 80 focused Dashboard tests plus previously retained Microsoft Edge and Chrome keyboard/focus
   operation, complete 129-record cursor pagination, browser-rendered
   409/413/422/429/500 recovery, and Chrome/in-app-browser 390 px
   responsive/clean-console runs using generic local data; uncommon statuses
@@ -420,7 +700,7 @@
 
 full Dashboard assistive-technology acceptance (high contrast, spoken Narrator
 output, and a real Remote Desktop session); automatic browser-side evidence
-collection, source-artifact export, and plugin/admin commands; non-loopback/TLS
+collection, arbitrary-source export, and plugin/admin commands; non-loopback/TLS
 API deployment, reverse-proxy trust, hostile-local-user
 defense, managed online revocation, durable/distributed sessions, per-client
 network rate controls, distributed rate state, HTTP artifact collection and
@@ -431,25 +711,192 @@ plugins, Linux/macOS plugin execution,
 custom GitHub Checks/PR annotations/API writes,
 managed/encrypted/hardware-backed key custody, trusted timestamps, online
 revocation, CI workload identity federation, database authorization,
-backup/repair, retained MSP430 telemetry history,
+automatic restore/repair, retained MSP430 telemetry history,
 Studio Phase 5
 human-readable report ingestion, authenticated provenance/signatures, source
-artifact payload/replay export, hardware control, and physical measurement
-validation.
+artifact replay beyond the bounded Phase 51 built-in software formats, hardware
+control, and physical measurement
+validation. Phase 33 adds manual JUnit + Cobertura/LCOV combination, not
+automatic/background collection or raw report retention. Its real-browser
+Cobertura/LCOV positive paths and the scoped negative manual matrix pass;
+remaining OS assistive checks are separate.
 
 ## Accepted local checkpoint
 
+- Phase 52: fresh-sdist Windows wheel build and exact Dashboard asset validation;
+  isolated install, dependency/HTTP checks and actual Edge operator workflow pass.
+  Browser-downloaded assurance independently reports VALID / decision FAIL and
+  the copied candidate remains revision 4. This is local delivery acceptance from
+  a working tree with changes, not publication. See [acceptance](../reports/PHASE_52_WINDOWS_DELIVERY_ACCEPTANCE.md).
+  Full verification: 1,423 passed / 3 skipped at 95.80% branch-aware coverage;
+  168 frontend tests and 33 interaction checks pass.
+- Phase 51: 14 new Python and 10 new frontend replay cases; full gate **1,420
+  passed / 3 skipped**, **95.80%** branch-aware coverage, 168 frontend cases and
+  clean-installed-wheel smoke pass. Actual Edge download is byte-identical to
+  CLI export and independently verifies as VALID / decision FAIL; eight exact
+  originals, four collections, 130 records, no producer/hardware claim. See
+  [acceptance](../reports/PHASE_51_SOURCE_REPLAY_ACCEPTANCE.md).
+- Phase 48: 36 new startup cases, 98 focused regressions (warnings as errors),
+  final full **1,380 passed / 3 skipped**, **95.88%** branch-aware coverage
+  (13,037 statements, 3,400 branches), and strict mypy over 116 files pass.
+  The startup module has 98.68% focused branch-aware coverage; real Windows
+  junction rejection and independent CLI startup/restart/mismatch checks pass.
+  TypeScript checking and 148 host interaction cases pass; 56 document/3 artifact
+  schemas, direct/BFF OpenAPI, assets and 33/33 CLI/REST smoke remain passing.
+  Exact evidence and package acceptance are retained in
+  [Phase 48 acceptance](../reports/PHASE_48_EXISTING_PAIR_ACCEPTANCE.md).
+  Public runtime IDs are correlation only; private process ownership, probation,
+  all-writer fencing and live adoption remain unimplemented. No running user
+  service, hardware or GitHub operation was touched.
+- Phase 47: 49 new preflight regressions pass in the full 1,344-test suite, with
+  3 host symlink skips and 95.85% branch-aware coverage (12,876 statements,
+  3,338 branches). Inventory and preflight modules have 100% branch-aware coverage;
+  model module 94.83%. Strict mypy passes across 114 source/tool files; 56 document
+  plus 3 artifact schemas, existing OpenAPI/assets and 33/33 CLI/REST smoke checks
+  pass. Independent CLI MATCH/DIFFERENT/refusal evidence and cold-copy preservation
+  are retained in [Phase 47 acceptance](../reports/PHASE_47_ADOPTION_PREFLIGHT_ACCEPTANCE.md).
+  Clean-wheel release smoke including the new CLI passes; the final focused
+  87-case preflight/rehearsal suite passes with warnings treated as errors.
+  No new browser acceptance, owner-service change, hardware or GitHub operation
+  is claimed.
+- Phase 46: design review and documentation corrections only; full existing
+  development gate freshly passes with 1,295 tests, 3 host symlink skips, 95.77%
+  branch-aware coverage and 33/33 CLI/REST smoke controls. No new adoption test
+  or browser/hardware acceptance is claimed. The 24 adoption fault cases remain
+  NOT RUN. See [design review evidence](../reports/PHASE_46_WORKSPACE_ADOPTION_DESIGN_REVIEW.md).
+- Phase 45: 93 focused Python cases and all 148 production-TypeScript interaction
+  cases pass. Full verification passes with 1,295 tests, 3 Windows symlink skips
+  and 95.77% branch-aware coverage (12,536 statements, 3,246 branches). Ruff,
+  formatting, strict mypy across 110 source/tool files, 55 document plus 3
+  artifact schemas, 29-path/31-operation Dashboard OpenAPI, packaged assets and
+  33 interaction-smoke controls pass. Actual isolated Edge exact receipt import,
+  different-name reselection and clean console pass; the
+  [screenshot](assets/phase45-recovery-rehearsal-review.png) and
+  [machine evidence](../reports/PHASE_45_RECOVERY_REHEARSAL_REVIEW_EVIDENCE.json)
+  are retained. No restore, live switch, hardware or GitHub operation occurred.
+- Phase 44: 38 new tests and 160 combined recovery/archive cases pass. Full
+  verification passes with 1,285 tests, 3 Windows symlink skips and 95.76%
+  branch-aware coverage (12,488 statements, 3,238 branches). The new rehearsal
+  module has 100% branch-aware coverage across 104 statements and 12 branches.
+  Ruff/formatting, strict mypy across 110 source/tool files, 54 document plus 3
+  artifact schemas and existing OpenAPI/assets pass; 139 frontend tests pass.
+  Clean-wheel build/install/rehearsal/refusal/readback/uninstall smoke passes;
+  the corrected exact-error smoke assertion and tested package hashes are
+  retained in the [acceptance report](../reports/PHASE_44_RECOVERY_REHEARSAL_ACCEPTANCE.md).
+  Actual CLI use of the earlier Edge download and independent hash/job/result
+  readback are retained in [Phase 44 evidence](../reports/PHASE_44_RECOVERY_REHEARSAL_EVIDENCE.json).
+- Phase 43: 40 focused Python cases and 9 new production-TypeScript interaction
+  cases pass. The full gate passes with 1,247 tests, 3 environment-dependent
+  symlink skips and 95.72% branch-aware coverage across 12,372 statements and
+  3,226 branches. Ruff, formatting, strict mypy across 109 source/tool files,
+  53 document plus 3 artifact schemas, 28-path/30-operation Dashboard OpenAPI,
+  packaged assets and 139 total frontend cases pass. Native Edge import exposed
+  and verified fixes for final-newline hash preservation and sequential report
+  reselection; READY/BLOCKED rendering and both downloaded hashes passed.
+- Phase 42: 26 new readiness tests and 120 combined cases pass. Full verification
+  passes with 1,233 tests, 3 environment-dependent symlink skips and 95.72%
+  branch-aware coverage; the new readiness module and workspace CLI each reach
+  100%. Exact independent-process READY/missing/wrong-hash and restore/readback
+  results are retained in [Phase 42 evidence](../reports/PHASE_42_RECOVERY_READINESS_ACCEPTANCE.md).
+- Phase 41: strict capacity/project-usage documents, CLI filtering and complete
+  bounded scan are implemented. Focused tests cover exact accounting, an archived
+  identity beyond the first 100 rows, invalid filters, project privacy and browser
+  warnings/labels. Final full-suite, package and browser results are retained in
+  [Phase 41 evidence](../reports/PHASE_41_JOB_CAPACITY_ACCEPTANCE.md).
+- Phase 40: 46 new regressions and 94 combined archival/backup cases pass, with
+  100% focused branch-aware coverage across four archival/model/workspace/CLI
+  modules (533 statements, 60 branches). Exact-backup review, live binding and
+  revision checks, immutable history, idempotency, logical quota reuse, rollback
+  and external readback pass. Actual isolated Edge detail/refresh/navigation and
+  logout pass; screenshot retained. Clean-wheel CLI archive/v4 restore also pass.
+  No live owner-workspace migration or hardware/GitHub access was performed.
+  See [Phase 40 evidence](../reports/PHASE_40_JOB_ARCHIVAL_ACCEPTANCE.md).
+- Phase 39: 48 workspace regressions pass, with 100% branch-aware coverage across
+  the new backup and CLI modules (323 statements, 36 branches). Paired locking,
+  committed WAL, exact table/history preservation, cold terminal attestation,
+  queued execution after recovery, malformed archives and partial recovery are
+  covered. Independent-process CLI smoke retains three task states/eight events
+  and the exact four-test/one-failure result. Retention planning changes no records.
+  See [Phase 39 evidence](../reports/PHASE_39_WORKSPACE_RECOVERY_ACCEPTANCE.md).
+- Phase 38: 99 focused Python job cases and 127 frontend host cases cover v2
+  record validation, exact v1/v2-to-v3 migration, private-token exclusion,
+  visible owner identity, lease renewal, cooperative cancellation ordering,
+  existing export/binding behavior and expanded revisions. The cross-process
+  synthetic smoke retains four tests/one failure and confirms candidate history
+  unchanged. Actual isolated in-app-browser execution separately confirmed r0-to-r4,
+  the owner/renewal fields, operator event history, exact failed-test output and
+  zero horizontal overflow. No GitHub or hardware claim is added.
+- Phase 37: 21 additional Python and 23 frontend result-handoff regressions;
+  operator-only canonical download and immutable binding with exact stale-state,
+  authorization, response identity and no-retry checks. Actual Edge downloaded
+  2,010 canonical bytes whose SHA-256 matched the binding fingerprint, then bound
+  the retained one-failure assembly. Independent CLI/store readback confirmed one
+  attributed binding while the candidate remained COLLECTING revision 1 and the
+  job remained SUCCEEDED revision 2. A dialog hash-overflow defect found in the
+  browser was corrected and retested without horizontal overflow. See
+  [acceptance evidence](../reports/PHASE_37_JOB_RESULT_HANDOFF_ACCEPTANCE.md).
+  Isolated port 8136 only; MSP430 and GitHub not accessed.
+- Phase 36: 23 additional Python and 14 frontend report-job regressions;
+  actual Edge frozen submission, separate parsing, single-failure counts,
+  combined LCOV 50% results, warning retention and forbidden-XML rejection.
+  Independent store readback confirms 3 new tasks with attributed three-event
+  histories and an unchanged unbound candidate. See [acceptance evidence](../reports/PHASE_36_DASHBOARD_JOB_SUBMISSION_ACCEPTANCE.md).
+  Isolated port 8135 only; original 8131/MSP430 runtime untouched. GitHub paused.
+- Phase 35: 16 additional Python and 17 frontend job-management regressions;
+  isolated actual Edge pagination, result inspection, Escape/focus return,
+  cancellation/actor retention, expired recovery and real revision-conflict checks.
+  See [acceptance evidence](../reports/PHASE_35_DASHBOARD_JOBS_ACCEPTANCE.md).
+  Original port 8131 and MSP430 runtime left untouched; GitHub remains paused.
+- Phase 34: 32 focused job regressions and independent-process CLI acceptance;
+  exact replay, exclusive claim, cancellation/late-result ordering, expired-only
+  recovery, candidate rechecks, quotas, corruption rejection and separate binding.
+  [Operations and limitations](COLLECTION_JOBS.md) distinguish successful
+  collection from policy PASS and logical deletion from secure erasure.
+  No existing Dashboard or MSP430 service was restarted or used for this work.
+- Phase 33: bounded combined report preview, original-JSON reviewed binding,
+  whole-selection rejection/warning behavior and existing collector reuse.
+  Real Edge Cobertura preview/binding/lifecycle/policy PASS and exact rule values
+  are retained; browser-discovered numeric reserialization was fixed without
+  changing canonical fingerprints. No new MSP430 or GitHub operation.
+  The [browser follow-up](../reports/PHASE_33_BROWSER_ACCEPTANCE_FOLLOWUP.md)
+  adds 13 scoped actual-Edge cases, including LCOV PASS, low-coverage FAIL,
+  warning consent, rejection/cancellation and recovery; fixes local-vs-HTTP
+  error labeling and mixed-case Windows asset inventory ordering.
+- Phase 32: 27 focused backup regressions; backup module 100% branch-aware
+  coverage (120 statements, 32 branches), cold terminal-candidate readback,
+  exact table preservation, installed CLI backup/verify/no-overwrite smoke and
+  an independent manual synthetic snapshot/hash check pass. No GitHub operation.
+- Phase 31: 28 focused host/Windows launcher cases; real isolated Dashboard,
+  API-only and stopped-service HTTP checks; two foreground startup/shutdown
+  cycles on the same synthetic database, with post-run SQLite quick-check OK.
+  Phase 32 added no fresh authenticated-browser or MSP430 stability claim.
+  Phase 33 adds isolated Edge test + coverage selection/binding/evaluation, not
+  new hardware or assistive-technology evidence. See the Phase 33 report.
+- Activation follow-up: 13 production-TypeScript host interaction regressions
+  pass via `pnpm run test:dashboard` on Node 24.19.0, separately from Python
+  coverage; real in-app-browser activation at port 8131 also passes
 - PowerShell environment bootstrap: PASS
 - direct dependency constraints and `pip check`: PASS
 - Ruff and Ruff format: PASS
 - mypy strict: PASS across package and verification-tool source files
-- pytest: 882 passed, 3 skipped (Windows symlink creation unavailable)
-- branch-aware coverage: 95.21% across 10,429 statements and 2,824 branches
+- Historical host checkpoint: pytest 1295 passed, 3 skipped (Windows symlink creation unavailable)
+- Historical coverage for that checkpoint: 95.77% across 12,536 statements and 3,246 branches
 - MSP430 live-status focus: 17 passed across parser, state classification,
   staleness, invalid/recovery, counters, dependency/I/O failure, and input-only
   monitor lifecycle
-- Dashboard focus: 48 passed with 98.41% branch-aware coverage across 642
-  statements and 114 branches
+- Historical Phase 30 Dashboard focus: 80 passed with 98.60% branch-aware coverage across 728
+  statements and 130 branches
+- Historical Phase 49 frontend host regressions: 158 passed, including four-family CI reports, job management, collection,
+  recovery handoff and rehearsal receipt review, Audit and activation; separate
+  from Python coverage and actual browser tests
+- Phase 30 browser checkpoint: real Edge file selection, independent binding,
+  lifecycle and policy PASS/FAIL, explicit warning retention, forbidden-XML
+  rejection and unchanged canceled-preview state pass. Shared-policy reuse
+  initially failed, then passed after schema v9 migration; four new migration
+  tests prove retained-row preservation and transactional rollback.
+- Phase 29 browser checkpoint: isolated 28-event fixture returned 25 + 3
+  events, exact candidate filter returned one, nonexistent ID returned zero,
+  refresh/back preserved filters, and keyboard toggled event details
 - Dashboard browser checkpoint: Microsoft Edge and Chrome keyboard creation/
   read, modal Tab containment/Escape/focus return, 129-record six-page
   traversal, and 409/413/422/429/500 recovery PASS; Chrome service-restart
@@ -511,11 +958,11 @@ validation.
 - committed JSON Schema, direct API OpenAPI, and Dashboard BFF OpenAPI drift
   checks: PASS
 - project/policy/candidate/transition example documents: VALID
-- forty-one canonical versioned document Schemas plus Benchmark, Analog
+- 54 canonical versioned document Schemas plus Benchmark, Analog
   Validation, and MSP430 validation-report artifact Schemas: drift-checked and
   parsed
 - complete sdist manifest and ForgeGate/sample-plugin wheel builds: PASS
-- clean-wheel MSP430 report collection, Dashboard 18-operation OpenAPI export,
+- clean-wheel MSP430 report collection, Dashboard OpenAPI export (28 paths, 30 operations),
   installed-package workflow, optional `pyserial` install, and uninstall: PASS
 - Windows sandbox focus: 20 passed across probe failure isolation, client/server
   identity, rootless/local/WSL requirements, command controls, strict verifier

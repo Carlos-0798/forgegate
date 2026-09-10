@@ -1,0 +1,122 @@
+{
+  "additionalProperties": false,
+  "properties": {
+    "archived_job_limit": {
+      "const": 1000,
+      "default": 1000,
+      "title": "Archived Job Limit",
+      "type": "integer"
+    },
+    "archived_job_slots_available": {
+      "maximum": 1000,
+      "minimum": 0,
+      "title": "Archived Job Slots Available",
+      "type": "integer"
+    },
+    "archived_jobs": {
+      "maximum": 1000,
+      "minimum": 0,
+      "title": "Archived Jobs",
+      "type": "integer"
+    },
+    "archiving_enabled": {
+      "title": "Archiving Enabled",
+      "type": "boolean"
+    },
+    "current_job_limit": {
+      "const": 100,
+      "default": 100,
+      "title": "Current Job Limit",
+      "type": "integer"
+    },
+    "current_job_slots_available": {
+      "maximum": 100,
+      "minimum": 0,
+      "title": "Current Job Slots Available",
+      "type": "integer"
+    },
+    "current_jobs": {
+      "maximum": 100,
+      "minimum": 0,
+      "title": "Current Jobs",
+      "type": "integer"
+    },
+    "dependency_availability": {
+      "const": "NOT_CHECKED",
+      "default": "NOT_CHECKED",
+      "title": "Dependency Availability",
+      "type": "string"
+    },
+    "external_backup_dependencies": {
+      "items": {
+        "type": "string"
+      },
+      "maxItems": 1000,
+      "title": "External Backup Dependencies",
+      "type": "array"
+    },
+    "live_result_bytes": {
+      "maximum": 33554432,
+      "minimum": 0,
+      "title": "Live Result Bytes",
+      "type": "integer"
+    },
+    "live_result_limit_bytes": {
+      "const": 33554432,
+      "default": 33554432,
+      "title": "Live Result Limit Bytes",
+      "type": "integer"
+    },
+    "pending_input_bytes": {
+      "maximum": 16777216,
+      "minimum": 0,
+      "title": "Pending Input Bytes",
+      "type": "integer"
+    },
+    "pending_input_limit_bytes": {
+      "const": 16777216,
+      "default": 16777216,
+      "title": "Pending Input Limit Bytes",
+      "type": "integer"
+    },
+    "physical_database_size": {
+      "const": "NOT_REPORTED",
+      "default": "NOT_REPORTED",
+      "title": "Physical Database Size",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "forgegate.job-capacity.v1",
+      "default": "forgegate.job-capacity.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "scope": {
+      "const": "store",
+      "default": "store",
+      "title": "Scope",
+      "type": "string"
+    },
+    "store_version": {
+      "enum": [
+        3,
+        4
+      ],
+      "title": "Store Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "store_version",
+    "archiving_enabled",
+    "current_jobs",
+    "current_job_slots_available",
+    "archived_jobs",
+    "archived_job_slots_available",
+    "pending_input_bytes",
+    "live_result_bytes",
+    "external_backup_dependencies"
+  ],
+  "title": "JobCapacity",
+  "type": "object"
+}

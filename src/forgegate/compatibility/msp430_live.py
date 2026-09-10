@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib
+import math
 import re
 import threading
 import time
@@ -189,6 +190,7 @@ class Msp430SerialMonitor:
         self._monotonic = monotonic
         self._utc_now = utc_now or (lambda: datetime.now(UTC))
         self._lock = threading.Lock()
+        self._lifecycle_lock = threading.Lock()
         self._stop_event = threading.Event()
         self._thread: threading.Thread | None = None
         self._connection: Literal["CONNECTING", "CONNECTED", "DISCONNECTED", "ERROR"] = "CONNECTING"
@@ -208,32 +210,53 @@ class Msp430SerialMonitor:
         return "READ_ONLY_TELEMETRY"
 
     def start(self) -> None:
-        with self._lock:
-            if self._thread is not None and self._thread.is_alive():
-                return
-            self._stop_event.clear()
-            self._connection = "CONNECTING"
-            self._detail_code = "SERIAL_CONNECTING"
-            self._detail_message = "Waiting to open the configured read-only serial endpoint."
-            self._thread = threading.Thread(
-                target=self._run,
-                name="forgegate-msp430-read-only",
-                daemon=True,
-            )
-            thread = self._thread
-        thread.start()
+        # Serialize lifecycle changes separately from the lock needed by the reader.
+        with self._lifecycle_lock:
+            with self._lock:
+                if self._thread is not None and self._thread.is_alive():
+                    if self._stop_event.is_set():
+                        raise Msp430MonitorError("MONITOR_STOP_INCOMPLETE")
+                    return
+                self._stop_event.clear()
+                self._connection = "CONNECTING"
+                self._detail_code = "SERIAL_CONNECTING"
+                self._detail_message = "Waiting to open the configured read-only serial endpoint."
+                self._thread = threading.Thread(
+                    target=self._run,
+                    name="forgegate-msp430-read-only",
+                    daemon=True,
+                )
+                thread = self._thread
+            try:
+                thread.start()
+            except Exception as exc:
+                with self._lock:
+                    self._thread = None
+                    self._connection = "ERROR"
+                    self._detail_code = "MONITOR_START_FAILED"
+                    self._detail_message = "The read-only serial monitor could not start."
+                raise Msp430MonitorError("MONITOR_START_FAILED") from exc
 
     def stop(self, timeout: float = 3.0) -> None:
-        self._stop_event.set()
-        with self._lock:
-            thread = self._thread
-        if thread is not None:
-            thread.join(timeout)
-        with self._lock:
-            self._thread = None
-            self._connection = "DISCONNECTED"
-            self._detail_code = "MONITOR_STOPPED"
-            self._detail_message = "The read-only serial monitor is stopped."
+        if not math.isfinite(timeout) or timeout < 0:
+            raise ValueError("monitor stop timeout must be finite and nonnegative")
+        with self._lifecycle_lock:
+            self._stop_event.set()
+            with self._lock:
+                thread = self._thread
+            if thread is not None:
+                thread.join(timeout)
+                if thread.is_alive():
+                    with self._lock:
+                        self._connection = "ERROR"
+                        self._detail_code = "MONITOR_STOP_TIMEOUT"
+                        self._detail_message = "The serial reader has not yet confirmed stopping."
+                    raise Msp430MonitorError("MONITOR_STOP_TIMEOUT")
+            with self._lock:
+                self._thread = None
+                self._connection = "DISCONNECTED"
+                self._detail_code = "MONITOR_STOPPED"
+                self._detail_message = "The read-only serial monitor is stopped."
 
     def snapshot(self) -> LiveStatusPage:
         now_utc = self._utc_now()
@@ -247,16 +270,25 @@ class Msp430SerialMonitor:
             heartbeat: Literal["NOT_OBSERVED", "NORMAL", "STALE", "INVALID"]
             detail_code = self._detail_code
             detail_message = self._detail_message
+            lifecycle_detail = detail_code in {
+                "MONITOR_STOPPED",
+                "MONITOR_STOP_TIMEOUT",
+                "MONITOR_START_FAILED",
+            }
             if self._last_frame_invalid:
                 heartbeat = "INVALID"
-                detail_code = "PROTOCOL_ERROR"
-                detail_message = "The latest TEL frame failed the frozen UART v1 contract."
+                if not lifecycle_detail:
+                    detail_code = "PROTOCOL_ERROR"
+                    detail_message = "The latest TEL frame failed the frozen UART v1 contract."
             elif age is None:
                 heartbeat = "NOT_OBSERVED"
             elif age > self._stale_after_seconds:
                 heartbeat = "STALE"
-                detail_code = "TELEMETRY_STALE"
-                detail_message = "No valid TEL frame arrived within the configured stale threshold."
+                if not lifecycle_detail:
+                    detail_code = "TELEMETRY_STALE"
+                    detail_message = (
+                        "No valid TEL frame arrived within the configured stale threshold."
+                    )
             else:
                 heartbeat = "NORMAL"
                 if self._connection == "CONNECTED":
@@ -296,7 +328,10 @@ class Msp430SerialMonitor:
     def _run(self) -> None:
         while not self._stop_event.is_set():
             try:
-                if not self._port_present(self._port):
+                present = self._port_present(self._port)
+                if self._stop_event.is_set():
+                    return
+                if not present:
                     self._set_connection(
                         "DISCONNECTED",
                         "SERIAL_NOT_PRESENT",
@@ -306,6 +341,8 @@ class Msp430SerialMonitor:
                     continue
                 handle = self._serial_factory(self._port)
                 try:
+                    if self._stop_event.is_set():
+                        return
                     handle.open()
                     with self._lock:
                         self._successful_connections += 1
@@ -336,6 +373,8 @@ class Msp430SerialMonitor:
     def _read_connected(self, handle: SerialHandle) -> None:
         while not self._stop_event.is_set():
             line = handle.read_until(b"\n", MSP430_UART_MAX_LINE_BYTES + 1)
+            if self._stop_event.is_set():
+                return
             if not line:
                 continue
             self._process_line(line)
@@ -371,6 +410,8 @@ class Msp430SerialMonitor:
         message: str,
     ) -> None:
         with self._lock:
+            if self._stop_event.is_set():
+                return
             self._connection = state
             self._detail_code = code
             self._detail_message = message

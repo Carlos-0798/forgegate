@@ -5,6 +5,7 @@ import os
 import stat
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Protocol
 
 from forgegate.domain.models import ArtifactReference
 
@@ -40,6 +41,12 @@ class ArtifactChangedError(ArtifactError):
 class RegisteredArtifact:
     reference: ArtifactReference
     content: bytes
+
+
+class ArtifactSource(Protocol):
+    """An exact-byte source; implementations must not invent artifact identity."""
+
+    def register(self, source_path: str | Path, *, media_type: str) -> RegisteredArtifact: ...
 
 
 class ArtifactRegistry:

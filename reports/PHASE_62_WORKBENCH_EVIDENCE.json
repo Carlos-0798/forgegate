@@ -1,0 +1,308 @@
+{
+  "format": "forgegate.phase62-workbench-acceptance.v1",
+  "recorded_at": "2026-09-09T07:35:37.705037+00:00",
+  "runtime_source_commit": "64b817b53e35c42d58ea1c545a0bf1eab5900fc1",
+  "build": {
+    "construction": "wheel_built_from_generated_sdist_in_fresh_directory",
+    "format": "forgegate.windows-delivery-build.v1",
+    "hardware_access": "NOT_PERFORMED",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "product_version": "0.1.0a1",
+    "publication": "NOT_PERFORMED",
+    "python": "3.12.10",
+    "sdist": {
+      "filename": "forgegate-0.1.0a1.tar.gz",
+      "sha256": "5ba3bff2fd6e6ba366b76db542bdae6b71c170a280fc8bfc98eaf82ce59ff0cd",
+      "size_bytes": 6669605
+    },
+    "source_commit": "64b817b53e35c42d58ea1c545a0bf1eab5900fc1",
+    "source_state": "CLEAN_COMMIT",
+    "wheel": {
+      "dashboard_asset_count": 5,
+      "filename": "forgegate-0.1.0a1-py3-none-any.whl",
+      "sha256": "85954723e44979c439618c0c48dee8f65ff96616bea36b3842575c72fc29aada",
+      "size_bytes": 363050,
+      "wheel_member_count": 116
+    }
+  },
+  "installed_from_wheel_outside_repository": true,
+  "browser": "Codex in-app browser on Windows",
+  "fixtures": "SYNTHETIC / declared / unsigned_local",
+  "cases": [
+    {
+      "candidate_id": "cand-516e9cbe8cd0642aaab8534c",
+      "version": "synthetic-browser-pass",
+      "revision": 4,
+      "evidence": {
+        "total": 2,
+        "passed": 2,
+        "failures": 0,
+        "errors": 0,
+        "skipped": 0,
+        "duration_seconds": 0.02
+      },
+      "rule_results": [
+        {
+          "rule_id": "tests-executed",
+          "claim": "tests.required-pass",
+          "decision": "PASS",
+          "mandatory": true,
+          "evidence_kind": "test.summary",
+          "aggregation": "value",
+          "operator": "greater_than",
+          "expected": 0,
+          "actual": 2,
+          "evidence_ids": [
+            "test-summary-8abf0ee214b5398b"
+          ],
+          "reason_code": "RULE_SATISFIED",
+          "explanation": "Eligible evidence satisfies the policy expression.",
+          "remediation_hint": null
+        },
+        {
+          "rule_id": "tests-pass",
+          "claim": "tests.required-pass",
+          "decision": "PASS",
+          "mandatory": true,
+          "evidence_kind": "test.summary",
+          "aggregation": "value",
+          "operator": "equals",
+          "expected": 0,
+          "actual": 0,
+          "evidence_ids": [
+            "test-summary-8abf0ee214b5398b"
+          ],
+          "reason_code": "RULE_SATISFIED",
+          "explanation": "Eligible evidence satisfies the policy expression.",
+          "remediation_hint": null
+        },
+        {
+          "rule_id": "tests-error-free",
+          "claim": "tests.required-pass",
+          "decision": "PASS",
+          "mandatory": true,
+          "evidence_kind": "test.summary",
+          "aggregation": "value",
+          "operator": "equals",
+          "expected": 0,
+          "actual": 0,
+          "evidence_ids": [
+            "test-summary-8abf0ee214b5398b"
+          ],
+          "reason_code": "RULE_SATISFIED",
+          "explanation": "Eligible evidence satisfies the policy expression.",
+          "remediation_hint": null
+        }
+      ],
+      "browser_download": {
+        "filename": "assurance-7092fee4738e3b506903419d4c771daf5d08e97c9a0eb8cef9b814c9f8584cd3.zip",
+        "bytes": 18355,
+        "sha256": "1f9b2595566d2a69eed7a1b9b24df33cd36853a88a17fb5e219d54f159ec6649"
+      },
+      "independent_verification": {
+        "assurance": "unsigned_local",
+        "bundle_id": "sha256:7092fee4738e3b506903419d4c771daf5d08e97c9a0eb8cef9b814c9f8584cd3",
+        "candidate_id": "cand-516e9cbe8cd0642aaab8534c",
+        "decision": "PASS",
+        "source_artifact_bytes": "not_embedded",
+        "status": "VALID"
+      },
+      "verifier_exit": 0
+    },
+    {
+      "candidate_id": "cand-a278b271acfdc7e74fffdbfb",
+      "version": "synthetic-browser-fail",
+      "revision": 4,
+      "evidence": {
+        "total": 2,
+        "passed": 1,
+        "failures": 1,
+        "errors": 0,
+        "skipped": 0,
+        "duration_seconds": 0.02
+      },
+      "rule_results": [
+        {
+          "rule_id": "tests-executed",
+          "claim": "tests.required-pass",
+          "decision": "PASS",
+          "mandatory": true,
+          "evidence_kind": "test.summary",
+          "aggregation": "value",
+          "operator": "greater_than",
+          "expected": 0,
+          "actual": 1,
+          "evidence_ids": [
+            "test-summary-f67603278d6da2c9"
+          ],
+          "reason_code": "RULE_SATISFIED",
+          "explanation": "Eligible evidence satisfies the policy expression.",
+          "remediation_hint": null
+        },
+        {
+          "rule_id": "tests-pass",
+          "claim": "tests.required-pass",
+          "decision": "FAIL",
+          "mandatory": true,
+          "evidence_kind": "test.summary",
+          "aggregation": "value",
+          "operator": "equals",
+          "expected": 0,
+          "actual": 1,
+          "evidence_ids": [
+            "test-summary-f67603278d6da2c9"
+          ],
+          "reason_code": "RULE_NOT_SATISFIED",
+          "explanation": "Eligible evidence does not satisfy the policy expression.",
+          "remediation_hint": "Provide evidence that satisfies equals."
+        },
+        {
+          "rule_id": "tests-error-free",
+          "claim": "tests.required-pass",
+          "decision": "PASS",
+          "mandatory": true,
+          "evidence_kind": "test.summary",
+          "aggregation": "value",
+          "operator": "equals",
+          "expected": 0,
+          "actual": 0,
+          "evidence_ids": [
+            "test-summary-f67603278d6da2c9"
+          ],
+          "reason_code": "RULE_SATISFIED",
+          "explanation": "Eligible evidence satisfies the policy expression.",
+          "remediation_hint": null
+        }
+      ],
+      "browser_download": {
+        "filename": "assurance-9057a780447d23691eefb3e24c97619e04438d99ea73ce83bb246464dc3eb3ba.zip",
+        "bytes": 18410,
+        "sha256": "94e7dd072576789c940cd97630fea6399ef9031ee26bf8b089847f2a2ba8875b"
+      },
+      "independent_verification": {
+        "assurance": "unsigned_local",
+        "bundle_id": "sha256:9057a780447d23691eefb3e24c97619e04438d99ea73ce83bb246464dc3eb3ba",
+        "candidate_id": "cand-a278b271acfdc7e74fffdbfb",
+        "decision": "FAIL",
+        "source_artifact_bytes": "not_embedded",
+        "status": "VALID"
+      },
+      "verifier_exit": 0
+    }
+  ],
+  "retained_avs": {
+    "format": "forgegate.phase62-retained-avs-compatibility.v1",
+    "status": "PASS",
+    "installed_isolated": true,
+    "installed_runtime_matches_delivery_wheel": true,
+    "wheel_runtime_members_compared": 111,
+    "wheel_sha256": "85954723e44979c439618c0c48dee8f65ff96616bea36b3842575c72fc29aada",
+    "archive_sha256": "961e6f953b7a7497d1f0a289c9d1ba884cfc54bb299553a130f47099b223ce8e",
+    "original_archive_unchanged": true,
+    "command_exit_code": 0,
+    "verification": {
+      "schema_version": "forgegate.evidence-replay-verification.v1",
+      "status": "VALID",
+      "replay_id": "sha256:868cc463c68993fc68e1c3c29af4c5326ffb0dbbb10d94e5bebc07fb96c8becf",
+      "bundle_id": "sha256:e7fd127642e8c88a79207af4f6cfe765f04a2657c2795b4c510c05fd44c73d1a",
+      "candidate_commit": "bf8c4c6f59ba9063524aea7db01df87d35170483",
+      "decision": "FAIL",
+      "collections_replayed": 4,
+      "evidence_records": 130,
+      "source_files": 8,
+      "producer_authentication": "NOT_PERFORMED",
+      "hardware_access": "NOT_PERFORMED"
+    },
+    "verification_exactly_matches_phase56": true,
+    "rule_results_exact_match": 12,
+    "passing_rules": 10,
+    "failing_rules": 2,
+    "upstream_execution": "NOT_PERFORMED",
+    "hardware_access": "NOT_PERFORMED"
+  },
+  "hardware_access": "NOT_PERFORMED",
+  "github_sync": "NOT_PERFORMED",
+  "independent_human_acceptance": "NOT_PERFORMED",
+  "human_efficiency_measurement": "NOT_PERFORMED",
+  "verification_followup_commit": "deb6845",
+  "gates": {
+    "development": "PASS",
+    "python_passed": 1466,
+    "python_symlink_skipped": 3,
+    "coverage_percent": 95.82,
+    "unchanged_coverage_threshold": 95,
+    "frontend_tests_passed": 264,
+    "frontend_typecheck": "PASS",
+    "interaction_smoke_passed": 33,
+    "release_smoke": "PASS",
+    "schema_and_openapi": "PASS"
+  },
+  "browser_checks": {
+    "scope": "Actual agent-driven visible UI, not independent human acceptance",
+    "overview_create_assess_pass": "PASS",
+    "candidate_create_assess_fail": "PASS",
+    "fail_filter_loaded_count": [
+      1,
+      3
+    ],
+    "unmatched_search_loaded_count": [
+      0,
+      3
+    ],
+    "clear_filters_loaded_count": [
+      3,
+      3
+    ],
+    "final_overview_counts": {
+      "loaded": 4,
+      "needs_investigation": 2,
+      "in_progress": 0,
+      "policy_passed": 2
+    },
+    "responsive_widths_px": [
+      390,
+      768
+    ],
+    "document_horizontal_overflow": false,
+    "console_warnings_or_errors": 0,
+    "refresh_retained_outcomes": true
+  },
+  "screenshots": [
+    {
+      "path": "docs/assets/phase62/assessment-fail.jpg",
+      "sha256": "628846dd8eb64ba3167827a9083d4f552119ea0387c37d2074bfc0997bcb6a9d",
+      "bytes": 88317,
+      "media_type": "image/jpeg"
+    },
+    {
+      "path": "docs/assets/phase62/assessment-pass.jpg",
+      "sha256": "f8e7ef951fb79d386ada7d446e50172eee6b233d2c5eaed3a2a02bad38d8b687",
+      "bytes": 90916,
+      "media_type": "image/jpeg"
+    },
+    {
+      "path": "docs/assets/phase62/candidate-filter.jpg",
+      "sha256": "b316562da8fa4ccd756d79683544f8b6bb1d4aa038de6a670d82e7a820219478",
+      "bytes": 67017,
+      "media_type": "image/jpeg"
+    },
+    {
+      "path": "docs/assets/phase62/decision-fail.jpg",
+      "sha256": "bcb1c7675a9a5a56a86c869bf892c704a484a2c5d8cd9899fc68f8d3787fd101",
+      "bytes": 155571,
+      "media_type": "image/jpeg"
+    },
+    {
+      "path": "docs/assets/phase62/workbench-narrow.jpg",
+      "sha256": "57f86dc96394f175900e8f7d66f93a346af9434b5eaff08a333967cae3e74a3f",
+      "bytes": 48934,
+      "media_type": "image/jpeg"
+    },
+    {
+      "path": "docs/assets/phase62/workbench.jpg",
+      "sha256": "e4777c4cb2088cfd04ea29b5ff4111c60264f44b5578dd7519c6f1b4176365a0",
+      "bytes": 167916,
+      "media_type": "image/jpeg"
+    }
+  ]
+}

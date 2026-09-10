@@ -1,0 +1,152 @@
+{
+  "$defs": {
+    "ArchiveDependencyCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "backup_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Backup Sha256",
+          "type": "string"
+        },
+        "error_code": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z][A-Z0-9_]{0,79}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error Code"
+        },
+        "job_ids": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "minItems": 1,
+          "title": "Job Ids",
+          "type": "array"
+        },
+        "jobs_without_result": {
+          "maximum": 1000,
+          "minimum": 0,
+          "title": "Jobs Without Result",
+          "type": "integer"
+        },
+        "result_payloads_verified": {
+          "maximum": 1000,
+          "minimum": 0,
+          "title": "Result Payloads Verified",
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "VERIFIED",
+            "NOT_SUPPLIED",
+            "FAILED"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "backup_sha256",
+        "job_ids",
+        "status",
+        "result_payloads_verified",
+        "jobs_without_result"
+      ],
+      "title": "ArchiveDependencyCheck",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "archived_job_count": {
+      "maximum": 1000,
+      "minimum": 0,
+      "title": "Archived Job Count",
+      "type": "integer"
+    },
+    "availability": {
+      "const": "observed_during_check_only",
+      "default": "observed_during_check_only",
+      "title": "Availability",
+      "type": "string"
+    },
+    "backup_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Backup Sha256",
+      "type": "string"
+    },
+    "checked_at": {
+      "format": "date-time",
+      "title": "Checked At",
+      "type": "string"
+    },
+    "dependencies": {
+      "items": {
+        "$ref": "#/$defs/ArchiveDependencyCheck"
+      },
+      "maxItems": 1000,
+      "title": "Dependencies",
+      "type": "array"
+    },
+    "external_identity_and_artifact_files": {
+      "const": "NOT_CHECKED",
+      "default": "NOT_CHECKED",
+      "title": "External Identity And Artifact Files",
+      "type": "string"
+    },
+    "manifest_fingerprint": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Manifest Fingerprint",
+      "type": "string"
+    },
+    "producer_authenticity": {
+      "const": "NOT_VERIFIED",
+      "default": "NOT_VERIFIED",
+      "title": "Producer Authenticity",
+      "type": "string"
+    },
+    "restore": {
+      "const": "NOT_PERFORMED",
+      "default": "NOT_PERFORMED",
+      "title": "Restore",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "forgegate.workspace-recovery-readiness.v1",
+      "default": "forgegate.workspace-recovery-readiness.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "scope": {
+      "const": "snapshot_and_exact_archived_job_payloads",
+      "default": "snapshot_and_exact_archived_job_payloads",
+      "title": "Scope",
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "READY",
+        "INCOMPLETE"
+      ],
+      "title": "Status",
+      "type": "string"
+    }
+  },
+  "required": [
+    "backup_sha256",
+    "manifest_fingerprint",
+    "checked_at",
+    "status",
+    "archived_job_count",
+    "dependencies"
+  ],
+  "title": "WorkspaceRecoveryReadiness",
+  "type": "object"
+}

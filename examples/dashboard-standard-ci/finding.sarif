@@ -1,0 +1,27 @@
+{
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "SyntheticScanner",
+          "version": "1.0"
+        }
+      },
+      "invocations": [
+        {
+          "executionSuccessful": true
+        }
+      ],
+      "results": [
+        {
+          "ruleId": "DEMO001",
+          "level": "error",
+          "message": {
+            "text": "Synthetic finding, not a detected production vulnerability."
+          }
+        }
+      ]
+    }
+  ]
+}

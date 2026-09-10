@@ -15,14 +15,25 @@ from forgegate.dashboard.models import (
     DashboardPrincipal,
     DashboardSessionResponse,
 )
-from forgegate.dashboard.routes import (
-    DASHBOARD_ACTIVATION_COOKIE,
-    DASHBOARD_CSP,
-    DASHBOARD_CSRF_HEADER,
-    DASHBOARD_SESSION_COOKIE,
-    install_dashboard_routes,
-)
 from forgegate.dashboard.sessions import DashboardSessionManager
+
+_ROUTE_EXPORTS = {
+    "DASHBOARD_ACTIVATION_COOKIE",
+    "DASHBOARD_CSP",
+    "DASHBOARD_CSRF_HEADER",
+    "DASHBOARD_SESSION_COOKIE",
+    "install_dashboard_routes",
+}
+
+
+def __getattr__(name: str) -> object:
+    """Keep route exports public without importing the application graph eagerly."""
+    if name not in _ROUTE_EXPORTS:
+        raise AttributeError(name)
+    from forgegate.dashboard import routes
+
+    return getattr(routes, name)
+
 
 __all__ = [
     "DASHBOARD_ACTIVATION_COOKIE",

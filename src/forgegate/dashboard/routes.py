@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import base64
+import hashlib
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Annotated
@@ -39,8 +41,17 @@ from forgegate.candidates import (
     CandidateTransitionResult,
     ReleaseCandidatePage,
 )
+from forgegate.candidates.models import CANDIDATE_ID_PATTERN
 from forgegate.candidates.store import STORE_SCHEMA_VERSION
 from forgegate.dashboard.assets import validate_dashboard_assets
+from forgegate.dashboard.collection import (
+    DashboardCollectionPreview,
+    DashboardCollectionPreviewRequest,
+    DashboardJUnitPreview,
+    DashboardJUnitPreviewRequest,
+    preview_collection,
+    preview_junit,
+)
 from forgegate.dashboard.models import (
     DashboardActivationCompleted,
     DashboardActivationStart,
@@ -49,12 +60,28 @@ from forgegate.dashboard.models import (
     DashboardCandidateAssuranceReview,
     DashboardLogoutResponse,
     DashboardOverview,
+    DashboardPolicyChoice,
+    DashboardPolicyChoices,
     DashboardPrincipal,
+    DashboardRecoveryRehearsalReviewRequest,
+    DashboardRecoveryReviewRequest,
+    DashboardReplayExportRequest,
     DashboardSessionResponse,
 )
 from forgegate.dashboard.sessions import DashboardSessionManager
+from forgegate.domain.models import SLUG_PATTERN
+from forgegate.evidence_replay import EvidenceReplayError, render_evidence_replay
 from forgegate.live_status import DisabledLiveStatusProvider, LiveStatusPage, LiveStatusProvider
+from forgegate.monitor_presets import (
+    MonitorControlView,
+    MonitorPresetController,
+    MonitorPresetError,
+    MonitorStartRequest,
+    MonitorStopRequest,
+)
 from forgegate.projects import RegisteredProjectPage
+from forgegate.recovery_models import RecoveryReadinessHandoff, build_recovery_handoff
+from forgegate.recovery_rehearsal import RecoveryRehearsalReview, build_rehearsal_review
 
 DASHBOARD_SESSION_COOKIE = "forgegate_dashboard"
 DASHBOARD_ACTIVATION_COOKIE = "forgegate_dashboard_activation"
@@ -82,9 +109,11 @@ def install_dashboard_routes(
     session_manager: DashboardSessionManager | None = None,
     static_root: Path | None = None,
     live_status_provider: LiveStatusProvider | None = None,
+    monitor_controller: MonitorPresetController | None = None,
+    job_store_path: Path | None = None,
 ) -> DashboardSessionManager:
     manager = session_manager or DashboardSessionManager(authenticator)
-    status_provider = live_status_provider or DisabledLiveStatusProvider()
+    status_provider = monitor_controller or live_status_provider or DisabledLiveStatusProvider()
     assets_root = static_root or Path(__file__).resolve().parent / "static"
     index_path = assets_root / "index.html"
     if not index_path.is_file():
@@ -275,6 +304,64 @@ def install_dashboard_routes(
             ),
         )
 
+    @app.post(
+        "/app/api/recovery-review",
+        response_model=RecoveryReadinessHandoff,
+        operation_id="reviewDashboardRecoveryReadiness",
+        include_in_schema=False,
+    )
+    def review_dashboard_recovery_readiness(
+        request: Request,
+        command: DashboardRecoveryReviewRequest,
+        csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> RecoveryReadinessHandoff:
+        _require_same_origin(request, required=True)
+        stored, principal = manager.session(request.cookies.get(DASHBOARD_SESSION_COOKIE))
+        request.state.authenticated_principal = principal
+        manager.require_csrf(stored, csrf_token)
+        if principal.role.value != "operator":
+            raise ApiAuthenticationError(
+                "API_ROLE_FORBIDDEN",
+                "operator role required for recovery report review",
+                status_code=403,
+            )
+        try:
+            return build_recovery_handoff(command.document, command.expected_sha256)
+        except (ValueError, UnicodeError) as exc:
+            raise CandidateStoreError(
+                "DASHBOARD_RECOVERY_REPORT_INVALID",
+                "recovery readiness report failed strict validation",
+            ) from exc
+
+    @app.post(
+        "/app/api/recovery-rehearsal-review",
+        response_model=RecoveryRehearsalReview,
+        operation_id="reviewDashboardRecoveryRehearsal",
+        include_in_schema=False,
+    )
+    def review_dashboard_recovery_rehearsal(
+        request: Request,
+        command: DashboardRecoveryRehearsalReviewRequest,
+        csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> RecoveryRehearsalReview:
+        _require_same_origin(request, required=True)
+        stored, principal = manager.session(request.cookies.get(DASHBOARD_SESSION_COOKIE))
+        request.state.authenticated_principal = principal
+        manager.require_csrf(stored, csrf_token)
+        if principal.role.value != "operator":
+            raise ApiAuthenticationError(
+                "API_ROLE_FORBIDDEN",
+                "operator role required for recovery rehearsal review",
+                status_code=403,
+            )
+        try:
+            return build_rehearsal_review(command.document, command.expected_sha256)
+        except (ValueError, UnicodeError) as exc:
+            raise CandidateStoreError(
+                "DASHBOARD_RECOVERY_REHEARSAL_INVALID",
+                "recovery rehearsal receipt failed strict validation",
+            ) from exc
+
     @app.get(
         "/app/api/live-status",
         response_model=LiveStatusPage,
@@ -283,8 +370,72 @@ def install_dashboard_routes(
     )
     def dashboard_live_status(request: Request) -> LiveStatusPage:
         _require_same_origin(request, required=False)
-        _dashboard_principal(manager, request)
+        principal = _dashboard_principal(manager, request)
+        if monitor_controller is not None:
+            authenticator.require_project(principal, monitor_controller.catalog.project_id)
         return status_provider.snapshot()
+
+    @app.get(
+        "/app/api/monitor-presets",
+        response_model=MonitorControlView | None,
+        operation_id="getDashboardMonitorPresets",
+        include_in_schema=False,
+    )
+    def dashboard_monitor_presets(request: Request) -> MonitorControlView | None:
+        _require_same_origin(request, required=False)
+        principal = _dashboard_principal(manager, request)
+        if monitor_controller is None:
+            return None
+        authenticator.require_project(principal, monitor_controller.catalog.project_id)
+        return monitor_controller.view()
+
+    def monitor_write_controller(
+        request: Request, csrf_token: str | None
+    ) -> MonitorPresetController:
+        _require_same_origin(request, required=True)
+        stored, principal = manager.session(request.cookies.get(DASHBOARD_SESSION_COOKIE))
+        request.state.authenticated_principal = principal
+        manager.require_csrf(stored, csrf_token)
+        if principal.role.value != "operator":
+            raise ApiAuthenticationError(
+                "API_ROLE_FORBIDDEN", "operator role required for monitor control", status_code=403
+            )
+        if monitor_controller is None:
+            raise MonitorPresetError(
+                "MONITOR_PRESETS_DISABLED",
+                "No monitor preset catalog is configured.",
+                status_code=503,
+            )
+        authenticator.require_project(principal, monitor_controller.catalog.project_id, write=True)
+        return monitor_controller
+
+    @app.post(
+        "/app/api/monitor-session/start",
+        response_model=MonitorControlView,
+        operation_id="startDashboardMonitor",
+        include_in_schema=False,
+    )
+    def start_dashboard_monitor(
+        request: Request,
+        command: MonitorStartRequest,
+        csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> MonitorControlView:
+        controller = monitor_write_controller(request, csrf_token)
+        return controller.start(command.preset_id, command.expected_revision)
+
+    @app.post(
+        "/app/api/monitor-session/stop",
+        response_model=MonitorControlView,
+        operation_id="stopDashboardMonitor",
+        include_in_schema=False,
+    )
+    def stop_dashboard_monitor(
+        request: Request,
+        command: MonitorStopRequest,
+        csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> MonitorControlView:
+        controller = monitor_write_controller(request, csrf_token)
+        return controller.stop(command.run_id)
 
     @app.get(
         "/app/api/projects",
@@ -396,6 +547,59 @@ def install_dashboard_routes(
         )
 
     @app.post(
+        "/app/api/candidates/{candidate_id}/junit-preview",
+        response_model=DashboardJUnitPreview,
+        operation_id="previewDashboardCandidateJUnit",
+        include_in_schema=False,
+    )
+    def preview_dashboard_candidate_junit(
+        request: Request,
+        candidate_id: Annotated[str, ApiPath(pattern=CANDIDATE_ID_PATTERN)],
+        command: DashboardJUnitPreviewRequest,
+        csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> DashboardJUnitPreview:
+        validate_preview(request, candidate_id, command, csrf_token)
+        return preview_junit(candidate_id, command)
+
+    @app.post(
+        "/app/api/candidates/{candidate_id}/collection-preview",
+        response_model=DashboardCollectionPreview,
+        operation_id="previewDashboardCandidateCollection",
+        include_in_schema=False,
+    )
+    def preview_dashboard_candidate_collection(
+        request: Request,
+        candidate_id: Annotated[str, ApiPath(pattern=CANDIDATE_ID_PATTERN)],
+        command: DashboardCollectionPreviewRequest,
+        csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> DashboardCollectionPreview:
+        validate_preview(request, candidate_id, command, csrf_token)
+        return preview_collection(candidate_id, command)
+
+    def validate_preview(
+        request: Request,
+        candidate_id: str,
+        command: DashboardJUnitPreviewRequest | DashboardCollectionPreviewRequest,
+        csrf_token: str | None,
+    ) -> None:
+        _dashboard_write_principal(
+            manager, authenticator, application, request, candidate_id, csrf_token
+        )
+        candidate = application.get_candidate(candidate_id)
+        if candidate.revision != command.expected_revision:
+            raise CandidateStoreError("STORE_REVISION_CONFLICT", "reload candidate before preview")
+        if candidate.status != "COLLECTING" or (
+            application.get_history(candidate_id).evidence_binding is not None
+        ):
+            raise CandidateStoreError(
+                "STORE_REVISION_CONFLICT", "preview requires an unbound COLLECTING candidate"
+            )
+        if candidate.commit_sha != command.reported_commit:
+            raise CandidateStoreError(
+                "STORE_REVISION_CONFLICT", "reported commit does not match the selected candidate"
+            )
+
+    @app.post(
         "/app/api/candidates/{candidate_id}/evidence",
         response_model=CandidateEvidenceBinding,
         operation_id="bindDashboardCandidateEvidence",
@@ -491,6 +695,24 @@ def install_dashboard_routes(
         return candidate
 
     @app.get(
+        "/app/api/candidates/{candidate_id}/policy-choices",
+        response_model=DashboardPolicyChoices,
+        operation_id="listDashboardCandidatePolicyChoices",
+        include_in_schema=False,
+    )
+    def get_dashboard_policy_choices(request: Request, candidate_id: str) -> DashboardPolicyChoices:
+        _require_same_origin(request, required=False)
+        principal = _dashboard_principal(manager, request)
+        candidate = application.get_candidate(candidate_id)
+        authenticator.require_project(principal, candidate.project_id, write=True)
+        materials = application.reusable_policy_materials(candidate_id)
+        return DashboardPolicyChoices(
+            candidate_id=candidate_id,
+            choices=[DashboardPolicyChoice(material=item) for item in materials[:10]],
+            truncated=len(materials) > 10,
+        )
+
+    @app.get(
         "/app/api/candidates/{candidate_id}/assurance-review",
         response_model=DashboardCandidateAssuranceReview,
         operation_id="getDashboardCandidateAssuranceReview",
@@ -536,7 +758,8 @@ def install_dashboard_routes(
                 None if assurance_bundle is None else assurance_bundle.source_artifact_bytes
             ),
             limitations=(
-                "Stored documents are validated on read; collectors are not re-run by this page.",
+                "Opening this review validates stored documents; source replay export "
+                "separately reparses selected reports.",
                 "Artifact hashes establish retained-byte integrity, not producer authenticity.",
                 (
                     "Source artifact bytes are referenced but are not embedded in this "
@@ -595,6 +818,61 @@ def install_dashboard_routes(
             },
         )
 
+    @app.post(
+        "/app/api/candidates/{candidate_id}/evidence-replay-export",
+        response_class=Response,
+        operation_id="exportDashboardEvidenceReplay",
+        include_in_schema=False,
+        responses={
+            200: {
+                "description": "Verified private source replay ZIP",
+                "content": {"application/zip": {"schema": {"type": "string", "format": "binary"}}},
+            }
+        },
+    )
+    def export_dashboard_evidence_replay(
+        request: Request,
+        candidate_id: str,
+        command: DashboardReplayExportRequest,
+        csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> Response:
+        _dashboard_write_principal(
+            manager, authenticator, application, request, candidate_id, csrf_token
+        )
+        candidate = application.get_candidate(candidate_id)
+        bundle = application.get_assurance_bundle(candidate_id)
+        if (
+            candidate.revision != command.expected_revision
+            or bundle.bundle_id != command.expected_bundle_id
+        ):
+            raise CandidateStoreError(
+                "STORE_REVISION_CONFLICT", "Reload the candidate before exporting."
+            )
+        try:
+            filename, archive = render_evidence_replay(
+                bundle,
+                {
+                    item.sha256: base64.b64decode(item.content_base64, validate=True)
+                    for item in command.files
+                },
+            )
+        except (EvidenceReplayError, ValueError) as exc:
+            raise CandidateStoreError(
+                getattr(exc, "code", "REPLAY_INVALID"),
+                "Source reports could not reproduce the retained candidate; "
+                "check the complete original selection.",
+            ) from exc
+        return Response(
+            content=archive,
+            media_type="application/zip",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "X-ForgeGate-Assurance-Bundle": bundle.bundle_id,
+                "X-ForgeGate-Replay-Archive": filename,
+                "X-ForgeGate-Archive-SHA256": hashlib.sha256(archive).hexdigest(),
+            },
+        )
+
     @app.get(
         "/app/api/audit-events",
         response_model=AuditEventPage,
@@ -603,10 +881,10 @@ def install_dashboard_routes(
     )
     def dashboard_audit_events(
         request: Request,
-        project_id: str,
+        project_id: Annotated[str, Query(pattern=SLUG_PATTERN)],
         after_sequence: Annotated[int, Query(ge=0)] = 0,
         limit: Annotated[int, Query(ge=1, le=200)] = 100,
-        candidate_id: str | None = None,
+        candidate_id: Annotated[str | None, Query(pattern=CANDIDATE_ID_PATTERN)] = None,
     ) -> AuditEventPage:
         _require_same_origin(request, required=False)
         principal = _dashboard_principal(manager, request)
@@ -620,6 +898,15 @@ def install_dashboard_routes(
             )
         )
 
+    from forgegate.dashboard.jobs import install_job_routes
+
+    install_job_routes(
+        app,
+        application=application,
+        authenticator=authenticator,
+        manager=manager,
+        store_path=job_store_path,
+    )
     app.state.dashboard_session_manager = manager
     app.state.dashboard_static_root = assets_root
     app.state.dashboard_live_status_provider = status_provider

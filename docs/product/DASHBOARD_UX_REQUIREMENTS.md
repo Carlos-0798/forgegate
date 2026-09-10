@@ -2,7 +2,8 @@
 
 ## Status and evidence boundary
 
-- Status: Phase 27 reviewed candidate workflow implemented over the Phase 24
+- Status: Phase 29 project Audit workspace over Phase 28 reviewed assurance export and activation recovery
+  implemented over the Phase 27 candidate workflow, Phase 24
   authenticated shell, Phase 25 optional live status, and Phase 26 assurance
   review; exact Edge zoom is accepted while the remaining environment-specific
   assistive checks retain their individual results
@@ -30,8 +31,9 @@ optional device status, project discovery, candidate discovery and creation,
 reviewed lifecycle transitions, local JSON evidence binding, local JSON policy
 evaluation, attestation generation, candidate detail, audit history,
 bound-evidence inspection, explainable policy results, and portable-assurance
-identity. Assurance export, plugin execution, trust-store administration, and
-file publication remain separate later gates.
+identity and reviewed portable ZIP download. Automatic collection, plugin
+execution, trust-store administration, and server-side file publication remain
+separate later gates.
 
 ## Non-goals
 
@@ -79,8 +81,9 @@ The navigation model is:
    journal, session state, and trust-store status.
 
 Items 1–7 are implemented for their stated read-only and reviewed-write slices.
-Candidate audit history is embedded in item 4; dedicated Plugins and Audit &
-security workspaces remain planned.
+Candidate audit history is embedded in item 4 and a dedicated operator-only
+Audit workspace supports project/candidate filtering, stable cursor pages and
+full recorded identities. Dedicated Plugins and Security workspaces remain planned.
 
 Navigation labels describe objects and outcomes. Mutating actions use explicit
 verbs such as **Create candidate**, **Review transition**, **Run policy
@@ -217,3 +220,14 @@ A Dashboard capability is complete only when:
 - a clean wheel serves the same static assets and API contract;
 - documentation, screenshots, and labels match the implemented behavior; and
 - every untested environment and assurance limitation remains explicit.
+
+## Bounded JUnit collection
+
+The Phase 30 form is a manual preview, not an automatic job. Its contract is
+[defined separately](../DASHBOARD_COLLECTION_CONTRACT.md). The UI must retain
+original report time, show unsigned_local / declared, distinguish collection
+status from policy decision, require explicit warning retention and another
+confirmation for immutable binding. Closing the dialog discards the preview
+without promising to cancel an already submitted server request. Missing-file
+validation and focus return were observed in Edge; upload completion is still
+an open manual gate.

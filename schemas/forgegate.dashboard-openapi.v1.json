@@ -136,6 +136,67 @@
         "title": "ApiSessionCreateRequest",
         "type": "object"
       },
+      "ArchiveDependencyCheck": {
+        "additionalProperties": false,
+        "properties": {
+          "backup_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Backup Sha256",
+            "type": "string"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z][A-Z0-9_]{0,79}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "job_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 1000,
+            "minItems": 1,
+            "title": "Job Ids",
+            "type": "array"
+          },
+          "jobs_without_result": {
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Jobs Without Result",
+            "type": "integer"
+          },
+          "result_payloads_verified": {
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Result Payloads Verified",
+            "type": "integer"
+          },
+          "status": {
+            "enum": [
+              "VERIFIED",
+              "NOT_SUPPLIED",
+              "FAILED"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "backup_sha256",
+          "job_ids",
+          "status",
+          "result_payloads_verified",
+          "jobs_without_result"
+        ],
+        "title": "ArchiveDependencyCheck",
+        "type": "object"
+      },
       "ArtifactReference": {
         "additionalProperties": false,
         "properties": {
@@ -793,6 +854,336 @@
         "title": "CollectionIssue",
         "type": "object"
       },
+      "CollectionJobEvent": {
+        "additionalProperties": false,
+        "properties": {
+          "actor": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AuditActor"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "record": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LegacyCollectionJobRecord"
+              },
+              {
+                "$ref": "#/components/schemas/CollectionJobRecord"
+              }
+            ],
+            "title": "Record"
+          }
+        },
+        "required": [
+          "record"
+        ],
+        "title": "CollectionJobEvent",
+        "type": "object"
+      },
+      "CollectionJobRecord": {
+        "additionalProperties": false,
+        "description": "Current record with visible, non-credential execution ownership and renewals.",
+        "properties": {
+          "authority": {
+            "default": "LOCAL_CLI_NOT_AUTHENTICATED",
+            "enum": [
+              "LOCAL_CLI_NOT_AUTHENTICATED",
+              "AUTHENTICATED_DASHBOARD"
+            ],
+            "title": "Authority",
+            "type": "string"
+          },
+          "candidate_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Candidate Fingerprint",
+            "type": "string"
+          },
+          "candidate_id": {
+            "pattern": "^cand-[0-9a-f]{24}$",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "candidate_write": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Candidate Write",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "enum": [
+                  "JOB_EXECUTION_FAILED",
+                  "JOB_LEASE_EXPIRED"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "execution_owner_id": {
+            "anyOf": [
+              {
+                "pattern": "^executor-[0-9a-f]{32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Execution Owner Id"
+          },
+          "job_id": {
+            "pattern": "^job-[0-9a-f]{32}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "lease_expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lease Expires At"
+          },
+          "lease_renewal_count": {
+            "default": 0,
+            "maximum": 62.0,
+            "minimum": 0.0,
+            "title": "Lease Renewal Count",
+            "type": "integer"
+          },
+          "project_id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "request_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Request Fingerprint",
+            "type": "string"
+          },
+          "result_fingerprint": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Fingerprint"
+          },
+          "revision": {
+            "default": 0,
+            "maximum": 64.0,
+            "minimum": 0.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "forgegate.collection-job.v2",
+            "default": "forgegate.collection-job.v2",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_bytes": {
+            "default": "retained_pending",
+            "enum": [
+              "retained_pending",
+              "released_logically"
+            ],
+            "title": "Source Bytes",
+            "type": "string"
+          },
+          "state": {
+            "default": "QUEUED",
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "SUCCEEDED",
+              "REVIEW_REQUIRED",
+              "REJECTED",
+              "FAILED",
+              "CANCELLED",
+              "INTERRUPTED"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "candidate_id",
+          "project_id",
+          "candidate_fingerprint",
+          "request_fingerprint",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CollectionJobRecord",
+        "type": "object"
+      },
+      "CollectionJobRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_id": {
+            "pattern": "^cand-[0-9a-f]{24}$",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "collection": {
+            "$ref": "#/components/schemas/DashboardCollectionPreviewRequest"
+          },
+          "schema_version": {
+            "const": "forgegate.collection-job-request.v1",
+            "default": "forgegate.collection-job-request.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "collection"
+        ],
+        "title": "CollectionJobRequest",
+        "type": "object"
+      },
+      "CollectionJobResult": {
+        "additionalProperties": false,
+        "properties": {
+          "assembly": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvidenceBundleAssembly"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "candidate_write": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Candidate Write",
+            "type": "string"
+          },
+          "collections": {
+            "items": {
+              "$ref": "#/components/schemas/CollectionResult"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Collections",
+            "type": "array"
+          },
+          "job_id": {
+            "pattern": "^job-[0-9a-f]{32}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "producer_authentication": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Producer Authentication",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.collection-job-result.v1",
+            "default": "forgegate.collection-job-result.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_artifact_bytes": {
+            "const": "not_embedded",
+            "default": "not_embedded",
+            "title": "Source Artifact Bytes",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "collections",
+          "assembly"
+        ],
+        "title": "CollectionJobResult",
+        "type": "object"
+      },
+      "CollectionJobReview": {
+        "additionalProperties": false,
+        "properties": {
+          "archive": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobArchiveReceipt"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/CollectionJobEvent"
+            },
+            "maxItems": 65,
+            "minItems": 1,
+            "title": "Events",
+            "type": "array"
+          },
+          "record": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LegacyCollectionJobRecord"
+              },
+              {
+                "$ref": "#/components/schemas/CollectionJobRecord"
+              }
+            ],
+            "title": "Record"
+          },
+          "result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CollectionJobResult"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "record",
+          "events",
+          "result"
+        ],
+        "title": "CollectionJobReview",
+        "type": "object"
+      },
       "CollectionReceipt": {
         "additionalProperties": false,
         "properties": {
@@ -850,6 +1241,69 @@
         ],
         "title": "CollectionReceipt",
         "type": "object"
+      },
+      "CollectionResult": {
+        "additionalProperties": false,
+        "properties": {
+          "artifacts": {
+            "items": {
+              "$ref": "#/components/schemas/ArtifactReference"
+            },
+            "title": "Artifacts",
+            "type": "array"
+          },
+          "collector_name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Collector Name",
+            "type": "string"
+          },
+          "collector_version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Collector Version",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRecord"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "rejected_records": {
+            "items": {
+              "$ref": "#/components/schemas/CollectionIssue"
+            },
+            "title": "Rejected Records",
+            "type": "array"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CollectionStatus"
+          },
+          "warnings": {
+            "items": {
+              "$ref": "#/components/schemas/CollectionIssue"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "collector_name",
+          "collector_version",
+          "status"
+        ],
+        "title": "CollectionResult",
+        "type": "object"
+      },
+      "CollectionStatus": {
+        "enum": [
+          "COMPLETE",
+          "REJECTED"
+        ],
+        "title": "CollectionStatus",
+        "type": "string"
       },
       "CollectorConfig": {
         "additionalProperties": false,
@@ -1166,6 +1620,468 @@
         "title": "DashboardCandidateAssuranceReview",
         "type": "object"
       },
+      "DashboardCollectionPreview": {
+        "additionalProperties": false,
+        "properties": {
+          "assembly": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvidenceBundleAssembly"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "assembly_json": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "readOnly": true,
+            "title": "Assembly Json"
+          },
+          "candidate_id": {
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "collection_json": {
+            "description": "Exact receipt bytes used by assembly references, including JSON numbers.",
+            "items": {
+              "type": "string"
+            },
+            "readOnly": true,
+            "title": "Collection Json",
+            "type": "array"
+          },
+          "collections": {
+            "items": {
+              "$ref": "#/components/schemas/CollectionResult"
+            },
+            "title": "Collections",
+            "type": "array"
+          },
+          "expected_revision": {
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "persistence": {
+            "const": "NOT_RETAINED",
+            "default": "NOT_RETAINED",
+            "title": "Persistence",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.dashboard-collection-preview.v1",
+            "default": "forgegate.dashboard-collection-preview.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_artifact_bytes": {
+            "const": "not_retained",
+            "default": "not_retained",
+            "title": "Source Artifact Bytes",
+            "type": "string"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "expected_revision",
+          "collections",
+          "assembly",
+          "collection_json",
+          "assembly_json"
+        ],
+        "title": "DashboardCollectionPreview",
+        "type": "object"
+      },
+      "DashboardCollectionPreviewRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "reported_commit": {
+            "pattern": "^[0-9a-fA-F]{7,64}$",
+            "title": "Reported Commit",
+            "type": "string"
+          },
+          "reports": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardReportUpload"
+            },
+            "maxItems": 4,
+            "minItems": 1,
+            "title": "Reports",
+            "type": "array"
+          },
+          "retain_warnings": {
+            "default": false,
+            "title": "Retain Warnings",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "reported_commit",
+          "reports"
+        ],
+        "title": "DashboardCollectionPreviewRequest",
+        "type": "object"
+      },
+      "DashboardJUnitPreview": {
+        "additionalProperties": false,
+        "properties": {
+          "assembly": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvidenceBundleAssembly"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "assembly_json": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Preserve fingerprint-bearing JSON numbers across a JavaScript round trip.",
+            "readOnly": true,
+            "title": "Assembly Json"
+          },
+          "candidate_id": {
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "collection": {
+            "$ref": "#/components/schemas/CollectionResult"
+          },
+          "expected_revision": {
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "persistence": {
+            "const": "NOT_RETAINED",
+            "default": "NOT_RETAINED",
+            "title": "Persistence",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.dashboard-junit-preview.v1",
+            "default": "forgegate.dashboard-junit-preview.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_artifact_bytes": {
+            "const": "not_retained",
+            "default": "not_retained",
+            "title": "Source Artifact Bytes",
+            "type": "string"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "expected_revision",
+          "collection",
+          "assembly",
+          "assembly_json"
+        ],
+        "title": "DashboardJUnitPreview",
+        "type": "object"
+      },
+      "DashboardJUnitPreviewRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "collected_at": {
+            "format": "date-time",
+            "title": "Collected At",
+            "type": "string"
+          },
+          "content_base64": {
+            "maxLength": 1398104,
+            "minLength": 4,
+            "title": "Content Base64",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "reported_commit": {
+            "pattern": "^[0-9a-fA-F]{7,64}$",
+            "title": "Reported Commit",
+            "type": "string"
+          },
+          "retain_warnings": {
+            "default": false,
+            "title": "Retain Warnings",
+            "type": "boolean"
+          },
+          "source_tool": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Source Tool",
+            "type": "string"
+          },
+          "source_version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Source Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "reported_commit",
+          "content_base64",
+          "source_tool",
+          "source_version",
+          "collected_at"
+        ],
+        "title": "DashboardJUnitPreviewRequest",
+        "type": "object"
+      },
+      "DashboardJobAssemblyCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_assembly_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Expected Assembly Id",
+            "type": "string"
+          },
+          "expected_job_revision": {
+            "maximum": 64.0,
+            "minimum": 0.0,
+            "title": "Expected Job Revision",
+            "type": "integer"
+          },
+          "expected_result_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Expected Result Fingerprint",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_job_revision",
+          "expected_result_fingerprint",
+          "expected_assembly_id"
+        ],
+        "title": "DashboardJobAssemblyCommand",
+        "type": "object"
+      },
+      "DashboardJobBindEvidenceCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "bound_at": {
+            "format": "date-time",
+            "title": "Bound At",
+            "type": "string"
+          },
+          "expected_assembly_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Expected Assembly Id",
+            "type": "string"
+          },
+          "expected_candidate_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Expected Candidate Fingerprint",
+            "type": "string"
+          },
+          "expected_candidate_revision": {
+            "minimum": 0.0,
+            "title": "Expected Candidate Revision",
+            "type": "integer"
+          },
+          "expected_job_revision": {
+            "maximum": 64.0,
+            "minimum": 0.0,
+            "title": "Expected Job Revision",
+            "type": "integer"
+          },
+          "expected_result_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Expected Result Fingerprint",
+            "type": "string"
+          }
+        },
+        "required": [
+          "expected_job_revision",
+          "expected_result_fingerprint",
+          "expected_assembly_id",
+          "expected_candidate_revision",
+          "expected_candidate_fingerprint",
+          "bound_at"
+        ],
+        "title": "DashboardJobBindEvidenceCommand",
+        "type": "object"
+      },
+      "DashboardJobCommand": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "maximum": 64.0,
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "expected_revision"
+        ],
+        "title": "DashboardJobCommand",
+        "type": "object"
+      },
+      "DashboardJobEvidenceBindingResult": {
+        "additionalProperties": false,
+        "properties": {
+          "assembly_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Assembly Fingerprint",
+            "type": "string"
+          },
+          "assembly_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Assembly Id",
+            "type": "string"
+          },
+          "binding": {
+            "$ref": "#/components/schemas/CandidateEvidenceBinding"
+          },
+          "candidate_transition": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Candidate Transition",
+            "type": "string"
+          },
+          "job_id": {
+            "pattern": "^job-[0-9a-f]{32}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "policy_decision": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Policy Decision",
+            "type": "string"
+          },
+          "result_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Result Fingerprint",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.dashboard-job-evidence-binding.v1",
+            "default": "forgegate.dashboard-job-evidence-binding.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_artifact_bytes": {
+            "const": "not_embedded",
+            "default": "not_embedded",
+            "title": "Source Artifact Bytes",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "result_fingerprint",
+          "assembly_id",
+          "assembly_fingerprint",
+          "binding"
+        ],
+        "title": "DashboardJobEvidenceBindingResult",
+        "type": "object"
+      },
+      "DashboardJobPage": {
+        "additionalProperties": false,
+        "properties": {
+          "archived_job_ids": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 25,
+            "title": "Archived Job Ids",
+            "type": "array"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "has_more": {
+            "title": "Has More",
+            "type": "boolean"
+          },
+          "jobs": {
+            "items": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/LegacyCollectionJobRecord"
+                },
+                {
+                  "$ref": "#/components/schemas/CollectionJobRecord"
+                }
+              ]
+            },
+            "title": "Jobs",
+            "type": "array"
+          },
+          "next_after_job_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next After Job Id"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "project_id": {
+            "title": "Project Id",
+            "type": "string"
+          },
+          "project_usage": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JobProjectUsage"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "enabled",
+          "project_id",
+          "jobs",
+          "next_after_job_id",
+          "has_more",
+          "observed_at",
+          "project_usage",
+          "archived_job_ids"
+        ],
+        "title": "DashboardJobPage",
+        "type": "object"
+      },
       "DashboardLogoutResponse": {
         "additionalProperties": false,
         "properties": {
@@ -1254,6 +2170,59 @@
         "title": "DashboardOverview",
         "type": "object"
       },
+      "DashboardPolicyChoice": {
+        "additionalProperties": false,
+        "properties": {
+          "material": {
+            "$ref": "#/components/schemas/PolicyMaterial"
+          },
+          "material_json": {
+            "readOnly": true,
+            "title": "Material Json",
+            "type": "string"
+          }
+        },
+        "required": [
+          "material",
+          "material_json"
+        ],
+        "title": "DashboardPolicyChoice",
+        "type": "object"
+      },
+      "DashboardPolicyChoices": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_id": {
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "choices": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardPolicyChoice"
+            },
+            "maxItems": 10,
+            "title": "Choices",
+            "type": "array"
+          },
+          "schema_version": {
+            "const": "forgegate.dashboard-policy-choices.v1",
+            "default": "forgegate.dashboard-policy-choices.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "truncated": {
+            "title": "Truncated",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "candidate_id",
+          "choices",
+          "truncated"
+        ],
+        "title": "DashboardPolicyChoices",
+        "type": "object"
+      },
       "DashboardPrincipal": {
         "additionalProperties": false,
         "properties": {
@@ -1317,6 +2286,157 @@
           "expires_at"
         ],
         "title": "DashboardPrincipal",
+        "type": "object"
+      },
+      "DashboardRecoveryRehearsalReviewRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "document": {
+            "maxLength": 1048576,
+            "minLength": 1,
+            "title": "Document",
+            "type": "string"
+          },
+          "expected_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Expected Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "document",
+          "expected_sha256"
+        ],
+        "title": "DashboardRecoveryRehearsalReviewRequest",
+        "type": "object"
+      },
+      "DashboardRecoveryReviewRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "document": {
+            "maxLength": 262144,
+            "minLength": 1,
+            "title": "Document",
+            "type": "string"
+          },
+          "expected_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Expected Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "document",
+          "expected_sha256"
+        ],
+        "title": "DashboardRecoveryReviewRequest",
+        "type": "object"
+      },
+      "DashboardReplayExportRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "acknowledge_private_sources": {
+            "const": true,
+            "title": "Acknowledge Private Sources",
+            "type": "boolean"
+          },
+          "expected_bundle_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Expected Bundle Id",
+            "type": "string"
+          },
+          "expected_revision": {
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/DashboardReplayFile"
+            },
+            "maxItems": 32,
+            "minItems": 2,
+            "title": "Files",
+            "type": "array"
+          }
+        },
+        "required": [
+          "expected_revision",
+          "expected_bundle_id",
+          "files",
+          "acknowledge_private_sources"
+        ],
+        "title": "DashboardReplayExportRequest",
+        "type": "object"
+      },
+      "DashboardReplayFile": {
+        "additionalProperties": false,
+        "properties": {
+          "content_base64": {
+            "maxLength": 1398104,
+            "minLength": 0,
+            "title": "Content Base64",
+            "type": "string"
+          },
+          "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "sha256",
+          "content_base64"
+        ],
+        "title": "DashboardReplayFile",
+        "type": "object"
+      },
+      "DashboardReportUpload": {
+        "additionalProperties": false,
+        "properties": {
+          "collected_at": {
+            "format": "date-time",
+            "title": "Collected At",
+            "type": "string"
+          },
+          "content_base64": {
+            "maxLength": 1398104,
+            "minLength": 4,
+            "title": "Content Base64",
+            "type": "string"
+          },
+          "format": {
+            "enum": [
+              "junit",
+              "coverage_xml",
+              "lcov",
+              "sarif",
+              "benchmark_json"
+            ],
+            "title": "Format",
+            "type": "string"
+          },
+          "source_tool": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Source Tool",
+            "type": "string"
+          },
+          "source_version": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Source Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "format",
+          "content_base64",
+          "source_tool",
+          "source_version",
+          "collected_at"
+        ],
+        "title": "DashboardReportUpload",
         "type": "object"
       },
       "DashboardSessionResponse": {
@@ -1669,6 +2789,426 @@
         "title": "IssueSeverity",
         "type": "string"
       },
+      "JobArchivePlan": {
+        "additionalProperties": false,
+        "properties": {
+          "assembly_id": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assembly Id"
+          },
+          "authority": {
+            "const": "LOCAL_CLI_NOT_AUTHENTICATED",
+            "default": "LOCAL_CLI_NOT_AUTHENTICATED",
+            "title": "Authority",
+            "type": "string"
+          },
+          "backup_manifest_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Backup Manifest Fingerprint",
+            "type": "string"
+          },
+          "backup_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Backup Sha256",
+            "type": "string"
+          },
+          "candidate_id": {
+            "pattern": "^cand-[0-9a-f]{24}$",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "events_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Events Fingerprint",
+            "type": "string"
+          },
+          "expected_candidate_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Expected Candidate Fingerprint",
+            "type": "string"
+          },
+          "expected_revision": {
+            "maximum": 64.0,
+            "minimum": 1.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "job_id": {
+            "pattern": "^job-[0-9a-f]{32}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "planned_at": {
+            "format": "date-time",
+            "title": "Planned At",
+            "type": "string"
+          },
+          "project_id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "record_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Record Fingerprint",
+            "type": "string"
+          },
+          "result_fingerprint": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Fingerprint"
+          },
+          "result_size_bytes": {
+            "maximum": 4194304.0,
+            "minimum": 0.0,
+            "title": "Result Size Bytes",
+            "type": "integer"
+          },
+          "retained_row_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Retained Row Fingerprint",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.job-archive-plan.v1",
+            "default": "forgegate.job-archive-plan.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_row_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Source Row Fingerprint",
+            "type": "string"
+          },
+          "terminal_before": {
+            "format": "date-time",
+            "title": "Terminal Before",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "candidate_id",
+          "project_id",
+          "expected_revision",
+          "record_fingerprint",
+          "events_fingerprint",
+          "source_row_fingerprint",
+          "retained_row_fingerprint",
+          "result_fingerprint",
+          "assembly_id",
+          "result_size_bytes",
+          "backup_sha256",
+          "backup_manifest_fingerprint",
+          "expected_candidate_fingerprint",
+          "terminal_before",
+          "planned_at"
+        ],
+        "title": "JobArchivePlan",
+        "type": "object"
+      },
+      "JobArchiveReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "archived_at": {
+            "format": "date-time",
+            "title": "Archived At",
+            "type": "string"
+          },
+          "audit_and_idempotency_records": {
+            "const": "retained",
+            "default": "retained",
+            "title": "Audit And Idempotency Records",
+            "type": "string"
+          },
+          "logical_job_slots_reclaimed": {
+            "const": 1,
+            "default": 1,
+            "title": "Logical Job Slots Reclaimed",
+            "type": "integer"
+          },
+          "physical_file_shrink": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Physical File Shrink",
+            "type": "string"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/JobArchivePlan"
+          },
+          "plan_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Plan Fingerprint",
+            "type": "string"
+          },
+          "result_storage": {
+            "const": "external_workspace_backup",
+            "default": "external_workspace_backup",
+            "title": "Result Storage",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.job-archive-receipt.v1",
+            "default": "forgegate.job-archive-receipt.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "secure_erasure": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Secure Erasure",
+            "type": "string"
+          }
+        },
+        "required": [
+          "plan",
+          "plan_fingerprint",
+          "archived_at"
+        ],
+        "title": "JobArchiveReceipt",
+        "type": "object"
+      },
+      "JobProjectUsage": {
+        "additionalProperties": false,
+        "properties": {
+          "archived_jobs": {
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Archived Jobs",
+            "type": "integer"
+          },
+          "archiving_enabled": {
+            "title": "Archiving Enabled",
+            "type": "boolean"
+          },
+          "current_jobs": {
+            "maximum": 100.0,
+            "minimum": 0.0,
+            "title": "Current Jobs",
+            "type": "integer"
+          },
+          "dependency_availability": {
+            "const": "NOT_CHECKED",
+            "default": "NOT_CHECKED",
+            "title": "Dependency Availability",
+            "type": "string"
+          },
+          "external_backup_dependencies": {
+            "items": {
+              "type": "string"
+            },
+            "maxItems": 1000,
+            "title": "External Backup Dependencies",
+            "type": "array"
+          },
+          "live_result_bytes": {
+            "maximum": 33554432.0,
+            "minimum": 0.0,
+            "title": "Live Result Bytes",
+            "type": "integer"
+          },
+          "pending_input_bytes": {
+            "maximum": 16777216.0,
+            "minimum": 0.0,
+            "title": "Pending Input Bytes",
+            "type": "integer"
+          },
+          "project_id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.job-project-usage.v1",
+            "default": "forgegate.job-project-usage.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "store_capacity_remaining": {
+            "const": "NOT_DISCLOSED",
+            "default": "NOT_DISCLOSED",
+            "title": "Store Capacity Remaining",
+            "type": "string"
+          },
+          "store_version": {
+            "enum": [
+              3,
+              4
+            ],
+            "title": "Store Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "project_id",
+          "store_version",
+          "archiving_enabled",
+          "current_jobs",
+          "archived_jobs",
+          "pending_input_bytes",
+          "live_result_bytes",
+          "external_backup_dependencies"
+        ],
+        "title": "JobProjectUsage",
+        "type": "object"
+      },
+      "LegacyCollectionJobRecord": {
+        "additionalProperties": false,
+        "properties": {
+          "authority": {
+            "default": "LOCAL_CLI_NOT_AUTHENTICATED",
+            "enum": [
+              "LOCAL_CLI_NOT_AUTHENTICATED",
+              "AUTHENTICATED_DASHBOARD"
+            ],
+            "title": "Authority",
+            "type": "string"
+          },
+          "candidate_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Candidate Fingerprint",
+            "type": "string"
+          },
+          "candidate_id": {
+            "pattern": "^cand-[0-9a-f]{24}$",
+            "title": "Candidate Id",
+            "type": "string"
+          },
+          "candidate_write": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Candidate Write",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "error_code": {
+            "anyOf": [
+              {
+                "enum": [
+                  "JOB_EXECUTION_FAILED",
+                  "JOB_LEASE_EXPIRED"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error Code"
+          },
+          "job_id": {
+            "pattern": "^job-[0-9a-f]{32}$",
+            "title": "Job Id",
+            "type": "string"
+          },
+          "lease_expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Lease Expires At"
+          },
+          "project_id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "request_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Request Fingerprint",
+            "type": "string"
+          },
+          "result_fingerprint": {
+            "anyOf": [
+              {
+                "pattern": "^sha256:[0-9a-f]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Result Fingerprint"
+          },
+          "revision": {
+            "default": 0,
+            "maximum": 2.0,
+            "minimum": 0.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "forgegate.collection-job.v1",
+            "default": "forgegate.collection-job.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_bytes": {
+            "default": "retained_pending",
+            "enum": [
+              "retained_pending",
+              "released_logically"
+            ],
+            "title": "Source Bytes",
+            "type": "string"
+          },
+          "state": {
+            "default": "QUEUED",
+            "enum": [
+              "QUEUED",
+              "RUNNING",
+              "SUCCEEDED",
+              "REVIEW_REQUIRED",
+              "REJECTED",
+              "FAILED",
+              "CANCELLED",
+              "INTERRUPTED"
+            ],
+            "title": "State",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "job_id",
+          "candidate_id",
+          "project_id",
+          "candidate_fingerprint",
+          "request_fingerprint",
+          "created_at",
+          "updated_at"
+        ],
+        "title": "CollectionJobRecord",
+        "type": "object"
+      },
       "LiveReportedIssue": {
         "additionalProperties": false,
         "properties": {
@@ -1720,6 +3260,15 @@
               "ERROR"
             ],
             "title": "Connection",
+            "type": "string"
+          },
+          "data_origin": {
+            "default": "LIVE_TELEMETRY",
+            "enum": [
+              "LIVE_TELEMETRY",
+              "SIMULATED"
+            ],
+            "title": "Data Origin",
             "type": "string"
           },
           "detail_code": {
@@ -1972,6 +3521,190 @@
           "sources"
         ],
         "title": "LiveStatusPage",
+        "type": "object"
+      },
+      "MonitorControlView": {
+        "additionalProperties": false,
+        "properties": {
+          "presets": {
+            "items": {
+              "$ref": "#/components/schemas/MonitorPreset"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Presets",
+            "type": "array"
+          },
+          "project_id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.monitor-control.v1",
+            "default": "forgegate.monitor-control.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "session": {
+            "$ref": "#/components/schemas/MonitorSessionView"
+          }
+        },
+        "required": [
+          "project_id",
+          "presets",
+          "session"
+        ],
+        "title": "MonitorControlView",
+        "type": "object"
+      },
+      "MonitorPreset": {
+        "additionalProperties": false,
+        "properties": {
+          "adapter": {
+            "enum": [
+              "msp430.uart.v1",
+              "forgegate.simulated-demo.v1"
+            ],
+            "title": "Adapter",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "port": {
+            "anyOf": [
+              {
+                "pattern": "^COM[1-9][0-9]{0,3}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Port"
+          },
+          "preset_id": {
+            "pattern": "^[a-z][a-z0-9-]{0,63}$",
+            "title": "Preset Id",
+            "type": "string"
+          },
+          "stale_after_seconds": {
+            "default": 3.0,
+            "maximum": 60.0,
+            "minimum": 1.5,
+            "title": "Stale After Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "preset_id",
+          "name",
+          "adapter"
+        ],
+        "title": "MonitorPreset",
+        "type": "object"
+      },
+      "MonitorSessionView": {
+        "additionalProperties": false,
+        "properties": {
+          "active_preset_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z][a-z0-9-]{0,63}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Preset Id"
+          },
+          "detail_code": {
+            "pattern": "^[A-Z][A-Z0-9_]{2,63}$",
+            "title": "Detail Code",
+            "type": "string"
+          },
+          "detail_message": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Detail Message",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 0.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "state": {
+            "enum": [
+              "STOPPED",
+              "RUNNING",
+              "ERROR",
+              "STOPPING"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "revision",
+          "detail_code",
+          "detail_message"
+        ],
+        "title": "MonitorSessionView",
+        "type": "object"
+      },
+      "MonitorStartRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "preset_id": {
+            "pattern": "^[a-z][a-z0-9-]{0,63}$",
+            "title": "Preset Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "preset_id",
+          "expected_revision"
+        ],
+        "title": "MonitorStartRequest",
+        "type": "object"
+      },
+      "MonitorStopRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "run_id": {
+            "pattern": "^[0-9a-f]{32}$",
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id"
+        ],
+        "title": "MonitorStopRequest",
         "type": "object"
       },
       "Operator": {
@@ -2566,6 +4299,306 @@
         "title": "ProjectIdentity",
         "type": "object"
       },
+      "RecoveryReadinessHandoff": {
+        "additionalProperties": false,
+        "properties": {
+          "dependency_count": {
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Dependency Count",
+            "type": "integer"
+          },
+          "disposition": {
+            "enum": [
+              "READY_FOR_REHEARSAL",
+              "BLOCKED"
+            ],
+            "title": "Disposition",
+            "type": "string"
+          },
+          "handoff_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Handoff Id",
+            "type": "string"
+          },
+          "jobs_without_result": {
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Jobs Without Result",
+            "type": "integer"
+          },
+          "live_availability": {
+            "const": "NOT_CHECKED",
+            "default": "NOT_CHECKED",
+            "title": "Live Availability",
+            "type": "string"
+          },
+          "payload_transfer": {
+            "const": "NOT_INCLUDED",
+            "default": "NOT_INCLUDED",
+            "title": "Payload Transfer",
+            "type": "string"
+          },
+          "readiness": {
+            "$ref": "#/components/schemas/WorkspaceRecoveryReadiness"
+          },
+          "report_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Report Fingerprint",
+            "type": "string"
+          },
+          "restore": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Restore",
+            "type": "string"
+          },
+          "result_payloads_verified": {
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Result Payloads Verified",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "forgegate.recovery-readiness-handoff.v1",
+            "default": "forgegate.recovery-readiness-handoff.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_report_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Source Report Sha256",
+            "type": "string"
+          },
+          "verified_dependency_count": {
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Verified Dependency Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "handoff_id",
+          "source_report_sha256",
+          "report_fingerprint",
+          "disposition",
+          "readiness",
+          "dependency_count",
+          "verified_dependency_count",
+          "result_payloads_verified",
+          "jobs_without_result"
+        ],
+        "title": "RecoveryReadinessHandoff",
+        "type": "object"
+      },
+      "RecoveryRehearsalReceipt": {
+        "additionalProperties": false,
+        "properties": {
+          "all_candidate_domain_history_validation": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "All Candidate Domain History Validation",
+            "type": "string"
+          },
+          "archived_payloads": {
+            "const": "VERIFIED_EXTERNAL_NOT_REHYDRATED",
+            "default": "VERIFIED_EXTERNAL_NOT_REHYDRATED",
+            "title": "Archived Payloads",
+            "type": "string"
+          },
+          "automatic_execution": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Automatic Execution",
+            "type": "string"
+          },
+          "availability": {
+            "const": "observed_during_rehearsal_only",
+            "default": "observed_during_rehearsal_only",
+            "title": "Availability",
+            "type": "string"
+          },
+          "candidate_store": {
+            "$ref": "#/components/schemas/SnapshotMember"
+          },
+          "completed_at": {
+            "format": "date-time",
+            "title": "Completed At",
+            "type": "string"
+          },
+          "external_identity_and_artifact_files": {
+            "const": "NOT_CHECKED",
+            "default": "NOT_CHECKED",
+            "title": "External Identity And Artifact Files",
+            "type": "string"
+          },
+          "handoff": {
+            "$ref": "#/components/schemas/RecoveryReadinessHandoff"
+          },
+          "handoff_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Handoff Sha256",
+            "type": "string"
+          },
+          "hardware_access": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Hardware Access",
+            "type": "string"
+          },
+          "job_store": {
+            "$ref": "#/components/schemas/SnapshotMember"
+          },
+          "live_workspace_changed": {
+            "const": false,
+            "default": false,
+            "title": "Live Workspace Changed",
+            "type": "boolean"
+          },
+          "manifest": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/WorkspaceBackupManifest"
+              },
+              {
+                "$ref": "#/components/schemas/WorkspaceBackupManifestV2"
+              }
+            ],
+            "title": "Manifest"
+          },
+          "post_restore_inspection_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Post Restore Inspection Fingerprint",
+            "type": "string"
+          },
+          "post_restore_job_count": {
+            "maximum": 1100.0,
+            "minimum": 0.0,
+            "title": "Post Restore Job Count",
+            "type": "integer"
+          },
+          "post_restore_job_event_count": {
+            "maximum": 71500.0,
+            "minimum": 0.0,
+            "title": "Post Restore Job Event Count",
+            "type": "integer"
+          },
+          "producer_authenticity": {
+            "const": "NOT_VERIFIED",
+            "default": "NOT_VERIFIED",
+            "title": "Producer Authenticity",
+            "type": "string"
+          },
+          "rechecked_readiness": {
+            "$ref": "#/components/schemas/WorkspaceRecoveryReadiness"
+          },
+          "rehearsal_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Rehearsal Id",
+            "type": "string"
+          },
+          "restore_mode": {
+            "const": "new_directory_only",
+            "default": "new_directory_only",
+            "title": "Restore Mode",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.recovery-rehearsal.v1",
+            "default": "forgegate.recovery-rehearsal.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "status": {
+            "const": "RESTORED_COPY_VERIFIED",
+            "default": "RESTORED_COPY_VERIFIED",
+            "title": "Status",
+            "type": "string"
+          },
+          "validation_scope": {
+            "const": "exact_member_bytes_sqlite_job_and_referenced_candidate_history",
+            "default": "exact_member_bytes_sqlite_job_and_referenced_candidate_history",
+            "title": "Validation Scope",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rehearsal_id",
+          "handoff_sha256",
+          "handoff",
+          "rechecked_readiness",
+          "completed_at",
+          "manifest",
+          "candidate_store",
+          "job_store",
+          "post_restore_job_count",
+          "post_restore_job_event_count",
+          "post_restore_inspection_fingerprint"
+        ],
+        "title": "RecoveryRehearsalReceipt",
+        "type": "object"
+      },
+      "RecoveryRehearsalReview": {
+        "additionalProperties": false,
+        "properties": {
+          "continuing_availability": {
+            "const": "NOT_CHECKED",
+            "default": "NOT_CHECKED",
+            "title": "Continuing Availability",
+            "type": "string"
+          },
+          "disposition": {
+            "const": "VERIFIED_RESTORED_COPY",
+            "default": "VERIFIED_RESTORED_COPY",
+            "title": "Disposition",
+            "type": "string"
+          },
+          "live_workspace_switch": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Live Workspace Switch",
+            "type": "string"
+          },
+          "path_input": {
+            "const": "NOT_ACCEPTED",
+            "default": "NOT_ACCEPTED",
+            "title": "Path Input",
+            "type": "string"
+          },
+          "receipt": {
+            "$ref": "#/components/schemas/RecoveryRehearsalReceipt"
+          },
+          "restore_execution": {
+            "const": "NOT_PERFORMED_BY_REVIEW",
+            "default": "NOT_PERFORMED_BY_REVIEW",
+            "title": "Restore Execution",
+            "type": "string"
+          },
+          "review_id": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Review Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.recovery-rehearsal-review.v1",
+            "default": "forgegate.recovery-rehearsal-review.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "source_receipt_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Source Receipt Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "review_id",
+          "source_receipt_sha256",
+          "receipt"
+        ],
+        "title": "RecoveryRehearsalReview",
+        "type": "object"
+      },
       "RegisteredProject": {
         "additionalProperties": false,
         "description": "Immutable first-version registration of one ForgeGate project profile.",
@@ -3001,6 +5034,28 @@
         "title": "RuleEvaluation",
         "type": "object"
       },
+      "SnapshotMember": {
+        "additionalProperties": false,
+        "properties": {
+          "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Sha256",
+            "type": "string"
+          },
+          "size_bytes": {
+            "maximum": 1073872896.0,
+            "minimum": 1.0,
+            "title": "Size Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sha256",
+          "size_bytes"
+        ],
+        "title": "SnapshotMember",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -3055,6 +5110,254 @@
         ],
         "title": "VerificationLevel",
         "type": "string"
+      },
+      "WorkspaceBackupManifest": {
+        "additionalProperties": false,
+        "properties": {
+          "candidate_store": {
+            "$ref": "#/components/schemas/SnapshotMember"
+          },
+          "candidate_store_version": {
+            "const": 9,
+            "default": 9,
+            "title": "Candidate Store Version",
+            "type": "integer"
+          },
+          "consistency": {
+            "const": "simultaneous_sqlite_write_reservations",
+            "default": "simultaneous_sqlite_write_reservations",
+            "title": "Consistency",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "encrypted": {
+            "const": false,
+            "default": false,
+            "title": "Encrypted",
+            "type": "boolean"
+          },
+          "external_identity_and_artifact_files": {
+            "const": "not_included",
+            "default": "not_included",
+            "title": "External Identity And Artifact Files",
+            "type": "string"
+          },
+          "includes_pending_report_bytes": {
+            "const": true,
+            "default": true,
+            "title": "Includes Pending Report Bytes",
+            "type": "boolean"
+          },
+          "job_store": {
+            "$ref": "#/components/schemas/SnapshotMember"
+          },
+          "job_store_version": {
+            "const": 3,
+            "default": 3,
+            "title": "Job Store Version",
+            "type": "integer"
+          },
+          "producer_authenticity": {
+            "const": "NOT_VERIFIED",
+            "default": "NOT_VERIFIED",
+            "title": "Producer Authenticity",
+            "type": "string"
+          },
+          "running_jobs": {
+            "const": 0,
+            "default": 0,
+            "title": "Running Jobs",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "forgegate.workspace-backup.v1",
+            "default": "forgegate.workspace-backup.v1",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "created_at",
+          "candidate_store",
+          "job_store"
+        ],
+        "title": "WorkspaceBackupManifest",
+        "type": "object"
+      },
+      "WorkspaceBackupManifestV2": {
+        "additionalProperties": false,
+        "properties": {
+          "archived_result_payloads": {
+            "const": "external_backups_required",
+            "default": "external_backups_required",
+            "title": "Archived Result Payloads",
+            "type": "string"
+          },
+          "candidate_store": {
+            "$ref": "#/components/schemas/SnapshotMember"
+          },
+          "candidate_store_version": {
+            "const": 9,
+            "default": 9,
+            "title": "Candidate Store Version",
+            "type": "integer"
+          },
+          "consistency": {
+            "const": "simultaneous_sqlite_write_reservations",
+            "default": "simultaneous_sqlite_write_reservations",
+            "title": "Consistency",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "encrypted": {
+            "const": false,
+            "default": false,
+            "title": "Encrypted",
+            "type": "boolean"
+          },
+          "external_identity_and_artifact_files": {
+            "const": "not_included",
+            "default": "not_included",
+            "title": "External Identity And Artifact Files",
+            "type": "string"
+          },
+          "includes_pending_report_bytes": {
+            "const": true,
+            "default": true,
+            "title": "Includes Pending Report Bytes",
+            "type": "boolean"
+          },
+          "job_store": {
+            "$ref": "#/components/schemas/SnapshotMember"
+          },
+          "job_store_version": {
+            "const": 4,
+            "default": 4,
+            "title": "Job Store Version",
+            "type": "integer"
+          },
+          "producer_authenticity": {
+            "const": "NOT_VERIFIED",
+            "default": "NOT_VERIFIED",
+            "title": "Producer Authenticity",
+            "type": "string"
+          },
+          "running_jobs": {
+            "const": 0,
+            "default": 0,
+            "title": "Running Jobs",
+            "type": "integer"
+          },
+          "schema_version": {
+            "const": "forgegate.workspace-backup.v2",
+            "default": "forgegate.workspace-backup.v2",
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "created_at",
+          "candidate_store",
+          "job_store"
+        ],
+        "title": "WorkspaceBackupManifestV2",
+        "type": "object"
+      },
+      "WorkspaceRecoveryReadiness": {
+        "additionalProperties": false,
+        "properties": {
+          "archived_job_count": {
+            "maximum": 1000.0,
+            "minimum": 0.0,
+            "title": "Archived Job Count",
+            "type": "integer"
+          },
+          "availability": {
+            "const": "observed_during_check_only",
+            "default": "observed_during_check_only",
+            "title": "Availability",
+            "type": "string"
+          },
+          "backup_sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Backup Sha256",
+            "type": "string"
+          },
+          "checked_at": {
+            "format": "date-time",
+            "title": "Checked At",
+            "type": "string"
+          },
+          "dependencies": {
+            "items": {
+              "$ref": "#/components/schemas/ArchiveDependencyCheck"
+            },
+            "maxItems": 1000,
+            "title": "Dependencies",
+            "type": "array"
+          },
+          "external_identity_and_artifact_files": {
+            "const": "NOT_CHECKED",
+            "default": "NOT_CHECKED",
+            "title": "External Identity And Artifact Files",
+            "type": "string"
+          },
+          "manifest_fingerprint": {
+            "pattern": "^sha256:[0-9a-f]{64}$",
+            "title": "Manifest Fingerprint",
+            "type": "string"
+          },
+          "producer_authenticity": {
+            "const": "NOT_VERIFIED",
+            "default": "NOT_VERIFIED",
+            "title": "Producer Authenticity",
+            "type": "string"
+          },
+          "restore": {
+            "const": "NOT_PERFORMED",
+            "default": "NOT_PERFORMED",
+            "title": "Restore",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.workspace-recovery-readiness.v1",
+            "default": "forgegate.workspace-recovery-readiness.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "scope": {
+            "const": "snapshot_and_exact_archived_job_payloads",
+            "default": "snapshot_and_exact_archived_job_payloads",
+            "title": "Scope",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "READY",
+              "INCOMPLETE"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "backup_sha256",
+          "manifest_fingerprint",
+          "checked_at",
+          "status",
+          "archived_job_count",
+          "dependencies"
+        ],
+        "title": "WorkspaceRecoveryReadiness",
+        "type": "object"
       }
     }
   },
@@ -3211,6 +5514,7 @@
             "name": "project_id",
             "required": true,
             "schema": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
               "title": "Project Id",
               "type": "string"
             }
@@ -3245,6 +5549,7 @@
             "schema": {
               "anyOf": [
                 {
+                  "pattern": "^cand-[0-9a-f]{24}$",
                   "type": "string"
                 },
                 {
@@ -3554,6 +5859,72 @@
         "summary": "Attest Dashboard Candidate"
       }
     },
+    "/app/api/candidates/{candidate_id}/collection-preview": {
+      "post": {
+        "operationId": "previewDashboardCandidateCollection",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "pattern": "^cand-[0-9a-f]{24}$",
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardCollectionPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardCollectionPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Dashboard Candidate Collection"
+      }
+    },
     "/app/api/candidates/{candidate_id}/evaluate": {
       "post": {
         "operationId": "evaluateDashboardCandidate",
@@ -3702,6 +6073,177 @@
         "summary": "Bind Dashboard Candidate Evidence"
       }
     },
+    "/app/api/candidates/{candidate_id}/evidence-replay-export": {
+      "post": {
+        "operationId": "exportDashboardEvidenceReplay",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardReplayExportRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/zip": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Verified private source replay ZIP"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Dashboard Evidence Replay"
+      }
+    },
+    "/app/api/candidates/{candidate_id}/junit-preview": {
+      "post": {
+        "operationId": "previewDashboardCandidateJUnit",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "pattern": "^cand-[0-9a-f]{24}$",
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardJUnitPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardJUnitPreview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Dashboard Candidate Junit"
+      }
+    },
+    "/app/api/candidates/{candidate_id}/policy-choices": {
+      "get": {
+        "operationId": "listDashboardCandidatePolicyChoices",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "candidate_id",
+            "required": true,
+            "schema": {
+              "title": "Candidate Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardPolicyChoices"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Dashboard Policy Choices"
+      }
+    },
     "/app/api/candidates/{candidate_id}/transitions": {
       "post": {
         "operationId": "advanceDashboardCandidate",
@@ -3776,6 +6318,658 @@
         "summary": "Advance Dashboard Candidate"
       }
     },
+    "/app/api/jobs": {
+      "get": {
+        "operationId": "listDashboardJobs",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after_job_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^job-[0-9a-f]{32}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "After Job Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "candidate_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^cand-[0-9a-f]{24}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Candidate Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "archive_filter",
+            "required": false,
+            "schema": {
+              "default": "all",
+              "enum": [
+                "all",
+                "current",
+                "archived"
+              ],
+              "title": "Archive Filter",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 25,
+              "maximum": 25,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardJobPage"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Jobs"
+      },
+      "post": {
+        "operationId": "submitDashboardJob",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$",
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CollectionJobRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/LegacyCollectionJobRecord"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CollectionJobRecord"
+                    }
+                  ],
+                  "title": "Response Submitdashboardjob"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit Job"
+      }
+    },
+    "/app/api/jobs/{job_id}": {
+      "get": {
+        "operationId": "reviewDashboardJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^job-[0-9a-f]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CollectionJobReview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Show Job"
+      }
+    },
+    "/app/api/jobs/{job_id}/assembly-export": {
+      "post": {
+        "operationId": "exportDashboardJobAssembly",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^job-[0-9a-f]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardJobAssemblyCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/vnd.forgegate.evidence-bundle-assembly+json": {
+                "schema": {
+                  "format": "binary",
+                  "type": "string"
+                }
+              }
+            },
+            "description": "Exact canonical evidence assembly JSON"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Export Job Assembly"
+      }
+    },
+    "/app/api/jobs/{job_id}/bind-evidence": {
+      "post": {
+        "operationId": "bindDashboardJobEvidence",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^job-[0-9a-f]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "Idempotency-Key",
+            "required": true,
+            "schema": {
+              "maxLength": 128,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9._:/-]*$",
+              "title": "Idempotency-Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardJobBindEvidenceCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DashboardJobEvidenceBindingResult"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Bind Job Evidence"
+      }
+    },
+    "/app/api/jobs/{job_id}/cancel": {
+      "post": {
+        "operationId": "cancelDashboardJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^job-[0-9a-f]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardJobCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/LegacyCollectionJobRecord"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CollectionJobRecord"
+                    }
+                  ],
+                  "title": "Response Canceldashboardjob"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Job"
+      }
+    },
+    "/app/api/jobs/{job_id}/recover": {
+      "post": {
+        "operationId": "recoverDashboardJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^job-[0-9a-f]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardJobCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/LegacyCollectionJobRecord"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CollectionJobRecord"
+                    }
+                  ],
+                  "title": "Response Recoverdashboardjob"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Recover Job"
+      }
+    },
+    "/app/api/jobs/{job_id}/run": {
+      "post": {
+        "operationId": "runDashboardJob",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "pattern": "^job-[0-9a-f]{32}$",
+              "title": "Job Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "project_id",
+            "required": true,
+            "schema": {
+              "pattern": "^[a-z][a-z0-9-]{1,62}$",
+              "title": "Project Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardJobCommand"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/LegacyCollectionJobRecord"
+                    },
+                    {
+                      "$ref": "#/components/schemas/CollectionJobRecord"
+                    }
+                  ],
+                  "title": "Response Rundashboardjob"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Job"
+      }
+    },
     "/app/api/live-status": {
       "get": {
         "operationId": "getDashboardLiveStatus",
@@ -3792,6 +6986,144 @@
           }
         },
         "summary": "Dashboard Live Status"
+      }
+    },
+    "/app/api/monitor-presets": {
+      "get": {
+        "operationId": "getDashboardMonitorPresets",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/MonitorControlView"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Getdashboardmonitorpresets"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Dashboard Monitor Presets"
+      }
+    },
+    "/app/api/monitor-session/start": {
+      "post": {
+        "operationId": "startDashboardMonitor",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MonitorStartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitorControlView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Dashboard Monitor"
+      }
+    },
+    "/app/api/monitor-session/stop": {
+      "post": {
+        "operationId": "stopDashboardMonitor",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MonitorStopRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitorControlView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Stop Dashboard Monitor"
       }
     },
     "/app/api/overview": {
@@ -3935,6 +7267,118 @@
           }
         },
         "summary": "Dashboard Candidates"
+      }
+    },
+    "/app/api/recovery-rehearsal-review": {
+      "post": {
+        "operationId": "reviewDashboardRecoveryRehearsal",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardRecoveryRehearsalReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryRehearsalReview"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Review Dashboard Recovery Rehearsal"
+      }
+    },
+    "/app/api/recovery-review": {
+      "post": {
+        "operationId": "reviewDashboardRecoveryReadiness",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DashboardRecoveryReviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RecoveryReadinessHandoff"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Review Dashboard Recovery Readiness"
       }
     },
     "/app/api/session": {

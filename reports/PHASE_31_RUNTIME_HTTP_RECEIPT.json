@@ -1,0 +1,63 @@
+{
+  "cases": [
+    {
+      "browser_interaction": "NOT_TESTED",
+      "case": "dashboard",
+      "dashboard_http_status": 200,
+      "database_integrity": "NOT_CHECKED",
+      "hardware_access": "NOT_PERFORMED",
+      "health_http_status": 200,
+      "instance_ownership": "NOT_VERIFIED",
+      "next_step": "Open /app/ and approve a fresh CLI activation; HTTP reachability does not prove login, data or hardware health.",
+      "origin": "http://127.0.0.1:61799",
+      "ready": true,
+      "scope": "unauthenticated_http_and_exact_installed_html_only",
+      "status": "DASHBOARD_REACHABLE"
+    },
+    {
+      "browser_interaction": "NOT_TESTED",
+      "case": "stopped_dashboard",
+      "dashboard_http_status": null,
+      "database_integrity": "NOT_CHECKED",
+      "hardware_access": "NOT_PERFORMED",
+      "health_http_status": null,
+      "instance_ownership": "NOT_VERIFIED",
+      "next_step": "No connection accepted at this instant. Start the intended service, then repeat this check.",
+      "origin": "http://127.0.0.1:61799",
+      "ready": false,
+      "scope": "unauthenticated_http_and_exact_installed_html_only",
+      "status": "CONNECTION_REFUSED"
+    },
+    {
+      "browser_interaction": "NOT_TESTED",
+      "case": "api_only",
+      "dashboard_http_status": 404,
+      "database_integrity": "NOT_CHECKED",
+      "hardware_access": "NOT_PERFORMED",
+      "health_http_status": 200,
+      "instance_ownership": "NOT_VERIFIED",
+      "next_step": "Check that the service was started with dashboard, not serve-api; inspect local logs.",
+      "origin": "http://127.0.0.1:61805",
+      "ready": false,
+      "scope": "unauthenticated_http_and_exact_installed_html_only",
+      "status": "DASHBOARD_HTTP_ERROR"
+    },
+    {
+      "browser_interaction": "NOT_TESTED",
+      "case": "stopped_api",
+      "dashboard_http_status": null,
+      "database_integrity": "NOT_CHECKED",
+      "hardware_access": "NOT_PERFORMED",
+      "health_http_status": null,
+      "instance_ownership": "NOT_VERIFIED",
+      "next_step": "No connection accepted at this instant. Start the intended service, then repeat this check.",
+      "origin": "http://127.0.0.1:61805",
+      "ready": false,
+      "scope": "unauthenticated_http_and_exact_installed_html_only",
+      "status": "CONNECTION_REFUSED"
+    }
+  ],
+  "evidence": "LOCAL_HOST_TEST",
+  "hardware_access": "NOT_PERFORMED",
+  "observed_at": "2026-09-06T17:44:50.142963+00:00"
+}

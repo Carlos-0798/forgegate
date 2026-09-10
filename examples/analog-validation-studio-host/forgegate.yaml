@@ -1,0 +1,21 @@
+schema_version: forgegate.project.v1
+project:
+  id: analog-validation-studio
+  name: Analog Validation Studio - Windows host acceptance
+  repository: https://github.com/Carlos-0798/mixed-signal-afe-validation-platform
+  default_branch: main
+release_tracks:
+  host_review:
+    policy: policies/host-review.yaml
+collectors:
+  - type: junit
+    path: artifacts/junit.xml
+  - type: coverage_xml
+    path: artifacts/coverage.xml
+  - type: sarif
+    path: artifacts/security.sarif
+  - type: benchmark_json
+    path: artifacts/benchmark.json
+outputs:
+  json: attestation.json
+  markdown: summary.md

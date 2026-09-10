@@ -2,6 +2,117 @@
 
 ## Unreleased
 
+- Added versioned, project-scoped local monitor presets with authenticated
+  Dashboard start/stop, explicit simulated data origin and a no-hardware demo.
+  Local adapter configuration remains separate from core evidence schemas.
+- Fixed MSP430 reader lifecycle races and retained timed-out workers until
+  confirmed stop, preventing an unconfirmed stop from creating a second reader.
+  Preset selection does not imply new-board compatibility or release evidence.
+- Added independent `workspace-init` with fresh scoped identity, initialized
+  stores, no-overwrite behavior and optional honest synthetic positive/negative
+  examples. First-policy and Windows interpreter instructions work without a
+  source checkout.
+- Replaced the authority-only Overview with an actionable project workbench;
+  added bounded candidate search/state filters and stale-response protection.
+- Fixed mixed detailed/summary-only JUnit accounting and nested mismatch audit;
+  default policies reject errors, zero-test and all-skipped inputs. Existing
+  frozen policies/evidence are not rewritten.
+- Extended clean-wheel smoke to recipient workspace setup and fixed unexpected
+  successful negative-control commands incorrectly passing the release gate.
+- Completed the frozen Windows Alpha milestone with a fresh-recipient final demo:
+  verified non-secret reviewer ZIP, exact-wheel install, generic PASS/FAIL exits,
+  authenticated Dashboard review, retained exact-runtime screenshots and explicit
+  real-project/non-production boundaries.
+- Accepted the frozen Phase 59 wheel against retained real AVS and MSP430
+  project evidence. AVS remains correctly `VALID / FAIL`; MSP430 artifact
+  collection is `COMPLETE` with `system_observed` evidence and retained scope/
+  correction warnings. Wrong-commit controls fail closed; no new upstream run,
+  serial access, producer authentication, browser rerun or GitHub action occurred.
+- Frozen the Windows local Alpha scope for code closeout, real-project acceptance
+  and final demonstration; recorded finite completion gates and open limitations.
+- Consolidated accepted Phase 46-58 work: offline adoption preflight, existing-only
+  paired startup, standard CI Dashboard reports, reviewed Quick Assessment,
+  saved policy reuse, private original-report replay, retained rule comparison,
+  bounded real AVS host-report handling and fresh-sdist Windows delivery.
+  Historical producer FAIL and unsigned-local evidence boundaries are retained.
+
+- Added coordinated candidate v9/job v3 backup, strict offline archive verification,
+  restored copies in new directories and snapshot-bound retention planning.
+  Both database writers are reserved during copying; running jobs block backup.
+  History/association checks, required restore hash, final readiness marker and
+  no-overwrite behavior preserve existing workspaces. No automatic purge, worker,
+  hardware operation or service restart is added.
+- Added `forgegate.collection-job.v2` and explicit job-store v3 migration with
+  byte-preserved v1 history, visible non-credential execution ownership, bounded
+  append-only lease renewals, restart non-adoption and cooperative cancellation
+  checks before each report and assembly. The Dashboard exposes owner/renewal
+  state without the private token. No scheduler, worker, mid-parser termination,
+  candidate transition, policy decision, GitHub operation or hardware access.
+- Added operator-reviewed canonical assembly download and separately confirmed
+  reuse of a retained `SUCCEEDED` job result through the existing immutable
+  candidate-evidence binding service. Exact job/result/assembly/candidate
+  identities, byte hashing, idempotency, actor attribution and stale-state gates
+  are enforced; no automatic transition, policy decision, source-byte export or
+  hardware access. Added 21 backend and 23 frontend regressions plus actual Edge
+  synthetic download/binding/readback evidence and a hash-overflow UI correction.
+- Added separately reviewed Dashboard job submission and foreground report
+  parsing, frozen bytes/metadata, warning consent, namespaced idempotency,
+  per-instance busy rejection and atomic initiating-operator attribution.
+  Added 23 backend and 14 frontend regressions plus real Edge synthetic acceptance.
+  No project test execution, automatic worker, evidence binding or hardware access.
+- Added opt-in authenticated Dashboard job inspection, project pagination,
+  reviewed cancellation and expired-lease recovery with atomic actor attribution.
+  Added explicit job-store v1-to-v2 migration without rewriting historical records,
+  frontend/authorization regressions and actual Edge synthetic acceptance.
+  Submission/execution were CLI-only at Phase 35; no automatic worker or hardware change.
+- Added a separate durable local collection-job store and CLI with idempotent
+  submission, bounded pending source retention, explicit run/cancel/recover,
+  exact result export and fail-closed candidate rechecks. No Dashboard job UI,
+  automatic worker, hardware access, evidence binding or policy decision added.
+- Added job lifecycle/negative tests, three public schemas, cross-process
+  expected-output acceptance and clean-wheel integration checks.
+- Added bounded combined Dashboard JUnit + Cobertura/LCOV previews with independent
+  metadata, duplicate/size/output limits, whole-selection warning consent and
+  separate immutable binding. Source reports remain unsigned-local declarations.
+- Fixed real-browser 422 binding failures caused by JSON number reserialization
+  (`50.0` to `50`); preserve exact assembly JSON without changing retained identities.
+- Added kind/scope labels to coverage previews, generic positive/negative fixtures,
+  complete policy/attestation integration and actual Edge combined PASS evidence.
+  No task queue, raw retention, hardware access or GitHub synchronization added.
+- Added local `candidate backup-store` and `candidate verify-backup` commands
+  for current-schema consistent SQLite snapshots, checked exclusive publication,
+  offline hash/integrity validation and fixed privacy-safe failure codes.
+- Added 27 regressions including committed WAL/uncommitted isolation, retained
+  rows and cold candidate/evidence/attestation reads, existing-target races,
+  sidecars, corruption, size/deadline checks and installed-wheel smoke. No live
+  database replacement, hardware access or GitHub synchronization performed.
+- Added `dashboard-check` with bounded, unauthenticated health/HTML checks,
+  actionable failure states and explicit non-ownership/non-hardware labels.
+- Added a Windows foreground launcher for existing database/trust files,
+  advisory exclusive-port checks, literal paths and child exit-code propagation.
+  No auto-start, watchdog, migration, process termination or automatic login.
+- Added actual local HTTP/installed-wheel smoke and Windows PowerShell tests;
+  recovery guidance preserves the existing schema and credential boundaries.
+- Added bounded single-JUnit Dashboard preview with exact-byte hashing, original
+  declared source time, explicit warning consent and separate immutable binding.
+  No filesystem path, raw-byte retention, queue, hardware or trust promotion.
+- Added 27 Python and 18 frontend host regressions and synthetic PASS/FAIL/
+  warning/rejected inputs. Real Edge upload, reviewed binding, policy PASS/FAIL,
+  warning-consent and forbidden-XML rejection now pass with retained screenshots.
+- Fixed shared profile-authorized policy content failing on a second candidate.
+  Schema v9 removes only global material-ID uniqueness, preserving candidate
+  binding uniqueness and immutable guards. Explicit migration from v1-v8,
+  retained-row preservation, rollback and same-database reuse are tested.
+- Added an operator-only project Audit workspace with candidate filters,
+  stable cursor links, full event/subject identities, recorded actors,
+  text-only details, and explicit partial-preview/unknown-actor boundaries.
+- Added 12 frontend and 5 BFF audit regressions; malformed BFF audit filters
+  now return 422 and the committed OpenAPI retains their exact patterns.
+- Fixed Dashboard activation commands to include the actual loopback origin
+  and port; added manual retry, explicit code-expiry guidance, rate-window
+  waiting without resubmission, and late-response isolation.
+- Added 13 Node host interaction regressions over the production TypeScript,
+  wired into CI separately from Python coverage and real-browser acceptance.
 - Added an operator-reviewed, candidate-bound Dashboard assurance download as
   a deterministic bounded three-file ZIP with no server path or filesystem
   publication surface.

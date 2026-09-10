@@ -5,12 +5,71 @@ analysis, compatibility contracts, and historical acceptance evidence.
 
 ## Start here
 
+For the current interruption, start with the
+[2026-09-09 pause/resumption checkpoint](PROJECT_RESUME_CHECKPOINT_2026-09-09.md)
+and [Private GitHub synchronization](../reports/GITHUB_SYNC_2026-09-09.md).
+The accepted baseline includes [monitor presets](MONITOR_PRESETS.md) and
+[Phase 64 evidence](../reports/PHASE_64_MONITOR_PRESETS_ACCEPTANCE.md).
+Older delivery slices below retain their historical scope.
+
 1. [Project status](PROJECT_STATUS.md) — current maturity and accepted baseline
 2. [Verification matrix](VERIFICATION_MATRIX.md) — evidence level for each capability
 3. [Roadmap](ROADMAP.md) — completed and remaining acceptance gates
-4. [Reproducible interaction walkthrough](DEMO.md) — generic CLI/API examples with expected output
-5. [Portfolio evidence gallery](PORTFOLIO_EVIDENCE.md) — retained screenshots, exact fixture data, hashes, and claim boundaries
-6. [Security policy](../SECURITY.md) — supported scope and responsible reporting
+4. [Final Windows demonstration](FINAL_WINDOWS_DEMO.md) — frozen package, exact positive/negative outcomes and Dashboard reviewer path
+5. [Reproducible interaction walkthrough](DEMO.md) — deeper generic CLI/API examples with expected output
+6. [Portfolio evidence gallery](PORTFOLIO_EVIDENCE.md) — retained screenshots, exact fixture data, hashes, and claim boundaries
+7. [Security policy](../SECURITY.md) — supported scope and responsible reporting
+
+Previously completed milestone: [feature freeze and Alpha completion](ALPHA_COMPLETION_PLAN.md).
+Phases 59-61 close the local source/build baseline, frozen-package real-project
+acceptance and final demonstration. The scoped Windows Alpha milestone is complete.
+See the [Phase 59 closeout](../reports/PHASE_59_CODE_CLOSEOUT_ACCEPTANCE.md) and
+[Phase 60 acceptance](../reports/PHASE_60_REAL_PROJECT_ACCEPTANCE.md) for the
+accepted identities, outcomes and verification boundaries, followed by the
+[Phase 61 final demo](../reports/PHASE_61_FINAL_DEMO_ACCEPTANCE.md).
+
+Previous engineering slice: [Phase 58 Windows installed-wheel acceptance](../reports/PHASE_58_WINDOWS_DELIVERY_ACCEPTANCE.md),
+covering installed Quick Assessment, Evidence Replay, assurance and comparison.
+It builds on [Evaluation comparison](DECISION_COMPARISON.md) and
+[Phase 57 acceptance](../reports/PHASE_57_DECISION_COMPARISON_ACCEPTANCE.md), building
+on [Quick assessment](QUICK_ASSESSMENT.md) and its
+[real AVS quick-handoff acceptance](../reports/PHASE_56_AVS_QUICK_ACCEPTANCE.md).
+The [Phase 53 efficiency and accuracy protocol](product/EFFICIENCY_ACCEPTANCE.md)
+and [blank observation record](product/EFFICIENCY_RUN_TEMPLATE.md) are retained,
+but human comparison is deferred by owner. The [product brief](product/PRODUCT_BRIEF.md)
+continues to prioritize report-review and handoff benefits without unmeasured claims.
+
+Historical delivery slice: [reviewed Windows installed-wheel delivery](../reports/PHASE_52_WINDOWS_DELIVERY_ACCEPTANCE.md)
+using the [Windows operating guide](WINDOWS_DASHBOARD_OPERATIONS.md), plus
+[private original-report export and offline replay](EVIDENCE_REPLAY.md),
+with [Phase 51 acceptance](../reports/PHASE_51_SOURCE_REPLAY_ACCEPTANCE.md).
+It extends [real AVS host acceptance](../reports/PHASE_50_AVS_HOST_ACCEPTANCE.md)
+and its [file-only consumer pack](../examples/analog-validation-studio-host/README.md),
+using the [standard CI collection contracts](DASHBOARD_COLLECTION_CONTRACT.md).
+The integration is accepted; its frozen producer baseline correctly remains FAIL.
+Real artifact delivery takes priority over further process management.
+
+Deferred engineering design: [workspace adoption and rollback](WORKSPACE_ADOPTION_DESIGN.md),
+with source-traced gaps, recovery-point review and 24 NOT RUN fault-injection
+cases. No live switch or managed lifecycle is implemented by this design.
+
+Earlier Phase 48 local slice: [existing-only paired startup and runtime correlation](WINDOWS_DASHBOARD_OPERATIONS.md),
+with explicit no-initialization/no-migration startup and public per-start IDs,
+not authenticated process ownership or a writer fence. Previous slice:
+[read-only adoption preflight](WORKSPACE_ADOPTION_PREFLIGHT.md),
+which compares exact snapshots and a cold rehearsal directory without process
+control or switch authority. Latest browser slice:
+[Dashboard rehearsal receipt review](DASHBOARD_RECOVERY_REHEARSAL_REVIEW.md),
+which presents the exact content-addressed restored-copy receipt without adding
+browser restore or workspace-switch authority. It follows the
+[reviewed recovery rehearsal](RECOVERY_REHEARSAL.md),
+[Recovery-page handoff review](DASHBOARD_RECOVERY_HANDOFF.md) and
+[offline readiness checks](RECOVERY_READINESS.md).
+Previous slice: [durable report-job lifecycle](COLLECTION_JOBS.md)
+with visible execution ownership, bounded lease renewal and cooperative stop
+checkpoints, with [Phase 38 browser and host evidence](../reports/PHASE_38_JOB_EXECUTION_LIFECYCLE_ACCEPTANCE.md).
+Phase 37 exact export/binding browser evidence remains separately retained in the
+[handoff report](../reports/PHASE_37_JOB_RESULT_HANDOFF_ACCEPTANCE.md).
 
 ## Product and trust model
 
@@ -28,6 +87,8 @@ analysis, compatibility contracts, and historical acceptance evidence.
 - [Benchmark collector](architecture/BENCHMARK_JSON_COLLECTOR.md)
 - [Evidence bundle assembly](architecture/EVIDENCE_BUNDLE_ASSEMBLY.md)
 - [Candidate evidence binding](architecture/CANDIDATE_EVIDENCE_BINDING.md)
+- [Durable local collection jobs](COLLECTION_JOBS.md) — CLI lifecycle, restart/cancel semantics and private data boundaries
+- [Dashboard job management](DASHBOARD_JOBS.md) — explicit store upgrade/configuration, operator-only inspection, parsing, exact export and immutable evidence handoff
 - [Policy engine](architecture/POLICY_ENGINE.md)
 - [Candidate lifecycle](architecture/CANDIDATE_LIFECYCLE.md)
 - [Attestations](architecture/ATTESTATIONS.md)
@@ -36,6 +97,9 @@ analysis, compatibility contracts, and historical acceptance evidence.
 
 ## Persistence, API, and audit
 
+- [Reviewed recovery rehearsal](RECOVERY_REHEARSAL.md)
+- [Coordinated workspace backup, recovery and retention planning](WORKSPACE_RECOVERY.md)
+- [Candidate store backup and validation](STORE_BACKUP_OPERATIONS.md)
 - [SQLite candidate store](architecture/SQLITE_CANDIDATE_STORE.md)
 - [Project registry and audit query](architecture/PROJECT_REGISTRY_AND_AUDIT_QUERY.md)
 - [Project authority and discovery](architecture/PROJECT_AUTHORITY_AND_DISCOVERY.md)
@@ -49,6 +113,7 @@ analysis, compatibility contracts, and historical acceptance evidence.
 
 ## Local Dashboard
 
+- [Windows startup, diagnostics and recovery](WINDOWS_DASHBOARD_OPERATIONS.md)
 - [Dashboard UX requirements](product/DASHBOARD_UX_REQUIREMENTS.md)
 - [Local Web Dashboard architecture](architecture/LOCAL_WEB_DASHBOARD.md)
 - [Dashboard assurance export](architecture/DASHBOARD_ASSURANCE_EXPORT.md)

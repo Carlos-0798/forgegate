@@ -1,0 +1,573 @@
+{
+  "$defs": {
+    "ArchiveDependencyCheck": {
+      "additionalProperties": false,
+      "properties": {
+        "backup_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Backup Sha256",
+          "type": "string"
+        },
+        "error_code": {
+          "anyOf": [
+            {
+              "pattern": "^[A-Z][A-Z0-9_]{0,79}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Error Code"
+        },
+        "job_ids": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 1000,
+          "minItems": 1,
+          "title": "Job Ids",
+          "type": "array"
+        },
+        "jobs_without_result": {
+          "maximum": 1000,
+          "minimum": 0,
+          "title": "Jobs Without Result",
+          "type": "integer"
+        },
+        "result_payloads_verified": {
+          "maximum": 1000,
+          "minimum": 0,
+          "title": "Result Payloads Verified",
+          "type": "integer"
+        },
+        "status": {
+          "enum": [
+            "VERIFIED",
+            "NOT_SUPPLIED",
+            "FAILED"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "backup_sha256",
+        "job_ids",
+        "status",
+        "result_payloads_verified",
+        "jobs_without_result"
+      ],
+      "title": "ArchiveDependencyCheck",
+      "type": "object"
+    },
+    "RecoveryReadinessHandoff": {
+      "additionalProperties": false,
+      "properties": {
+        "dependency_count": {
+          "maximum": 1000,
+          "minimum": 0,
+          "title": "Dependency Count",
+          "type": "integer"
+        },
+        "disposition": {
+          "enum": [
+            "READY_FOR_REHEARSAL",
+            "BLOCKED"
+          ],
+          "title": "Disposition",
+          "type": "string"
+        },
+        "handoff_id": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Handoff Id",
+          "type": "string"
+        },
+        "jobs_without_result": {
+          "maximum": 1000,
+          "minimum": 0,
+          "title": "Jobs Without Result",
+          "type": "integer"
+        },
+        "live_availability": {
+          "const": "NOT_CHECKED",
+          "default": "NOT_CHECKED",
+          "title": "Live Availability",
+          "type": "string"
+        },
+        "payload_transfer": {
+          "const": "NOT_INCLUDED",
+          "default": "NOT_INCLUDED",
+          "title": "Payload Transfer",
+          "type": "string"
+        },
+        "readiness": {
+          "$ref": "#/$defs/WorkspaceRecoveryReadiness"
+        },
+        "report_fingerprint": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Report Fingerprint",
+          "type": "string"
+        },
+        "restore": {
+          "const": "NOT_PERFORMED",
+          "default": "NOT_PERFORMED",
+          "title": "Restore",
+          "type": "string"
+        },
+        "result_payloads_verified": {
+          "maximum": 1000,
+          "minimum": 0,
+          "title": "Result Payloads Verified",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "forgegate.recovery-readiness-handoff.v1",
+          "default": "forgegate.recovery-readiness-handoff.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "source_report_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Source Report Sha256",
+          "type": "string"
+        },
+        "verified_dependency_count": {
+          "maximum": 1000,
+          "minimum": 0,
+          "title": "Verified Dependency Count",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "handoff_id",
+        "source_report_sha256",
+        "report_fingerprint",
+        "disposition",
+        "readiness",
+        "dependency_count",
+        "verified_dependency_count",
+        "result_payloads_verified",
+        "jobs_without_result"
+      ],
+      "title": "RecoveryReadinessHandoff",
+      "type": "object"
+    },
+    "SnapshotMember": {
+      "additionalProperties": false,
+      "properties": {
+        "sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Sha256",
+          "type": "string"
+        },
+        "size_bytes": {
+          "maximum": 1073872896,
+          "minimum": 1,
+          "title": "Size Bytes",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "sha256",
+        "size_bytes"
+      ],
+      "title": "SnapshotMember",
+      "type": "object"
+    },
+    "WorkspaceBackupManifest": {
+      "additionalProperties": false,
+      "properties": {
+        "candidate_store": {
+          "$ref": "#/$defs/SnapshotMember"
+        },
+        "candidate_store_version": {
+          "const": 9,
+          "default": 9,
+          "title": "Candidate Store Version",
+          "type": "integer"
+        },
+        "consistency": {
+          "const": "simultaneous_sqlite_write_reservations",
+          "default": "simultaneous_sqlite_write_reservations",
+          "title": "Consistency",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "encrypted": {
+          "const": false,
+          "default": false,
+          "title": "Encrypted",
+          "type": "boolean"
+        },
+        "external_identity_and_artifact_files": {
+          "const": "not_included",
+          "default": "not_included",
+          "title": "External Identity And Artifact Files",
+          "type": "string"
+        },
+        "includes_pending_report_bytes": {
+          "const": true,
+          "default": true,
+          "title": "Includes Pending Report Bytes",
+          "type": "boolean"
+        },
+        "job_store": {
+          "$ref": "#/$defs/SnapshotMember"
+        },
+        "job_store_version": {
+          "const": 3,
+          "default": 3,
+          "title": "Job Store Version",
+          "type": "integer"
+        },
+        "producer_authenticity": {
+          "const": "NOT_VERIFIED",
+          "default": "NOT_VERIFIED",
+          "title": "Producer Authenticity",
+          "type": "string"
+        },
+        "running_jobs": {
+          "const": 0,
+          "default": 0,
+          "title": "Running Jobs",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "forgegate.workspace-backup.v1",
+          "default": "forgegate.workspace-backup.v1",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "created_at",
+        "candidate_store",
+        "job_store"
+      ],
+      "title": "WorkspaceBackupManifest",
+      "type": "object"
+    },
+    "WorkspaceBackupManifestV2": {
+      "additionalProperties": false,
+      "properties": {
+        "archived_result_payloads": {
+          "const": "external_backups_required",
+          "default": "external_backups_required",
+          "title": "Archived Result Payloads",
+          "type": "string"
+        },
+        "candidate_store": {
+          "$ref": "#/$defs/SnapshotMember"
+        },
+        "candidate_store_version": {
+          "const": 9,
+          "default": 9,
+          "title": "Candidate Store Version",
+          "type": "integer"
+        },
+        "consistency": {
+          "const": "simultaneous_sqlite_write_reservations",
+          "default": "simultaneous_sqlite_write_reservations",
+          "title": "Consistency",
+          "type": "string"
+        },
+        "created_at": {
+          "format": "date-time",
+          "title": "Created At",
+          "type": "string"
+        },
+        "encrypted": {
+          "const": false,
+          "default": false,
+          "title": "Encrypted",
+          "type": "boolean"
+        },
+        "external_identity_and_artifact_files": {
+          "const": "not_included",
+          "default": "not_included",
+          "title": "External Identity And Artifact Files",
+          "type": "string"
+        },
+        "includes_pending_report_bytes": {
+          "const": true,
+          "default": true,
+          "title": "Includes Pending Report Bytes",
+          "type": "boolean"
+        },
+        "job_store": {
+          "$ref": "#/$defs/SnapshotMember"
+        },
+        "job_store_version": {
+          "const": 4,
+          "default": 4,
+          "title": "Job Store Version",
+          "type": "integer"
+        },
+        "producer_authenticity": {
+          "const": "NOT_VERIFIED",
+          "default": "NOT_VERIFIED",
+          "title": "Producer Authenticity",
+          "type": "string"
+        },
+        "running_jobs": {
+          "const": 0,
+          "default": 0,
+          "title": "Running Jobs",
+          "type": "integer"
+        },
+        "schema_version": {
+          "const": "forgegate.workspace-backup.v2",
+          "default": "forgegate.workspace-backup.v2",
+          "title": "Schema Version",
+          "type": "string"
+        }
+      },
+      "required": [
+        "created_at",
+        "candidate_store",
+        "job_store"
+      ],
+      "title": "WorkspaceBackupManifestV2",
+      "type": "object"
+    },
+    "WorkspaceRecoveryReadiness": {
+      "additionalProperties": false,
+      "properties": {
+        "archived_job_count": {
+          "maximum": 1000,
+          "minimum": 0,
+          "title": "Archived Job Count",
+          "type": "integer"
+        },
+        "availability": {
+          "const": "observed_during_check_only",
+          "default": "observed_during_check_only",
+          "title": "Availability",
+          "type": "string"
+        },
+        "backup_sha256": {
+          "pattern": "^[0-9a-f]{64}$",
+          "title": "Backup Sha256",
+          "type": "string"
+        },
+        "checked_at": {
+          "format": "date-time",
+          "title": "Checked At",
+          "type": "string"
+        },
+        "dependencies": {
+          "items": {
+            "$ref": "#/$defs/ArchiveDependencyCheck"
+          },
+          "maxItems": 1000,
+          "title": "Dependencies",
+          "type": "array"
+        },
+        "external_identity_and_artifact_files": {
+          "const": "NOT_CHECKED",
+          "default": "NOT_CHECKED",
+          "title": "External Identity And Artifact Files",
+          "type": "string"
+        },
+        "manifest_fingerprint": {
+          "pattern": "^sha256:[0-9a-f]{64}$",
+          "title": "Manifest Fingerprint",
+          "type": "string"
+        },
+        "producer_authenticity": {
+          "const": "NOT_VERIFIED",
+          "default": "NOT_VERIFIED",
+          "title": "Producer Authenticity",
+          "type": "string"
+        },
+        "restore": {
+          "const": "NOT_PERFORMED",
+          "default": "NOT_PERFORMED",
+          "title": "Restore",
+          "type": "string"
+        },
+        "schema_version": {
+          "const": "forgegate.workspace-recovery-readiness.v1",
+          "default": "forgegate.workspace-recovery-readiness.v1",
+          "title": "Schema Version",
+          "type": "string"
+        },
+        "scope": {
+          "const": "snapshot_and_exact_archived_job_payloads",
+          "default": "snapshot_and_exact_archived_job_payloads",
+          "title": "Scope",
+          "type": "string"
+        },
+        "status": {
+          "enum": [
+            "READY",
+            "INCOMPLETE"
+          ],
+          "title": "Status",
+          "type": "string"
+        }
+      },
+      "required": [
+        "backup_sha256",
+        "manifest_fingerprint",
+        "checked_at",
+        "status",
+        "archived_job_count",
+        "dependencies"
+      ],
+      "title": "WorkspaceRecoveryReadiness",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "all_candidate_domain_history_validation": {
+      "const": "NOT_PERFORMED",
+      "default": "NOT_PERFORMED",
+      "title": "All Candidate Domain History Validation",
+      "type": "string"
+    },
+    "archived_payloads": {
+      "const": "VERIFIED_EXTERNAL_NOT_REHYDRATED",
+      "default": "VERIFIED_EXTERNAL_NOT_REHYDRATED",
+      "title": "Archived Payloads",
+      "type": "string"
+    },
+    "automatic_execution": {
+      "const": "NOT_PERFORMED",
+      "default": "NOT_PERFORMED",
+      "title": "Automatic Execution",
+      "type": "string"
+    },
+    "availability": {
+      "const": "observed_during_rehearsal_only",
+      "default": "observed_during_rehearsal_only",
+      "title": "Availability",
+      "type": "string"
+    },
+    "candidate_store": {
+      "$ref": "#/$defs/SnapshotMember"
+    },
+    "completed_at": {
+      "format": "date-time",
+      "title": "Completed At",
+      "type": "string"
+    },
+    "external_identity_and_artifact_files": {
+      "const": "NOT_CHECKED",
+      "default": "NOT_CHECKED",
+      "title": "External Identity And Artifact Files",
+      "type": "string"
+    },
+    "handoff": {
+      "$ref": "#/$defs/RecoveryReadinessHandoff"
+    },
+    "handoff_sha256": {
+      "pattern": "^[0-9a-f]{64}$",
+      "title": "Handoff Sha256",
+      "type": "string"
+    },
+    "hardware_access": {
+      "const": "NOT_PERFORMED",
+      "default": "NOT_PERFORMED",
+      "title": "Hardware Access",
+      "type": "string"
+    },
+    "job_store": {
+      "$ref": "#/$defs/SnapshotMember"
+    },
+    "live_workspace_changed": {
+      "const": false,
+      "default": false,
+      "title": "Live Workspace Changed",
+      "type": "boolean"
+    },
+    "manifest": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/WorkspaceBackupManifest"
+        },
+        {
+          "$ref": "#/$defs/WorkspaceBackupManifestV2"
+        }
+      ],
+      "title": "Manifest"
+    },
+    "post_restore_inspection_fingerprint": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Post Restore Inspection Fingerprint",
+      "type": "string"
+    },
+    "post_restore_job_count": {
+      "maximum": 1100,
+      "minimum": 0,
+      "title": "Post Restore Job Count",
+      "type": "integer"
+    },
+    "post_restore_job_event_count": {
+      "maximum": 71500,
+      "minimum": 0,
+      "title": "Post Restore Job Event Count",
+      "type": "integer"
+    },
+    "producer_authenticity": {
+      "const": "NOT_VERIFIED",
+      "default": "NOT_VERIFIED",
+      "title": "Producer Authenticity",
+      "type": "string"
+    },
+    "rechecked_readiness": {
+      "$ref": "#/$defs/WorkspaceRecoveryReadiness"
+    },
+    "rehearsal_id": {
+      "pattern": "^sha256:[0-9a-f]{64}$",
+      "title": "Rehearsal Id",
+      "type": "string"
+    },
+    "restore_mode": {
+      "const": "new_directory_only",
+      "default": "new_directory_only",
+      "title": "Restore Mode",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "forgegate.recovery-rehearsal.v1",
+      "default": "forgegate.recovery-rehearsal.v1",
+      "title": "Schema Version",
+      "type": "string"
+    },
+    "status": {
+      "const": "RESTORED_COPY_VERIFIED",
+      "default": "RESTORED_COPY_VERIFIED",
+      "title": "Status",
+      "type": "string"
+    },
+    "validation_scope": {
+      "const": "exact_member_bytes_sqlite_job_and_referenced_candidate_history",
+      "default": "exact_member_bytes_sqlite_job_and_referenced_candidate_history",
+      "title": "Validation Scope",
+      "type": "string"
+    }
+  },
+  "required": [
+    "rehearsal_id",
+    "handoff_sha256",
+    "handoff",
+    "rechecked_readiness",
+    "completed_at",
+    "manifest",
+    "candidate_store",
+    "job_store",
+    "post_restore_job_count",
+    "post_restore_job_event_count",
+    "post_restore_inspection_fingerprint"
+  ],
+  "title": "RecoveryRehearsalReceipt",
+  "type": "object"
+}
