@@ -34,8 +34,8 @@ The core workflow supports:
 - **Optional device status:** saved MSP430 UART v1 read-only presets and an
   explicitly simulated demonstration, kept separate from release evidence.
 
-**CI disclosure:** current hosted jobs are blocked by GitHub's reported
-billing/spending limit. The local figures below are not latest hosted-CI results;
+**CI disclosure:** current hosted jobs did not execute because of an account-level
+GitHub Actions restriction. The local figures below are not latest hosted-CI results;
 the badge reflects GitHub workflow status, not overall product acceptance. See the
 [synchronization record](reports/GITHUB_SYNC_2026-09-09.md).
 
