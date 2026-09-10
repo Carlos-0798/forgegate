@@ -104,6 +104,11 @@ the full repository gate before accepting a new code checkpoint.
    Keep frontend host tests distinct from browser and physical evidence.
 6. Retain meaningful new screenshots/results with explicit synthetic/replay/
    host/physical labels. Update the current overview, not every historical report.
+7. Preserve the owner's manual-only cloud CI policy: pushes and PRs do not
+   trigger hosted tests. Run the retained workflow only on explicit request;
+   cloud billing resolution is not required to resume local engineering or
+   Private synchronization. Do not label an unrun cloud check PASS. See the
+   [manual run instructions](../README.md#optional-cloud-validation).
 
 ## Key references
 

@@ -1,8 +1,8 @@
 name: ci
 
 on:
-  push:
-  pull_request:
+  # Owner-selected policy: local gates first; hosted runs require an explicit dispatch.
+  workflow_dispatch:
 
 permissions:
   contents: read

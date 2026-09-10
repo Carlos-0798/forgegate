@@ -9,6 +9,11 @@ authorized on 2026-09-09; public visibility, License and Release remain separate
 See the [resumption checkpoint](PROJECT_RESUME_CHECKPOINT_2026-09-09.md) and
 [synchronization record](../reports/GITHUB_SYNC_2026-09-09.md).
 
+Cloud CI is owner-selected and manual-only; routine synchronization uses local
+verification. Keep the existing cloud matrix available without restoring push/PR
+triggers unless the owner requests that policy change. Account restriction
+resolution is deferred until cloud execution is wanted, not a product milestone.
+
 After job preparation, the proposed next engineering slice is an adapter
 conformance/example kit using the existing protocol and preset boundaries.
 Then validate a real supported device when one and explicit permission are

@@ -12,6 +12,12 @@ they do not certify the latest branch. Recent hosted jobs were blocked before
 execution by an account payment/spending-limit restriction. No required checks
 or repository protections are disabled as part of synchronization.
 
+After synchronization, the owner selected **manual-only cloud CI** on 2026-09-09.
+`workflow_dispatch` is the sole repository workflow trigger; local development
+gates remain required and the hosted jobs are retained unchanged. Trigger-policy
+regression tests are local evidence, not a cloud execution. See the
+[manual run instructions](../README.md#optional-cloud-validation).
+
 | Capability | Planned evidence | Current status |
 |---|---|---|
 | Reusable monitor presets | Versioned local catalog, operator/project/CSRF boundaries, duplicate-start and late-stop controls, simulated states and fresh-wheel browser controls | LOCAL ENGINEERING PASS — 1,568 Python passes / 3 environment skips, 95.90%; 296 frontend passes; release smoke and independent installed-browser start/stop/reload/restart pass. Screenshots retained. No new physical-board, native assistive or productivity claim. See Phase 64 acceptance |
