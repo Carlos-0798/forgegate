@@ -1,5 +1,8 @@
 # Project status
 
+- Portfolio follow-up (2026-09-09): reviewer navigation, ownership, real-case
+  summary and independent setup entry points are refreshed; engineering feature
+  work remains paused. See the [GitHub page audit](../reports/GITHUB_REVIEWER_AUDIT_2026-09-09.md).
 - Cloud validation policy (2026-09-09 owner decision): `ci.yml` is manual-only
   through `workflow_dispatch`. Pushes and PRs do not automatically run cloud
   tests; the complete existing matrix and local development gates are retained.

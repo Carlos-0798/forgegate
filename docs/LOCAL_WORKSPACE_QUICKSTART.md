@@ -7,6 +7,12 @@ policy. Windows and Python 3.12 are the tested target.
 
 ## Install and prepare
 
+Have repository access but no supplied wheel? First follow the
+[source-checkout build instructions](../README.md#quick-start), then copy the
+resulting wheel into a new short, private installation directory. There is no
+public installer or hosted demo; the repository and any supplied package require
+authorized access.
+
 In a short, private local directory, with the supplied wheel beside you:
 
 ```powershell
