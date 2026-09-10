@@ -1,12 +1,24 @@
 # Roadmap
 
-## Current status — Windows Local Alpha closed
+## Current priority — reusable monitoring after Alpha closeout
+
+The owner selected a bounded Phase 64 extension: saved project-scoped monitor
+presets, explicit browser start/stop, a hardware-free simulated adapter and safe
+MSP430 reader lifecycle reuse. See [monitor presets](MONITOR_PRESETS.md) and the
+[acceptance record](../reports/PHASE_64_MONITOR_PRESETS_ACCEPTANCE.md). No new
+hardware protocol, device control or generic plugin loader is implied.
+
+The next useful extension is a protocol-specific adapter conformance example,
+then actual acceptance when another device or producer is available. Avoid
+building a broad device marketplace or claiming hardware support from simulation.
+
+## Accepted baseline — Windows Local Alpha closed
 
 Phase 63 completed the final recipient-style installation and user-path closeout.
 The accepted core is candidate creation, supported-report import, normalized
 evidence review, authorized policy evaluation and verifiable handoff. Further
-Alpha feature expansion is frozen unless a reproduced blocker appears; future
-work should be a separately selected validation or production milestone. See
+Alpha feature expansion was frozen at that checkpoint; Phase 64 is a separately
+owner-selected milestone and does not invalidate its accepted results. See
 [Phase 63](../reports/PHASE_63_FINAL_USER_PATH_ACCEPTANCE.md).
 
 Independent novice acceptance and the Phase 53B human efficiency/accuracy study

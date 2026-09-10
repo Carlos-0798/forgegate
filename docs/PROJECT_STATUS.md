@@ -2,7 +2,15 @@
 
 - Date: 2026-09-09
 - Version: 0.1.0a1
-- Active checkpoint: Phase 63 final user-path closeout LOCAL ENGINEERING PASS.
+- Active checkpoint: Phase 64 reusable monitor presets LOCAL ENGINEERING PASS.
+  Saved project-scoped catalogs, operator start/stop, explicit simulated origin
+  and safe serial-reader reuse are implemented. Full gate: 1,568 Python passes /
+  3 environment skips, 95.90% coverage; 296 frontend passes; clean-install release
+  smoke and installed-browser lifecycle acceptance pass. No new physical-board acceptance,
+  release-evidence capture, human productivity or GitHub claim. See
+  [preset workflow](MONITOR_PRESETS.md) and
+  [acceptance](../reports/PHASE_64_MONITOR_PRESETS_ACCEPTANCE.md).
+- Previous checkpoint: Phase 63 final user-path closeout LOCAL ENGINEERING PASS.
   A clean-commit Windows delivery was installed outside the checkout; workspace
   initialization, browser activation, durable candidate creation and the retained
   complete PASS/FAIL handoff are accepted. Full gate: 1,466 passes / 3 symlink

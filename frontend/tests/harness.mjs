@@ -73,13 +73,14 @@ export async function harness(origin = "http://127.0.0.1:8131") {
       assert.notEqual(next, undefined, `Unexpected request: ${path}`);
       const value = typeof next === "function" ? await next() : next;
       if (value instanceof Error) throw value;
+      const responseBody = Object.hasOwn(value, "body") ? value.body : { error: { code: "FIXTURE_ERROR", request_id: "fixture-request" } };
       const responseBytes = value.bytes ?? new TextEncoder().encode(
-        value.text ?? JSON.stringify(value.body ?? { error: { code: "FIXTURE_ERROR", request_id: "fixture-request" } })
+        value.text ?? JSON.stringify(responseBody)
       );
       return {
         ok: value.status < 400, status: value.status,
         headers: new Headers(value.headers),
-        json: async () => value.body ?? { error: { code: "FIXTURE_ERROR", request_id: "fixture-request" } },
+        json: async () => responseBody,
         arrayBuffer: async () => responseBytes.buffer.slice(responseBytes.byteOffset, responseBytes.byteOffset + responseBytes.byteLength),
         blob: async () => new Blob([responseBytes])
       };

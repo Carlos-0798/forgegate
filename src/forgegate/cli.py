@@ -115,7 +115,12 @@ from forgegate.policy.models import (
     PolicyEvaluationDocument,
     ProfileAuthorizedPolicyEvaluation,
 )
-from forgegate.schema_registry import ARTIFACT_SCHEMAS, SCHEMAS, schema_filename
+from forgegate.schema_registry import (
+    ARTIFACT_SCHEMAS,
+    LOCAL_CONFIGURATION_SCHEMAS,
+    SCHEMAS,
+    schema_filename,
+)
 from forgegate.workspace_cli import workspace_app
 
 app = typer.Typer(
@@ -147,6 +152,7 @@ def doctor() -> None:
         "platform": platform.platform(),
         "supported_schemas": sorted(SCHEMAS),
         "supported_artifact_schemas": sorted(ARTIFACT_SCHEMAS),
+        "supported_local_configuration_schemas": sorted(LOCAL_CONFIGURATION_SCHEMAS),
         "phase": "phase22-windows-alpha",
     }
     typer.echo(json.dumps(report, indent=2, sort_keys=True))
@@ -217,9 +223,9 @@ def validate_config(
 def export_schemas(
     output_dir: Annotated[Path, typer.Argument(file_okay=False)],
 ) -> None:
-    """Export canonical document and collector-artifact JSON Schemas."""
+    """Export canonical document, local configuration and collector-artifact JSON Schemas."""
     output_dir.mkdir(parents=True, exist_ok=True)
-    for schema_version, model in sorted(SCHEMAS.items()):
+    for schema_version, model in sorted({**SCHEMAS, **LOCAL_CONFIGURATION_SCHEMAS}.items()):
         target = output_dir / schema_filename(schema_version)
         payload = json.dumps(model.model_json_schema(), indent=2, sort_keys=True) + "\n"
         target.write_bytes(payload.encode("utf-8"))
@@ -683,6 +689,50 @@ def dashboard_check(
         raise typer.Exit(code=3)
 
 
+@app.command("monitor-preset-init")
+def monitor_preset_init(
+    output: Annotated[Path, typer.Argument(dir_okay=False)],
+    project: Annotated[str, typer.Option("--project")],
+    msp430_port: Annotated[
+        str | None,
+        typer.Option("--msp430-port", help="Optionally add a saved read-only MSP430 COM port."),
+    ] = None,
+) -> None:
+    """Save reusable monitor presets once; does not open hardware or start a service."""
+    from forgegate.monitor_presets import MonitorPreset, MonitorPresetCatalog
+    from forgegate.monitor_presets_io import save_monitor_presets
+
+    try:
+        presets = [
+            MonitorPreset(
+                preset_id="simulated-demo",
+                name="Simulated status demonstration",
+                adapter="forgegate.simulated-demo.v1",
+            )
+        ]
+        if msp430_port is not None:
+            presets.append(
+                MonitorPreset(
+                    preset_id="msp430-uart",
+                    name="MSP430 UART v1 (read-only)",
+                    adapter="msp430.uart.v1",
+                    port=msp430_port,
+                )
+            )
+        save_monitor_presets(
+            output, MonitorPresetCatalog(project_id=project, presets=tuple(presets))
+        )
+    except (ValueError, OSError) as exc:
+        typer.echo(
+            "ERROR: monitor preset setup failed; check input and choose a new output file.",
+            err=True,
+        )
+        raise typer.Exit(code=3) from exc
+    typer.echo("Monitor presets saved. Hardware access: NOT_PERFORMED.")
+    typer.echo("Start Dashboard with --monitor-presets PATH; activate, then open Live devices.")
+    typer.echo("Presets start STOPPED. Select a preset and explicitly start monitoring.")
+
+
 @app.command("dashboard")
 def dashboard(
     database: Annotated[Path, typer.Option("--database", dir_okay=False)],
@@ -725,16 +775,43 @@ def dashboard(
         float,
         typer.Option("--msp430-stale-seconds", min=1.5, max=60.0),
     ] = 3.0,
+    monitor_presets: Annotated[
+        Path | None,
+        typer.Option(
+            "--monitor-presets",
+            exists=True,
+            dir_okay=False,
+            readable=True,
+            help="Saved monitor catalog; remains stopped until an operator starts a preset.",
+        ),
+    ] = None,
 ) -> None:
     """Serve the authenticated local Dashboard and established REST API."""
     import uvicorn
 
     from forgegate.api import ApiAuthenticator, create_api_app
     from forgegate.collection_jobs import JobError
-    from forgegate.compatibility.msp430_live import Msp430SerialMonitor
+    from forgegate.monitor_presets import MonitorPresetController
+    from forgegate.monitor_presets_io import load_monitor_presets
 
     try:
         bind_host = validated_loopback_host(host)
+        if monitor_presets is not None and msp430_port is not None:
+            raise ValueError("DASHBOARD_MONITOR_PROVIDER_CONFLICT")
+        controller = (
+            MonitorPresetController(load_monitor_presets(monitor_presets))
+            if monitor_presets is not None
+            else None
+        )
+        if (
+            existing_pair
+            and controller is not None
+            and any(
+                preset.adapter != "forgegate.simulated-demo.v1"
+                for preset in controller.catalog.presets
+            )
+        ):
+            raise ValueError("DASHBOARD_EXISTING_PAIR_REQUIRES_JOBS_AND_NO_HARDWARE")
         runtime_trust_store_path = trust_store_path.expanduser().absolute()
 
         def load_runtime_trust_store() -> TrustStore:
@@ -755,14 +832,14 @@ def dashboard(
         elif job_store is None or msp430_port is not None:
             raise ValueError("DASHBOARD_EXISTING_PAIR_REQUIRES_JOBS_AND_NO_HARDWARE")
         local_url = f"http://{bind_host}:{port}/app/"
-        monitor = (
-            None
-            if msp430_port is None
-            else Msp430SerialMonitor(
+        monitor = None
+        if msp430_port is not None:
+            from forgegate.compatibility.msp430_live import Msp430SerialMonitor
+
+            monitor = Msp430SerialMonitor(
                 msp430_port,
                 stale_after_seconds=msp430_stale_seconds,
             )
-        )
         dashboard_app = create_api_app(
             database,
             application=application,
@@ -771,11 +848,14 @@ def dashboard(
             dashboard_live_status_provider=monitor,
             dashboard_job_store_path=job_store,
             dashboard_existing_pair=existing_pair,
+            dashboard_monitor_controller=controller,
         )
-    except (CandidateStoreError, IdentityError, ValueError, JobError) as exc:
+    except (CandidateStoreError, IdentityError, ValueError, JobError, OSError) as exc:
         typer.echo(f"ERROR: {exc}", err=True)
         raise typer.Exit(code=3) from exc
     typer.echo(f"ForgeGate Dashboard: {local_url}")
+    if controller is not None:
+        typer.echo("Saved monitor presets loaded, STOPPED. Use Live devices to start/stop.")
     if monitor is not None:
         typer.echo(
             f"MSP430 live status: read-only {msp430_port} at 115200 baud; no bytes transmitted."
@@ -791,6 +871,8 @@ def dashboard(
             log_level="info",
         )
     finally:
+        if controller is not None:
+            controller.close()
         if monitor is not None:
             monitor.stop()
 

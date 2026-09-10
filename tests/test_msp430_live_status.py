@@ -355,3 +355,103 @@ def test_default_serial_adapter_reports_missing_optional_dependency(
         msp430_live._default_serial_factory("COM4")
     with pytest.raises(msp430_live.Msp430MonitorError, match="pyserial"):
         msp430_live._default_port_present("COM4")
+
+
+@pytest.mark.parametrize("stage", ["presence", "factory", "open", "read"])
+def test_stop_timeout_retains_reader_and_blocks_replacement_until_exit(stage: str) -> None:
+    entered = threading.Event()
+    release = threading.Event()
+    observed = {"factories": 0, "opens": 0, "closes": 0}
+
+    def block_at(current: str) -> None:
+        if stage == current:
+            entered.set()
+            assert release.wait(3), "test did not release simulated I/O"
+
+    class BlockingHandle:
+        is_open = False
+
+        def open(self) -> None:
+            block_at("open")
+            self.is_open = True
+            observed["opens"] += 1
+
+        def read_until(self, expected: bytes = b"\n", size: int | None = None) -> bytes:
+            block_at("read")
+            return _tel_line()
+
+        def close(self) -> None:
+            self.is_open = False
+            observed["closes"] += 1
+
+    handle = BlockingHandle()
+
+    def present(_port: str) -> bool:
+        block_at("presence")
+        return True
+
+    def factory(_port: str):
+        observed["factories"] += 1
+        block_at("factory")
+        return handle
+
+    monitor = Msp430SerialMonitor("COM4", serial_factory=factory, port_present=present)
+    try:
+        monitor.start()
+        assert entered.wait(1)
+        reader = monitor._thread
+        with pytest.raises(msp430_live.Msp430MonitorError, match="MONITOR_STOP_TIMEOUT"):
+            monitor.stop(timeout=0)
+        assert monitor._thread is reader and reader is not None and reader.is_alive()
+        with pytest.raises(msp430_live.Msp430MonitorError, match="MONITOR_STOP_INCOMPLETE"):
+            monitor.start()
+        assert monitor._thread is reader
+        assert monitor.snapshot().sources[0].detail_code == "MONITOR_STOP_TIMEOUT"
+    finally:
+        release.set()
+        monitor.stop(timeout=1)
+    assert monitor._thread is None
+    assert monitor.snapshot().sources[0].detail_code == "MONITOR_STOPPED"
+    assert monitor.snapshot().sources[0].frames_received == 0
+    assert observed["opens"] == observed["closes"] == int(stage in {"open", "read"})
+    assert observed["factories"] == int(stage != "presence")
+
+
+@pytest.mark.parametrize("invalid", [False, True])
+def test_stopped_lifecycle_detail_is_not_hidden_by_old_heartbeat(invalid: bool) -> None:
+    clock = _Clock()
+    monitor = Msp430SerialMonitor("COM4", monotonic=clock.monotonic, utc_now=clock.utc_now)
+    monitor._process_line(_tel_line())
+    clock.advance(10)
+    if invalid:
+        monitor._process_line(b"TEL,invalid\n")
+    monitor.stop()
+    source = monitor.snapshot().sources[0]
+    assert source.heartbeat == ("INVALID" if invalid else "STALE")
+    assert source.detail_code == "MONITOR_STOPPED"
+    assert source.connection == "DISCONNECTED"
+    assert source.data_origin == "LIVE_TELEMETRY"
+
+
+def test_thread_start_failure_leaves_safe_stoppable_monitor(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def fail(_thread: threading.Thread) -> None:
+        raise RuntimeError("private runtime detail")
+
+    monitor = Msp430SerialMonitor("COM4", port_present=lambda _: pytest.fail("must not enumerate"))
+    with monkeypatch.context() as patch:
+        patch.setattr(threading.Thread, "start", fail)
+        with pytest.raises(msp430_live.Msp430MonitorError, match="MONITOR_START_FAILED"):
+            monitor.start()
+    assert monitor._thread is None
+    assert monitor.snapshot().sources[0].detail_code == "MONITOR_START_FAILED"
+    assert "private" not in monitor.snapshot().sources[0].detail_message
+    monitor.stop()
+
+
+@pytest.mark.parametrize("timeout", [-1, float("nan"), float("inf")])
+def test_monitor_stop_rejects_unbounded_or_negative_timeout(timeout: float) -> None:
+    monitor = Msp430SerialMonitor("COM4")
+    with pytest.raises(ValueError, match="stop timeout"):
+        monitor.stop(timeout=timeout)

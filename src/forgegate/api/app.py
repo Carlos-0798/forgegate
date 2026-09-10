@@ -58,6 +58,7 @@ from forgegate.candidates import (
 )
 from forgegate.candidates.models import CandidateTransitionResult
 from forgegate.dashboard.startup import DashboardStartupError, ExistingDashboardPair
+from forgegate.monitor_presets import MonitorPresetController, MonitorPresetError
 from forgegate.network import is_loopback_host
 from forgegate.policy import PolicyMaterial
 from forgegate.projects import (
@@ -126,15 +127,27 @@ def create_api_app(
     dashboard_live_status_provider: LiveStatusProvider | None = None,
     dashboard_job_store_path: Path | None = None,
     dashboard_existing_pair: bool = False,
+    dashboard_monitor_controller: MonitorPresetController | None = None,
 ) -> FastAPI:
     if authenticator is None and not contract_only:
         raise ValueError("authenticated API construction requires an ApiAuthenticator")
+    if dashboard_monitor_controller is not None and (
+        not dashboard or dashboard_live_status_provider is not None
+    ):
+        raise ValueError("DASHBOARD_MONITOR_PROVIDER_CONFLICT")
     pair = None
     if dashboard_existing_pair:
         if (
             not dashboard
             or dashboard_job_store_path is None
             or dashboard_live_status_provider is not None
+            or (
+                dashboard_monitor_controller is not None
+                and any(
+                    preset.adapter != "forgegate.simulated-demo.v1"
+                    for preset in dashboard_monitor_controller.catalog.presets
+                )
+            )
         ):
             raise DashboardStartupError("DASHBOARD_EXISTING_PAIR_REQUIRES_JOBS_AND_NO_HARDWARE")
         pair = ExistingDashboardPair.prepare(database, dashboard_job_store_path)
@@ -152,8 +165,12 @@ def create_api_app(
         try:
             yield
         finally:
-            if pair is not None:
-                pair.stop()
+            try:
+                if dashboard_monitor_controller is not None:
+                    dashboard_monitor_controller.close()
+            finally:
+                if pair is not None:
+                    pair.stop()
 
     app = FastAPI(
         title="ForgeGate Local API",
@@ -167,6 +184,7 @@ def create_api_app(
     app.state.candidate_application = candidate_application
     app.state.authenticator = authenticator
     app.state.dashboard_pair = pair
+    app.state.dashboard_monitor_controller = dashboard_monitor_controller
 
     def require_project(
         principal: ApiPrincipal,
@@ -300,6 +318,12 @@ def create_api_app(
         response = await call_next(request)
         response.headers["X-Request-ID"] = request_id
         return response
+
+    @app.exception_handler(MonitorPresetError)
+    async def monitor_preset_error_handler(
+        request: Request, exc: MonitorPresetError
+    ) -> JSONResponse:
+        return _error_response(exc.status_code, exc.code, str(exc), _request_id(request))
 
     @app.exception_handler(CandidateStoreError)
     async def candidate_store_error_handler(
@@ -878,6 +902,7 @@ def create_api_app(
             session_manager=dashboard_session_manager,
             static_root=dashboard_static_root,
             live_status_provider=dashboard_live_status_provider,
+            monitor_controller=dashboard_monitor_controller,
             job_store_path=dashboard_job_store_path,
         )
     return app

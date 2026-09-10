@@ -80,6 +80,10 @@ template do not silently modify them.
 
 ## Private files and evidence
 
+For reusable MSP430 read-only monitoring or a no-hardware status demonstration,
+follow [Monitor presets](MONITOR_PRESETS.md). This is separate from report
+assessment; a monitored heartbeat does not validate a release.
+
 `operator-key.pem` is an unencrypted private key. Keep the entire workspace in a
 private directory with appropriate Windows account permissions. Its `.gitignore`
 prevents accidental ordinary Git addition but is not encryption or an ACL.

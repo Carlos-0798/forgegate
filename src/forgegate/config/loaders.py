@@ -20,6 +20,7 @@ from forgegate.candidates.models import (
 from forgegate.domain.models import EvidenceBundle, PolicyConfig, ProjectConfig
 from forgegate.github_actions import GitHubActionReport
 from forgegate.identity import AssuranceSignature, SigningIdentity, TrustStore
+from forgegate.monitor_presets import MonitorPresetCatalog
 from forgegate.plugins import (
     PluginDiscoveryReport,
     PluginManifest,
@@ -44,6 +45,7 @@ MAX_CONFIG_NODES = 250_000
 MAX_CONFIG_DEPTH = 64
 type SupportedConfig = (
     ProjectConfig
+    | MonitorPresetCatalog
     | WorkspaceInitializationReport
     | InitializationReport
     | PolicyConfig
@@ -78,6 +80,7 @@ type SupportedConfig = (
 )
 
 SCHEMA_MODELS: dict[str, type[SupportedConfig]] = {
+    "forgegate.monitor-presets.v1": MonitorPresetCatalog,
     "forgegate.workspace-initialization.v1": WorkspaceInitializationReport,
     "forgegate.project.v1": ProjectConfig,
     "forgegate.initialization-report.v1": InitializationReport,

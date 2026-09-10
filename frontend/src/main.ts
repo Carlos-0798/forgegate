@@ -238,6 +238,7 @@ interface LiveSourceStatus {
   source_id: string;
   source_type: string;
   display_name: string;
+  data_origin?: "LIVE_TELEMETRY" | "SIMULATED";
   access_mode: "READ_ONLY";
   connection: "CONNECTING" | "CONNECTED" | "DISCONNECTED" | "ERROR";
   heartbeat: "NOT_OBSERVED" | "NORMAL" | "STALE" | "INVALID";
@@ -263,6 +264,32 @@ interface LiveSourceStatus {
   reconnects: number;
   evidence_boundary: "LIVE_STATUS_ONLY_NOT_RELEASE_EVIDENCE";
   hardware_control: "NOT_PERFORMED";
+}
+
+interface MonitorControlView {
+  schema_version: "forgegate.monitor-control.v1";
+  project_id: string;
+  presets: Array<{
+    preset_id: string;
+    name: string;
+    adapter: "msp430.uart.v1" | "forgegate.simulated-demo.v1";
+    port: string | null;
+    stale_after_seconds: number;
+  }>;
+  session: {
+    state: "STOPPED" | "RUNNING" | "STOPPING" | "ERROR";
+    revision: number;
+    run_id: string | null;
+    active_preset_id: string | null;
+    detail_code: string;
+    detail_message: string;
+  };
+}
+
+interface MonitorControls {
+  element: HTMLElement;
+  configured: () => boolean | undefined;
+  refresh: (manual?: boolean) => Promise<void>;
 }
 
 interface CandidateTransition {
@@ -1083,7 +1110,11 @@ async function renderRoute(): Promise<void> {
 }
 
 async function renderDevices(): Promise<void> {
+  const owner = session;
+  if (owner === null) return;
+  clearLiveStatusTimer();
   const generation = liveStatusGeneration;
+  const hash = window.location.hash;
   const main = page(
     "Live devices",
     "READ-ONLY OBSERVATION",
@@ -1092,7 +1123,6 @@ async function renderDevices(): Promise<void> {
   const toolbar = el("section", "toolbar live-toolbar");
   const refresh = button("Refresh now", "button secondary");
   const cadence = statusBadge("Live · every 1 s");
-  refresh.addEventListener("click", () => void refreshLiveStatus(main, generation));
   toolbar.append(cadence, refresh);
   const announcement = el("p", "sr-only");
   announcement.setAttribute("aria-live", "polite");
@@ -1101,47 +1131,204 @@ async function renderDevices(): Promise<void> {
   content.setAttribute("aria-label", "Live device status");
   content.setAttribute("aria-busy", "true");
   content.append(el("p", "muted", "Loading the current read-only device status…"));
-  main.append(toolbar, announcement, content);
-  shell(main);
-  await refreshLiveStatus(main, generation);
-}
-
-async function refreshLiveStatus(main: HTMLElement, generation: number): Promise<void> {
-  if (generation !== liveStatusGeneration || currentRoute !== "devices" || session === null) return;
-  if (liveStatusTimer !== null) window.clearTimeout(liveStatusTimer);
-  liveStatusTimer = null;
-  const content = main.querySelector<HTMLElement>(".live-status-region");
-  const announcement = main.querySelector<HTMLElement>("[aria-live='polite']");
-  if (content === null || !main.isConnected) return;
-  try {
-    const result = await api<LiveStatusPage>("/app/api/live-status");
-    if (generation !== liveStatusGeneration || currentRoute !== "devices" || !main.isConnected) return;
-    content.setAttribute("aria-busy", "false");
-    content.replaceChildren(renderLiveStatus(result));
-    const signature = result.sources
-      .map((source) => `${source.display_name}: ${source.connection}, heartbeat ${source.heartbeat}, device ${source.device_health}`)
-      .join(". ");
-    if (announcement !== null && signature !== lastLiveAnnouncement) {
-      announcement.textContent = signature || "No live device monitor is configured.";
-      lastLiveAnnouncement = signature;
+  const current = (): boolean => session === owner && generation === liveStatusGeneration
+    && currentRoute === "devices" && window.location.hash === hash && main.isConnected;
+  const controls = createMonitorControls(owner, current);
+  let refreshing = false;
+  const refreshStatus = async (): Promise<void> => {
+    if (!current() || refreshing) return;
+    refreshing = true;
+    refresh.disabled = true;
+    if (liveStatusTimer !== null) window.clearTimeout(liveStatusTimer);
+    liveStatusTimer = null;
+    // Read both independent views together, then render sources with the known
+    // configuration mode. The persistent controls retain focus across polling.
+    const [status] = await Promise.allSettled([
+      api<LiveStatusPage>("/app/api/live-status"), controls.refresh()
+    ]);
+    if (!current()) return;
+    refreshing = false;
+    refresh.disabled = false;
+    let delay = 2000;
+    if (status.status === "fulfilled") {
+      const result = status.value;
+      content.setAttribute("aria-busy", "false");
+      content.replaceChildren(renderLiveStatus(result, controls.configured()));
+      const signature = result.sources
+        .map((source) => `${source.data_origin === "SIMULATED" ? "SIMULATED " : ""}${source.display_name}: ${source.connection}, heartbeat ${source.heartbeat}, device ${source.device_health}`)
+        .join(". ");
+      if (signature !== lastLiveAnnouncement) {
+        announcement.textContent = signature || "No monitor is currently running.";
+        lastLiveAnnouncement = signature;
+      }
+      delay = Math.max(1, result.refresh_after_seconds) * 1000;
+    } else if (handleProtectedProblem(content, status.reason, "Refresh the current monitor status, then inspect its reported error.")) {
+      return;
     }
-    liveStatusTimer = window.setTimeout(
-      () => void refreshLiveStatus(main, generation),
-      Math.max(1, result.refresh_after_seconds) * 1000
-    );
-  } catch (error) {
-    if (handleProtectedProblem(content, error, "Confirm the local monitor is running, then retry.")) return;
-    liveStatusTimer = window.setTimeout(() => void refreshLiveStatus(main, generation), 2000);
-  }
+    liveStatusTimer = window.setTimeout(() => void refreshStatus(), delay);
+  };
+  refresh.addEventListener("click", () => void refreshStatus());
+  main.append(toolbar, controls.element, announcement, content);
+  shell(main);
+  await refreshStatus();
 }
 
-function renderLiveStatus(result: LiveStatusPage): HTMLElement {
+function createMonitorControls(owner: DashboardSession, current: () => boolean): MonitorControls {
+  const element = el("section", "monitor-control-region");
+  element.append(el("p", "muted", "Loading saved monitor presets…"));
+  const panel = el("section", "panel monitor-control-panel");
+  const origin = el("p", "eyebrow", "SAVED MONITOR PRESET");
+  const state = el("p", "monitor-session-state", "Monitor session unavailable");
+  state.setAttribute("aria-live", "polite");
+  const detail = el("p", "muted");
+  const active = el("p", "mono");
+  const label = el("label", "field");
+  label.htmlFor = "monitor-preset";
+  const select = el("select");
+  select.id = "monitor-preset";
+  select.name = "monitor-preset";
+  select.setAttribute("aria-describedby", "monitor-preset-description");
+  label.append(el("span", undefined, "Saved preset"), select);
+  const description = el("p", "monitor-preset-description");
+  description.id = "monitor-preset-description";
+  const start = button("Start monitoring", "button primary");
+  const stop = button("Stop monitoring", "button secondary");
+  const reload = button("Reload monitor session", "button quiet");
+  const actions = el("div", "toolbar");
+  const problem = el("div", "monitor-control-problem");
+  const operator = owner.principal.role === "operator";
+  if (operator) actions.append(start, stop);
+  actions.append(reload);
+  panel.append(origin, el("h2", undefined, "Monitor session"), state, detail, active, label, description,
+    el("p", "command-boundary", "Stop monitoring ends only the monitor session. The Dashboard server stays running. Live status is not release evidence."), actions, problem);
+  if (!operator) panel.append(el("p", "muted", "Read-only session. An operator must start or stop monitoring."));
+
+  let view: MonitorControlView | null | undefined;
+  let pending = false;
+  let fresh = false;
+  let requestGeneration = 0;
+  let optionsSignature = "";
+  let readProblemVisible = false;
+  const mountPanel = (): void => {
+    if (element.firstElementChild !== panel) element.replaceChildren(panel);
+  };
+  const update = (): void => {
+    const selected = view?.presets.find(preset => preset.preset_id === select.value);
+    const running = view?.session.run_id !== null && view?.session.run_id !== undefined;
+    const activePreset = view?.presets.find(preset => preset.preset_id === view?.session.active_preset_id);
+    const simulated = (running ? activePreset : selected)?.adapter === "forgegate.simulated-demo.v1";
+    origin.textContent = simulated ? "SIMULATED DEMO — NO HARDWARE OBSERVATION" : "SAVED MONITOR PRESET";
+    description.textContent = selected === undefined ? "No saved preset is available."
+      : selected.adapter === "forgegate.simulated-demo.v1"
+        ? "SIMULATED: six scripted connection, heartbeat and health states change every 5 seconds and repeat every 30 seconds. No serial port is opened; the demo provides no hardware evidence."
+        : `Read-only MSP430 UART v1 · ${selected.port ?? "No port configured"} · stale after ${selected.stale_after_seconds} seconds. Starting the monitor does not establish a connection or validate measurements.`;
+    select.disabled = !operator || pending || !fresh || running;
+    start.disabled = !operator || pending || !fresh || selected === undefined || running;
+    stop.disabled = !operator || pending || !fresh || !running;
+    stop.textContent = view?.session.state === "STOPPING" ? "Retry stop monitoring" : "Stop monitoring";
+    reload.disabled = pending;
+    if (view !== null && view !== undefined) {
+      const nextState = `Monitoring ${view.session.state} · revision ${view.session.revision}`;
+      if (state.textContent !== nextState) state.textContent = nextState;
+      detail.textContent = `${view.session.detail_code}: ${view.session.detail_message}`;
+      active.textContent = `Project: ${view.project_id} · Active preset: ${activePreset?.name ?? "None"} · Run: ${view.session.run_id ?? "None"}`;
+    }
+    panel.setAttribute("aria-busy", String(pending));
+  };
+  const accept = (result: MonitorControlView | null): void => {
+    view = result;
+    fresh = true;
+    if (result === null) {
+      element.replaceChildren();
+      return;
+    }
+    mountPanel();
+    const signature = JSON.stringify(result.presets);
+    if (signature !== optionsSignature) {
+      const selected = select.value;
+      select.replaceChildren(...result.presets.map(preset => {
+        const option = el("option", undefined, `${preset.name}${preset.adapter === "forgegate.simulated-demo.v1" ? " · SIMULATED" : ""}`);
+        option.value = preset.preset_id;
+        return option;
+      }));
+      select.value = result.presets.some(preset => preset.preset_id === selected)
+        ? selected : result.session.active_preset_id ?? result.presets[0]?.preset_id ?? "";
+      optionsSignature = signature;
+    }
+    if (result.session.run_id !== null && result.session.active_preset_id !== null) select.value = result.session.active_preset_id;
+    update();
+  };
+  const refresh = async (manual = false): Promise<void> => {
+    if (!current() || pending) return;
+    const request = ++requestGeneration;
+    try {
+      const result = await api<MonitorControlView | null>("/app/api/monitor-presets");
+      if (!current() || request !== requestGeneration) return;
+      accept(result);
+      if (manual || readProblemVisible) problem.replaceChildren();
+      readProblemVisible = false;
+    } catch (error) {
+      if (!current() || request !== requestGeneration) return;
+      fresh = false;
+      mountPanel();
+      update();
+      if (error instanceof RequestProblem && error.status === 401) {
+        handleProtectedProblem(problem, error, "Start a new local activation.");
+        return;
+      }
+      if (!readProblemVisible || manual) {
+        if (handleProtectedProblem(problem, error, "Reload the monitor session before starting or stopping it.")) return;
+        readProblemVisible = true;
+      }
+    }
+  };
+  const command = async (action: "start" | "stop"): Promise<void> => {
+    if (!current() || !operator || pending || !fresh || view === null || view === undefined) return;
+    if ((action === "start" && start.disabled) || (action === "stop" && stop.disabled)) return;
+    const body = action === "start"
+      ? {preset_id: select.value, expected_revision: view.session.revision}
+      : {run_id: view.session.run_id};
+    pending = true;
+    const request = ++requestGeneration;
+    problem.replaceChildren();
+    readProblemVisible = false;
+    update();
+    try {
+      const result = await api<MonitorControlView>(`/app/api/monitor-session/${action}`, {
+        method: "POST", headers: {"X-ForgeGate-CSRF": owner.csrf_token}, body: JSON.stringify(body)
+      });
+      if (!current() || request !== requestGeneration) return;
+      accept(result);
+    } catch (error) {
+      if (!current() || request !== requestGeneration) return;
+      fresh = false;
+      if (handleProtectedProblem(problem, error, "The monitor outcome is unconfirmed. Reload the monitor session before trying again; no connection is claimed.")) return;
+    } finally {
+      if (current() && request === requestGeneration) {
+        pending = false;
+        update();
+      }
+    }
+  };
+  select.addEventListener("change", () => { if (current()) update(); });
+  start.addEventListener("click", () => void command("start"));
+  stop.addEventListener("click", () => void command("stop"));
+  reload.addEventListener("click", () => void refresh(true));
+  update();
+  return {element, configured: () => view === undefined ? undefined : view !== null, refresh};
+}
+
+function renderLiveStatus(result: LiveStatusPage, controlled: boolean | undefined): HTMLElement {
   const wrapper = el("div", "live-status-stack");
   if (result.sources.length === 0) {
     wrapper.append(
       emptyState(
-        "No live monitor configured",
-        "Restart the Dashboard with --msp430-port COM4 to enable the optional read-only MSP430 UART v1 monitor."
+        controlled === false ? "No live monitor configured" : "No monitor is currently running",
+        controlled === false
+          ? "Restart the Dashboard with --msp430-port COM4 to enable the optional read-only MSP430 UART v1 monitor."
+          : controlled === true
+            ? "Select a saved preset above and start monitoring with an operator session."
+            : "Reload the monitor session to check which monitoring options are available."
       )
     );
     return wrapper;
@@ -1152,18 +1339,20 @@ function renderLiveStatus(result: LiveStatusPage): HTMLElement {
 }
 
 function renderLiveSource(source: LiveSourceStatus): HTMLElement {
+  const simulated = source.data_origin === "SIMULATED";
   const sourcePanel = el("article", "live-source-panel");
   const heading = el("div", "card-heading");
   const title = el("div");
-  title.append(el("p", "eyebrow", "LIVE SOURCE"), el("h2", undefined, source.display_name));
+  title.append(el("p", "eyebrow", simulated ? "SIMULATED SOURCE — NO HARDWARE OBSERVATION" : "LIVE SOURCE"),
+    el("h2", undefined, `${simulated ? "SIMULATED · " : ""}${source.display_name}`));
   heading.append(title, statusBadge(source.access_mode));
 
   const stateGrid = el("section", "device-state-grid");
   stateGrid.setAttribute("aria-label", `${source.display_name} current states`);
   stateGrid.append(
-    liveStateCard("Connection", source.connection, connectionDescription(source.connection)),
-    liveStateCard("Heartbeat", source.heartbeat, heartbeatDescription(source)),
-    liveStateCard("Device health", source.device_health, healthDescription(source))
+    liveStateCard("Connection", source.connection, simulated ? "Scripted connection state; no serial endpoint is opened." : connectionDescription(source.connection)),
+    liveStateCard("Heartbeat", source.heartbeat, simulated ? "Scripted heartbeat freshness; no device frame was observed." : heartbeatDescription(source)),
+    liveStateCard("Device health", source.device_health, simulated ? "Scripted health state; this is not a firmware report or hardware diagnosis." : healthDescription(source))
   );
 
   const detail = el("section", "live-detail-banner");
@@ -1171,7 +1360,7 @@ function renderLiveSource(source: LiveSourceStatus): HTMLElement {
 
   const columns = el("div", "content-columns");
   const telemetry = el("section", "panel");
-  telemetry.append(el("p", "eyebrow", "LATEST VALID TEL FRAME"), el("h3", undefined, "Telemetry position"));
+  telemetry.append(el("p", "eyebrow", simulated ? "SIMULATED VALUES" : "LATEST VALID TEL FRAME"), el("h3", undefined, "Telemetry position"));
   const telemetryValues = el("dl", "definition-list");
   telemetryValues.append(
     definition("Sequence", nullableNumber(source.sequence)),
@@ -1184,24 +1373,26 @@ function renderLiveSource(source: LiveSourceStatus): HTMLElement {
   telemetry.append(telemetryValues);
   if (source.reported_issues.length > 0) {
     const issues = el("section", "reported-issues");
-    issues.append(el("h4", undefined, "Decoded firmware reports"));
+    issues.append(el("h4", undefined, simulated ? "Simulated issue examples" : "Decoded firmware reports"));
     const list = el("ul", "issue-list");
     for (const issue of source.reported_issues) {
       const item = el("li");
       item.append(el("code", undefined, issue.mask), el("span", undefined, issue.label));
       list.append(item);
     }
-    issues.append(list, el("p", "muted", "Decoded from the versioned MSP430 UART v1 adapter; these are device reports, not ForgeGate diagnoses."));
+    issues.append(list, el("p", "muted", simulated
+      ? "Scripted examples only; no device report or hardware diagnosis is established."
+      : "Decoded from the versioned MSP430 UART v1 adapter; these are device reports, not ForgeGate diagnoses."));
     telemetry.append(issues);
   }
 
   const monitor = el("section", "panel");
-  monitor.append(el("p", "eyebrow", "MONITOR DIAGNOSTICS"), el("h3", undefined, "Read-only transport"));
+  monitor.append(el("p", "eyebrow", "MONITOR DIAGNOSTICS"), el("h3", undefined, simulated ? "Simulated source" : "Read-only transport"));
   const monitorValues = el("dl", "definition-list");
   monitorValues.append(
     definition("Endpoint", source.endpoint, true),
     definition("Protocol", source.protocol, true),
-    definition("Baud", String(source.baud_rate)),
+    definition("Baud", simulated ? "Not applicable (simulated)" : String(source.baud_rate)),
     definition("Stale after", `${source.stale_after_seconds.toFixed(1)} s`),
     definition("Valid frames", String(source.frames_received)),
     definition("Protocol errors", String(source.protocol_errors)),
@@ -1212,7 +1403,9 @@ function renderLiveSource(source: LiveSourceStatus): HTMLElement {
   columns.append(telemetry, monitor);
 
   const boundary = el("p", "live-boundary mono", `${source.evidence_boundary} · hardware_control=${source.hardware_control}`);
-  sourcePanel.append(heading, stateGrid, detail, columns, boundary);
+  sourcePanel.append(heading);
+  if (simulated) sourcePanel.append(el("p", "live-simulation-notice", "SIMULATED: six demo states change every 5 seconds and repeat every 30 seconds. No serial port is opened, and no physical hardware or release evidence is produced."));
+  sourcePanel.append(stateGrid, detail, columns, boundary);
   return sourcePanel;
 }
 

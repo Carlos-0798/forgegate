@@ -3262,6 +3262,15 @@
             "title": "Connection",
             "type": "string"
           },
+          "data_origin": {
+            "default": "LIVE_TELEMETRY",
+            "enum": [
+              "LIVE_TELEMETRY",
+              "SIMULATED"
+            ],
+            "title": "Data Origin",
+            "type": "string"
+          },
           "detail_code": {
             "pattern": "^[A-Z][A-Z0-9_]{2,63}$",
             "title": "Detail Code",
@@ -3512,6 +3521,190 @@
           "sources"
         ],
         "title": "LiveStatusPage",
+        "type": "object"
+      },
+      "MonitorControlView": {
+        "additionalProperties": false,
+        "properties": {
+          "presets": {
+            "items": {
+              "$ref": "#/components/schemas/MonitorPreset"
+            },
+            "maxItems": 20,
+            "minItems": 1,
+            "title": "Presets",
+            "type": "array"
+          },
+          "project_id": {
+            "pattern": "^[a-z][a-z0-9-]{1,62}$",
+            "title": "Project Id",
+            "type": "string"
+          },
+          "schema_version": {
+            "const": "forgegate.monitor-control.v1",
+            "default": "forgegate.monitor-control.v1",
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "session": {
+            "$ref": "#/components/schemas/MonitorSessionView"
+          }
+        },
+        "required": [
+          "project_id",
+          "presets",
+          "session"
+        ],
+        "title": "MonitorControlView",
+        "type": "object"
+      },
+      "MonitorPreset": {
+        "additionalProperties": false,
+        "properties": {
+          "adapter": {
+            "enum": [
+              "msp430.uart.v1",
+              "forgegate.simulated-demo.v1"
+            ],
+            "title": "Adapter",
+            "type": "string"
+          },
+          "name": {
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "port": {
+            "anyOf": [
+              {
+                "pattern": "^COM[1-9][0-9]{0,3}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Port"
+          },
+          "preset_id": {
+            "pattern": "^[a-z][a-z0-9-]{0,63}$",
+            "title": "Preset Id",
+            "type": "string"
+          },
+          "stale_after_seconds": {
+            "default": 3.0,
+            "maximum": 60.0,
+            "minimum": 1.5,
+            "title": "Stale After Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "preset_id",
+          "name",
+          "adapter"
+        ],
+        "title": "MonitorPreset",
+        "type": "object"
+      },
+      "MonitorSessionView": {
+        "additionalProperties": false,
+        "properties": {
+          "active_preset_id": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z][a-z0-9-]{0,63}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Active Preset Id"
+          },
+          "detail_code": {
+            "pattern": "^[A-Z][A-Z0-9_]{2,63}$",
+            "title": "Detail Code",
+            "type": "string"
+          },
+          "detail_message": {
+            "maxLength": 240,
+            "minLength": 1,
+            "title": "Detail Message",
+            "type": "string"
+          },
+          "revision": {
+            "minimum": 0.0,
+            "title": "Revision",
+            "type": "integer"
+          },
+          "run_id": {
+            "anyOf": [
+              {
+                "pattern": "^[0-9a-f]{32}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Id"
+          },
+          "state": {
+            "enum": [
+              "STOPPED",
+              "RUNNING",
+              "ERROR",
+              "STOPPING"
+            ],
+            "title": "State",
+            "type": "string"
+          }
+        },
+        "required": [
+          "state",
+          "revision",
+          "detail_code",
+          "detail_message"
+        ],
+        "title": "MonitorSessionView",
+        "type": "object"
+      },
+      "MonitorStartRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "expected_revision": {
+            "minimum": 0.0,
+            "title": "Expected Revision",
+            "type": "integer"
+          },
+          "preset_id": {
+            "pattern": "^[a-z][a-z0-9-]{0,63}$",
+            "title": "Preset Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "preset_id",
+          "expected_revision"
+        ],
+        "title": "MonitorStartRequest",
+        "type": "object"
+      },
+      "MonitorStopRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "run_id": {
+            "pattern": "^[0-9a-f]{32}$",
+            "title": "Run Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id"
+        ],
+        "title": "MonitorStopRequest",
         "type": "object"
       },
       "Operator": {
@@ -6793,6 +6986,144 @@
           }
         },
         "summary": "Dashboard Live Status"
+      }
+    },
+    "/app/api/monitor-presets": {
+      "get": {
+        "operationId": "getDashboardMonitorPresets",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/MonitorControlView"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Getdashboardmonitorpresets"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Dashboard Monitor Presets"
+      }
+    },
+    "/app/api/monitor-session/start": {
+      "post": {
+        "operationId": "startDashboardMonitor",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MonitorStartRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitorControlView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Start Dashboard Monitor"
+      }
+    },
+    "/app/api/monitor-session/stop": {
+      "post": {
+        "operationId": "stopDashboardMonitor",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "X-ForgeGate-CSRF",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "X-Forgegate-Csrf"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MonitorStopRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MonitorControlView"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Stop Dashboard Monitor"
       }
     },
     "/app/api/overview": {

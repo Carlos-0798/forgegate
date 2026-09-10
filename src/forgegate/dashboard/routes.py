@@ -72,6 +72,13 @@ from forgegate.dashboard.sessions import DashboardSessionManager
 from forgegate.domain.models import SLUG_PATTERN
 from forgegate.evidence_replay import EvidenceReplayError, render_evidence_replay
 from forgegate.live_status import DisabledLiveStatusProvider, LiveStatusPage, LiveStatusProvider
+from forgegate.monitor_presets import (
+    MonitorControlView,
+    MonitorPresetController,
+    MonitorPresetError,
+    MonitorStartRequest,
+    MonitorStopRequest,
+)
 from forgegate.projects import RegisteredProjectPage
 from forgegate.recovery_models import RecoveryReadinessHandoff, build_recovery_handoff
 from forgegate.recovery_rehearsal import RecoveryRehearsalReview, build_rehearsal_review
@@ -102,10 +109,11 @@ def install_dashboard_routes(
     session_manager: DashboardSessionManager | None = None,
     static_root: Path | None = None,
     live_status_provider: LiveStatusProvider | None = None,
+    monitor_controller: MonitorPresetController | None = None,
     job_store_path: Path | None = None,
 ) -> DashboardSessionManager:
     manager = session_manager or DashboardSessionManager(authenticator)
-    status_provider = live_status_provider or DisabledLiveStatusProvider()
+    status_provider = monitor_controller or live_status_provider or DisabledLiveStatusProvider()
     assets_root = static_root or Path(__file__).resolve().parent / "static"
     index_path = assets_root / "index.html"
     if not index_path.is_file():
@@ -362,8 +370,72 @@ def install_dashboard_routes(
     )
     def dashboard_live_status(request: Request) -> LiveStatusPage:
         _require_same_origin(request, required=False)
-        _dashboard_principal(manager, request)
+        principal = _dashboard_principal(manager, request)
+        if monitor_controller is not None:
+            authenticator.require_project(principal, monitor_controller.catalog.project_id)
         return status_provider.snapshot()
+
+    @app.get(
+        "/app/api/monitor-presets",
+        response_model=MonitorControlView | None,
+        operation_id="getDashboardMonitorPresets",
+        include_in_schema=False,
+    )
+    def dashboard_monitor_presets(request: Request) -> MonitorControlView | None:
+        _require_same_origin(request, required=False)
+        principal = _dashboard_principal(manager, request)
+        if monitor_controller is None:
+            return None
+        authenticator.require_project(principal, monitor_controller.catalog.project_id)
+        return monitor_controller.view()
+
+    def monitor_write_controller(
+        request: Request, csrf_token: str | None
+    ) -> MonitorPresetController:
+        _require_same_origin(request, required=True)
+        stored, principal = manager.session(request.cookies.get(DASHBOARD_SESSION_COOKIE))
+        request.state.authenticated_principal = principal
+        manager.require_csrf(stored, csrf_token)
+        if principal.role.value != "operator":
+            raise ApiAuthenticationError(
+                "API_ROLE_FORBIDDEN", "operator role required for monitor control", status_code=403
+            )
+        if monitor_controller is None:
+            raise MonitorPresetError(
+                "MONITOR_PRESETS_DISABLED",
+                "No monitor preset catalog is configured.",
+                status_code=503,
+            )
+        authenticator.require_project(principal, monitor_controller.catalog.project_id, write=True)
+        return monitor_controller
+
+    @app.post(
+        "/app/api/monitor-session/start",
+        response_model=MonitorControlView,
+        operation_id="startDashboardMonitor",
+        include_in_schema=False,
+    )
+    def start_dashboard_monitor(
+        request: Request,
+        command: MonitorStartRequest,
+        csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> MonitorControlView:
+        controller = monitor_write_controller(request, csrf_token)
+        return controller.start(command.preset_id, command.expected_revision)
+
+    @app.post(
+        "/app/api/monitor-session/stop",
+        response_model=MonitorControlView,
+        operation_id="stopDashboardMonitor",
+        include_in_schema=False,
+    )
+    def stop_dashboard_monitor(
+        request: Request,
+        command: MonitorStopRequest,
+        csrf_token: Annotated[str | None, Header(alias=DASHBOARD_CSRF_HEADER)] = None,
+    ) -> MonitorControlView:
+        controller = monitor_write_controller(request, csrf_token)
+        return controller.stop(command.run_id)
 
     @app.get(
         "/app/api/projects",

@@ -30,6 +30,7 @@ from forgegate.evidence_replay import EvidenceReplayManifest, EvidenceReplayVeri
 from forgegate.github_actions import GitHubActionReport
 from forgegate.identity import AssuranceSignature, SigningIdentity, TrustStore
 from forgegate.job_archive_models import JobArchivePlan, JobArchiveReceipt
+from forgegate.monitor_presets import MonitorPresetCatalog
 from forgegate.plugins import (
     PluginDiscoveryReport,
     PluginManifest,
@@ -117,6 +118,11 @@ SCHEMAS: dict[str, type[BaseModel]] = {
     "forgegate.plugin-run-result.v1": PluginRunResult,
     "forgegate.plugin-run-receipt.v1": PluginRunReceipt,
     "forgegate.windows-plugin-sandbox-capability.v1": WindowsSandboxCapabilityReport,
+}
+
+# Local adapter selection is configuration, not a domain-neutral evidence contract.
+LOCAL_CONFIGURATION_SCHEMAS: dict[str, type[BaseModel]] = {
+    "forgegate.monitor-presets.v1": MonitorPresetCatalog,
 }
 
 ARTIFACT_SCHEMAS: dict[str, dict[str, object]] = {

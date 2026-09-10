@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+- Added versioned, project-scoped local monitor presets with authenticated
+  Dashboard start/stop, explicit simulated data origin and a no-hardware demo.
+  Local adapter configuration remains separate from core evidence schemas.
+- Fixed MSP430 reader lifecycle races and retained timed-out workers until
+  confirmed stop, preventing an unconfirmed stop from creating a second reader.
+  Preset selection does not imply new-board compatibility or release evidence.
 - Added independent `workspace-init` with fresh scoped identity, initialized
   stores, no-overwrite behavior and optional honest synthetic positive/negative
   examples. First-policy and Windows interpreter instructions work without a

@@ -1,0 +1,84 @@
+{
+  "$defs": {
+    "MonitorPreset": {
+      "additionalProperties": false,
+      "properties": {
+        "adapter": {
+          "enum": [
+            "msp430.uart.v1",
+            "forgegate.simulated-demo.v1"
+          ],
+          "title": "Adapter",
+          "type": "string"
+        },
+        "name": {
+          "maxLength": 120,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "port": {
+          "anyOf": [
+            {
+              "pattern": "^COM[1-9][0-9]{0,3}$",
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Port"
+        },
+        "preset_id": {
+          "pattern": "^[a-z][a-z0-9-]{0,63}$",
+          "title": "Preset Id",
+          "type": "string"
+        },
+        "stale_after_seconds": {
+          "default": 3.0,
+          "maximum": 60,
+          "minimum": 1.5,
+          "title": "Stale After Seconds",
+          "type": "number"
+        }
+      },
+      "required": [
+        "preset_id",
+        "name",
+        "adapter"
+      ],
+      "title": "MonitorPreset",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "presets": {
+      "items": {
+        "$ref": "#/$defs/MonitorPreset"
+      },
+      "maxItems": 20,
+      "minItems": 1,
+      "title": "Presets",
+      "type": "array"
+    },
+    "project_id": {
+      "pattern": "^[a-z][a-z0-9-]{1,62}$",
+      "title": "Project Id",
+      "type": "string"
+    },
+    "schema_version": {
+      "const": "forgegate.monitor-presets.v1",
+      "default": "forgegate.monitor-presets.v1",
+      "title": "Schema Version",
+      "type": "string"
+    }
+  },
+  "required": [
+    "project_id",
+    "presets"
+  ],
+  "title": "MonitorPresetCatalog",
+  "type": "object"
+}

@@ -689,6 +689,26 @@ code {
   gap: 1rem;
 }
 
+.monitor-control-panel {
+  margin-bottom: 1rem;
+}
+
+.monitor-control-panel .field {
+  max-width: 38rem;
+}
+
+.monitor-session-state,
+.live-simulation-notice {
+  font-weight: 650;
+}
+
+.live-simulation-notice {
+  padding: 1rem;
+  border: 1px solid var(--warning);
+  border-radius: .8rem;
+  color: var(--warning);
+}
+
 .live-source-panel {
   padding: clamp(1.1rem, 3vw, 1.75rem);
   border: 1px solid var(--line);

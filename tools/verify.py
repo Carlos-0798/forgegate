@@ -7,7 +7,12 @@ from pathlib import Path
 
 from forgegate.api import create_api_app
 from forgegate.dashboard.openapi import create_dashboard_openapi
-from forgegate.schema_registry import ARTIFACT_SCHEMAS, SCHEMAS, schema_filename
+from forgegate.schema_registry import (
+    ARTIFACT_SCHEMAS,
+    LOCAL_CONFIGURATION_SCHEMAS,
+    SCHEMAS,
+    schema_filename,
+)
 
 REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
 
@@ -20,7 +25,7 @@ def run(command: list[str]) -> None:
 
 
 def verify_committed_schemas() -> None:
-    for schema_version, model in sorted(SCHEMAS.items()):
+    for schema_version, model in sorted({**SCHEMAS, **LOCAL_CONFIGURATION_SCHEMAS}.items()):
         expected = json.dumps(model.model_json_schema(), indent=2, sort_keys=True) + "\n"
         path = REPOSITORY_ROOT / "schemas" / schema_filename(schema_version)
         if not path.is_file():
