@@ -1,5 +1,11 @@
 # Project status
 
+- Cloud validation policy (2026-09-09 owner decision): `ci.yml` is manual-only
+  through `workflow_dispatch`. Pushes and PRs do not automatically run cloud
+  tests; the complete existing matrix and local development gates are retained.
+  Account restrictions may be addressed when a cloud run is wanted, not as a
+  prerequisite for Private synchronization. Historical blocked runs are not PASS.
+  See [manual run instructions](../README.md#optional-cloud-validation).
 - Current direction (2026-09-09): pause new engineering features for job
   preparation; preserve the accepted Phase 64 baseline and synchronize the
   existing Private GitHub repository. See the

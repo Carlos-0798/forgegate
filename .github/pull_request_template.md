@@ -27,6 +27,10 @@ Record skips and failures; do not replace them with a general “all checks pass
 statement. Hosted CI does not prove local Podman/WSL2, hardware, or production
 behavior.
 
+Repository cloud CI is manual-only. Record whether a hosted run was explicitly
+requested and its actual result; routine pushes/PRs use local acceptance evidence.
+Do not treat a missing cloud check as a hosted PASS.
+
 ## Security, privacy, and publication
 
 - [ ] No credential, token, private key, personal email, private artifact, or machine-specific absolute path is included.

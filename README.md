@@ -11,7 +11,7 @@ reports before a release. It automates report identification, normalization and
 reviewed assessment; it does **not** run the upstream tests or replace a CI system.
 Human time savings and accuracy improvement remain **not measured**.
 
-[![CI](https://github.com/Carlos-0798/forgegate/actions/workflows/ci.yml/badge.svg)](https://github.com/Carlos-0798/forgegate/actions/workflows/ci.yml)
+[Manual cloud CI and run history](https://github.com/Carlos-0798/forgegate/actions/workflows/ci.yml)
 
 ## Current status
 
@@ -34,9 +34,12 @@ The core workflow supports:
 - **Optional device status:** saved MSP430 UART v1 read-only presets and an
   explicitly simulated demonstration, kept separate from release evidence.
 
-**CI disclosure:** current hosted jobs did not execute because of an account-level
-GitHub Actions restriction. The local figures below are not latest hosted-CI results;
-the badge reflects GitHub workflow status, not overall product acceptance. See the
+**Validation policy:** local checks are the development baseline. Cloud CI is
+**manual only** (`workflow_dispatch`); pushes and pull requests do not run it
+automatically. The full three-platform workflow remains available when requested.
+Recent historical hosted jobs did not execute because of an account-level
+GitHub Actions restriction; they are not passing runs. The local figures below
+are not latest hosted-CI results. See the
 [synchronization record](reports/GITHUB_SYNC_2026-09-09.md).
 
 ![Actual Windows workbench with explicitly synthetic PASS and FAIL examples](docs/assets/phase62/workbench.jpg)
@@ -97,6 +100,10 @@ zoom, backup/recovery, optional UART observation and Windows plugin isolation—
 indexed in the [verification matrix](docs/VERIFICATION_MATRIX.md) and
 [evidence gallery](docs/PORTFOLIO_EVIDENCE.md). Coverage is a configured test-suite
 metric, not an accuracy, security, accessibility or hardware certification.
+
+Earlier [reviewed workflow](docs/assets/forgegate-dashboard-reviewed-workflow-pass.jpg)
+and [decision](docs/assets/forgegate-dashboard-reviewed-workflow-decision.jpg)
+captures remain available as historical evidence, with their original fixture scope.
 
 ## Key design decisions
 
@@ -167,6 +174,17 @@ outputs, policy selection and export verification. For source development, run
 `tools/setup_environment.ps1` from the checkout; it installs the constrained
 development environment and runs `tools/verify.py`. Packaging acceptance is
 `python tools/release_smoke.py` using the repository `.venv`.
+
+## Optional cloud validation
+
+To deliberately run the retained cloud checks, open **Actions → ci → Run workflow**,
+select the intended branch (normally `main`), and confirm **Run workflow**.
+This runs Windows, Linux and macOS checks, then the generic assurance Action
+fixture if the matrix passes. Review account eligibility and runner usage first;
+manual triggering does not resolve an account billing/spending restriction.
+No cloud run is needed merely to upload a locally verified change, and a skipped
+cloud run is **not** a hosted PASS. Historical run records remain available.
+See [GitHub's manual workflow instructions](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/manually-run-a-workflow).
 
 ## Repository layout
 

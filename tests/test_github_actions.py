@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from typing import Any
 
 import pytest
+import yaml
 from typer.testing import CliRunner
 
 from forgegate.application import (
@@ -371,6 +372,19 @@ def test_action_metadata_uses_environment_not_inline_inputs(repository_root: Pat
     assert '"$FORGEGATE_ACTION_ASSURANCE_DIRECTORY"' in run_block
     assert '"$FORGEGATE_ACTION_EXPECTED_COMMIT"' in run_block
     assert "GITHUB_TOKEN" not in action
+
+
+def test_repository_cloud_workflows_require_explicit_dispatch(repository_root: Path) -> None:
+    workflow_paths = sorted(
+        path
+        for path in (repository_root / ".github/workflows").iterdir()
+        if path.suffix in {".yml", ".yaml"}
+    )
+    assert workflow_paths
+    for path in workflow_paths:
+        # BaseLoader preserves GitHub's `on` key rather than YAML 1.1's boolean coercion.
+        workflow = yaml.load(path.read_text(encoding="utf-8"), Loader=yaml.BaseLoader)
+        assert set(workflow["on"]) == {"workflow_dispatch"}, path.name
 
 
 def test_committed_generic_fixture_verifies_and_matches_action_workflow(
