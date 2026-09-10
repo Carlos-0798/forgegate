@@ -19,7 +19,8 @@ smokes were skipped. This is neither a budget-only failure nor a full hosted PAS
 
 ## Encountered failures and bounded corrections
 
-All three corrections are confined to tests. Product implementation, dependency
+The corrections are confined to tests and the release-smoke verification tool.
+Product implementation, dependency
 constraints, workflow triggers, negative-input rejection and gate exit semantics
 are unchanged; failed checks are not disabled.
 
@@ -28,6 +29,7 @@ are unchanged; failed checks are not disabled.
 | Help-option assertion fails with hosted terminal color | ANSI sequences can split a visually correct option string. The help test now decodes ANSI before checking the exact options, and explicitly exercises plain and forced-color output. | `tests/test_monitor_preset_cli.py`; the options and successful exit codes remain asserted. Complete corrected hosted acceptance is pending. |
 | Job Summary displays an expected `GITHUB_COMMIT_MISMATCH` as an apparent release error | An intentional negative CLI test inherited the enclosing runner's summary destination. The module now isolates inherited command-file paths; the secondary-write failure test writes to its own temporary summary and asserts the original mismatch, secondary failure, exit 3 and exact error-summary content. | `tests/test_github_actions.py`; before the fix, the test passed but changed an external summary sentinel. After the fix, 12 passed / 1 Windows symlink skip and both external summary/output hashes were unchanged. Environment fallback remains tested with temporary destinations. |
 | Two Windows launcher rejection tests fail in the hosted environment | The tests did not supply the running test interpreter to the PowerShell launcher. They now pass explicit `-Python` with `sys.executable`, retaining the missing-input, occupied-port and empty-database assertions. | `tests/test_dashboard_runtime.py`; isolated reproduction and the 28-case local launcher suite pass. The completed hosted trace confirms that both tests reached the missing-Python error before their intended rejection branch. |
+| macOS clean-package replay export rejects the temporary path | The next hosted run passed the macOS development gate, then hit the real export guard because `/var` is an alias in the platform temporary path. The smoke tool now strictly resolves its own already-created temporary root before building or exporting. | `tools/release_smoke.py` and `tests/test_release_smoke.py`; a real junction/symlink regression fails against the old tool and passes against the correction. The 16-case smoke/replay selection passes locally; production anti-link checks are unchanged. |
 
 The misleading summary is distinct from a real test failure: a deliberately
 rejected fixture wrote to the wrong **test environment destination**. Production
@@ -41,10 +43,20 @@ fixture, not the ForgeGate repository revision's release suitability.
   1,571 passed, 3 environment skips, 95.89% branch-aware combined coverage.
   This predates the final launcher correction and is not acceptance of that
   complete change set.
-- Fresh full local verification of all three corrections: **PASS**;
+- Full local verification of the first three corrections (`728250e`): **PASS**;
   1,571 passed / 3 environment skips, 95.89% branch-aware combined coverage,
   33/33 interaction checks, lint/format, typing, schemas and both OpenAPI
   contracts passed. The configured 95% coverage floor is unchanged.
+- Final local development and clean-package gates after the smoke-path
+  correction: **PASS**. Full development verification recorded 1,572 passed /
+  3 environment skips, 95.89% coverage and 33/33 interaction checks. The complete
+  clean-install release smoke also passed. This locally built working-tree
+  package is not a published installer or GitHub Release.
+- Second hosted run [34534606028](https://github.com/Carlos-0798/forgegate/actions/runs/34534606028)
+  targets `728250eb8f6005c92b04c9352b9964a5225781b6`. Ubuntu completed both gates;
+  macOS completed development verification but failed package replay export at
+  the path guard described above. Final Windows status and the subsequent
+  corrected smoke-tool run remain pending; this run is not overall PASS.
 - Corrected source commit, full hosted matrix, clean-package smoke and dependent
   generic Action job: **PENDING**.
 - Failed run 34533073332: complete log archive and 3 annotations screened;

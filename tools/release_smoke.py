@@ -556,7 +556,8 @@ def main(
     if windows_live_broker and (live_output is None or sandbox_evidence is None):
         raise SystemExit("live broker smoke requires output and sandbox evidence paths")
     with tempfile.TemporaryDirectory(prefix="forgegate-release-") as temporary:
-        root = Path(temporary)
+        # Use the physical temporary root (macOS /var may alias /private/var).
+        root = Path(temporary).resolve(strict=True)
         dist = root / "dist"
         build_windows_delivery(dist)
 
