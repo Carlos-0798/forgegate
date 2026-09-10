@@ -7,13 +7,13 @@ policy. Windows and Python 3.12 are the tested target.
 
 ## Install and prepare
 
-Have repository access but no supplied wheel? First follow the
+First follow the
 [source-checkout build instructions](../README.md#quick-start), then copy the
 resulting wheel into a new short, private installation directory. There is no
-public installer or hosted demo; the repository and any supplied package require
-authorized access.
+packaged public GitHub Release, installer or hosted demo. Source visibility and
+package publication are separate; see the [License status](../README.md#license-status).
 
-In a short, private local directory, with the supplied wheel beside you:
+In that installation directory, with the resulting wheel beside you:
 
 ```powershell
 py -3.12 -m venv .venv

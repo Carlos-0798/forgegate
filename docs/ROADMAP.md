@@ -1,20 +1,32 @@
 # Roadmap
 
-## Current state — portfolio synchronized; engineering paused
+## Current state — publication acceptance pending; engineering paused
 
 New feature work is paused during the owner's job preparation. The completed
 Windows Local Alpha and Phase 64 monitor presets are retained, not reopened as
 unfinished work. The accepted baseline is synchronized into the existing Private
 GitHub repository. The [2026-09-10 portfolio closeout](../reports/GITHUB_PORTFOLIO_CLOSEOUT_2026-09-10.md)
 records presentation and publication checks, not another product milestone.
-Public visibility, License and Release remain separate owner decisions.
+On 2026-09-10 the owner authorized Public source visibility **after complete
+hosted CI acceptance and closeout**. The repository remains Private while that
+gate is pending; see the [hosted CI closeout](../reports/HOSTED_CI_CLOSEOUT_2026-09-10.md).
+License, packaged Release and LinkedIn publication remain separate decisions.
 See the [resumption checkpoint](PROJECT_RESUME_CHECKPOINT_2026-09-09.md) and
 [synchronization record](../reports/GITHUB_SYNC_2026-09-09.md).
 
 Cloud CI is owner-selected and manual-only; routine synchronization uses local
 verification. Keep the existing cloud matrix available without restoring push/PR
-triggers unless the owner requests that policy change. Account restriction
-resolution is deferred until cloud execution is wanted, not a product milestone.
+triggers unless the owner requests that policy change. The owner has now enabled
+cloud execution for publication acceptance. The first fresh matrix executed and
+exposed test-harness failures; narrowly scoped corrections and a complete passing
+rerun are required before publication, not a new feature milestone.
+
+- [x] Record conditional Public authorization and retain the manual-only policy.
+- [ ] Complete the corrected source's full local gate and hosted matrix, including
+  package smoke and the dependent generic Action fixture; retain failed attempts.
+- [ ] Finish the source/log/presentation checks for the exact accepted revision,
+  change visibility, and verify anonymous access. Do not infer completion from
+  local PASS, successful upload or a single passing matrix job.
 
 After job preparation, the proposed next engineering slice is an adapter
 conformance/example kit using the existing protocol and preset boundaries.
@@ -22,7 +34,8 @@ Then validate a real supported device when one and explicit permission are
 available. Capture/export is a separate task, not silently added release evidence.
 Do not start a broad driver marketplace, managed service or cloud rewrite.
 
-Earlier phase priorities and GitHub-paused notes below are historical records.
+Earlier phase priorities, Private-only, no-cloud-run and GitHub-paused notes
+below are historical records.
 This section and the linked checkpoint take precedence for resumption.
 
 ## Completed priority — reusable monitoring after Alpha closeout

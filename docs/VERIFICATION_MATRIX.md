@@ -5,9 +5,9 @@ regression counts do not establish human efficiency or independent operator
 acceptance. Phase 53B human measurement is deferred by owner; the
 [protocol](product/EFFICIENCY_ACCEPTANCE.md) remains available.
 
-Current Private GitHub synchronization and its fresh local checks are recorded
+The earlier Private GitHub synchronization and its local checks are recorded
 in [the synchronization record](../reports/GITHUB_SYNC_2026-09-09.md).
-The later local regression has 1,569 passes / 3 environment skips and 95.90%
+That presentation checkpoint's local regression had 1,569 passes / 3 environment skips and 95.90%
 branch-aware combined coverage, including the manual-CI policy check; see
 [PR #14](https://github.com/Carlos-0798/forgegate/pull/14) and the
 [portfolio closeout](../reports/GITHUB_PORTFOLIO_CLOSEOUT_2026-09-10.md).
@@ -16,7 +16,13 @@ they do not certify the latest branch. The September 9 synchronization jobs
 were blocked before tests executed by an account payment/spending-limit
 restriction; this does not characterize every historical failed or cancelled
 run. No required checks or repository protections are disabled as part of
-synchronization.
+synchronization. The owner subsequently enabled cloud execution and authorized
+Public visibility only after complete hosted CI acceptance and closeout.
+Run 34533073332 actually executed the matrix and exposed test-harness failures;
+the repository remains Private and the corrected revision's complete hosted
+acceptance is pending. Current source, correction and publication results belong
+in the [hosted CI closeout](../reports/HOSTED_CI_CLOSEOUT_2026-09-10.md), not in
+historical Phase counts below.
 
 After synchronization, the owner selected **manual-only cloud CI** on 2026-09-09.
 `workflow_dispatch` is the sole repository workflow trigger; local development
@@ -26,6 +32,7 @@ regression tests are local evidence, not a cloud execution. See the
 
 | Capability | Planned evidence | Current status |
 |---|---|---|
+| Current hosted CI and source publication | Complete corrected-commit matrix, package smoke, generic Action fixture, scoped publication review and anonymous readback | PENDING — Public conditionally authorized; repository still Private. The newly executed matrix found failures. Local fixes or historical green runs do not satisfy this gate; see the hosted CI closeout |
 | Reusable monitor presets | Versioned local catalog, operator/project/CSRF boundaries, duplicate-start and late-stop controls, simulated states and fresh-wheel browser controls | LOCAL ENGINEERING PASS — 1,568 Python passes / 3 environment skips, 95.90%; 296 frontend passes; release smoke and independent installed-browser start/stop/reload/restart pass. Screenshots retained. No new physical-board, native assistive or productivity claim. See Phase 64 acceptance |
 | Final user-path closeout | Clean-commit delivery outside checkout, new scoped identity/store, browser activation and durable write, retained full positive/negative assessment and independently verified downloads | LOCAL ENGINEERING PASS — 1,466 Python passes / 3 symlink skips, 95.82%; 265 frontend passes; release smoke and clean delivery pass; actual VALID/PASS and VALID/FAIL handoff retained. Independent novice, native assistive, hardware and human timing not claimed. See Phase 63 acceptance |
 | Independent first use and task workbench | Fresh installed package outside checkout, new scoped identity/store, real browser positive/negative inputs and independently verified downloads | LOCAL PASS — Phase 62 baseline retained; actual VALID/PASS and VALID/FAIL handoff and AVS 130 records/12 rules unchanged. See Phase 62 acceptance |
@@ -83,7 +90,7 @@ regression tests are local evidence, not a cloud execution. See the
 | mypy strict | package and verification tools | PASS |
 | Source distribution contents | manifest assertion | PASS |
 | Clean release installation | temporary sdist/wheel/venv smoke | PASS |
-| Windows/Linux/macOS CI | GitHub Actions | PASS — `verify.py` + `release_smoke.py`, latest accepted merge run 33999452478 (`32e961c`) plus generic Action smoke; live Podman fixtures not run in hosted CI |
+| Windows/Linux/macOS CI historical baseline | GitHub Actions | HISTORICAL PASS — `verify.py` + `release_smoke.py`, accepted merge run 33999452478 (`32e961c`) plus generic Action smoke; not the current source's result; live Podman fixtures not run in hosted CI |
 | Artifact root and byte identity | unit/adversarial tests | PASS — local host |
 | Stable artifact read/change rejection | simulated metadata cases | PASS — local host |
 | Actual Windows symlink escape | privileged symlink fixture | NOT RUN — host disallowed symlink creation |
@@ -181,7 +188,7 @@ regression tests are local evidence, not a cloud execution. See the
 | GitHub Action report contract | model/identity/Schema/loader tests | PASS — content-derived v1 report; local host |
 | Portable bundle to CI commit binding | strict verifier + complete exact object ID | PASS — partial/invalid/mismatch rejected; local host |
 | GitHub Job Summary and outputs | escaping, truncation, size/path/adversarial tests | PASS — bounded append-only runner files; local host |
-| GitHub composite Action | committed generic fixture + real workflow job | PASS — latest accepted private CI run 33999452478 (`32e961c`) |
+| GitHub composite Action historical baseline | committed generic fixture + real workflow job | HISTORICAL PASS — private CI run 33999452478 (`32e961c`); not current-source hosted acceptance |
 | Installed GitHub gate | clean-wheel portable-bundle/summary/output/report smoke | PASS — local host |
 | Custom GitHub Checks/PR/API writes | token/permissions/OIDC design | NOT IMPLEMENTED — no token requested and no GitHub API called |
 | Plugin manifest contract | model/identity/Schema/loader/adversarial tests | PASS — bounded content-derived v1 metadata; local + private CI |

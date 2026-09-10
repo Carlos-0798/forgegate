@@ -31,7 +31,7 @@ Peer-project tests and hardware results remain the work of their original projec
 **Completed Windows Local Alpha milestone — `0.1.0a1`, September 2026.**
 The installable CLI, authenticated local Dashboard, real-report integration and
 offline review workflow have accepted local evidence. This is a completed,
-demonstrable engineering milestone, **not a production service or public release**.
+demonstrable engineering milestone, **not a production service or packaged public release**.
 
 ![Actual Windows workbench with explicitly synthetic PASS and FAIL examples](docs/assets/phase62/workbench.jpg)
 
@@ -142,11 +142,10 @@ rollback and migration regressions. See the [failure and correction record](repo
 
 ## Quick start
 
-Windows and Python 3.12 are the tested target. Use the supplied private delivery
-wheel in a short local directory; this repository does not advertise a public
-package release. Dependencies require a package cache or package-index access.
-
-If you have repository access but no supplied wheel, build one from your checkout:
+Windows and Python 3.12 are the tested target. Build a local delivery wheel from
+this source checkout in a short directory. There is no packaged public GitHub
+Release, installer or hosted demo. Dependencies require a package cache or
+package-index access.
 
 ```powershell
 .\tools\setup_environment.ps1
@@ -246,7 +245,7 @@ for trust assumptions. Untested or planned capabilities are not delivered result
 
 ## Roadmap
 
-The accepted Windows Local Alpha is synchronized to this private repository.
+The accepted Windows Local Alpha milestone is retained in this repository.
 Future work is bounded by demonstrated user needs, not a claim of unfinished core
 functionality. The [resume checkpoint](docs/PROJECT_RESUME_CHECKPOINT_2026-09-09.md)
 preserves the engineering continuation plan.
@@ -265,7 +264,8 @@ See the [detailed roadmap](docs/ROADMAP.md) for completed and deferred work.
 
 ## License status
 
-No open-source license has been selected. This private-development repository is
-all rights reserved. Review requires repository access; a link alone does not grant
-access, and there is no public hosted demo. Public visibility, redistribution,
-a public release, a License change and LinkedIn publication require separate approval.
+No open-source license has been selected; all rights reserved. Source visibility
+does not itself grant an open-source license or general redistribution rights.
+There is no packaged public GitHub Release, installer or hosted demo. License
+changes, redistribution, packaged releases and LinkedIn publication require
+separate approval; changing source visibility does not approve those actions.
