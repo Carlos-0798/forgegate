@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 import uvicorn
+from rich.text import Text
 from typer.testing import CliRunner
 
 from forgegate.candidates import SQLiteCandidateRepository
@@ -294,11 +295,26 @@ def test_monitor_preset_loader_requires_existing_regular_file(
         load_monitor_presets(presets)
 
 
-def test_dashboard_help_exposes_preset_file_and_initializer() -> None:
+@pytest.mark.parametrize("force_color", [False, True], ids=["plain", "forced-color"])
+def test_dashboard_help_exposes_preset_file_and_initializer(
+    monkeypatch: pytest.MonkeyPatch, force_color: bool
+) -> None:
+    for variable in ("NO_COLOR", "FORCE_COLOR", "PY_COLORS"):
+        monkeypatch.delenv(variable, raising=False)
+    monkeypatch.setenv("TERM", "xterm-256color")
+    if force_color:
+        monkeypatch.setenv("FORCE_COLOR", "1")
+        monkeypatch.setenv("PY_COLORS", "1")
+    # Typer caches terminal forcing at import; isolate both rendering modes.
+    monkeypatch.setattr("typer.rich_utils.FORCE_TERMINAL", force_color)
+
     dashboard = runner.invoke(app, ["dashboard", "--help"])
-    assert dashboard.exit_code == 0
-    assert "--monitor-presets" in dashboard.output
+    assert dashboard.exit_code == 0, dashboard.output
+    assert ("\x1b[" in dashboard.output) is force_color
+    assert "--monitor-presets" in Text.from_ansi(dashboard.output).plain
     initializer = runner.invoke(app, ["monitor-preset-init", "--help"])
-    assert initializer.exit_code == 0
-    assert "--project" in initializer.output
-    assert "--msp430-port" in initializer.output
+    assert initializer.exit_code == 0, initializer.output
+    assert ("\x1b[" in initializer.output) is force_color
+    initializer_text = Text.from_ansi(initializer.output).plain
+    assert "--project" in initializer_text
+    assert "--msp430-port" in initializer_text

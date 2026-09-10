@@ -63,7 +63,7 @@ operator page does not imply authenticated actors for historical CLI records.
 - Environment: Microsoft Edge, Google Chrome, and Codex in-app browser on
   Windows, loopback-only ForgeGate Dashboard
 - Evidence level: `LOCAL_BROWSER_TEST`
-- Product status: private Windows Alpha `0.1.0a1`
+- Product status at capture time: private Windows Alpha `0.1.0a1`
 - Hardware access: candidate-workflow captures `NOT_PERFORMED`; Devices capture
   `READ_ONLY_TELEMETRY`
 - Remote deployment and release approval: not demonstrated

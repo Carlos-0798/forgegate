@@ -32,7 +32,7 @@ def run() -> dict[str, object]:
     env = {key: value for key, value in os.environ.items() if key.upper() != "PYTHONPATH"}
     cases: list[dict[str, object]] = []
     with tempfile.TemporaryDirectory(prefix="forgegate-pair-") as directory:
-        root = Path(directory)
+        root = Path(directory).resolve(strict=True)
         candidate, jobs = root / "candidate.db", root / "jobs.db"
         SQLiteCandidateRepository(candidate).initialize()
         CollectionJobStore(jobs).initialize()

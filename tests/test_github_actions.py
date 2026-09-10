@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import json
+import os
 import stat
+from collections.abc import Iterator
 from datetime import UTC, datetime
 from pathlib import Path
 from types import SimpleNamespace
@@ -46,6 +48,21 @@ from forgegate.github_actions.service import (
 
 runner = CliRunner()
 COMMIT = "a" * 40
+
+
+@pytest.fixture(autouse=True)
+def isolate_github_command_files() -> Iterator[None]:
+    # Unit-test decisions must not append to the enclosing CI job's command files.
+    # Use a separate context because a test below explicitly undoes its monkeypatch.
+    with pytest.MonkeyPatch.context() as isolated:
+        isolated.delenv("GITHUB_OUTPUT", raising=False)
+        isolated.delenv("GITHUB_STEP_SUMMARY", raising=False)
+        yield
+
+
+def test_inherited_github_command_files_are_isolated() -> None:
+    assert "GITHUB_OUTPUT" not in os.environ
+    assert "GITHUB_STEP_SUMMARY" not in os.environ
 
 
 def _published_pass_bundle(tmp_path: Path, repository_root: Path) -> Path:
@@ -347,6 +364,7 @@ def test_cli_reports_secondary_github_file_failure(
     repository_root: Path,
 ) -> None:
     directory = _published_pass_bundle(tmp_path, repository_root)
+    summary = tmp_path / "summary.md"
     result = runner.invoke(
         app,
         [
@@ -356,10 +374,16 @@ def test_cli_reports_secondary_github_file_failure(
             "b" * 40,
             "--github-output",
             str(tmp_path),
+            "--step-summary",
+            str(summary),
         ],
     )
     assert result.exit_code == 3
+    assert "GITHUB_COMMIT_MISMATCH" in result.output
     assert "additionally failed to write GitHub files" in result.output
+    assert summary.read_text(encoding="utf-8") == render_github_error_summary(
+        "GITHUB_COMMIT_MISMATCH"
+    )
 
 
 def test_action_metadata_uses_environment_not_inline_inputs(repository_root: Path) -> None:

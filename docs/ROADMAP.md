@@ -1,20 +1,41 @@
 # Roadmap
 
-## Current state — portfolio synchronized; engineering paused
+## Current state — source portfolio accepted; engineering paused
 
 New feature work is paused during the owner's job preparation. The completed
 Windows Local Alpha and Phase 64 monitor presets are retained, not reopened as
-unfinished work. The accepted baseline is synchronized into the existing Private
+unfinished work. The accepted baseline is synchronized into the existing
 GitHub repository. The [2026-09-10 portfolio closeout](../reports/GITHUB_PORTFOLIO_CLOSEOUT_2026-09-10.md)
 records presentation and publication checks, not another product milestone.
-Public visibility, License and Release remain separate owner decisions.
+On 2026-09-10 the owner authorized Public source visibility after complete
+hosted CI acceptance and closeout. Exact source
+`f2ba63d055ab93a437a5de73b697b84d2afacd07` passed all four jobs in
+[run 34537416870](https://github.com/Carlos-0798/forgegate/actions/runs/34537416870)
+and is accepted for Public-source portfolio presentation. See the
+[hosted CI closeout](../reports/HOSTED_CI_CLOSEOUT_2026-09-10.md) and
+[PR #17 completion receipt](https://github.com/Carlos-0798/forgegate/pull/17)
+for source acceptance and the separate visibility/anonymous-access outcome.
+Later documentation-only commits are not the source tested by that hosted run.
+License, packaged Release and LinkedIn publication remain separate decisions.
 See the [resumption checkpoint](PROJECT_RESUME_CHECKPOINT_2026-09-09.md) and
 [synchronization record](../reports/GITHUB_SYNC_2026-09-09.md).
 
 Cloud CI is owner-selected and manual-only; routine synchronization uses local
 verification. Keep the existing cloud matrix available without restoring push/PR
-triggers unless the owner requests that policy change. Account restriction
-resolution is deferred until cloud execution is wanted, not a product milestone.
+triggers unless the owner requests that policy change. The owner-enabled cloud
+acceptance exposed test-harness failures, retained their unsuccessful attempts,
+and accepted the scoped corrections through a complete passing rerun. This is
+verification maintenance, not a new feature milestone.
+
+- [x] Record conditional Public authorization and retain the manual-only policy.
+- [x] Complete the corrected source's full local gate and hosted matrix, including
+  package smoke and the dependent generic Action fixture; retain failed attempts.
+- [x] Complete the scoped source/log/presentation review for the accepted
+  revision; retain unavailable historical-log and evidence limitations.
+
+Publication execution is a separate action: consult the PR #17 completion
+receipt for visibility and anonymous access. Neither local PASS, successful
+upload nor source-portfolio acceptance alone establishes a visibility change.
 
 After job preparation, the proposed next engineering slice is an adapter
 conformance/example kit using the existing protocol and preset boundaries.
@@ -22,7 +43,8 @@ Then validate a real supported device when one and explicit permission are
 available. Capture/export is a separate task, not silently added release evidence.
 Do not start a broad driver marketplace, managed service or cloud rewrite.
 
-Earlier phase priorities and GitHub-paused notes below are historical records.
+Earlier phase priorities, Private-only, no-cloud-run and GitHub-paused notes
+below are historical records.
 This section and the linked checkpoint take precedence for resumption.
 
 ## Completed priority — reusable monitoring after Alpha closeout

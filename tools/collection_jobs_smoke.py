@@ -50,7 +50,7 @@ def invoke(root: Path, *args: str, expected: int = 0) -> dict[str, Any] | list[A
 def main() -> int:
     # Each CLI invocation is a NEW process. No service, network or device is used.
     with tempfile.TemporaryDirectory(prefix="forgegate-jobs-") as directory:
-        root = Path(directory)
+        root = Path(directory).resolve(strict=True)
         database = root / "candidates.db"
         store = root / "jobs.db"
         application = CandidateApplication.for_database(database)

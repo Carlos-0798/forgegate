@@ -1,9 +1,20 @@
 # Project status
 
-- Portfolio closeout (2026-09-10): engineering outcomes remain the lead review
+- Source portfolio acceptance (2026-09-10): accepted for owner-authorized
+  Public-source portfolio presentation. [Run 34537416870](https://github.com/Carlos-0798/forgegate/actions/runs/34537416870)
+  completed successfully on exact source
+  `f2ba63d055ab93a437a5de73b697b84d2afacd07`: Windows, Ubuntu and macOS full
+  verification and clean-package smoke, plus the dependent generic Action job.
+  See the [hosted CI closeout](../reports/HOSTED_CI_CLOSEOUT_2026-09-10.md) for
+  failed attempts, scoped corrections and exact evidence. Later documentation-only
+  commits are not the source tested by that run. Actual visibility and anonymous
+  access belong to the [PR #17 completion receipt](https://github.com/Carlos-0798/forgegate/pull/17).
+  New engineering features remain paused; License, packaged Release and LinkedIn
+  publication are separate decisions.
+- Earlier portfolio closeout (2026-09-10): engineering outcomes remain the lead review
   path; browser-check terminology, failure explanations and publication evidence
   have been reviewed. The Phase 64 runtime is unchanged. Repository visibility
-  stays Private and cloud CI remains manual-only. See the
+  stayed Private at that checkpoint; cloud CI remains manual-only. See the
   [closeout record](../reports/GITHUB_PORTFOLIO_CLOSEOUT_2026-09-10.md).
 - Portfolio follow-up (2026-09-09): reviewer navigation, ownership, real-case
   summary and independent setup entry points are refreshed; engineering feature
@@ -11,17 +22,18 @@
 - Cloud validation policy (2026-09-09 owner decision): `ci.yml` is manual-only
   through `workflow_dispatch`. Pushes and PRs do not automatically run cloud
   tests; the complete existing matrix and local development gates are retained.
-  Account restrictions may be addressed when a cloud run is wanted, not as a
-  prerequisite for Private synchronization. Historical blocked runs are not PASS.
+  The owner-enabled publication acceptance run is recorded above. Historical
+  account-blocked and executed-but-failed runs remain unchanged, not PASS.
   See [manual run instructions](../README.md#optional-cloud-validation).
-- Current direction (2026-09-09): pause new engineering features for job
+- Current engineering direction (2026-09-09): pause new features for job
   preparation; preserve the accepted Phase 64 baseline and synchronize the
-  existing Private GitHub repository. See the
+  existing GitHub repository for portfolio review. See the
   [resumption checkpoint](PROJECT_RESUME_CHECKPOINT_2026-09-09.md) for the next
   adapter-conformance slice and the
   [synchronization record](../reports/GITHUB_SYNC_2026-09-09.md) for fresh gates
-  and the reviewed remote handoff. Earlier dated local-only / GitHub-paused
-  statements below describe their original checkpoints, not current authority.
+  and the reviewed remote handoff. Earlier dated local-only, Private-only,
+  no-cloud-run and GitHub-paused statements below describe their original
+  checkpoints, not current publication authority.
 - Date: 2026-09-10
 - Version: 0.1.0a1
 - Active checkpoint: Phase 64 reusable monitor presets LOCAL ENGINEERING PASS.
@@ -269,14 +281,16 @@
 - Hardware evidence: owner-authorized input-only COM4 UART status observation;
   no command, firmware/debug action, physical measurement validation, release
   evidence, or production claim
-- Remote/publication status: existing Private `Carlos-0798/forgegate`;
-  synchronization is owner-authorized on 2026-09-09 and tracked in the linked
-  synchronization record. The last fully accepted historical cross-platform
-  run remains 33999452478. Recent hosted jobs reported an account
-  payment/spending-limit restriction; local tests are not hosted CI. No Public
-  visibility, License, Release, LinkedIn publication or spending change is authorized.
+- Remote/publication status: `Carlos-0798/forgegate` is accepted for
+  owner-authorized Public-source portfolio presentation. Complete hosted
+  acceptance is bound to source `f2ba63d` and run 34537416870, as recorded in the
+  [current closeout](../reports/HOSTED_CI_CLOSEOUT_2026-09-10.md). The
+  [PR #17 completion receipt](https://github.com/Carlos-0798/forgegate/pull/17)
+  records the visibility transition and anonymous-access outcome separately;
+  source acceptance is not itself a visibility change. Local tests are not hosted
+  CI. License, packaged Release and LinkedIn publication remain separate actions.
 
-The Phase 28 post-merge run 34001577886 passed the Windows/Linux/macOS test and
+Historical context: the Phase 28 post-merge run 34001577886 passed the Windows/Linux/macOS test and
 package jobs, but its final generic Action job did not start because GitHub
 reported an account payment/spending-limit restriction. The overall run is
 not green. Billing changes require owner action; local acceptance is separate.
@@ -992,13 +1006,13 @@ remaining OS assistive checks are separate.
 - repository-external ForgeGate installation plus sample-plugin
   install/discover/uninstall independence smoke: PASS
 - Git Bash shell-script syntax check: PASS
-- latest accepted GitHub Actions baseline: merge run 33999452478
+- historical accepted GitHub Actions baseline: merge run 33999452478
   PASS on Windows, Ubuntu, and macOS; each platform completed `verify.py` over
   783 collected tests and `release_smoke.py` for checkpoint commit
   `32e961ce72a5ce4497010fbc22a53b0aab090571`, and the dependent Ubuntu job
   passed the real composite Action against the generic fixture; the local
   Podman hostile fixtures were not run or claimed by hosted CI
-- private GitHub synchronization: `main` pushed with noreply commit identity;
+- historical private GitHub synchronization: `main` pushed with noreply commit identity;
   repository visibility, default branch, About, and ten Topics read back
 
 See `reports/PHASE_0_ENVIRONMENT_AUDIT.md` for the prerequisite audit and exact

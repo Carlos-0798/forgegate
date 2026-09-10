@@ -70,7 +70,7 @@ def rows(path: Path) -> dict[str, list[Any]]:
 
 def main() -> int:
     with tempfile.TemporaryDirectory(prefix="forgegate-workspace-smoke-") as temp:
-        root = Path(temp)
+        root = Path(temp).resolve(strict=True)
         database, jp = root / "candidates.db", root / "jobs.db"
         application = CandidateApplication.for_database(database)
         application.initialize()
