@@ -51,7 +51,7 @@ def run(root: Path, arguments: list[str], expected: int = 0) -> str:
 
 def smoke() -> dict[str, Any]:
     with tempfile.TemporaryDirectory(prefix="forgegate-adoption-smoke-") as temp:
-        root = Path(temp)
+        root = Path(temp).resolve(strict=True)
         cp, jp = root / "candidates.db", root / "jobs.db"
         application = CandidateApplication.for_database(cp)
         application.initialize()

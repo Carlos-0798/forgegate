@@ -45,12 +45,13 @@ def main() -> None:
         )
     )
     with tempfile.TemporaryDirectory(prefix="forgegate-runtime-") as temporary:
+        root = Path(temporary).resolve(strict=True)
         for dashboard, expected in ((True, "DASHBOARD_REACHABLE"), (False, "DASHBOARD_HTTP_ERROR")):
             with socket.socket() as listener:
                 listener.bind(("127.0.0.1", 0))
                 port = listener.getsockname()[1]
                 api = create_api_app(
-                    Path(temporary) / f"{dashboard}.db",
+                    root / f"{dashboard}.db",
                     authenticator=ApiAuthenticator(trust),
                     dashboard=dashboard,
                 )
