@@ -1,5 +1,10 @@
 # Project status
 
+- Portfolio closeout (2026-09-10): engineering outcomes remain the lead review
+  path; browser-check terminology, failure explanations and publication evidence
+  have been reviewed. The Phase 64 runtime is unchanged. Repository visibility
+  stays Private and cloud CI remains manual-only. See the
+  [closeout record](../reports/GITHUB_PORTFOLIO_CLOSEOUT_2026-09-10.md).
 - Portfolio follow-up (2026-09-09): reviewer navigation, ownership, real-case
   summary and independent setup entry points are refreshed; engineering feature
   work remains paused. See the [GitHub page audit](../reports/GITHUB_REVIEWER_AUDIT_2026-09-09.md).
@@ -17,7 +22,7 @@
   [synchronization record](../reports/GITHUB_SYNC_2026-09-09.md) for fresh gates
   and the reviewed remote handoff. Earlier dated local-only / GitHub-paused
   statements below describe their original checkpoints, not current authority.
-- Date: 2026-09-09
+- Date: 2026-09-10
 - Version: 0.1.0a1
 - Active checkpoint: Phase 64 reusable monitor presets LOCAL ENGINEERING PASS.
   Saved project-scoped catalogs, operator start/stop, explicit simulated origin

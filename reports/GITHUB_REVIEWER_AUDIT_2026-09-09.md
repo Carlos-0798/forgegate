@@ -19,7 +19,7 @@ real AVS images, the Mermaid diagram, and the linked real-project report.
 | Reviewer question / observed issue | Applied presentation change |
 |---|---|
 | What problem does this solve? | Explain reconciling reports for one version and handing off a checkable decision before listing implementation detail; retain the unmeasured-human-gain boundary |
-| Whose project and which work? | Identify the independent project maintainer and component scope; do not claim all code was manually authored or upstream tests were ForgeGate work |
+| Whose project and which work? | Identify the independent project maintainer, component scope and upstream ownership; distinguish project responsibility from tool assistance |
 | Where should a reviewer start? | Direct links to a curated screenshot map, a plain-language real case, design decisions and independent Windows setup |
 | Can I read the architecture without zooming? | Replace the visibly cramped seven-node graph with a four-stage summary; detailed collector, policy, database and authentication information remains in prose/docs |
 | Are the numbers and pictures consistent? | Show the 1,569-test regression record from PR #14; preserve Phase 64's earlier 1,568 count as history; distinguish synthetic workflows, retained real AVS reports and historical physical UART observation |

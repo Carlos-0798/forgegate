@@ -17,7 +17,7 @@ another engineer can check without the original database. This replaces manual
 report reconciliation steps; human time savings and accuracy gains remain
 **not measured**.
 
-**Ownership:** an independent engineering project maintained by
+**Ownership:** an independent engineering project initiated and maintained by
 [Carlos-0798](https://github.com/Carlos-0798). Its scope spans report processing,
 policy evaluation, local web interaction, audit history and reproducible delivery.
 Peer-project tests and hardware results remain the work of their original projects.
@@ -135,6 +135,11 @@ captures remain available as historical evidence, with their original fixture sc
 - **Compatibility preserves evidence levels.** Domain-neutral contracts and
   optional adapters never promote simulated or software results to physical proof.
 
+**Resolved engineering issue:** a global uniqueness constraint initially prevented
+multiple candidates from reusing identical authorized policy content. The schema
+v9 correction preserved candidate-level uniqueness and immutable history, with
+rollback and migration regressions. See the [failure and correction record](reports/PHASE_30_JUNIT_COLLECTION_ACCEPTANCE.md).
+
 ## Quick start
 
 Windows and Python 3.12 are the tested target. Use the supplied private delivery
@@ -192,8 +197,9 @@ development environment and runs `tools/verify.py`. Packaging acceptance is
 
 Cloud CI is **manual only** (`workflow_dispatch`); pushes and PRs do not run it
 automatically. [Run history](https://github.com/Carlos-0798/forgegate/actions/workflows/ci.yml)
-retains the earlier account-restricted jobs, which did not execute tests and are
-not PASS. Local results above are not latest hosted-CI results; see the
+retains successful runs for older commits and account-restricted failures;
+neither establishes a hosted PASS for the current main. Local results above are
+not latest hosted-CI results; see the
 [synchronization record](reports/GITHUB_SYNC_2026-09-09.md).
 
 To deliberately run the retained cloud checks, open **Actions → ci → Run workflow**,

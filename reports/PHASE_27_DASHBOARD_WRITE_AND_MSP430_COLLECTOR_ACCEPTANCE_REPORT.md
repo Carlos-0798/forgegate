@@ -34,13 +34,13 @@ PASS at revision 4, and retained audit sequence 5–12. The evaluated test-summa
 rule expected zero failures and observed zero. The final attestation remained
 `unsigned_local` and visibly excluded deployment and hardware claims.
 
-## Manual negative and defect-driven testing
+## Actual-browser negative and defect-driven checks
 
 A structurally valid evidence assembly with another commit was rejected with
 HTTP 422 before a durable binding. The positive assembly then passed complete
 server-side identity, receipt, evidence, artifact, and warning validation.
 
-Manual testing found two presentation defects and verified their corrections:
+Browser interaction checks found two presentation defects and verified their corrections:
 
 - a detail-only reload could show PASS below a stale DRAFT table row; completion
   now reloads the whole candidate workspace before reopening its detail;

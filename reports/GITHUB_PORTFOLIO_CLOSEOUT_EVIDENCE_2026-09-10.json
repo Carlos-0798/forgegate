@@ -1,0 +1,700 @@
+{
+  "record_type": "forgegate.portfolio-closeout-review.v1",
+  "local_date": "2026-09-10",
+  "source_head": "285e760c803db2670185e878eb9e8b79b16d4da4",
+  "review_scope": "Presentation and bounded publication privacy review; not runtime or production acceptance",
+  "baseline_git_inventory": {
+    "scope": "all locally reachable refs after origin fetch; not unreachable server objects",
+    "commits": 115,
+    "blob_objects": 2199,
+    "current_tracked_paths": 673
+  },
+  "visual_review": {
+    "raster_originals_reviewed": 91,
+    "svg_sources_reviewed": 1,
+    "visible_sensitive_findings": 0,
+    "images_changed": false,
+    "notes": [
+      "Expired local one-time activation challenge is retained as historical evidence, not an active credential.",
+      "Record IDs, idempotency keys and public fingerprints are not treated as authentication secrets.",
+      "Synthetic and AVS upstream captions remain necessary; no hidden, blurred or off-frame text was reconstructed."
+    ]
+  },
+  "history_review": {
+    "historical_image_blobs": 92,
+    "historical_images_not_current": 0,
+    "binary_blobs": 91,
+    "binary_blobs_outside_current_images": 0,
+    "pattern_findings": [],
+    "identity_mismatches": []
+  },
+  "retained_hosted_review": {
+    "historical_run_count": 75,
+    "available_logs_pattern_checked": 60,
+    "unavailable_logs": 15,
+    "unavailable_log_job_records_checked": 60,
+    "unavailable_log_annotations_checked": 43,
+    "targeted_matches": 0,
+    "scope": "Retained preceding read-only review; missing logs are unavailable, not PASS. No hosted dispatch."
+  },
+  "publication": {
+    "visibility": "PRIVATE",
+    "cloud_workflow": "manual workflow_dispatch only",
+    "public_change": "NOT_AUTHORIZED",
+    "license_change": "NOT_PERFORMED",
+    "release": "NOT_PERFORMED",
+    "linkedin": "NOT_PERFORMED"
+  },
+  "limitations": [
+    "Targeted patterns and visible-content inspection are not exhaustive credential, metadata, steganography, dependency or security certification.",
+    "Git scope covers local refs after origin fetch, not unreachable server objects, deleted server content or external forks.",
+    "No new hardware, upstream producer, application-browser, package or independent-user acceptance is claimed.",
+    "Local validation and post-merge live page readback are recorded separately in the accompanying pull request."
+  ],
+  "images": [
+    {
+      "path": "docs/assets/forgegate-cli-demo.svg",
+      "git_blob": "121cd7ab6703a52787588e2c5af86c43d2ba2006",
+      "sha256": "f2aa865bb1964a0b9e60f168ae662d0dea4d4bb157413983bf464e9b9ecd6258",
+      "bytes": 2529,
+      "review": "SVG_SOURCE_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-activation-expired.png",
+      "git_blob": "821bdac7494a035cffaf12557a5e92b708870951",
+      "sha256": "7530cbd2d4be3329722db19ba3d62bcfbc2ada572e3ba1b455c0bc9dd1c73309",
+      "bytes": 84708,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-activation-retry.png",
+      "git_blob": "7f40004187e0a7bad2cba5571575d233b45417a6",
+      "sha256": "b1cfeaf21a4874d6f439b05c0c602bbc4ce5e7cdd08d2671bbfc989a01e16de2",
+      "bytes": 99919,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-activation-server.png",
+      "git_blob": "f288e546987829d39805472bf58992d573912890",
+      "sha256": "4d771f4017e8716ebf8b8cfb0005d34fe6b9eb633c6b12b725b9ed021b1b9a0c",
+      "bytes": 114528,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-alpha.jpg",
+      "git_blob": "f15b7f53645b1377aab8e97e1ada439c908d553f",
+      "sha256": "09776b433ad66325d97df2055ab7872e4cd3ab35b31c81ec7beb514c032187e1",
+      "bytes": 80173,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-assurance-export-complete.jpg",
+      "git_blob": "3e60f27db664742ec703c0eb39652bc141790fc3",
+      "sha256": "b14383297e23751fc27fe4f1c825d946955cadafc002996a217fd063fa63bb23",
+      "bytes": 88567,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-assurance-export-confirm.jpg",
+      "git_blob": "5e5d43861d9268d4867c2be869e48ef57d515595",
+      "sha256": "9ad0626e53de8a4c846f9739cb23bf4ffc9b9d1b0de90aa68af99fda54ac773e",
+      "bytes": 78602,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-assurance-review.jpg",
+      "git_blob": "b4ee1e6a28bd03a40fd6ff2733fc40c5cd04ec62",
+      "sha256": "bf333b7a9eafa4fa0d53e79bb82cf245b9933e8b5f16f1eb6167aa3ae7c2fcfa",
+      "bytes": 124484,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-audit-detail.png",
+      "git_blob": "78184ec0649e0eb633273888e9f1e2737b8b22dc",
+      "sha256": "0ae9327acdc8a954831a29c0691f6f4341bbd4e9961fe224c272b6edf55e6777",
+      "bytes": 87019,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-candidate-detail.jpg",
+      "git_blob": "df8622a7cdc02ab853f371d7fdd3225d2260b8f8",
+      "sha256": "311eaf3c1c438691a9c0d46176eceaa10082893fc2ca72c5d2f17a5ec9e04f2c",
+      "bytes": 108817,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-candidates.jpg",
+      "git_blob": "d9429078f270af5f2b1c79f96866bdf53a3fbef7",
+      "sha256": "6a46f301f8d563faf01c16a3a6c42e6385c1c821deaa29936aeefb7db67ffaca",
+      "bytes": 73728,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-coverage-warning.jpg",
+      "git_blob": "d90ce4083a09a03666da259f29b9da69617cd550",
+      "sha256": "a025539fd4eb80d0df71ea70cff18a00a82905148cbb38b73e9ac74b1d804e8c",
+      "bytes": 125742,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-decision-review.jpg",
+      "git_blob": "c8d80ad6a70182a85b4b5d7fe799816e0122ca47",
+      "sha256": "c6a709589d9377fe4095a40265d0b95d52da7859574780d939a7f2a6752fa4e1",
+      "bytes": 71489,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-evidence-review.jpg",
+      "git_blob": "6c46a342d67365692b81a3489f0b17b6282a4bcb",
+      "sha256": "378ed52d7fe669896280f0c517129a06b923bf3d74f216a32887a43f3bae0fd9",
+      "bytes": 71551,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-junit-fail-decision.jpg",
+      "git_blob": "99e3a2cab9c68659e2cf6d75b5c389b7372365c7",
+      "sha256": "4cc750209174efba36a698f4b7b38ce59bd7ab9f34085740de72a44e1d48291e",
+      "bytes": 191602,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-junit-import-form.jpg",
+      "git_blob": "fd01af0cac4bca8dc3a9947f498ed4e8214b38e4",
+      "sha256": "ea6cca48c5b257414488948810c01015467382c0afbb831e12a08395770cda50",
+      "bytes": 97769,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-junit-pass-decision.jpg",
+      "git_blob": "5d2884f55a9e98473c7e0542b2946b413bc09f15",
+      "sha256": "f10ecf116d9c758bf8e40efd9211ccbc40d99afbf0abd25e882ab53799e89c33",
+      "bytes": 191922,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-junit-rejected.jpg",
+      "git_blob": "fd5e22b058965739ccf12448d066cd3e0ddd2ae5",
+      "sha256": "8513e8d0d7a788996fe4484093b741c08bb1a9b65b1acd1816061a58166a994a",
+      "bytes": 119189,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-junit-warning-consent.jpg",
+      "git_blob": "877a60422c332b5c5e2a8ccd66d6db86777563c4",
+      "sha256": "364dae1a4ccd17fd1cf37a4d2660dcd0293e15821f25fe23ce29e100a545ffe4",
+      "bytes": 136837,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-lcov-decision.jpg",
+      "git_blob": "6c58eef7b1b702b55735fc13ef529ec1f60ae3f2",
+      "sha256": "207f49dff33a2cd489d2809b4efaf1aeb1ea5c1f95912ed37c3d3a9efd5a7a51",
+      "bytes": 183097,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-lcov-preview.jpg",
+      "git_blob": "bdc2c3274291d08f4e89499212120d56e95c88b2",
+      "sha256": "a2384c438edf3640e15ee2bd8e7081247b70982394d0ec91cb627fa49250430e",
+      "bytes": 109953,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-local-validation.jpg",
+      "git_blob": "c14ac908dc93d3261f8d660827f42e7076260cf6",
+      "sha256": "53590aa95961ef2e0302172d6d09df0e41c0f8377dad07d9815f3286b597f567",
+      "bytes": 129010,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-low-coverage-fail.jpg",
+      "git_blob": "bcaead20a6c1776235f57300d130f05ccb1d111c",
+      "sha256": "a16ee3a18185c797b09a28a2bd55e05722eef9769ace1b3b9ac36122701525ac",
+      "bytes": 180939,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-low-coverage-rules.jpg",
+      "git_blob": "c9fc70d100d0e00dd9d4f23679622c1474e494c1",
+      "sha256": "b273f7d483965b57cfab82c32f1b4eb49d6fcd1a59c60bcc4ef547667a684daa",
+      "bytes": 190448,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-msp430-decoded-faults.jpg",
+      "git_blob": "7d68e939b0f8a7ba34b5920b21467e568710c238",
+      "sha256": "57412ba3f267db345a4dcb1bf070dde50717906d4b3a1e358bada709c664fb07",
+      "bytes": 111404,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-msp430-live-status.png",
+      "git_blob": "282f2e85933cd1b0ce187ab436a95d15cf0bfc3a",
+      "sha256": "7baf6de9d5269f6856e9f6a1c47a454c085abbefa39b2b42667efacb39c81e89",
+      "bytes": 71371,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-multi-report-bound.jpg",
+      "git_blob": "0e528d605528121bc6b4bf43ab4b47851800f674",
+      "sha256": "8d25d64070839b1a478d4f149a29464b720d5c30c2e363c7e1bf589ea4e184cc",
+      "bytes": 128320,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-multi-report-decision.jpg",
+      "git_blob": "4a6b08bb92b344e085167dc185e2e272c4b9a2ef",
+      "sha256": "2ff762afbe64e12ff3cf657d17cdaa9f00e61280dc6dd85c9ba078dfece5ece8",
+      "bytes": 192810,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-multi-report-rules.jpg",
+      "git_blob": "e6f7c9d3a3e542176217aa2158053d13d3113809",
+      "sha256": "aa745c93e2b57ffe40af798d35c6508110b733bb8774fda17b4541311f21cce6",
+      "bytes": 195781,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-overview.jpg",
+      "git_blob": "9d3be83b33c6721cbe2545f5877d1fbdf6c58231",
+      "sha256": "75ab59d2bf64e52b0479743a1e7b185aae227b1a0778981b20ebb693b48a9bdb",
+      "bytes": 116662,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-project-audit.png",
+      "git_blob": "7b03419588767b4ebe98795d74771bd59c88ada5",
+      "sha256": "ff43afab36e2cadc920b82a7ab5cf9480756ea9ce3f52119d7c6fca8eb639c35",
+      "bytes": 87756,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-report-rejected.jpg",
+      "git_blob": "4351ee1d96a3bdac153247863aa6d12791de5947",
+      "sha256": "62b4cf78473450a4f2d3915a9cf0eb20ee500f54bed5dcc6f7df75e6bb36aff7",
+      "bytes": 132062,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-reviewed-workflow-assurance.jpg",
+      "git_blob": "cc119c156a3119d86b7a781678b25bc2fa1765de",
+      "sha256": "82e7f02361b61a2fc7a89f6055909353d2def75a88dec5ccdeeff4cbdf8aa499",
+      "bytes": 71974,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-reviewed-workflow-decision.jpg",
+      "git_blob": "c56b1eb4d07ef72695b98c549987c15d5ce5a590",
+      "sha256": "f59e498fa7b8ccf5fc8234d1cb7ad1b8c9f48efdaddb860f43babd7c96030dd5",
+      "bytes": 70003,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-reviewed-workflow-pass.jpg",
+      "git_blob": "8aa33cf1da2a956f150bb980e1d95bca8debce93",
+      "sha256": "4d6ade31ab0ac191a3b4b32a112e556af4b6b6aa654616d59faea0ddd4880acd",
+      "bytes": 82390,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-shared-policy-error.jpg",
+      "git_blob": "1d015937a4626d5ef5113f405d0d6e7a741ea75f",
+      "sha256": "a5979ae84ff1a47c56a593f0f7341fbb15472ec2a19b9d7a7d21042670e1c34f",
+      "bytes": 127830,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-validation-error.jpg",
+      "git_blob": "6868ae8c74c089deff28fb847ca75c1795961aae",
+      "sha256": "30da6753bfa208c23c2f543d576dd7073ab31bc5d3951a331ea7682660d24b4c",
+      "bytes": 75950,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-zoom-100.jpg",
+      "git_blob": "dcdfbc295f58b9e10562b3098c174fa12a047ab1",
+      "sha256": "f731d3cb975b81421c29107da5cff73dc501708c956919add6b192d83e5aa45c",
+      "bytes": 187715,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-zoom-125.jpg",
+      "git_blob": "24d4641035d86ebc88e71d75166d1b5cd1786d1c",
+      "sha256": "939442ad9f4be42f9aa92b0b7d5b3f05e58f88f47cfce11e22a248975e67c61c",
+      "bytes": 136807,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-zoom-150.jpg",
+      "git_blob": "5fbf7b753644ef723ceafbd86a1c1dfbbe5b22d2",
+      "sha256": "c81041e8dc0521c1bca5903f66fb9f14a7041845c02ec50f2a75b168dc1a641d",
+      "bytes": 93782,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-zoom-175.jpg",
+      "git_blob": "f7b14f8429da27466434c0c1301d963de7d8c5a5",
+      "sha256": "ee81b5387756bdff2cd6e14e60a3db9367ee3b4437b003ab70e3f763646f16cf",
+      "bytes": 64543,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-zoom-200-dialog.jpg",
+      "git_blob": "f09a7bae8e5ef7f3d08a8b4adc528336e6ae4cf7",
+      "sha256": "7d9ca117612f4ef9a5acfac50440c955376f4384386d3cf6bfb5db3446e396c9",
+      "bytes": 35939,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-dashboard-zoom-200.jpg",
+      "git_blob": "91018d576548ac8b01340bf357e24a165365e3ce",
+      "sha256": "12d5b794a857d07a98d8df11fae63d375a336eae676c071bdaa170a6bd83942a",
+      "bytes": 48656,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/forgegate-job-archived-result.png",
+      "git_blob": "ac168faf7f5ee8258d584101c73c7d259f22947f",
+      "sha256": "7680b6ad414932abe2f2681a6791b600f1fa5ddb9584f9261f079078370761f9",
+      "bytes": 180188,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase35-job-cancelled.png",
+      "git_blob": "5456ab227057c3d6261e0e69c265e375ce13ba01",
+      "sha256": "b53b53f4174a7bc343d1796ab8f41cc30166f678ede8fe88d0dd0f195dcaa0b2",
+      "bytes": 181581,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase35-job-conflict.png",
+      "git_blob": "a54e8514a0cb30953bb7b0fecce6ffa4bc306fc0",
+      "sha256": "e4178e723d04a601ce48d35bdb8d29219571a0c12a20bd22ca90e20ff9a3a9a1",
+      "bytes": 94432,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase35-job-recovered.png",
+      "git_blob": "9d8b8b4bf80cf5846f99277a258db8c2f2d044c1",
+      "sha256": "f4a738fcfcf02cc3efd5cf6f5c31b5317277efd3d25f08697bd285f1660fdbc9",
+      "bytes": 184491,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase35-job-result.png",
+      "git_blob": "a29ece42b755a7f140c622dcd2c967e94e69f0c1",
+      "sha256": "c9ee242a096aa882dddc46fe8bd139ad51d1c92496dc3d0418bf526a2dca4613",
+      "bytes": 132132,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase36-combined-result.png",
+      "git_blob": "0ad029731fce0aa5cdf085fded9e9e89650f4d41",
+      "sha256": "c5afae71efc42d31b0e9fdcf8a08316d507ba4adc7ba2cde2db12bd8facd86e6",
+      "bytes": 123996,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase36-retained-warnings.png",
+      "git_blob": "db06604796b174a46b8c70614c6dbadcbd59d25c",
+      "sha256": "f4b638dddb78b197fbd92c126d95a7c15c583162f6c52b104b5e90b9e3a8b1f6",
+      "bytes": 198352,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase36-submit-review.png",
+      "git_blob": "4f07aeb4c7245deade4cafa0aadeb7a1e09dbe54",
+      "sha256": "17f372d007c91f22b06a0cd4369a3b459fb90427323c7a75ac38c220eb13dc94",
+      "bytes": 108558,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase36-task-result.png",
+      "git_blob": "a7bc34c92af4e897784947c4954eae352971c9fb",
+      "sha256": "53eef18edb4391e031dca6f60501683bf59500eff2fe79a609e8148bc58f6c97",
+      "bytes": 207854,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase37-assembly-download-review.jpg",
+      "git_blob": "73a1bd30375fc1c5e47350694ba2132914447367",
+      "sha256": "ac9545eb2dce440e9264bddba55e6c92c22a81c2dba29fd45c6f2362654d3048",
+      "bytes": 75313,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase37-bound-evidence.jpg",
+      "git_blob": "0dc21eb4cdff5ef065dec3e9b5eb728cca77b4fd",
+      "sha256": "532293642d761c055caa5621179b18b269c767057eb3330e4f38b854d832366e",
+      "bytes": 130679,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase37-evidence-binding-result.jpg",
+      "git_blob": "015ec77eda82424939e7145d5127f800fbc2736b",
+      "sha256": "7c3fc31ccebfc1d54651d0cc515f04ae21b09d445532b926483bd50e228279c0",
+      "bytes": 109164,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase37-job-result-actions.jpg",
+      "git_blob": "af14dcc5062ae7f16b6cf3e360e535b47f3b17f8",
+      "sha256": "180ee1df284e131a9874af70177c613fb8024a8f739c8dd6bc2d9de4ab73acd4",
+      "bytes": 156442,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase41-job-capacity-filter.jpg",
+      "git_blob": "4abfc95878284a4c8d2e42d70b4c00220ba7da84",
+      "sha256": "833088164b3ef2382a2bd4b6194303569028b528e6c792836c9deb212dc1850d",
+      "bytes": 147635,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase45-recovery-rehearsal-review.png",
+      "git_blob": "a4f0324772177b206ae4a7cce93d70d2a1b26957",
+      "sha256": "e2337d5b9a77522e77de04db72da968fe02ded0c74e4ed7a623b802970701c7f",
+      "bytes": 169873,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase62/assessment-fail.jpg",
+      "git_blob": "4abe1a7f3a086131698122800c6e761daf6ac966",
+      "sha256": "628846dd8eb64ba3167827a9083d4f552119ea0387c37d2074bfc0997bcb6a9d",
+      "bytes": 88317,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase62/assessment-pass.jpg",
+      "git_blob": "51d573c88da7446a6913ee98de54268127288267",
+      "sha256": "f8e7ef951fb79d386ada7d446e50172eee6b233d2c5eaed3a2a02bad38d8b687",
+      "bytes": 90916,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase62/candidate-filter.jpg",
+      "git_blob": "f7ba902f5bf06c0558c53e56afd3661ad5709f96",
+      "sha256": "b316562da8fa4ccd756d79683544f8b6bb1d4aa038de6a670d82e7a820219478",
+      "bytes": 67017,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase62/decision-fail.jpg",
+      "git_blob": "3273ae6a102e4ec067b4d2f27933410bc4f4bb43",
+      "sha256": "bcb1c7675a9a5a56a86c869bf892c704a484a2c5d8cd9899fc68f8d3787fd101",
+      "bytes": 155571,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase62/workbench-narrow.jpg",
+      "git_blob": "59d7c6a7f90a16ec53619a97eb842b422e710d2e",
+      "sha256": "57f86dc96394f175900e8f7d66f93a346af9434b5eaff08a333967cae3e74a3f",
+      "bytes": 48934,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase62/workbench.jpg",
+      "git_blob": "31254fa9aaa6046add7ec3a680ae9ae27c68e21a",
+      "sha256": "e4777c4cb2088cfd04ea29b5ff4111c60264f44b5578dd7519c6f1b4176365a0",
+      "bytes": 167916,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase64/simulated-monitor.png",
+      "git_blob": "cd2575d5e050fd7b03e1c2cec8fe65fcfb819f7e",
+      "sha256": "ed752d853eb20ce1d9e5ae55dc3ea994c966667753b549a901bfea5bc7bfb0a1",
+      "bytes": 81826,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "docs/assets/phase64/simulated-status.png",
+      "git_blob": "444f6a9855f05d047c013699e6a61829703b5c19",
+      "sha256": "e48bbf0c5207830c473b831926acb6f149370903c04c9051cb56e3298b084c6b",
+      "bytes": 97273,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase49-browser/four-report-binding.png",
+      "git_blob": "8f474766ac97ac2c0dfbaa26bc3b6327bee00b5a",
+      "sha256": "e02b3b81d3cb4e565706e06e266e97c37928f1932e8c8ab35a3e54c78ee4c6d2",
+      "bytes": 138349,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase49-browser/invalid-sarif-no-binding.png",
+      "git_blob": "0376a60e5c85122a2b8c196da91937e63167b421",
+      "sha256": "af3cc6cf06e37d8a97296e6c1e78c278f26eb4ad82d45d350b16715e85ce42ea",
+      "bytes": 116026,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase49-browser/synthetic-six-rule-pass.png",
+      "git_blob": "b79409ef1bafc24e4bd5ed0fda2303f01e9a740f",
+      "sha256": "16160a7d2f13d4e48364dda16d18574ea107a275c5855dcd469b9172bb018483",
+      "bytes": 156964,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase50-browser/avs-assurance-download.png",
+      "git_blob": "90c8a72d23415184c3c612303a024a253a459e32",
+      "sha256": "19f36b45c514a08432cb7aa47a59f175159f9e113ae8c97a53b20ee0f707e610",
+      "bytes": 108452,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase50-browser/avs-host-decision.png",
+      "git_blob": "4a052ff92298654acdda679512067c5fe85a0ae3",
+      "sha256": "606ee97a9f57b1f21df8125ac3222340c847aaf3c761f41c625a7244b1cba195",
+      "bytes": 182023,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase51-browser/missing-originals.png",
+      "git_blob": "996ccd2bec0d52aad0c9aa01386998ebab682b65",
+      "sha256": "39472bfabb70f616c30ac7aa165d218dea994280cb1e281f22ad2ad116454a1e",
+      "bytes": 109481,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase51-browser/source-replay-download.png",
+      "git_blob": "cf5333774a84b7e4675c1b9cbcba96dac9415fcc",
+      "sha256": "88bd9ead53dad980477c7bba60e12feecf7f129efcf5d26af2125222d50187af",
+      "bytes": 98403,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase52-browser/installed-wheel-assurance-download.png",
+      "git_blob": "3cb534b19ca0cc1d63a1f1362ba89fa0df8c1bf7",
+      "sha256": "2c286df5b7997b673b8efe268501deab6ab88acc157bbb1fc51227e772c182d3",
+      "bytes": 108651,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase52-browser/installed-wheel-decision.png",
+      "git_blob": "6f7eeac595de3e16f8a0fa86e3fa61894c7e9ea7",
+      "sha256": "15ac7179eeb209c8572a2b3e687678bcfe09051011a6b578c2ae265452b7551d",
+      "bytes": 181828,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase52-browser/installed-wheel-overview.png",
+      "git_blob": "98b5f7d80085ede21159cdf17d49572fbdb141f3",
+      "sha256": "b99c26e1cc335f5e423be6cef74bb9fc851090638f60211d86d0659aaddb899f",
+      "bytes": 136735,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase54-browser/quick-fail.png",
+      "git_blob": "ba5aa46465028abb4b0beceeb8278168b998bcb1",
+      "sha256": "4611d9c04e500aadc79527d75621c61240e2e25887b95a99c43494f96550696e",
+      "bytes": 201697,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase54-browser/quick-rejected-final.png",
+      "git_blob": "8cb36ac63d44af9eaa3ee5e9b97ee5ba7f74ba03",
+      "sha256": "7a6bbde6c1b5019827e0d1165e47c5b5b14aef5f768741d82e83b24f0d2e5a28",
+      "bytes": 153681,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase55-browser/assessment-pass.png",
+      "git_blob": "490dbd325f8221eba12ef2e9ea063d3f7e05c258",
+      "sha256": "b480f50c3560fccc6fd1c82a288dbe67dc4549eee2da9d959ef3710df3c320d3",
+      "bytes": 183311,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase55-browser/replay-downloaded.png",
+      "git_blob": "20fd1adfd43f739e1975155095b5df465e7049eb",
+      "sha256": "e8c64cb89d99c0a651fcdf99bf9dc24a41b35ce7d0b606a81762867337344405",
+      "bytes": 96711,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase56-browser/avs-quick-decision.png",
+      "git_blob": "499a4d15ffe9a69794a937df0c95f71c8c8cc02a",
+      "sha256": "b3651219f528b88f62f1fc3955eacfacea648b00c69a26551b96d29fbadb8fa8",
+      "bytes": 166810,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase56-browser/avs-replay-download.png",
+      "git_blob": "449f1444a725375d85584f92195dd68bbac0472f",
+      "sha256": "8431a544acd236ce2259c0d3fdab2eb2dfa707d37d291d54c8c1a9084c6d34e0",
+      "bytes": 81806,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase57-browser/missing-evidence.png",
+      "git_blob": "0080c3c8c0af673c82eb90d9d7c578fa8d9f6971",
+      "sha256": "3909eca2983e26c64b42c28bac1c4ac0f81930c68971e88a7c33679bbe9bc959",
+      "bytes": 215740,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase57-browser/new-failure.png",
+      "git_blob": "91538b80c8a102178c14ffcb5874ed3f9c42e8e5",
+      "sha256": "2ee8fe780ad9d93f5c20b2715a9fd8d4cc086e57b2852be8b4a8a68d3ccfc69d",
+      "bytes": 249834,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase57-browser/not-comparable.png",
+      "git_blob": "65921423a329e4d716e15ec4425dcf3c14243531",
+      "sha256": "ca370ee29c0a6e18eb16fc3b74abef31c0476014d1c22c5cbbe4a8d5fe676849",
+      "bytes": 199603,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase57-browser/restored-rule.png",
+      "git_blob": "c3f10b83a071fc43757ec784723ae810651ff8f9",
+      "sha256": "4547c870af23687985108b2d5093592a66c3798fef00df5e15bbd16732ece71b",
+      "bytes": 213785,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase58-browser/installed-assurance-download.png",
+      "git_blob": "d0dc31edd60df75e98c658b9e1469797bc875bac",
+      "sha256": "a8d8deb9a89ec8783c43a9db7179dcdc175503e0be4e3fe2de40e63094b4e5bc",
+      "bytes": 88040,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase58-browser/installed-comparison-not-comparable.png",
+      "git_blob": "cc91587b5a8e9972378357f945969f37572a0d3a",
+      "sha256": "b5f753ebb4dfd84d5726bc3d26206e1eb0491cebadd37e698113ef453791a611",
+      "bytes": 155591,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase58-browser/installed-comparison-restored.png",
+      "git_blob": "141c1febd18515c95e3b8c3201765c4164f3c446",
+      "sha256": "f6b2215167571f5b6cff6e96a2fa739ef876643c24dde67e7b719f2f5c6ffcaa",
+      "bytes": 164680,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase58-browser/installed-quick-pass.png",
+      "git_blob": "4e255c0f787d357e9c05758265d3662a668f54fb",
+      "sha256": "0ad168d13a221d0ad94b66fe0a5153f9beba95061ab36712e645ad7e9cd0fa9e",
+      "bytes": 154576,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase58-browser/installed-quick-preview.png",
+      "git_blob": "3c7f6c5b49dd31d4bc5edd4e13b6697122e9a8ad",
+      "sha256": "7b1a90246a5ba0eeafdd05c7d274e0ac73c0c92ab6057079f14a5ea37528badf",
+      "bytes": 148448,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    },
+    {
+      "path": "reports/phase58-browser/installed-replay-download.png",
+      "git_blob": "7de48b8154b47e0311add75ac43e95e5726f5c86",
+      "sha256": "6f1cd509e65d5942590fd8d32f9400a410de8a1806b17bef308ff585cf16bccf",
+      "bytes": 75197,
+      "review": "ORIGINAL_VISIBLE_CONTENT_REVIEWED"
+    }
+  ]
+}
