@@ -1,8 +1,10 @@
-# Phase 24 manual interaction acceptance — 2026-09-04
+# Phase 24 actual-browser interaction checks — 2026-09-04
 
 - Product: ForgeGate Windows Local Alpha
 - Surface: authenticated loopback Web Dashboard
 - Browsers: Microsoft Edge, Google Chrome, and Codex in-app browser on Windows
+- Method: tool-operated browser interactions with CLI and stored-state cross-checks;
+  not owner-performed manual testing or independent, unassisted first-use acceptance
 - Fixture: generic `sample-api` project and local ephemeral acceptance identity
 - ForgeGate hardware access/integration: **NOT_PERFORMED**
 - External board connectivity observation: **PASS — connection only; no serial read/write, firmware action, protocol validation, or measurement**

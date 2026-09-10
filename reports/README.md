@@ -6,12 +6,6 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
-- [GitHub reviewer-path audit](GITHUB_REVIEWER_AUDIT_2026-09-09.md) — actual
-  repository-page inspection, clearer review navigation and evidence labels;
-  presentation only, not another product feature milestone.
-- [Private GitHub synchronization](GITHUB_SYNC_2026-09-09.md) — preserved source
-  checkpoint, fresh local gates, presentation/privacy review and hosted CI limits;
-  [engineering resumption plan](../docs/PROJECT_RESUME_CHECKPOINT_2026-09-09.md).
 - [Phase 64 monitor presets](PHASE_64_MONITOR_PRESETS_ACCEPTANCE.md) — versioned
   configuration, safe start/stop and labeled simulation; latest engineering
   baseline with [machine evidence](PHASE_64_MONITOR_PRESETS_EVIDENCE.json).
@@ -32,6 +26,20 @@ not be quoted as the latest project status.
 - [Phase 59 feature freeze and code closeout](PHASE_59_CODE_CLOSEOUT_ACCEPTANCE.md) —
   coherent local commit baseline, finite completion gates, clean-source delivery
   and exact installed-artifact checks; [machine evidence](PHASE_59_CODE_CLOSEOUT_EVIDENCE.json).
+
+## Maintenance and presentation records
+
+- [Portfolio closeout](GITHUB_PORTFOLIO_CLOSEOUT_2026-09-10.md) — final reviewer
+  wording, scoped image/history publication review and unchanged engineering
+  baseline; separate from product or hosted-CI acceptance.
+- [GitHub reviewer-path audit](GITHUB_REVIEWER_AUDIT_2026-09-09.md) — actual
+  repository-page inspection, clearer review navigation and evidence labels;
+  presentation only, not another product feature milestone.
+- [Private GitHub synchronization](GITHUB_SYNC_2026-09-09.md) — preserved source
+  checkpoint, fresh local gates, presentation/privacy review and hosted CI limits;
+  [engineering resumption plan](../docs/PROJECT_RESUME_CHECKPOINT_2026-09-09.md).
+
+## Earlier engineering checkpoints
 
 - [Phase 58 refreshed Windows delivery](PHASE_58_WINDOWS_DELIVERY_ACCEPTANCE.md) —
   isolated installed wheel completes actual Edge synthetic quick assessment,
@@ -119,7 +127,7 @@ not be quoted as the latest project status.
 - [Phase 25 MSP430 live-status acceptance](PHASE_25_MSP430_LIVE_STATUS_ACCEPTANCE_REPORT.md) — optional read-only UART v1 monitor, authenticated Devices page, deterministic status-state coverage, and bounded real COM4 observation; historical pre-unplug snapshot
 - [Phase 25 MSP430 live-status evidence](PHASE_25_MSP430_LIVE_STATUS_EVIDENCE_2026-09-05.json) — exact ten-second browser counters and explicit no-control/no-measurement/no-release-evidence boundaries
 - [Phase 24 authenticated local Dashboard checkpoint](PHASE_24_AUTHENTICATED_LOCAL_DASHBOARD_ACCEPTANCE_REPORT.md) — implementation and automation pass; full manual cross-browser exit gate partial
-- [Phase 24 manual interaction acceptance](PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md) — operator/producer inputs, durable output cross-check, expiry/restart recovery, Edge/Chrome focus, 129-record pagination, 422 recovery, and remaining manual boundary
+- [Phase 24 actual-browser interaction checks](PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md) — operator/producer inputs, durable output cross-check, expiry/restart recovery, Edge/Chrome focus, 129-record pagination, 422 recovery, and remaining acceptance boundary
 - [MSP430 connection and Dashboard observation](MSP430_CONNECTION_AND_DASHBOARD_OBSERVATION_2026-09-04.md) — bounded Windows USB/UART pass, retained device absence, and a 216.1-second reconnection pass, plus non-mutating Dashboard checks; not uninterrupted long-duration stability, firmware, protocol, measurement, or ForgeGate hardware-integration proof
 - [MSP430 connection observation record](MSP430_CONNECTION_OBSERVATION_2026-09-04.json) — exact local counters and explicit non-claims without a device serial number
 - [Dashboard fault-presentation record](DASHBOARD_FAULT_PRESENTATION_EVIDENCE_2026-09-04.json) — isolated Chrome 409/413/429/500 rendering, focus, recovery, countdown, and zero-write evidence; test injection, not authentic operational failure evidence
@@ -147,7 +155,7 @@ publisher-provenance, or general third-party compatibility claims.
 | 21 | Operator run/query/collect workflow | [Acceptance report](PHASE_21_PLUGIN_OPERATOR_WORKFLOW_ACCEPTANCE_REPORT.md) |
 | 22 | Clean-install Windows Alpha delivery chain | [Acceptance report](PHASE_22_WINDOWS_ALPHA_ACCEPTANCE_REPORT.md), [raw evidence](PHASE_22_WINDOWS_ALPHA_LIVE_EVIDENCE.json) |
 | 23 | Local Web Dashboard design gate | [Design report](PHASE_23_LOCAL_WEB_DASHBOARD_DESIGN_GATE.md); no UI implementation |
-| 24 | Authenticated local Dashboard vertical slice | [Acceptance report](PHASE_24_AUTHENTICATED_LOCAL_DASHBOARD_ACCEPTANCE_REPORT.md) and [manual interaction record](PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md); implementation/local flow pass, manual cross-browser gate partial |
+| 24 | Authenticated local Dashboard vertical slice | [Acceptance report](PHASE_24_AUTHENTICATED_LOCAL_DASHBOARD_ACCEPTANCE_REPORT.md) and [actual-browser interaction record](PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md); implementation/local flow pass, full cross-browser gate partial |
 | 25 | Optional MSP430 read-only live status | [Acceptance report](PHASE_25_MSP430_LIVE_STATUS_ACCEPTANCE_REPORT.md), [bounded machine record](PHASE_25_MSP430_LIVE_STATUS_EVIDENCE_2026-09-05.json), and [later owner-assisted follow-up](MSP430_MANUAL_UNPLUG_REPLUG_EVIDENCE_2026-09-05.json); deterministic state coverage plus connected COM4 browser observation |
 | 26 | Read-only Dashboard assurance review | [Acceptance report](PHASE_26_DASHBOARD_ASSURANCE_REVIEW_ACCEPTANCE_REPORT.md), [browser evidence](DASHBOARD_ASSURANCE_REVIEW_EVIDENCE_2026-09-05.json), and [MSP430 follow-up](MSP430_MANUAL_UNPLUG_REPLUG_EVIDENCE_2026-09-05.json); candidate-bound Evidence/Decision/Assurance and decoded live fault reports |
 | 27 | Reviewed Dashboard workflow and MSP430 evidence contract | [Acceptance report](PHASE_27_DASHBOARD_WRITE_AND_MSP430_COLLECTOR_ACCEPTANCE_REPORT.md) and [browser evidence](DASHBOARD_PHASE27_INTERACTION_EVIDENCE_2026-09-05.json); complete local write workflow, strict artifact-only collector, exact Edge zoom, and explicit accessibility boundaries |

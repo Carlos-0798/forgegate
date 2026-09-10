@@ -1,11 +1,13 @@
 # Roadmap
 
-## Current priority — preserve the checkpoint and synchronize the portfolio
+## Current state — portfolio synchronized; engineering paused
 
 New feature work is paused during the owner's job preparation. The completed
 Windows Local Alpha and Phase 64 monitor presets are retained, not reopened as
-unfinished work. Synchronization into the existing Private GitHub repository is
-authorized on 2026-09-09; public visibility, License and Release remain separate.
+unfinished work. The accepted baseline is synchronized into the existing Private
+GitHub repository. The [2026-09-10 portfolio closeout](../reports/GITHUB_PORTFOLIO_CLOSEOUT_2026-09-10.md)
+records presentation and publication checks, not another product milestone.
+Public visibility, License and Release remain separate owner decisions.
 See the [resumption checkpoint](PROJECT_RESUME_CHECKPOINT_2026-09-09.md) and
 [synchronization record](../reports/GITHUB_SYNC_2026-09-09.md).
 

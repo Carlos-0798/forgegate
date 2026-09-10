@@ -7,10 +7,16 @@ acceptance. Phase 53B human measurement is deferred by owner; the
 
 Current Private GitHub synchronization and its fresh local checks are recorded
 in [the synchronization record](../reports/GITHUB_SYNC_2026-09-09.md).
+The later local regression has 1,569 passes / 3 environment skips and 95.90%
+branch-aware combined coverage, including the manual-CI policy check; see
+[PR #14](https://github.com/Carlos-0798/forgegate/pull/14) and the
+[portfolio closeout](../reports/GITHUB_PORTFOLIO_CLOSEOUT_2026-09-10.md).
 Historical cross-platform PASS rows below are tied to their named commits;
-they do not certify the latest branch. Recent hosted jobs were blocked before
-execution by an account payment/spending-limit restriction. No required checks
-or repository protections are disabled as part of synchronization.
+they do not certify the latest branch. The September 9 synchronization jobs
+were blocked before tests executed by an account payment/spending-limit
+restriction; this does not characterize every historical failed or cancelled
+run. No required checks or repository protections are disabled as part of
+synchronization.
 
 After synchronization, the owner selected **manual-only cloud CI** on 2026-09-09.
 `workflow_dispatch` is the sole repository workflow trigger; local development

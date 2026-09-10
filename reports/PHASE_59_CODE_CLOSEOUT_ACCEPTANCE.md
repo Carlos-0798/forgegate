@@ -51,15 +51,15 @@ environments, logs and private preservation snapshots remain local and untracked
 
 ## Failed attempts and corrections
 
-1. The agent initially scheduled two sdist builds in the same checkout, causing
-   shared staging collisions. Build operations were subsequently serialized.
+1. Two sdist builds overlapped in one checkout, causing shared staging
+   collisions. Build operations were subsequently serialized.
 2. An isolated nested checkout produced a 262-character Windows staging path;
    the sdist build failed. The same commit built successfully in a shorter
    checkout. Residue was moved to a private retention directory, not deleted.
 3. An initial verifier invocation did not resolve its interpreter absolutely;
    it was interrupted and excluded. The final runner uses the isolated checkout's
    absolute Python path.
-4. An agent-triggered Vite rebuild during a test run temporarily removed the
+4. A Vite rebuild overlapped with a test run and temporarily removed the asset
    inventory. That run had 1,432 passes, one failure and three skips. Completing
    inventory generation restored exact committed bytes; a fresh full gate was
    required with no concurrent asset mutation.

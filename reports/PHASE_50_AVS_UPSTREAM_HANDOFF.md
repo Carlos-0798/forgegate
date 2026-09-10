@@ -1,4 +1,4 @@
-# AVS host acceptance handoff to the upstream agent
+# AVS host acceptance handoff
 
 Date: 2026-09-08. Scope: independent archived commit
 `bf8c4c6f59ba9063524aea7db01df87d35170483`, **not the current dirty worktree**.

@@ -184,8 +184,8 @@ rejected request did not create a durable candidate or audit event.
 This earlier Chrome capture comes from the separate generic 129-record
 acceptance fixture. All six pages were traversed as
 `25/25/25/25/25/4`, producing 129 unique versions with no duplicates. The
-complete input/output record and remaining manual boundary are in the
-[Phase 24 manual interaction report](../reports/PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md).
+complete input/output record and remaining acceptance boundary are in the
+[Phase 24 actual-browser interaction report](../reports/PHASE_24_MANUAL_INTERACTION_ACCEPTANCE_2026-09-04.md).
 
 ## 9. Read-only MSP430 live status
 
