@@ -1,11 +1,27 @@
 # Portfolio evidence gallery
 
-This page collects the small set of real, reproducible artifacts intended for
-the repository landing page and portfolio review. The candidate workflow images
-use generic local fixture data. The final Devices image is separately labeled as
-an owner-authorized, input-only MSP430 UART observation. None of the captures
-contains a private key, API token, personal email address, validated physical
-measurement, or production environment.
+This page provides a short review path followed by the retained screenshot and
+acceptance archive. The captures distinguish three kinds of evidence:
+synthetic workflow tests, integration with retained real Analog Validation Studio
+(AVS) software reports, and a historical owner-authorized, input-only observation
+of a physically connected MSP430 UART. A real browser capture does not make its
+input data real, and a real UART observation does not validate sensor accuracy.
+These artifacts do not demonstrate a production deployment or customer use.
+
+## Recommended review path
+
+| Review question | Artifact and acceptance record | What it supports |
+|---|---|---|
+| Can a user inspect a version and understand a failed rule? | [Workbench](assets/phase62/workbench.jpg), [failed-rule view](assets/phase62/decision-fail.jpg), [workbench acceptance](../reports/PHASE_62_WORKBENCH_ACCEPTANCE.md) | Implemented Windows Dashboard workflow using explicitly synthetic inputs |
+| Does it work with another project's actual reports? | [Real AVS decision](../reports/phase56-browser/avs-quick-decision.png), [real-report acceptance](../reports/PHASE_56_AVS_QUICK_ACCEPTANCE.md) | Retained software reports preserve the original engineering FAIL and its rule outcomes; no upstream rerun or hardware verification |
+| Can another person check the exported result? | [Reviewed export](assets/forgegate-dashboard-assurance-export-confirm.jpg), [portable export acceptance](../reports/PHASE_28_DASHBOARD_ASSURANCE_EXPORT_ACCEPTANCE_REPORT.md), [original-report replay acceptance](../reports/PHASE_51_SOURCE_REPLAY_ACCEPTANCE.md) | Candidate-bound assurance verification and the separate original-report replay path; integrity is not producer authenticity |
+| What is the optional hardware boundary? | [MSP430 status view](assets/forgegate-dashboard-msp430-decoded-faults.jpg), [observation record](../reports/PHASE_25_MSP430_LIVE_STATUS_EVIDENCE_2026-09-05.json) | Historical read-only transport, heartbeat and firmware-reported fault presentation; no device control or calibrated measurement claim |
+
+To try the current product, follow the
+[independent local workspace guide](LOCAL_WORKSPACE_QUICKSTART.md). The archive
+below retains each checkpoint's original input, date and scope; older interface
+captures and then-paused synchronization notes are historical, not the current
+product or repository state. No screenshot has been regenerated for this index.
 
 ## Evidence boundary
 
@@ -274,8 +290,9 @@ software tests, not uptime, browser-interaction or hardware evidence.
 [Backup acceptance](../reports/PHASE_32_STORE_BACKUP_ACCEPTANCE.md) records exact
 synthetic snapshot counts/hash, WAL transaction isolation and cold application
 readback. No database or raw project data belongs in this gallery. This checkpoint
-has no browser-layout change and no new screenshot claim. Synchronization is
-paused; these results are retained locally for later review.
+has no browser-layout change and no new screenshot claim. At that historical
+checkpoint, synchronization was paused and the results were retained locally
+for later review; this does not describe the current repository state.
 
 ### Phase 33 combined-report evidence
 
@@ -285,7 +302,8 @@ Screenshots retain exact report hashes, seven records, two collector receipts,
 and a 50% expected/actual synthetic coverage rule. These are not repository
 coverage metrics, upstream AFE/MSP results, provenance authentication or hardware.
 The initial browser 422 was reproduced and fixed by exact JSON preservation.
-All evidence remains local while GitHub synchronization is paused.
+At that historical checkpoint, evidence remained local while GitHub
+synchronization was paused; the original acceptance scope is unchanged.
 
 ![Combined evidence retained](assets/forgegate-dashboard-multi-report-bound.jpg)
 

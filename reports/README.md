@@ -6,6 +6,9 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
+- [GitHub reviewer-path audit](GITHUB_REVIEWER_AUDIT_2026-09-09.md) — actual
+  repository-page inspection, clearer review navigation and evidence labels;
+  presentation only, not another product feature milestone.
 - [Private GitHub synchronization](GITHUB_SYNC_2026-09-09.md) — preserved source
   checkpoint, fresh local gates, presentation/privacy review and hosted CI limits;
   [engineering resumption plan](../docs/PROJECT_RESUME_CHECKPOINT_2026-09-09.md).

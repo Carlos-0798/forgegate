@@ -3,22 +3,30 @@
 This index separates current product claims from design detail, security
 analysis, compatibility contracts, and historical acceptance evidence.
 
-## Start here
+## Start here — review or try ForgeGate
 
-For the current interruption, start with the
-[2026-09-09 pause/resumption checkpoint](PROJECT_RESUME_CHECKPOINT_2026-09-09.md)
-and [Private GitHub synchronization](../reports/GITHUB_SYNC_2026-09-09.md).
-The accepted baseline includes [monitor presets](MONITOR_PRESETS.md) and
+1. [Product brief](product/PRODUCT_BRIEF.md) — the report-review problem, intended user and engineering tradeoffs
+2. [Portfolio evidence gallery](PORTFOLIO_EVIDENCE.md#recommended-review-path) — a short route through the workbench, real software-report case and verifiable handoff; no installation required
+3. [Independent local workspace](LOCAL_WORKSPACE_QUICKSTART.md) — install, initialize your own workspace and repeat the synthetic PASS/FAIL task; for a source checkout without a supplied wheel, start with the [README build instructions](../README.md#quick-start)
+4. [Project status](PROJECT_STATUS.md) and [verification matrix](VERIFICATION_MATRIX.md) — accepted capabilities and their evidence limits
+5. [Domain model](architecture/DOMAIN_MODEL.md), [policy engine](architecture/POLICY_ENGINE.md) and [trust model](architecture/TRUST_AND_EVIDENCE.md) — implementation and design review
+6. [Roadmap](ROADMAP.md) and [security policy](../SECURITY.md) — remaining work, supported scope and responsible reporting
+
+## Maintainer resumption and historical acceptance
+
+The [2026-09-09 pause/resumption checkpoint](PROJECT_RESUME_CHECKPOINT_2026-09-09.md)
+and [Private GitHub synchronization](../reports/GITHUB_SYNC_2026-09-09.md)
+preserve the engineering handoff. They are maintenance records, not prerequisites
+for reviewing or trying the product. The accepted baseline includes
+[monitor presets](MONITOR_PRESETS.md) and
 [Phase 64 evidence](../reports/PHASE_64_MONITOR_PRESETS_ACCEPTANCE.md).
-Older delivery slices below retain their historical scope.
 
-1. [Project status](PROJECT_STATUS.md) — current maturity and accepted baseline
-2. [Verification matrix](VERIFICATION_MATRIX.md) — evidence level for each capability
-3. [Roadmap](ROADMAP.md) — completed and remaining acceptance gates
-4. [Final Windows demonstration](FINAL_WINDOWS_DEMO.md) — frozen package, exact positive/negative outcomes and Dashboard reviewer path
-5. [Reproducible interaction walkthrough](DEMO.md) — deeper generic CLI/API examples with expected output
-6. [Portfolio evidence gallery](PORTFOLIO_EVIDENCE.md) — retained screenshots, exact fixture data, hashes, and claim boundaries
-7. [Security policy](../SECURITY.md) — supported scope and responsible reporting
+The [frozen Phase 61 Windows demonstration](FINAL_WINDOWS_DEMO.md) retains its
+original package and expected outcomes. Its GUI commands require the owner's
+historical private workspace; new users should follow the independent workspace
+guide above. The [generic CLI/API walkthrough](DEMO.md) remains available for
+deeper interaction examples. Older delivery slices below retain their original
+scope and do not supersede the current first-use guide.
 
 Previously completed milestone: [feature freeze and Alpha completion](ALPHA_COMPLETION_PLAN.md).
 Phases 59-61 close the local source/build baseline, frozen-package real-project

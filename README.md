@@ -9,9 +9,22 @@ and a portable, independently verifiable handoff.
 Built for individual developers and small engineering teams reviewing scattered
 reports before a release. It automates report identification, normalization and
 reviewed assessment; it does **not** run the upstream tests or replace a CI system.
-Human time savings and accuracy improvement remain **not measured**.
 
-[Manual cloud CI and run history](https://github.com/Carlos-0798/forgegate/actions/workflows/ci.yml)
+**Why this project:** passing tests in one tool do not explain whether a particular
+version meets all release criteria. ForgeGate brings existing reports, the chosen
+policy and per-rule reasons into one reviewed workflow, then exports a handoff
+another engineer can check without the original database. This replaces manual
+report reconciliation steps; human time savings and accuracy gains remain
+**not measured**.
+
+**Ownership:** an independent engineering project maintained by
+[Carlos-0798](https://github.com/Carlos-0798). Its scope spans report processing,
+policy evaluation, local web interaction, audit history and reproducible delivery.
+Peer-project tests and hardware results remain the work of their original projects.
+
+**Review without installing:** [screenshots and their scope](docs/PORTFOLIO_EVIDENCE.md#recommended-review-path)
+· [real-project result](#real-project-case) · [engineering decisions](#key-design-decisions).
+**Try it:** [independent Windows setup](docs/LOCAL_WORKSPACE_QUICKSTART.md).
 
 ## Current status
 
@@ -19,6 +32,11 @@ Human time savings and accuracy improvement remain **not measured**.
 The installable CLI, authenticated local Dashboard, real-report integration and
 offline review workflow have accepted local evidence. This is a completed,
 demonstrable engineering milestone, **not a production service or public release**.
+
+![Actual Windows workbench with explicitly synthetic PASS and FAIL examples](docs/assets/phase62/workbench.jpg)
+
+Actual browser capture using **synthetic tutorial data**. It demonstrates the
+workbench, not a customer deployment or a real project's passing tests.
 
 The core workflow supports:
 
@@ -34,30 +52,15 @@ The core workflow supports:
 - **Optional device status:** saved MSP430 UART v1 read-only presets and an
   explicitly simulated demonstration, kept separate from release evidence.
 
-**Validation policy:** local checks are the development baseline. Cloud CI is
-**manual only** (`workflow_dispatch`); pushes and pull requests do not run it
-automatically. The full three-platform workflow remains available when requested.
-Recent historical hosted jobs did not execute because of an account-level
-GitHub Actions restriction; they are not passing runs. The local figures below
-are not latest hosted-CI results. See the
-[synchronization record](reports/GITHUB_SYNC_2026-09-09.md).
-
-![Actual Windows workbench with explicitly synthetic PASS and FAIL examples](docs/assets/phase62/workbench.jpg)
-
-This retained browser capture uses synthetic tutorial data. It demonstrates the
-implemented workbench, not a customer deployment or a real project's passing tests.
+**Validation policy:** local acceptance, with [optional manual cloud checks](#optional-cloud-validation).
 
 ## Architecture and workflow
 
 ```mermaid
 flowchart LR
-    A[Existing reports] --> B[Bounded collectors + SHA-256]
-    B --> C[Candidate-bound evidence]
-    C --> D[Versioned policy evaluation]
-    D --> E[Decision + attestation]
-    E --> F[Portable assurance / offline replay]
-    U[Local Dashboard / CLI] --> C
-    U --> D
+    A[Existing reports] --> B[Normalize + bind]
+    B --> C[Review + evaluate]
+    C --> D[Export + verify]
 ```
 
 **Stack:** Python 3.12, FastAPI, Pydantic, Typer, SQLite, TypeScript/native DOM,
@@ -81,12 +84,20 @@ reports keep their original dates and scopes; their test counts are not additive
 
 | Verification | Recorded outcome | Scope / evidence |
 |---|---|---|
-| Python regression | **1,568 passed; 3 skipped; 95.90% branch-aware combined coverage** | Host suite; Windows symlink-permission skips; [latest acceptance](reports/PHASE_64_MONITOR_PRESETS_ACCEPTANCE.md) |
+| Python regression | **1,569 passed; 3 skipped; 95.90% branch-aware combined coverage** | Windows host suite including the manual-CI regression; [recorded gate](https://github.com/Carlos-0798/forgegate/pull/14); Phase 64's earlier 1,568 count remains historical |
 | Frontend regression | **296 passed** | Production-TypeScript host tests, not 296 manual browser scenarios; [machine record](reports/PHASE_64_MONITOR_PRESETS_EVIDENCE.json) |
 | Interaction and quality gates | **33/33 CLI/API checks**, typing, lint/format, assets and contract drift passed | Local development verification; [latest acceptance](reports/PHASE_64_MONITOR_PRESETS_ACCEPTANCE.md) |
 | Windows delivery | Clean-install release smoke and installed-browser lifecycle checks passed | Isolated wheel installation; [final user path](reports/PHASE_63_FINAL_USER_PATH_ACCEPTANCE.md), [preset extension](reports/PHASE_64_MONITOR_PRESETS_ACCEPTANCE.md) |
 | Real AVS report integration | **4 collections, 130 records, 12 rules: 10 PASS / 2 FAIL** | Retained software reports; independent replay **VALID / FAIL**, with no new upstream run; [acceptance](reports/PHASE_56_AVS_QUICK_ACCEPTANCE.md) |
 | End-to-end browser handoff | Synthetic PASS/FAIL/REVIEW, private replay, assurance verification and policy-aware comparison accepted | Actual Windows browser runs with separately identified artifacts; [assessment](reports/PHASE_54_QUICK_ASSESSMENT_ACCEPTANCE.md), [installed workflow](reports/PHASE_58_WINDOWS_DELIVERY_ACCEPTANCE.md) |
+
+## Real-project case
+
+**Task:** assess one retained Analog Validation Studio software version using its
+test, coverage, static-analysis and benchmark reports. **Result:** four reports
+became 130 normalized records; 12 policy rules produced **10 PASS / 2 FAIL**.
+The downloaded original-report replay independently reproduced **VALID / FAIL**.
+This is a completed integration, not a newly passing AVS version.
 
 ![Actual Edge quick assessment preserving a retained real AVS FAIL decision](reports/phase56-browser/avs-quick-decision.png)
 
@@ -94,6 +105,8 @@ reports keep their original dates and scopes; their test counts are not additive
 AVS report set correctly keeps its two failing rules. Its original reports and
 complete rule outcomes are reproducible; ForgeGate did not rerun the producer's
 tests, authenticate their origin or verify physical hardware.
+See the [case, encountered failures and corrective work](reports/PHASE_56_AVS_QUICK_ACCEPTANCE.md)
+and its [machine-readable evidence](reports/PHASE_56_AVS_QUICK_ACCEPTANCE_EVIDENCE.json).
 
 Additional scoped evidence—negative inputs, HTTP error presentation, keyboard,
 zoom, backup/recovery, optional UART observation and Windows plugin isolation—is
@@ -177,6 +190,12 @@ development environment and runs `tools/verify.py`. Packaging acceptance is
 
 ## Optional cloud validation
 
+Cloud CI is **manual only** (`workflow_dispatch`); pushes and PRs do not run it
+automatically. [Run history](https://github.com/Carlos-0798/forgegate/actions/workflows/ci.yml)
+retains the earlier account-restricted jobs, which did not execute tests and are
+not PASS. Local results above are not latest hosted-CI results; see the
+[synchronization record](reports/GITHUB_SYNC_2026-09-09.md).
+
 To deliberately run the retained cloud checks, open **Actions → ci → Run workflow**,
 select the intended branch (normally `main`), and confirm **Run workflow**.
 This runs Windows, Linux and macOS checks, then the generic assurance Action
@@ -221,9 +240,10 @@ for trust assumptions. Untested or planned capabilities are not delivered result
 
 ## Roadmap
 
-The accepted local milestone is preserved while portfolio synchronization is
-completed. The [resume checkpoint](docs/PROJECT_RESUME_CHECKPOINT_2026-09-09.md)
-records the exact pause point, remaining work and safe resumption sequence.
+The accepted Windows Local Alpha is synchronized to this private repository.
+Future work is bounded by demonstrated user needs, not a claim of unfinished core
+functionality. The [resume checkpoint](docs/PROJECT_RESUME_CHECKPOINT_2026-09-09.md)
+preserves the engineering continuation plan.
 
 1. Resume extensibility with a bounded protocol-adapter conformance example;
    require actual device acceptance before claiming another supported board.
@@ -240,5 +260,6 @@ See the [detailed roadmap](docs/ROADMAP.md) for completed and deferred work.
 ## License status
 
 No open-source license has been selected. This private-development repository is
-all rights reserved. A GitHub synchronization does not authorize public visibility,
-redistribution, a public release, a License change or LinkedIn publication.
+all rights reserved. Review requires repository access; a link alone does not grant
+access, and there is no public hosted demo. Public visibility, redistribution,
+a public release, a License change and LinkedIn publication require separate approval.
