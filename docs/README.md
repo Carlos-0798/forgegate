@@ -5,6 +5,13 @@ analysis, compatibility contracts, and historical acceptance evidence.
 
 ## Start here
 
+For the current interruption, start with the
+[2026-09-09 pause/resumption checkpoint](PROJECT_RESUME_CHECKPOINT_2026-09-09.md)
+and [Private GitHub synchronization](../reports/GITHUB_SYNC_2026-09-09.md).
+The accepted baseline includes [monitor presets](MONITOR_PRESETS.md) and
+[Phase 64 evidence](../reports/PHASE_64_MONITOR_PRESETS_ACCEPTANCE.md).
+Older delivery slices below retain their historical scope.
+
 1. [Project status](PROJECT_STATUS.md) — current maturity and accepted baseline
 2. [Verification matrix](VERIFICATION_MATRIX.md) — evidence level for each capability
 3. [Roadmap](ROADMAP.md) — completed and remaining acceptance gates
@@ -13,7 +20,7 @@ analysis, compatibility contracts, and historical acceptance evidence.
 6. [Portfolio evidence gallery](PORTFOLIO_EVIDENCE.md) — retained screenshots, exact fixture data, hashes, and claim boundaries
 7. [Security policy](../SECURITY.md) — supported scope and responsible reporting
 
-Current milestone: [feature freeze and Alpha completion](ALPHA_COMPLETION_PLAN.md).
+Previously completed milestone: [feature freeze and Alpha completion](ALPHA_COMPLETION_PLAN.md).
 Phases 59-61 close the local source/build baseline, frozen-package real-project
 acceptance and final demonstration. The scoped Windows Alpha milestone is complete.
 See the [Phase 59 closeout](../reports/PHASE_59_CODE_CLOSEOUT_ACCEPTANCE.md) and
@@ -32,7 +39,7 @@ and [blank observation record](product/EFFICIENCY_RUN_TEMPLATE.md) are retained,
 but human comparison is deferred by owner. The [product brief](product/PRODUCT_BRIEF.md)
 continues to prioritize report-review and handoff benefits without unmeasured claims.
 
-Current product slice: [reviewed Windows installed-wheel delivery](../reports/PHASE_52_WINDOWS_DELIVERY_ACCEPTANCE.md)
+Historical delivery slice: [reviewed Windows installed-wheel delivery](../reports/PHASE_52_WINDOWS_DELIVERY_ACCEPTANCE.md)
 using the [Windows operating guide](WINDOWS_DASHBOARD_OPERATIONS.md), plus
 [private original-report export and offline replay](EVIDENCE_REPLAY.md),
 with [Phase 51 acceptance](../reports/PHASE_51_SOURCE_REPLAY_ACCEPTANCE.md).

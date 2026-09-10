@@ -5,6 +5,13 @@ regression counts do not establish human efficiency or independent operator
 acceptance. Phase 53B human measurement is deferred by owner; the
 [protocol](product/EFFICIENCY_ACCEPTANCE.md) remains available.
 
+Current Private GitHub synchronization and its fresh local checks are recorded
+in [the synchronization record](../reports/GITHUB_SYNC_2026-09-09.md).
+Historical cross-platform PASS rows below are tied to their named commits;
+they do not certify the latest branch. Recent hosted jobs were blocked before
+execution by an account payment/spending-limit restriction. No required checks
+or repository protections are disabled as part of synchronization.
+
 | Capability | Planned evidence | Current status |
 |---|---|---|
 | Reusable monitor presets | Versioned local catalog, operator/project/CSRF boundaries, duplicate-start and late-stop controls, simulated states and fresh-wheel browser controls | LOCAL ENGINEERING PASS — 1,568 Python passes / 3 environment skips, 95.90%; 296 frontend passes; release smoke and independent installed-browser start/stop/reload/restart pass. Screenshots retained. No new physical-board, native assistive or productivity claim. See Phase 64 acceptance |

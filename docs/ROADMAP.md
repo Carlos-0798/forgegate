@@ -1,6 +1,24 @@
 # Roadmap
 
-## Current priority — reusable monitoring after Alpha closeout
+## Current priority — preserve the checkpoint and synchronize the portfolio
+
+New feature work is paused during the owner's job preparation. The completed
+Windows Local Alpha and Phase 64 monitor presets are retained, not reopened as
+unfinished work. Synchronization into the existing Private GitHub repository is
+authorized on 2026-09-09; public visibility, License and Release remain separate.
+See the [resumption checkpoint](PROJECT_RESUME_CHECKPOINT_2026-09-09.md) and
+[synchronization record](../reports/GITHUB_SYNC_2026-09-09.md).
+
+After job preparation, the proposed next engineering slice is an adapter
+conformance/example kit using the existing protocol and preset boundaries.
+Then validate a real supported device when one and explicit permission are
+available. Capture/export is a separate task, not silently added release evidence.
+Do not start a broad driver marketplace, managed service or cloud rewrite.
+
+Earlier phase priorities and GitHub-paused notes below are historical records.
+This section and the linked checkpoint take precedence for resumption.
+
+## Completed priority — reusable monitoring after Alpha closeout
 
 The owner selected a bounded Phase 64 extension: saved project-scoped monitor
 presets, explicit browser start/stop, a hardware-free simulated adapter and safe
@@ -23,7 +41,8 @@ owner-selected milestone and does not invalidate its accepted results. See
 
 Independent novice acceptance and the Phase 53B human efficiency/accuracy study
 remain unrun. They must precede quantitative usability or productivity claims.
-GitHub synchronization remains deferred.
+GitHub synchronization was deferred at that acceptance checkpoint and is now
+separately authorized as described above.
 
 ## Completed priority — independent first use and task completion
 

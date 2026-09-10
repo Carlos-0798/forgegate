@@ -6,6 +6,12 @@ not be quoted as the latest project status.
 
 ## Current checkpoint
 
+- [Private GitHub synchronization](GITHUB_SYNC_2026-09-09.md) — preserved source
+  checkpoint, fresh local gates, presentation/privacy review and hosted CI limits;
+  [engineering resumption plan](../docs/PROJECT_RESUME_CHECKPOINT_2026-09-09.md).
+- [Phase 64 monitor presets](PHASE_64_MONITOR_PRESETS_ACCEPTANCE.md) — versioned
+  configuration, safe start/stop and labeled simulation; latest engineering
+  baseline with [machine evidence](PHASE_64_MONITOR_PRESETS_EVIDENCE.json).
 - [Phase 63 final user-path closeout](PHASE_63_FINAL_USER_PATH_ACCEPTANCE.md) —
   clean-commit installed delivery, recipient-style cold start, actual browser
   activation/write checks, retained full PASS/FAIL handoff and explicit remaining

@@ -1,5 +1,13 @@
 # Project status
 
+- Current direction (2026-09-09): pause new engineering features for job
+  preparation; preserve the accepted Phase 64 baseline and synchronize the
+  existing Private GitHub repository. See the
+  [resumption checkpoint](PROJECT_RESUME_CHECKPOINT_2026-09-09.md) for the next
+  adapter-conformance slice and the
+  [synchronization record](../reports/GITHUB_SYNC_2026-09-09.md) for fresh gates
+  and the reviewed remote handoff. Earlier dated local-only / GitHub-paused
+  statements below describe their original checkpoints, not current authority.
 - Date: 2026-09-09
 - Version: 0.1.0a1
 - Active checkpoint: Phase 64 reusable monitor presets LOCAL ENGINEERING PASS.
@@ -247,19 +255,21 @@
 - Hardware evidence: owner-authorized input-only COM4 UART status observation;
   no command, firmware/debug action, physical measurement validation, release
   evidence, or production claim
-- Remote/publication status: private `Carlos-0798/forgegate`; earlier checkpoints
-  were synchronized through reviewed pull requests and required CI. Current local
-  work remains unsynchronized while GitHub synchronization is paused. The latest
-  previously accepted cross-platform run was 33999452478; no public release,
-  License, or LinkedIn publication is authorized
+- Remote/publication status: existing Private `Carlos-0798/forgegate`;
+  synchronization is owner-authorized on 2026-09-09 and tracked in the linked
+  synchronization record. The last fully accepted historical cross-platform
+  run remains 33999452478. Recent hosted jobs reported an account
+  payment/spending-limit restriction; local tests are not hosted CI. No Public
+  visibility, License, Release, LinkedIn publication or spending change is authorized.
 
 The Phase 28 post-merge run 34001577886 passed the Windows/Linux/macOS test and
 package jobs, but its final generic Action job did not start because GitHub
 reported an account payment/spending-limit restriction. The overall run is
 not green. Billing changes require owner action; local acceptance is separate.
 
-Per the owner's current instruction, current closeout work is local-only. No GitHub
-inspection, push, PR creation or merge was performed for this checkpoint.
+Historical local engineering closeout did not perform GitHub operations.
+The separately authorized 2026-09-09 synchronization does not change those
+original evidence boundaries or make previously unrun hosted jobs pass.
 
 ## Implemented
 
