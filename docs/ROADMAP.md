@@ -1,32 +1,41 @@
 # Roadmap
 
-## Current state — publication acceptance pending; engineering paused
+## Current state — source portfolio accepted; engineering paused
 
 New feature work is paused during the owner's job preparation. The completed
 Windows Local Alpha and Phase 64 monitor presets are retained, not reopened as
-unfinished work. The accepted baseline is synchronized into the existing Private
+unfinished work. The accepted baseline is synchronized into the existing
 GitHub repository. The [2026-09-10 portfolio closeout](../reports/GITHUB_PORTFOLIO_CLOSEOUT_2026-09-10.md)
 records presentation and publication checks, not another product milestone.
-On 2026-09-10 the owner authorized Public source visibility **after complete
-hosted CI acceptance and closeout**. The repository remains Private while that
-gate is pending; see the [hosted CI closeout](../reports/HOSTED_CI_CLOSEOUT_2026-09-10.md).
+On 2026-09-10 the owner authorized Public source visibility after complete
+hosted CI acceptance and closeout. Exact source
+`f2ba63d055ab93a437a5de73b697b84d2afacd07` passed all four jobs in
+[run 34537416870](https://github.com/Carlos-0798/forgegate/actions/runs/34537416870)
+and is accepted for Public-source portfolio presentation. See the
+[hosted CI closeout](../reports/HOSTED_CI_CLOSEOUT_2026-09-10.md) and
+[PR #17 completion receipt](https://github.com/Carlos-0798/forgegate/pull/17)
+for source acceptance and the separate visibility/anonymous-access outcome.
+Later documentation-only commits are not the source tested by that hosted run.
 License, packaged Release and LinkedIn publication remain separate decisions.
 See the [resumption checkpoint](PROJECT_RESUME_CHECKPOINT_2026-09-09.md) and
 [synchronization record](../reports/GITHUB_SYNC_2026-09-09.md).
 
 Cloud CI is owner-selected and manual-only; routine synchronization uses local
 verification. Keep the existing cloud matrix available without restoring push/PR
-triggers unless the owner requests that policy change. The owner has now enabled
-cloud execution for publication acceptance. The first fresh matrix executed and
-exposed test-harness failures; narrowly scoped corrections and a complete passing
-rerun are required before publication, not a new feature milestone.
+triggers unless the owner requests that policy change. The owner-enabled cloud
+acceptance exposed test-harness failures, retained their unsuccessful attempts,
+and accepted the scoped corrections through a complete passing rerun. This is
+verification maintenance, not a new feature milestone.
 
 - [x] Record conditional Public authorization and retain the manual-only policy.
-- [ ] Complete the corrected source's full local gate and hosted matrix, including
+- [x] Complete the corrected source's full local gate and hosted matrix, including
   package smoke and the dependent generic Action fixture; retain failed attempts.
-- [ ] Finish the source/log/presentation checks for the exact accepted revision,
-  change visibility, and verify anonymous access. Do not infer completion from
-  local PASS, successful upload or a single passing matrix job.
+- [x] Complete the scoped source/log/presentation review for the accepted
+  revision; retain unavailable historical-log and evidence limitations.
+
+Publication execution is a separate action: consult the PR #17 completion
+receipt for visibility and anonymous access. Neither local PASS, successful
+upload nor source-portfolio acceptance alone establishes a visibility change.
 
 After job preparation, the proposed next engineering slice is an adapter
 conformance/example kit using the existing protocol and preset boundaries.

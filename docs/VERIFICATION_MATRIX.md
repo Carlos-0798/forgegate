@@ -19,10 +19,17 @@ run. No required checks or repository protections are disabled as part of
 synchronization. The owner subsequently enabled cloud execution and authorized
 Public visibility only after complete hosted CI acceptance and closeout.
 Run 34533073332 actually executed the matrix and exposed test-harness failures;
-the repository remains Private and the corrected revision's complete hosted
-acceptance is pending. Current source, correction and publication results belong
-in the [hosted CI closeout](../reports/HOSTED_CI_CLOSEOUT_2026-09-10.md), not in
-historical Phase counts below.
+those failures are retained, not relabeled as account-blocked or successful.
+Corrected source `f2ba63d055ab93a437a5de73b697b84d2afacd07` completed all four jobs
+successfully in [run 34537416870](https://github.com/Carlos-0798/forgegate/actions/runs/34537416870).
+Its local gate recorded 1,577 passes / 3 environment skips and 95.89%
+branch-aware combined coverage, plus 33/33 CLI/API interaction checks.
+Hosted counts are reported separately below; they are not added to local counts.
+Later documentation-only commits are not the source tested by that cloud run.
+Source, corrections and results are in the
+[hosted CI closeout](../reports/HOSTED_CI_CLOSEOUT_2026-09-10.md); actual visibility
+and anonymous access have a separate
+[PR #17 completion receipt](https://github.com/Carlos-0798/forgegate/pull/17).
 
 After synchronization, the owner selected **manual-only cloud CI** on 2026-09-09.
 `workflow_dispatch` is the sole repository workflow trigger; local development
@@ -32,7 +39,8 @@ regression tests are local evidence, not a cloud execution. See the
 
 | Capability | Planned evidence | Current status |
 |---|---|---|
-| Current hosted CI and source publication | Complete corrected-commit matrix, package smoke, generic Action fixture, scoped publication review and anonymous readback | PENDING — Public conditionally authorized; repository still Private. The newly executed matrix found failures. Local fixes or historical green runs do not satisfy this gate; see the hosted CI closeout |
+| Accepted hosted CI source | Complete corrected-commit matrix, package smoke and generic Action fixture | HOSTED PASS — run 34537416870 at `f2ba63d055ab93a437a5de73b697b84d2afacd07`, all four jobs successful. Windows: 1,580 passes / 0 skips; Ubuntu and macOS: 1,574 passes / 6 skips each. All three: 95.90% branch-aware combined coverage, 296 frontend passes / 0 failures, full verification and release smoke PASS. Generic Action fixture outputs PASS; this is not hardware or production acceptance |
+| Source portfolio publication | Owner approval, scoped source/log/presentation review, explicit visibility change and anonymous readback | ACCEPTED FOR PUBLIC-SOURCE PORTFOLIO — exact-source acceptance above; actual visibility and anonymous-access outcome are recorded separately in the PR #17 completion receipt. Later documentation-only commits were not cloud-tested by that run |
 | Reusable monitor presets | Versioned local catalog, operator/project/CSRF boundaries, duplicate-start and late-stop controls, simulated states and fresh-wheel browser controls | LOCAL ENGINEERING PASS — 1,568 Python passes / 3 environment skips, 95.90%; 296 frontend passes; release smoke and independent installed-browser start/stop/reload/restart pass. Screenshots retained. No new physical-board, native assistive or productivity claim. See Phase 64 acceptance |
 | Final user-path closeout | Clean-commit delivery outside checkout, new scoped identity/store, browser activation and durable write, retained full positive/negative assessment and independently verified downloads | LOCAL ENGINEERING PASS — 1,466 Python passes / 3 symlink skips, 95.82%; 265 frontend passes; release smoke and clean delivery pass; actual VALID/PASS and VALID/FAIL handoff retained. Independent novice, native assistive, hardware and human timing not claimed. See Phase 63 acceptance |
 | Independent first use and task workbench | Fresh installed package outside checkout, new scoped identity/store, real browser positive/negative inputs and independently verified downloads | LOCAL PASS — Phase 62 baseline retained; actual VALID/PASS and VALID/FAIL handoff and AVS 130 records/12 rules unchanged. See Phase 62 acceptance |

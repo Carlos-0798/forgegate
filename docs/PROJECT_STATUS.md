@@ -1,14 +1,16 @@
 # Project status
 
-- Publication gate (2026-09-10): the owner authorized Public source visibility
-  **after complete hosted CI acceptance and closeout**. The repository is still
-  Private; publication and anonymous-access verification are pending. The newly
-  executing cloud matrix exposed test-harness failures under investigation and
-  correction, not a completed hosted PASS. See the
-  [hosted CI closeout](../reports/HOSTED_CI_CLOSEOUT_2026-09-10.md) for the exact
-  source, failures, scoped corrections and final verification status. New
-  engineering features remain paused; License, Release and LinkedIn publication
-  are separate decisions.
+- Source portfolio acceptance (2026-09-10): accepted for owner-authorized
+  Public-source portfolio presentation. [Run 34537416870](https://github.com/Carlos-0798/forgegate/actions/runs/34537416870)
+  completed successfully on exact source
+  `f2ba63d055ab93a437a5de73b697b84d2afacd07`: Windows, Ubuntu and macOS full
+  verification and clean-package smoke, plus the dependent generic Action job.
+  See the [hosted CI closeout](../reports/HOSTED_CI_CLOSEOUT_2026-09-10.md) for
+  failed attempts, scoped corrections and exact evidence. Later documentation-only
+  commits are not the source tested by that run. Actual visibility and anonymous
+  access belong to the [PR #17 completion receipt](https://github.com/Carlos-0798/forgegate/pull/17).
+  New engineering features remain paused; License, packaged Release and LinkedIn
+  publication are separate decisions.
 - Earlier portfolio closeout (2026-09-10): engineering outcomes remain the lead review
   path; browser-check terminology, failure explanations and publication evidence
   have been reviewed. The Phase 64 runtime is unchanged. Repository visibility
@@ -20,12 +22,12 @@
 - Cloud validation policy (2026-09-09 owner decision): `ci.yml` is manual-only
   through `workflow_dispatch`. Pushes and PRs do not automatically run cloud
   tests; the complete existing matrix and local development gates are retained.
-  The owner has now enabled and requested cloud execution for publication
-  acceptance. Historical account-blocked runs remain historical, not PASS.
+  The owner-enabled publication acceptance run is recorded above. Historical
+  account-blocked and executed-but-failed runs remain unchanged, not PASS.
   See [manual run instructions](../README.md#optional-cloud-validation).
 - Current engineering direction (2026-09-09): pause new features for job
   preparation; preserve the accepted Phase 64 baseline and synchronize the
-  existing Private GitHub repository. See the
+  existing GitHub repository for portfolio review. See the
   [resumption checkpoint](PROJECT_RESUME_CHECKPOINT_2026-09-09.md) for the next
   adapter-conformance slice and the
   [synchronization record](../reports/GITHUB_SYNC_2026-09-09.md) for fresh gates
@@ -279,12 +281,13 @@
 - Hardware evidence: owner-authorized input-only COM4 UART status observation;
   no command, firmware/debug action, physical measurement validation, release
   evidence, or production claim
-- Remote/publication status: `Carlos-0798/forgegate` is still Private. The owner
-  authorized Public visibility after full hosted CI acceptance and closeout on
-  2026-09-10; those exit gates are pending in the
-  [current closeout](../reports/HOSTED_CI_CLOSEOUT_2026-09-10.md). Run 34533073332
-  executed hosted tests and exposed failures; it is not equivalent to the earlier
-  account-blocked runs or a passing current revision. Local tests are not hosted
+- Remote/publication status: `Carlos-0798/forgegate` is accepted for
+  owner-authorized Public-source portfolio presentation. Complete hosted
+  acceptance is bound to source `f2ba63d` and run 34537416870, as recorded in the
+  [current closeout](../reports/HOSTED_CI_CLOSEOUT_2026-09-10.md). The
+  [PR #17 completion receipt](https://github.com/Carlos-0798/forgegate/pull/17)
+  records the visibility transition and anonymous-access outcome separately;
+  source acceptance is not itself a visibility change. Local tests are not hosted
   CI. License, packaged Release and LinkedIn publication remain separate actions.
 
 Historical context: the Phase 28 post-merge run 34001577886 passed the Windows/Linux/macOS test and

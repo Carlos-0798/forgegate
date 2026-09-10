@@ -29,10 +29,14 @@ not be quoted as the latest project status.
 
 ## Maintenance and presentation records
 
-- [Hosted CI and publication closeout](HOSTED_CI_CLOSEOUT_2026-09-10.md) — current
-  conditional Public authorization, actually executed cloud failures, scoped
-  test-harness corrections and pending acceptance/publication gates. Engineering
-  features remain paused; this does not yet record hosted PASS or Public access.
+- [Hosted CI and publication closeout](HOSTED_CI_CLOSEOUT_2026-09-10.md) — accepted
+  Public-source portfolio baseline: all four jobs of run 34537416870 passed at
+  exact source `f2ba63d055ab93a437a5de73b697b84d2afacd07`; failed attempts and
+  scoped test-harness corrections remain recorded. Later documentation-only
+  commits are not that run's tested source. Actual visibility and anonymous
+  access have a separate [PR #17 completion receipt](https://github.com/Carlos-0798/forgegate/pull/17).
+  Engineering features remain paused; hosted tests are not new browser, hardware
+  or production acceptance.
 - [Earlier portfolio closeout](GITHUB_PORTFOLIO_CLOSEOUT_2026-09-10.md) — reviewer
   wording, scoped image/history publication review and unchanged engineering
   baseline; its Private/no-cloud-run authorization notes describe that historical

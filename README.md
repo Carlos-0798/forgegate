@@ -79,14 +79,16 @@ See the [product brief](docs/product/PRODUCT_BRIEF.md) and
 
 ## Verified outcomes
 
-These are retained **local** acceptance results, not customer metrics. Earlier
-reports keep their original dates and scopes; their test counts are not additive.
+These are scoped local and hosted acceptance results, not customer metrics.
+Earlier reports keep their original dates and scopes; counts from different
+platforms or checkpoints are not additive.
 
 | Verification | Recorded outcome | Scope / evidence |
 |---|---|---|
-| Python regression | **1,569 passed; 3 skipped; 95.90% branch-aware combined coverage** | Windows host suite including the manual-CI regression; [recorded gate](https://github.com/Carlos-0798/forgegate/pull/14); Phase 64's earlier 1,568 count remains historical |
-| Frontend regression | **296 passed** | Production-TypeScript host tests, not 296 manual browser scenarios; [machine record](reports/PHASE_64_MONITOR_PRESETS_EVIDENCE.json) |
-| Interaction and quality gates | **33/33 CLI/API checks**, typing, lint/format, assets and contract drift passed | Local development verification; [latest acceptance](reports/PHASE_64_MONITOR_PRESETS_ACCEPTANCE.md) |
+| Python regression | **1,577 passed; 3 environment skips; 95.89% branch-aware combined coverage** | Current local Windows development gate; [closeout record](reports/HOSTED_CI_CLOSEOUT_2026-09-10.md) |
+| Hosted compatibility checks | Windows **1,580 passed / 0 skipped**; Ubuntu and macOS **1,574 passed / 6 Windows-only skips each**; **95.90% coverage** on each | Full development and clean-install gates, then the generic Action fixture, all passed at `f2ba63d`; [exact run](https://github.com/Carlos-0798/forgegate/actions/runs/34537416870). This does not extend native end-user acceptance beyond Windows. |
+| Frontend regression | **296 passed on each hosted platform** | Production-TypeScript host tests, not 296 manual browser scenarios; [closeout record](reports/HOSTED_CI_CLOSEOUT_2026-09-10.md) |
+| Interaction and quality gates | **33/33 CLI/API checks**, typing, lint/format, assets and contract drift passed | Local development verification; [closeout record](reports/HOSTED_CI_CLOSEOUT_2026-09-10.md) |
 | Windows delivery | Clean-install release smoke and installed-browser lifecycle checks passed | Isolated wheel installation; [final user path](reports/PHASE_63_FINAL_USER_PATH_ACCEPTANCE.md), [preset extension](reports/PHASE_64_MONITOR_PRESETS_ACCEPTANCE.md) |
 | Real AVS report integration | **4 collections, 130 records, 12 rules: 10 PASS / 2 FAIL** | Retained software reports; independent replay **VALID / FAIL**, with no new upstream run; [acceptance](reports/PHASE_56_AVS_QUICK_ACCEPTANCE.md) |
 | End-to-end browser handoff | Synthetic PASS/FAIL/REVIEW, private replay, assurance verification and policy-aware comparison accepted | Actual Windows browser runs with separately identified artifacts; [assessment](reports/PHASE_54_QUICK_ASSESSMENT_ACCEPTANCE.md), [installed workflow](reports/PHASE_58_WINDOWS_DELIVERY_ACCEPTANCE.md) |
@@ -196,10 +198,13 @@ development environment and runs `tools/verify.py`. Packaging acceptance is
 
 Cloud CI is **manual only** (`workflow_dispatch`); pushes and PRs do not run it
 automatically. [Run history](https://github.com/Carlos-0798/forgegate/actions/workflows/ci.yml)
-retains successful runs for older commits and account-restricted failures;
-neither establishes a hosted PASS for the current main. Local results above are
-not latest hosted-CI results; see the
-[synchronization record](reports/GITHUB_SYNC_2026-09-09.md).
+retains both failed attempts and their corrections. The complete
+[accepted run](https://github.com/Carlos-0798/forgegate/actions/runs/34537416870)
+passed all four jobs at `f2ba63d055ab93a437a5de73b697b84d2afacd07`.
+The final closeout update changes Markdown documentation only; its later commit
+is not the SHA executed by this run. Runtime, tests, verification tools, assets,
+dependencies and workflow remain identical to that tested revision. See the
+[failure, correction and acceptance record](reports/HOSTED_CI_CLOSEOUT_2026-09-10.md).
 
 To deliberately run the retained cloud checks, open **Actions → ci → Run workflow**,
 select the intended branch (normally `main`), and confirm **Run workflow**.
